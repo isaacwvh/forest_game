@@ -1,0 +1,340 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "moonwillow",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "golden"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "wispMotion": "three-joint pendant chains with staggered phase and increasing tip motion"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/moonwillow-sprout-standard.png",
+        "golden": "ui/moonwillow-sprout-golden.png"
+      },
+      "seedling": {
+        "standard": "ui/moonwillow-seedling-standard.png",
+        "golden": "ui/moonwillow-seedling-golden.png"
+      },
+      "young": {
+        "standard": "ui/moonwillow-young-standard.png",
+        "golden": "ui/moonwillow-young-golden.png"
+      },
+      "adult": {
+        "standard": "ui/moonwillow-adult-standard.png",
+        "golden": "ui/moonwillow-adult-golden.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/moonwillow-sprout-standard.usdz",
+      "thumbnail": "ui/moonwillow-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.30173,
+          -0.08515,
+          0.0
+        ],
+        "max": [
+          0.26433,
+          0.07167,
+          0.76049
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.30784,
+          -0.09474,
+          0.0
+        ],
+        "max": [
+          0.26884,
+          0.07663,
+          0.7617
+        ]
+      },
+      "animation": "moonwillow_sprout_sway",
+      "triangles": 844,
+      "joints": 12,
+      "bytes": 77647,
+      "sha256": "c669271cb258d92651d8d6efdf38eff95e9d2ec3d2a57adeb6ff3a9e4471edf4"
+    },
+    {
+      "stage": "sprout",
+      "variant": "golden",
+      "file": "models/moonwillow-sprout-golden.usdz",
+      "thumbnail": "ui/moonwillow-sprout-golden.png",
+      "bounds": {
+        "min": [
+          -0.30173,
+          -0.08515,
+          0.0
+        ],
+        "max": [
+          0.26433,
+          0.07167,
+          0.76049
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.30784,
+          -0.09474,
+          0.0
+        ],
+        "max": [
+          0.26884,
+          0.07663,
+          0.7617
+        ]
+      },
+      "animation": "moonwillow_sprout_sway",
+      "triangles": 844,
+      "joints": 12,
+      "bytes": 112015,
+      "sha256": "522118122a61708d9b4678605df568a5e798dd96d938c4a2126efcb16c330195"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/moonwillow-seedling-standard.usdz",
+      "thumbnail": "ui/moonwillow-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.65329,
+          -0.23076,
+          0.0
+        ],
+        "max": [
+          0.70143,
+          0.49962,
+          1.376
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.68393,
+          -0.27285,
+          0.0
+        ],
+        "max": [
+          0.72959,
+          0.53661,
+          1.37767
+        ]
+      },
+      "animation": "moonwillow_seedling_sway",
+      "triangles": 4812,
+      "joints": 15,
+      "bytes": 230592,
+      "sha256": "895f284ec58b98e83cd1e62c412c196df6aec37feefe8791a00e5fa5a6bf6e46"
+    },
+    {
+      "stage": "seedling",
+      "variant": "golden",
+      "file": "models/moonwillow-seedling-golden.usdz",
+      "thumbnail": "ui/moonwillow-seedling-golden.png",
+      "bounds": {
+        "min": [
+          -0.65329,
+          -0.23076,
+          0.0
+        ],
+        "max": [
+          0.70143,
+          0.49962,
+          1.376
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.68393,
+          -0.27285,
+          0.0
+        ],
+        "max": [
+          0.72959,
+          0.53661,
+          1.37767
+        ]
+      },
+      "animation": "moonwillow_seedling_sway",
+      "triangles": 4812,
+      "joints": 15,
+      "bytes": 265216,
+      "sha256": "66bfe4f02028377a1d04750a564b1af4c16f29b1473553a17cc5f637a992946f"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/moonwillow-young-standard.usdz",
+      "thumbnail": "ui/moonwillow-young-standard.png",
+      "bounds": {
+        "min": [
+          -1.29718,
+          -1.13505,
+          0.0
+        ],
+        "max": [
+          1.44313,
+          1.2692,
+          2.7532
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.42198,
+          -1.31901,
+          0.0
+        ],
+        "max": [
+          1.56391,
+          1.42642,
+          2.76012
+        ]
+      },
+      "animation": "moonwillow_young_sway",
+      "triangles": 14680,
+      "joints": 33,
+      "bytes": 807700,
+      "sha256": "1f5bd8f65b22d290d5b00399b29df8aac2e2434340cc8274c5602145cf0d0dba"
+    },
+    {
+      "stage": "young",
+      "variant": "golden",
+      "file": "models/moonwillow-young-golden.usdz",
+      "thumbnail": "ui/moonwillow-young-golden.png",
+      "bounds": {
+        "min": [
+          -1.29718,
+          -1.13505,
+          0.0
+        ],
+        "max": [
+          1.44313,
+          1.2692,
+          2.7532
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.42198,
+          -1.31901,
+          0.0
+        ],
+        "max": [
+          1.56391,
+          1.42642,
+          2.76012
+        ]
+      },
+      "animation": "moonwillow_young_sway",
+      "triangles": 14680,
+      "joints": 33,
+      "bytes": 842183,
+      "sha256": "223c16ee6c1c4ab4dba71660c09366cf49acd922a60c280d0471f648b8910fd5"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/moonwillow-adult-standard.usdz",
+      "thumbnail": "ui/moonwillow-adult-standard.png",
+      "bounds": {
+        "min": [
+          -2.67674,
+          -2.1123,
+          0.0
+        ],
+        "max": [
+          2.60228,
+          2.00131,
+          4.5291
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.98412,
+          -2.36307,
+          0.0
+        ],
+        "max": [
+          2.71995,
+          2.36935,
+          4.53293
+        ]
+      },
+      "animation": "moonwillow_adult_sway",
+      "triangles": 42692,
+      "joints": 93,
+      "bytes": 2069085,
+      "sha256": "e7263fd9ccfb8751c04026ca98a897169d158c5c7bf5251703a1697e06dfb200"
+    },
+    {
+      "stage": "adult",
+      "variant": "golden",
+      "file": "models/moonwillow-adult-golden.usdz",
+      "thumbnail": "ui/moonwillow-adult-golden.png",
+      "bounds": {
+        "min": [
+          -2.67674,
+          -2.1123,
+          0.0
+        ],
+        "max": [
+          2.60228,
+          2.00131,
+          4.5291
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.98412,
+          -2.36307,
+          0.0
+        ],
+        "max": [
+          2.71995,
+          2.36935,
+          4.53293
+        ]
+      },
+      "animation": "moonwillow_adult_sway",
+      "triangles": 42692,
+      "joints": 93,
+      "bytes": 2103583,
+      "sha256": "c6493af1e0242e5ae378aa2c065e907ea2d6f7de10e61fdfbdafb504782fb6fb"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+name: iOS frontend
+on:
+  push:
+    paths: ['frontend/**', 'assets/**', '.github/workflows/frontend.yml']
+  pull_request:
+    paths: ['frontend/**', 'assets/**', '.github/workflows/frontend.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulator:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record Xcode version
+        run: xcodebuild -version
+      - name: Validate, test Debug, build Release
+        run: |
+          python3 frontend/scripts/generate_project.py --check
+          bash frontend/scripts/test-mac.sh
+      - name: Retain native test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: frontend/DerivedData/Logs/Test/*.xcresult
+          if-no-files-found: ignore

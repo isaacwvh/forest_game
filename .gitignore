@@ -1,0 +1,48 @@
+# Local agent configuration and credentials
+/.codex/
+/.agents/
+/.aws/
+.env
+.env.*
+!.env.example
+!.env.sample
+*.p12
+*.pfx
+*.mobileprovision
+
+# OS and editor state
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# Xcode build output and per-user settings
+DerivedData/
+build/
+xcuserdata/
+*.xcuserstate
+*.xcresult
+*.ipa
+*.dSYM/
+Local.xcconfig
+
+# Local validation / language tooling
+.validation-tools/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+
+# Local art authoring and planning workspace; runtime art is tracked in assets/
+/art/
+/outputs/
+/tools/plant-planning/
+*.blend1
+*.blend2
+
+# Duplicate packaged copies; track the unpacked versioned runtime packages
+/assets/*.zip

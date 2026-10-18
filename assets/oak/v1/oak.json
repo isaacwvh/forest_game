@@ -1,0 +1,316 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "oak",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "blue",
+    "vined"
+  ],
+  "initialStage": "sprout",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "sproutAcorn": "closed_upper_half_only",
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/oak-sprout-standard.png",
+        "blue": "ui/oak-sprout-blue.png",
+        "vined": "ui/oak-sprout-vined.png"
+      },
+      "seedling": {
+        "standard": "ui/oak-seedling-standard.png",
+        "blue": "ui/oak-seedling-blue.png",
+        "vined": "ui/oak-seedling-vined.png"
+      },
+      "young": {
+        "standard": "ui/oak-young-standard.png",
+        "blue": "ui/oak-young-blue.png",
+        "vined": "ui/oak-young-vined.png"
+      },
+      "adult": {
+        "standard": "ui/oak-adult-standard.png",
+        "blue": "ui/oak-adult-blue.png",
+        "vined": "ui/oak-adult-vined.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/oak-sprout-standard.usdz",
+      "bounds": {
+        "min": [
+          -0.39885,
+          -0.17,
+          0.0
+        ],
+        "max": [
+          0.3505,
+          0.17,
+          0.75519
+        ]
+      },
+      "animation": "oak_sprout_sway",
+      "thumbnail": "ui/oak-sprout-standard.png",
+      "bytes": 85189,
+      "sha256": "638cabdeab0ab319023f3edd0251685df8555685fa1155aa0ec5c3cce5c7deb0"
+    },
+    {
+      "stage": "sprout",
+      "variant": "blue",
+      "file": "models/oak-sprout-blue.usdz",
+      "bounds": {
+        "min": [
+          -0.39885,
+          -0.17,
+          0.0
+        ],
+        "max": [
+          0.3505,
+          0.17,
+          0.75519
+        ]
+      },
+      "animation": "oak_sprout_sway",
+      "thumbnail": "ui/oak-sprout-blue.png",
+      "bytes": 87424,
+      "sha256": "ba2fde9cddb61b24d670313b9eeeebf3053ca119e084d77d7eb794cc639a42e3"
+    },
+    {
+      "stage": "sprout",
+      "variant": "vined",
+      "file": "models/oak-sprout-vined.usdz",
+      "bounds": {
+        "min": [
+          -0.39885,
+          -0.17,
+          0.0
+        ],
+        "max": [
+          0.3505,
+          0.17,
+          0.75519
+        ]
+      },
+      "animation": "oak_sprout_sway",
+      "thumbnail": "ui/oak-sprout-vined.png",
+      "bytes": 124219,
+      "sha256": "180f9fcad166199bf8380237401af35cfb99bcf6161fc2fd42b4264a6fee9480"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/oak-seedling-standard.usdz",
+      "bounds": {
+        "min": [
+          -0.44857,
+          -0.07491,
+          0.0
+        ],
+        "max": [
+          0.46995,
+          0.065,
+          1.35537
+        ]
+      },
+      "animation": "oak_seedling_sway",
+      "thumbnail": "ui/oak-seedling-standard.png",
+      "bytes": 110665,
+      "sha256": "d31f62be86d48bcd28a5c67f7695ae0d81a1ba708979046545850455c39819fa"
+    },
+    {
+      "stage": "seedling",
+      "variant": "blue",
+      "file": "models/oak-seedling-blue.usdz",
+      "bounds": {
+        "min": [
+          -0.44857,
+          -0.07491,
+          0.0
+        ],
+        "max": [
+          0.46995,
+          0.065,
+          1.35537
+        ]
+      },
+      "animation": "oak_seedling_sway",
+      "thumbnail": "ui/oak-seedling-blue.png",
+      "bytes": 112901,
+      "sha256": "d8bd17b2ed48a748e7e3aa4a1d5fab3392c4b982dd74fc086c50d28aeece9a5d"
+    },
+    {
+      "stage": "seedling",
+      "variant": "vined",
+      "file": "models/oak-seedling-vined.usdz",
+      "bounds": {
+        "min": [
+          -0.44857,
+          -0.21866,
+          0.0
+        ],
+        "max": [
+          0.46995,
+          0.2196,
+          1.35537
+        ]
+      },
+      "animation": "oak_seedling_sway",
+      "thumbnail": "ui/oak-seedling-vined.png",
+      "bytes": 156618,
+      "sha256": "8672eec6b4b7827e7d1ea7e416a0bb3cf5b14ca28de655938e5e03486083133a"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/oak-young-standard.usdz",
+      "bounds": {
+        "min": [
+          -1.49154,
+          -0.74059,
+          0.0
+        ],
+        "max": [
+          1.28711,
+          0.70749,
+          3.06421
+        ]
+      },
+      "animation": "oak_young_sway",
+      "thumbnail": "ui/oak-young-standard.png",
+      "bytes": 180774,
+      "sha256": "b5e60e99d5ca7d2b81bc920173462e8a152bac5f74e9eee5c0ce174072cda3bd"
+    },
+    {
+      "stage": "young",
+      "variant": "blue",
+      "file": "models/oak-young-blue.usdz",
+      "bounds": {
+        "min": [
+          -1.49154,
+          -0.74059,
+          0.0
+        ],
+        "max": [
+          1.28711,
+          0.70749,
+          3.06421
+        ]
+      },
+      "animation": "oak_young_sway",
+      "thumbnail": "ui/oak-young-blue.png",
+      "bytes": 183010,
+      "sha256": "772d851a293082509408497f12c6b57f028d27957db59335a914d2a3a3044176"
+    },
+    {
+      "stage": "young",
+      "variant": "vined",
+      "file": "models/oak-young-vined.usdz",
+      "bounds": {
+        "min": [
+          -1.49154,
+          -0.74059,
+          0.0
+        ],
+        "max": [
+          1.28711,
+          0.70749,
+          3.06421
+        ]
+      },
+      "animation": "oak_young_sway",
+      "thumbnail": "ui/oak-young-vined.png",
+      "bytes": 234853,
+      "sha256": "40a2188ec352415d7be9c99b69ab728c1e6412636b1d175aa05b97128e8f73e0"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/oak-adult-standard.usdz",
+      "bounds": {
+        "min": [
+          -2.56413,
+          -1.23644,
+          0.0
+        ],
+        "max": [
+          2.40828,
+          1.47351,
+          4.81956
+        ]
+      },
+      "animation": "oak_adult_sway",
+      "thumbnail": "ui/oak-adult-standard.png",
+      "bytes": 429115,
+      "sha256": "67a533d74c7cc2f760048a7b82568c7916a47393a70cab17d1f70341ccc9958b"
+    },
+    {
+      "stage": "adult",
+      "variant": "blue",
+      "file": "models/oak-adult-blue.usdz",
+      "bounds": {
+        "min": [
+          -2.56413,
+          -1.23644,
+          0.0
+        ],
+        "max": [
+          2.40828,
+          1.47351,
+          4.81956
+        ]
+      },
+      "animation": "oak_adult_sway",
+      "thumbnail": "ui/oak-adult-blue.png",
+      "bytes": 431223,
+      "sha256": "03d92aedfa48320dd863fe29c6bb97c7901ed848c47cb5c633dda60b2be941f9"
+    },
+    {
+      "stage": "adult",
+      "variant": "vined",
+      "file": "models/oak-adult-vined.usdz",
+      "bounds": {
+        "min": [
+          -2.56413,
+          -1.23644,
+          0.0
+        ],
+        "max": [
+          2.40828,
+          1.47351,
+          4.81956
+        ]
+      },
+      "animation": "oak_adult_sway",
+      "thumbnail": "ui/oak-adult-vined.png",
+      "bytes": 480627,
+      "sha256": "89226f0bd8dd37c77b7169eb71f0c2a6b7e98c8a3893b6470923eee9f1077774"
+    }
+  ]
+}

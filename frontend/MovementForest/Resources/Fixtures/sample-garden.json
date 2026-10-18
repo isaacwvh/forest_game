@@ -1,0 +1,163 @@
+{
+  "gardenId": "50000000-0000-4000-8000-000000000001",
+  "title": "Your forest",
+  "isSample": true,
+  "width": 10,
+  "depth": 10,
+  "gardenUnitMetres": 1,
+  "catalogVersion": "development-1",
+  "layoutVersion": 1,
+  "stateVersion": 1,
+  "plants": [
+    {
+      "id": "40000000-0000-4000-8000-000000000001",
+      "speciesId": "oak",
+      "variantId": "standard",
+      "assetVersion": "1.0.0",
+      "growthStage": "young",
+      "x": 1.3,
+      "y": 1.4,
+      "rotationDegrees": 0
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000002",
+      "speciesId": "moonwillow",
+      "variantId": "standard",
+      "assetVersion": "1.0.0",
+      "growthStage": "sprout",
+      "x": 3.2,
+      "y": 1.2,
+      "rotationDegrees": 43
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000003",
+      "speciesId": "oak",
+      "variantId": "standard",
+      "assetVersion": "1.0.0",
+      "growthStage": "adult",
+      "x": 5.3,
+      "y": 1.6,
+      "rotationDegrees": 86
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000004",
+      "speciesId": "oak",
+      "variantId": "blue",
+      "assetVersion": "1.0.0",
+      "growthStage": "seedling",
+      "x": 7.4,
+      "y": 1.3,
+      "rotationDegrees": 129
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000005",
+      "speciesId": "moonwillow",
+      "variantId": "golden",
+      "assetVersion": "1.0.0",
+      "growthStage": "sprout",
+      "x": 8.8,
+      "y": 2,
+      "rotationDegrees": 172
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000006",
+      "speciesId": "oak",
+      "variantId": "blue",
+      "assetVersion": "1.0.0",
+      "growthStage": "adult",
+      "x": 1.1,
+      "y": 4.3,
+      "rotationDegrees": 215
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000007",
+      "speciesId": "oak",
+      "variantId": "vined",
+      "assetVersion": "1.0.0",
+      "growthStage": "seedling",
+      "x": 3.2,
+      "y": 4,
+      "rotationDegrees": 258
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000008",
+      "speciesId": "moonwillow",
+      "variantId": "standard",
+      "assetVersion": "1.0.0",
+      "growthStage": "young",
+      "x": 5.2,
+      "y": 4.8,
+      "rotationDegrees": 301
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000009",
+      "speciesId": "oak",
+      "variantId": "vined",
+      "assetVersion": "1.0.0",
+      "growthStage": "sprout",
+      "x": 7.3,
+      "y": 4.2,
+      "rotationDegrees": 344
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000010",
+      "speciesId": "oak",
+      "variantId": "standard",
+      "assetVersion": "1.0.0",
+      "growthStage": "seedling",
+      "x": 8.9,
+      "y": 5.1,
+      "rotationDegrees": 27
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000011",
+      "speciesId": "moonwillow",
+      "variantId": "golden",
+      "assetVersion": "1.0.0",
+      "growthStage": "young",
+      "x": 1.4,
+      "y": 7.7,
+      "rotationDegrees": 70
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000012",
+      "speciesId": "oak",
+      "variantId": "standard",
+      "assetVersion": "1.0.0",
+      "growthStage": "adult",
+      "x": 3.5,
+      "y": 8.2,
+      "rotationDegrees": 113
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000013",
+      "speciesId": "oak",
+      "variantId": "blue",
+      "assetVersion": "1.0.0",
+      "growthStage": "sprout",
+      "x": 5.4,
+      "y": 7.8,
+      "rotationDegrees": 156
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000014",
+      "speciesId": "moonwillow",
+      "variantId": "standard",
+      "assetVersion": "1.0.0",
+      "growthStage": "seedling",
+      "x": 7.3,
+      "y": 8.1,
+      "rotationDegrees": 199
+    },
+    {
+      "id": "40000000-0000-4000-8000-000000000015",
+      "speciesId": "oak",
+      "variantId": "blue",
+      "assetVersion": "1.0.0",
+      "growthStage": "young",
+      "x": 8.8,
+      "y": 8.5,
+      "rotationDegrees": 242
+    }
+  ]
+}

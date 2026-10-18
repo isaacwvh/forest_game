@@ -1,0 +1,621 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+		DCE225EB8044B3C61F2F577A = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "MovementForestApp.swift";
+			path = "MovementForest/App/MovementForestApp.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		085D240C162BFD671E547B0B = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "DevelopmentScenes.swift";
+			path = "MovementForest/Configuration/DevelopmentScenes.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		6A208B202DDC424D09F8E377 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "DeveloperToolsScreen.swift";
+			path = "MovementForest/Features/DeveloperTools/DeveloperToolsScreen.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		7F051C7A7231868CF21EC942 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "GardenScreen.swift";
+			path = "MovementForest/Features/Garden/GardenScreen.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		C8240791E29FBCA66D64276E = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "ActivityScreen.swift";
+			path = "MovementForest/Features/HealthDiagnostics/ActivityScreen.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		DC769BAC9A6FA970809B792D = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "SettingsScreen.swift";
+			path = "MovementForest/Features/SettingsScreen.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		06F76A949E23F427468AF389 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "SharedViews.swift";
+			path = "MovementForest/Features/SharedViews.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		F6177EEC0535BDCB23D5E479 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "ActivityModels.swift";
+			path = "MovementForest/Models/ActivityModels.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		B728906F4027187FB75A77EA = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "AssetManifest.swift";
+			path = "MovementForest/Models/AssetManifest.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		E9F0E999D5C011038FA15FB3 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "GardenModels.swift";
+			path = "MovementForest/Models/GardenModels.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		6F02BFC991B13954669D833C = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "GardenRenderer.swift";
+			path = "MovementForest/Rendering/GardenRenderer.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		078CE58DC9CB87F77658A9E6 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "PlantModelLoader.swift";
+			path = "MovementForest/Rendering/PlantModelLoader.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		1AF37472275213BA31BEE26E = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "BundleAssetCatalog.swift";
+			path = "MovementForest/Services/Assets/BundleAssetCatalog.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		38271CEE3E0508EEFD15312F = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "GardenRepository.swift";
+			path = "MovementForest/Services/GardenRepository.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		A638036A5456E3F4207F7B75 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "HealthDataProvider.swift";
+			path = "MovementForest/Services/Health/HealthDataProvider.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		02392538DBB1BF3ABC8BA244 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "HealthKitService.swift";
+			path = "MovementForest/Services/Health/HealthKitService.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		A23F005116503F4D1BD3F369 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "ActivityTests.swift";
+			path = "MovementForestTests/ActivityTests.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		E8D5B097AB208DE0EA4391F1 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "ForestModelTests.swift";
+			path = "MovementForestTests/ForestModelTests.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		B8B72F5DBAF8C861F035AA9E = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "sourcecode.swift";
+			name = "ForestUITests.swift";
+			path = "MovementForestUITests/ForestUITests.swift";
+			sourceTree = "SOURCE_ROOT";
+		};
+		11429E0B23D65EC39FBC062C = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "folder";
+			name = "oak";
+			path = "../assets/oak";
+			sourceTree = "SOURCE_ROOT";
+		};
+		9D372D09074DCBFBF002DA1D = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "folder";
+			name = "moonwillow";
+			path = "../assets/moonwillow";
+			sourceTree = "SOURCE_ROOT";
+		};
+		C76ADF4E483D92344CF2C2ED = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "folder";
+			name = "Fixtures";
+			path = "MovementForest/Resources/Fixtures";
+			sourceTree = "SOURCE_ROOT";
+		};
+		73ED92CE7AA8ABDB743FE9E0 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text.plist.xml";
+			name = "Info.plist";
+			path = "MovementForest/Configuration/Info.plist";
+			sourceTree = "SOURCE_ROOT";
+		};
+		215F12B50620880AA8263109 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text.plist.entitlements";
+			name = "MovementForest.entitlements";
+			path = "MovementForest/Configuration/MovementForest.entitlements";
+			sourceTree = "SOURCE_ROOT";
+		};
+		E6E70C72ECCEDC7E316F6D24 = {
+			isa = "PBXFileReference";
+			explicitFileType = "wrapper.application";
+			includeInIndex = 0;
+			path = "MovementForest.app";
+			sourceTree = "BUILT_PRODUCTS_DIR";
+		};
+		501F2F24985FD2BE2B888634 = {
+			isa = "PBXBuildFile";
+			fileRef = "DCE225EB8044B3C61F2F577A";
+		};
+		059D0EF7142D78DA5B0A6C04 = {
+			isa = "PBXBuildFile";
+			fileRef = "085D240C162BFD671E547B0B";
+		};
+		0C59D6D88B1DBD23FBDCB479 = {
+			isa = "PBXBuildFile";
+			fileRef = "6A208B202DDC424D09F8E377";
+		};
+		2BD14F73C1978FF565035359 = {
+			isa = "PBXBuildFile";
+			fileRef = "7F051C7A7231868CF21EC942";
+		};
+		19B20723EBA06EEFCAF9E853 = {
+			isa = "PBXBuildFile";
+			fileRef = "C8240791E29FBCA66D64276E";
+		};
+		15D7DD4482DBCDAB1548C0BB = {
+			isa = "PBXBuildFile";
+			fileRef = "DC769BAC9A6FA970809B792D";
+		};
+		90BAE88D6F9EBBBD2F89ADB0 = {
+			isa = "PBXBuildFile";
+			fileRef = "06F76A949E23F427468AF389";
+		};
+		728CB5645C507A8DC354ED1B = {
+			isa = "PBXBuildFile";
+			fileRef = "F6177EEC0535BDCB23D5E479";
+		};
+		1206E0C9A401CD852BF7061E = {
+			isa = "PBXBuildFile";
+			fileRef = "B728906F4027187FB75A77EA";
+		};
+		04ABEC9E23A07C27ED7A98D8 = {
+			isa = "PBXBuildFile";
+			fileRef = "E9F0E999D5C011038FA15FB3";
+		};
+		C78420A557F90B9320575CDA = {
+			isa = "PBXBuildFile";
+			fileRef = "6F02BFC991B13954669D833C";
+		};
+		0D760B272C45EEDE54EFEDDE = {
+			isa = "PBXBuildFile";
+			fileRef = "078CE58DC9CB87F77658A9E6";
+		};
+		F4378CEA1F106354A508954E = {
+			isa = "PBXBuildFile";
+			fileRef = "1AF37472275213BA31BEE26E";
+		};
+		35E96B2A1238773C77045E9B = {
+			isa = "PBXBuildFile";
+			fileRef = "38271CEE3E0508EEFD15312F";
+		};
+		5A32866F5C30FA5E09918149 = {
+			isa = "PBXBuildFile";
+			fileRef = "A638036A5456E3F4207F7B75";
+		};
+		3361ED4A5831D8A399303E64 = {
+			isa = "PBXBuildFile";
+			fileRef = "02392538DBB1BF3ABC8BA244";
+		};
+		7036E7128548C8CE11BC5744 = {
+			isa = "PBXBuildFile";
+			fileRef = "11429E0B23D65EC39FBC062C";
+		};
+		49E7476C8CA3197C86E1E8F5 = {
+			isa = "PBXBuildFile";
+			fileRef = "9D372D09074DCBFBF002DA1D";
+		};
+		3576E935158B9B61B6215CC7 = {
+			isa = "PBXBuildFile";
+			fileRef = "C76ADF4E483D92344CF2C2ED";
+		};
+		44B3D93E32D77B77346DCF60 = {
+			isa = "PBXSourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ("501F2F24985FD2BE2B888634", "059D0EF7142D78DA5B0A6C04", "0C59D6D88B1DBD23FBDCB479", "2BD14F73C1978FF565035359", "19B20723EBA06EEFCAF9E853", "15D7DD4482DBCDAB1548C0BB", "90BAE88D6F9EBBBD2F89ADB0", "728CB5645C507A8DC354ED1B", "1206E0C9A401CD852BF7061E", "04ABEC9E23A07C27ED7A98D8", "C78420A557F90B9320575CDA", "0D760B272C45EEDE54EFEDDE", "F4378CEA1F106354A508954E", "35E96B2A1238773C77045E9B", "5A32866F5C30FA5E09918149", "3361ED4A5831D8A399303E64",);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A900310F8BB9B9FD6626CB6A = {
+			isa = "PBXFrameworksBuildPhase";
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6420B351C86F81FFDE432B57 = {
+			isa = "PBXResourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ("7036E7128548C8CE11BC5744", "49E7476C8CA3197C86E1E8F5", "3576E935158B9B61B6215CC7",);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BF2AA15732A3C56054483A4D = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				CODE_SIGN_STYLE = "Automatic";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.movementforest";
+				TARGETED_DEVICE_FAMILY = "1";
+				SUPPORTS_MACCATALYST = "NO";
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = "NO";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks",);
+				SWIFT_VERSION = "5.0";
+				INFOPLIST_FILE = "MovementForest/Configuration/Info.plist";
+				CODE_SIGN_ENTITLEMENTS = "MovementForest/Configuration/MovementForest.entitlements";
+				MARKETING_VERSION = "0.1.0";
+				CURRENT_PROJECT_VERSION = "1";
+			};
+			name = "Debug";
+		};
+		94B9220870FEEF2DB3D08D26 = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				CODE_SIGN_STYLE = "Automatic";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.movementforest";
+				TARGETED_DEVICE_FAMILY = "1";
+				SUPPORTS_MACCATALYST = "NO";
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = "NO";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks",);
+				SWIFT_VERSION = "5.0";
+				INFOPLIST_FILE = "MovementForest/Configuration/Info.plist";
+				CODE_SIGN_ENTITLEMENTS = "MovementForest/Configuration/MovementForest.entitlements";
+				MARKETING_VERSION = "0.1.0";
+				CURRENT_PROJECT_VERSION = "1";
+			};
+			name = "Release";
+		};
+		027E031FF042BBB055D4884D = {
+			isa = "XCConfigurationList";
+			buildConfigurations = ("BF2AA15732A3C56054483A4D", "94B9220870FEEF2DB3D08D26",);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		E424B0ADBAE92AAAA71973D9 = {
+			isa = "PBXNativeTarget";
+			buildConfigurationList = "027E031FF042BBB055D4884D";
+			buildPhases = ("44B3D93E32D77B77346DCF60", "A900310F8BB9B9FD6626CB6A", "6420B351C86F81FFDE432B57",);
+			buildRules = ();
+			dependencies = ();
+			name = "MovementForest";
+			productName = "MovementForest";
+			productReference = "E6E70C72ECCEDC7E316F6D24";
+			productType = "com.apple.product-type.application";
+		};
+		C7B5A4FB165F6036B8036CE3 = {
+			isa = "PBXFileReference";
+			explicitFileType = "wrapper.cfbundle";
+			includeInIndex = 0;
+			path = "MovementForestTests.xctest";
+			sourceTree = "BUILT_PRODUCTS_DIR";
+		};
+		F09DF5FC5E7FDEEC1A437FC6 = {
+			isa = "PBXBuildFile";
+			fileRef = "A23F005116503F4D1BD3F369";
+		};
+		4B2BE7A648AF8E90C1B58DEE = {
+			isa = "PBXBuildFile";
+			fileRef = "E8D5B097AB208DE0EA4391F1";
+		};
+		8A2739B668201E1AA02F5276 = {
+			isa = "PBXSourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ("F09DF5FC5E7FDEEC1A437FC6", "4B2BE7A648AF8E90C1B58DEE",);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5E3638A8834F3D33F6F722C2 = {
+			isa = "PBXFrameworksBuildPhase";
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C22FA425D61B36C701B87E35 = {
+			isa = "PBXResourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		323BE88AD5EA4A4967356A2B = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				CODE_SIGN_STYLE = "Automatic";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.movementforest.MovementForestTests";
+				TARGETED_DEVICE_FAMILY = "1";
+				SUPPORTS_MACCATALYST = "NO";
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = "NO";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks",);
+				SWIFT_VERSION = "5.0";
+				GENERATE_INFOPLIST_FILE = "YES";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MovementForest.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MovementForest";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+			};
+			name = "Debug";
+		};
+		C5DFDB9837AEB58E04D7C1DC = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				CODE_SIGN_STYLE = "Automatic";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.movementforest.MovementForestTests";
+				TARGETED_DEVICE_FAMILY = "1";
+				SUPPORTS_MACCATALYST = "NO";
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = "NO";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks",);
+				SWIFT_VERSION = "5.0";
+				GENERATE_INFOPLIST_FILE = "YES";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MovementForest.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MovementForest";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+			};
+			name = "Release";
+		};
+		0CDB03A97CF8372B13C9DC10 = {
+			isa = "XCConfigurationList";
+			buildConfigurations = ("323BE88AD5EA4A4967356A2B", "C5DFDB9837AEB58E04D7C1DC",);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		4FED48D4C551C67CD1076597 = {
+			isa = "PBXContainerItemProxy";
+			containerPortal = "244210E48437B6556980A702";
+			proxyType = 1;
+			remoteGlobalIDString = "E424B0ADBAE92AAAA71973D9";
+			remoteInfo = "MovementForest";
+		};
+		CCE033CA26BE09FFCF40E7D9 = {
+			isa = "PBXTargetDependency";
+			target = "E424B0ADBAE92AAAA71973D9";
+			targetProxy = "4FED48D4C551C67CD1076597";
+		};
+		B36F4BC74827A393D3EB5790 = {
+			isa = "PBXNativeTarget";
+			buildConfigurationList = "0CDB03A97CF8372B13C9DC10";
+			buildPhases = ("8A2739B668201E1AA02F5276", "5E3638A8834F3D33F6F722C2", "C22FA425D61B36C701B87E35",);
+			buildRules = ();
+			dependencies = ("CCE033CA26BE09FFCF40E7D9",);
+			name = "MovementForestTests";
+			productName = "MovementForestTests";
+			productReference = "C7B5A4FB165F6036B8036CE3";
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FF77D28F3590A2635DD35744 = {
+			isa = "PBXFileReference";
+			explicitFileType = "wrapper.cfbundle";
+			includeInIndex = 0;
+			path = "MovementForestUITests.xctest";
+			sourceTree = "BUILT_PRODUCTS_DIR";
+		};
+		44F3EA98D058FB72779FDFB3 = {
+			isa = "PBXBuildFile";
+			fileRef = "B8B72F5DBAF8C861F035AA9E";
+		};
+		5B83F746E85DBB0B38203767 = {
+			isa = "PBXSourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ("44F3EA98D058FB72779FDFB3",);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		769038C60F7CA02ED96A5508 = {
+			isa = "PBXFrameworksBuildPhase";
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1FCAB227EDF77AF1E3021A42 = {
+			isa = "PBXResourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		46D8BDD258AD32DADA7FBB3F = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				CODE_SIGN_STYLE = "Automatic";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.movementforest.MovementForestUITests";
+				TARGETED_DEVICE_FAMILY = "1";
+				SUPPORTS_MACCATALYST = "NO";
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = "NO";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks",);
+				SWIFT_VERSION = "5.0";
+				GENERATE_INFOPLIST_FILE = "YES";
+				TEST_TARGET_NAME = "MovementForest";
+			};
+			name = "Debug";
+		};
+		40FBCDCAB965074793965D30 = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				CODE_SIGN_STYLE = "Automatic";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.example.movementforest.MovementForestUITests";
+				TARGETED_DEVICE_FAMILY = "1";
+				SUPPORTS_MACCATALYST = "NO";
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = "NO";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks",);
+				SWIFT_VERSION = "5.0";
+				GENERATE_INFOPLIST_FILE = "YES";
+				TEST_TARGET_NAME = "MovementForest";
+			};
+			name = "Release";
+		};
+		E3E342E54A6A136A01F94417 = {
+			isa = "XCConfigurationList";
+			buildConfigurations = ("46D8BDD258AD32DADA7FBB3F", "40FBCDCAB965074793965D30",);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		206194A03BF615A796A4D59A = {
+			isa = "PBXContainerItemProxy";
+			containerPortal = "244210E48437B6556980A702";
+			proxyType = 1;
+			remoteGlobalIDString = "E424B0ADBAE92AAAA71973D9";
+			remoteInfo = "MovementForest";
+		};
+		3B8B372E68806037DA50C579 = {
+			isa = "PBXTargetDependency";
+			target = "E424B0ADBAE92AAAA71973D9";
+			targetProxy = "206194A03BF615A796A4D59A";
+		};
+		065361D519301EAE7D19536F = {
+			isa = "PBXNativeTarget";
+			buildConfigurationList = "E3E342E54A6A136A01F94417";
+			buildPhases = ("5B83F746E85DBB0B38203767", "769038C60F7CA02ED96A5508", "1FCAB227EDF77AF1E3021A42",);
+			buildRules = ();
+			dependencies = ("3B8B372E68806037DA50C579",);
+			name = "MovementForestUITests";
+			productName = "MovementForestUITests";
+			productReference = "FF77D28F3590A2635DD35744";
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		FC233BDA2344D97687F5A251 = {
+			isa = "PBXGroup";
+			name = "App";
+			children = ("DCE225EB8044B3C61F2F577A", "085D240C162BFD671E547B0B", "6A208B202DDC424D09F8E377", "7F051C7A7231868CF21EC942", "C8240791E29FBCA66D64276E", "DC769BAC9A6FA970809B792D", "06F76A949E23F427468AF389", "F6177EEC0535BDCB23D5E479", "B728906F4027187FB75A77EA", "E9F0E999D5C011038FA15FB3", "6F02BFC991B13954669D833C", "078CE58DC9CB87F77658A9E6", "1AF37472275213BA31BEE26E", "38271CEE3E0508EEFD15312F", "A638036A5456E3F4207F7B75", "02392538DBB1BF3ABC8BA244",);
+			sourceTree = "<group>";
+		};
+		C5E55183ECB076EB335DF6EE = {
+			isa = "PBXGroup";
+			name = "Resources";
+			children = ("11429E0B23D65EC39FBC062C", "9D372D09074DCBFBF002DA1D", "C76ADF4E483D92344CF2C2ED", "73ED92CE7AA8ABDB743FE9E0", "215F12B50620880AA8263109",);
+			sourceTree = "<group>";
+		};
+		A15BAE29D077123B12BD5DB3 = {
+			isa = "PBXGroup";
+			name = "Unit tests";
+			children = ("A23F005116503F4D1BD3F369", "E8D5B097AB208DE0EA4391F1",);
+			sourceTree = "<group>";
+		};
+		870DD5D77384367D04D4AFA4 = {
+			isa = "PBXGroup";
+			name = "UI tests";
+			children = ("B8B72F5DBAF8C861F035AA9E",);
+			sourceTree = "<group>";
+		};
+		B9E7F2871A3402983868AFC8 = {
+			isa = "PBXGroup";
+			name = "Products";
+			children = ("E6E70C72ECCEDC7E316F6D24", "C7B5A4FB165F6036B8036CE3", "FF77D28F3590A2635DD35744",);
+			sourceTree = "<group>";
+		};
+		19F479106CE8C3BA8C106518 = {
+			isa = "PBXGroup";
+			children = ("FC233BDA2344D97687F5A251", "C5E55183ECB076EB335DF6EE", "A15BAE29D077123B12BD5DB3", "870DD5D77384367D04D4AFA4", "B9E7F2871A3402983868AFC8",);
+			sourceTree = "<group>";
+		};
+		E366C934853B927CD95D6596 = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				SDKROOT = "iphoneos";
+				IPHONEOS_DEPLOYMENT_TARGET = "16.0";
+				CLANG_ENABLE_MODULES = "YES";
+				CLANG_ENABLE_OBJC_ARC = "YES";
+				SWIFT_VERSION = "5.0";
+				SWIFT_STRICT_CONCURRENCY = "targeted";
+				ENABLE_USER_SCRIPT_SANDBOXING = "YES";
+				GCC_C_LANGUAGE_STANDARD = "gnu17";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				DEBUG_INFORMATION_FORMAT = "dwarf";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				ENABLE_TESTABILITY = "YES";
+				ONLY_ACTIVE_ARCH = "YES";
+			};
+			name = "Debug";
+		};
+		88CA8AFD100B5FEFEE902286 = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				SDKROOT = "iphoneos";
+				IPHONEOS_DEPLOYMENT_TARGET = "16.0";
+				CLANG_ENABLE_MODULES = "YES";
+				CLANG_ENABLE_OBJC_ARC = "YES";
+				SWIFT_VERSION = "5.0";
+				SWIFT_STRICT_CONCURRENCY = "targeted";
+				ENABLE_USER_SCRIPT_SANDBOXING = "YES";
+				GCC_C_LANGUAGE_STANDARD = "gnu17";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+			};
+			name = "Release";
+		};
+		442D61E217DD044EA4245BF2 = {
+			isa = "XCConfigurationList";
+			buildConfigurations = ("E366C934853B927CD95D6596", "88CA8AFD100B5FEFEE902286",);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		244210E48437B6556980A702 = {
+			isa = "PBXProject";
+			attributes = {
+				BuildIndependentTargetsInParallel = "YES";
+				LastUpgradeCheck = "1600";
+				TargetAttributes = {
+					E424B0ADBAE92AAAA71973D9 = {
+						CreatedOnToolsVersion = "16.0";
+						SystemCapabilities = {
+							com.apple.HealthKit = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = "442D61E217DD044EA4245BF2";
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = "en";
+			hasScannedForEncodings = 0;
+			knownRegions = ("en", "Base",);
+			mainGroup = "19F479106CE8C3BA8C106518";
+			productRefGroup = "B9E7F2871A3402983868AFC8";
+			projectDirPath = "";
+			projectRoot = "";
+			targets = ("E424B0ADBAE92AAAA71973D9", "B36F4BC74827A393D3EB5790", "065361D519301EAE7D19536F",);
+		};
+	};
+	rootObject = "244210E48437B6556980A702";
+}
