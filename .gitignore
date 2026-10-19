@@ -9,6 +9,9 @@
 *.p12
 *.pfx
 *.mobileprovision
+*.pem
+*.key
+.envrc
 
 # OS and editor state
 .DS_Store
@@ -34,8 +37,27 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+.venv-*/
 venv/
+env/
 node_modules/
+.ruff_cache/
+.mypy_cache/
+.tox/
+.nox/
+.hypothesis/
+*.egg-info/
+/backend/.local-*/
+.coverage*
+coverage.xml
+htmlcov/
+dist/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
 
 # Local art authoring and planning workspace; runtime art is tracked in assets/
 /art/

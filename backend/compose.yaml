@@ -1,0 +1,50 @@
+name: movement-forest
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: forest
+      POSTGRES_PASSWORD: forest-local-only
+      POSTGRES_DB: forest
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - forest-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forest -d forest"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  migrate:
+    build: .
+    environment:
+      FOREST_DATABASE_URL: postgresql+psycopg://forest:forest-local-only@db:5432/forest
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["tools"]
+  api:
+    build: .
+    environment:
+      FOREST_ENVIRONMENT: local
+      FOREST_DATABASE_URL: postgresql+psycopg://forest:forest-local-only@db:5432/forest
+      FOREST_AUTH_MODE: development
+      FOREST_DEV_AUTH_SECRET: ${FOREST_DEV_AUTH_SECRET:?Set FOREST_DEV_AUTH_SECRET in .env}
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2).close()"
+      interval: 2s
+      timeout: 3s
+      start_period: 5s
+      retries: 30
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  forest-db:

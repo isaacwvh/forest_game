@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "example-only-v1",
+  "speciesId": "silver_birch",
+  "displayName": "Silver Birch",
+  "description": "A fictional woodland tree used to illustrate the data model.",
+  "enabled": true,
+  "properties": {},
+  "footprint": {
+    "shape": "circle",
+    "clearanceRadius": 0.65,
+    "unit": "garden_unit",
+    "fixedAcrossStages": true,
+    "sharedAcrossVariants": true
+  },
+  "defaultProfiles": {
+    "growth": { "id": "silver_birch_growth", "version": 1 },
+    "behaviour": { "id": "silver_birch_behaviour", "version": 1 },
+    "attraction": { "id": "silver_birch_attraction", "version": 1 }
+  },
+  "variants": [
+    {
+      "variantId": "standard",
+      "displayName": "Standard",
+      "description": "Pale bark and green foliage.",
+      "rarity": "uncommon",
+      "enabled": true,
+      "profileOverrides": {
+        "growth": null,
+        "behaviour": null,
+        "attraction": null
+      },
+      "assetCatalog": {
+        "key": "plants/silver_birch/example-v1/catalog.json",
+        "version": "example-v1"
+      },
+      "stages": {
+        "sprout": {
+          "modelKey": "plants/silver_birch/example-v1/models/silver-birch-sprout-standard.usdz",
+          "thumbnailKey": "plants/silver_birch/example-v1/thumbnails/silver-birch-sprout-standard.png"
+        },
+        "seedling": {
+          "modelKey": "plants/silver_birch/example-v1/models/silver-birch-seedling-standard.usdz",
+          "thumbnailKey": "plants/silver_birch/example-v1/thumbnails/silver-birch-seedling-standard.png"
+        },
+        "young": {
+          "modelKey": "plants/silver_birch/example-v1/models/silver-birch-young-standard.usdz",
+          "thumbnailKey": "plants/silver_birch/example-v1/thumbnails/silver-birch-young-standard.png"
+        },
+        "adult": {
+          "modelKey": "plants/silver_birch/example-v1/models/silver-birch-adult-standard.usdz",
+          "thumbnailKey": "plants/silver_birch/example-v1/thumbnails/silver-birch-adult-standard.png"
+        }
+      }
+    }
+  ],
+  "profiles": {
+    "growth": [
+      {
+        "id": "silver_birch_growth",
+        "version": 1,
+        "microUnitsPerWater": 1000000,
+        "thresholdsMicroUnits": {
+          "sprout": "0",
+          "seedling": "100000000",
+          "young": "400000000",
+          "adult": "1000000000"
+        },
+        "maximumGrowthMicroUnits": "1000000000"
+      }
+    ],
+    "behaviour": [
+      {
+        "id": "silver_birch_behaviour",
+        "version": 1,
+        "schemaVersion": 2,
+        "metricMultipliers": {
+          "steps": 1.0,
+          "walking_running_distance_km": 0.8,
+          "active_energy_kcal": 0.3,
+          "flights_climbed": 1.2,
+          "workout_minutes.running": 1.5,
+          "workout_minutes.cycling": 0.8,
+          "workout_minutes.swimming": 0.5,
+          "workout_minutes.strength_training": 1.0
+        },
+        "conditionalModifiers": [],
+        "gardenEffects": [
+          {
+            "id": "woodland_shelter",
+            "system": "visitors",
+            "type": "percentage_bonus",
+            "scope": "offline_capacity",
+            "target": "own_garden",
+            "activation": {
+              "minimumSourceStage": "young",
+              "requiresSourcePlaced": true
+            },
+            "bonusFraction": 0.25,
+            "stackingGroup": "woodland_shelter",
+            "stackingRule": "strongest"
+          }
+        ],
+        "unknownWeatherMultiplier": 1.0
+      }
+    ],
+    "attraction": [
+      {
+        "id": "silver_birch_attraction",
+        "version": 1,
+        "microUnitsPerAttraction": 1000000,
+        "stageAttractionMicroUnits": {
+          "sprout": "2000000",
+          "seedling": "5000000",
+          "young": "12000000",
+          "adult": "20000000"
+        },
+        "gameplayTags": ["tree", "woodland"]
+      }
+    ]
+  }
+}

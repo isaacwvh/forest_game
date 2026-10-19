@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "plantId": "76c98f41-42fc-46dd-a119-11b47d309d2a",
+  "ownerId": "a06c16c9-e605-4d90-a494-a30a700761aa",
+  "speciesId": "silver_birch",
+  "variantId": "standard",
+  "pinnedProfiles": {
+    "growth": { "id": "silver_birch_growth", "version": 1 },
+    "behaviour": { "id": "silver_birch_behaviour", "version": 1 },
+    "attraction": { "id": "silver_birch_attraction", "version": 1 }
+  },
+  "growthMicroUnits": "580000000",
+  "fractionalAccountingState": {},
+  "firstMaturedAt": null,
+  "acquisition": {
+    "source": "seed_draw",
+    "referenceId": "47635595-70af-47ac-a550-8ad4c454cf3d"
+  },
+  "createdAt": "2026-10-20T00:10:00Z",
+  "updatedAt": "2026-10-20T01:30:00Z",
+  "placement": {
+    "gardenId": "5b06b07a-6d55-464d-bce3-e375bd3753a3",
+    "x": 3.2,
+    "y": 4.6,
+    "rotationDegrees": 35
+  },
+  "derived": {
+    "growthStage": "young",
+    "growthPoints": 580,
+    "waterToNextStage": 420,
+    "baseAttraction": 12,
+    "contributesAttraction": true,
+    "activeGardenEffectIds": ["woodland_shelter"],
+    "modelKey": "plants/silver_birch/example-v1/models/silver-birch-young-standard.usdz",
+    "thumbnailKey": "plants/silver_birch/example-v1/thumbnails/silver-birch-young-standard.png"
+  }
+}

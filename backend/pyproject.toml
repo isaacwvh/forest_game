@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "movement-forest-api"
+version = "0.1.0"
+description = "Movement Forest B1/B2 API foundation"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.34,<1",
+  "SQLAlchemy>=2.0.40,<2.1",
+  "alembic>=1.15,<2",
+  "psycopg[binary]>=3.2,<4",
+  "pydantic-settings>=2.8,<3",
+  "PyJWT[crypto]>=2.10,<3",
+  "tzdata>=2025.1",
+]
+
+[project.optional-dependencies]
+dev = ["httpx2>=2.14,<3", "pytest>=8.3,<10", "ruff>=0.11,<1"]
+
+[project.scripts]
+forest = "forest_api.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = ["error"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/forest_api/routes.py" = ["B008"]
+"src/forest_api/dependencies.py" = ["B008"]
