@@ -75,6 +75,23 @@ def main():
             value = plant[field]
             require(math.isfinite(value) and 0 <= value <= upper, "Invalid placement")
         require(plant["rotationDegrees"] < 360, "Yaw must be less than 360")
+    editor = json.loads((ROOT / "MovementForest/Resources/Fixtures/editor-contract.json").read_text(encoding="utf-8"))
+    require(editor["catalogue"]["isFixture"] is True, "Editor contract must use synthetic catalogue data")
+    require(editor["emptyGarden"]["plants"] == [], "Expected empty starter garden")
+    stored = editor["inventory"]["plants"][0]
+    placed = editor["plantResult"]["garden"]["plants"][0]
+    request = editor["plantRequest"]
+    require(stored["plantId"] == placed["plantId"] == request["actions"][0]["plantId"], "Editor fixture ownership differs")
+    require(stored["placement"] is None and placed["placement"] is not None, "Editor fixture membership differs")
+    require(editor["plantResult"]["requestId"] == request["requestId"], "Editor fixture receipt differs")
+    require("../spec_examples/placement-cases.json" in project_text, "Shared placement cases missing from Xcode project")
+    for species in editor["catalogue"]["species"]:
+        for variant in species["variants"]:
+            for stage, references in variant["stages"].items():
+                asset = catalog[(species["speciesId"], variant["assetCatalogVersion"], stage, variant["variantId"])]
+                prefix = f"assets/{species['speciesId']}/v1/"
+                require(references["modelKey"] == prefix + asset["file"], "API model key differs from bundle")
+                require(references["thumbnailKey"] == prefix + asset["thumbnail"], "API thumbnail key differs from bundle")
     config = ROOT / "MovementForest/Configuration"
     info = plistlib.loads((config / "Info.plist").read_bytes())
     entitlements = plistlib.loads((config / "MovementForest.entitlements").read_bytes())
@@ -91,6 +108,7 @@ def main():
         if "Services/Health" in source.as_posix():
             require("print(" not in text and "NSLog(" not in text, f"Health logging found: {source}")
     print(f"PASS: {models} USDZs/checksums/archives, {models} alpha PNGs, 15 fixture plants, plists, shared scheme, {len(sources)} Swift source references.")
+    print("PASS: synthetic B3 editor contract, owned-copy identity, bundled API asset keys and shared geometry resource.")
     print("Swift compilation, native UI, imported axes, animation, and real HealthKit remain Mac/iPhone checks.")
 
 

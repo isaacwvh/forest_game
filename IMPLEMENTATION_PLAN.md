@@ -1,9 +1,11 @@
 # Movement Forest implementation plan
 
 Revised 20 October 2026 against `forest_game_v1_spec.md`, version 0.9.
-This is a proposed delivery plan, not a source of approved balance values. F1–F3 are complete per the user's update. The B1/B2 foundation is now implemented under `backend/`; see `backend/VALIDATION.md` for verification and remaining provider/container checks. B3 and subsequent mechanics are not implemented.
+This is a proposed delivery plan, not a source of approved balance values. F1–F3 are complete per the user's update. The B1–B3 backend is now implemented under `backend/`; see `backend/VALIDATION.md` for verification and remaining provider/container checks. B4 and subsequent mechanics are not implemented.
 
 **Milestone status:** B1 and B2 accepted as complete by the user. Live managed-auth provider integration, approved production configuration and remote CI execution remain tracked follow-up work in `backend/VALIDATION.md`.
+
+**B3 implementation:** atomic batch edits, canonical geometry, optimistic layout/catalogue checks, durable retries, consistent reads and disabled future visitor-accounting boundaries are implemented. All 132 backend tests and a real HTTP smoke check passed. No database migration or new production balance values are required. See backend validation for scope limits and the pending Docker image check.
 
 ## What changed from the previous plan
 

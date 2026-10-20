@@ -52,6 +52,8 @@ def generated_files():
                        ("Fixtures", "MovementForest/Resources/Fixtures")]:
         resource_refs.append(add("resource-" + name, "PBXFileReference", lastKnownFileType="folder",
                                  name=name, path=path, sourceTree="SOURCE_ROOT"))
+    geometry_fixture = add("shared-placement-cases", "PBXFileReference", lastKnownFileType="text.json",
+                           name="placement-cases.json", path="../spec_examples/placement-cases.json", sourceTree="SOURCE_ROOT")
     config_refs = [add("config-" + name, "PBXFileReference", lastKnownFileType=kind, name=name,
                        path="MovementForest/Configuration/" + name, sourceTree="SOURCE_ROOT")
                    for name, kind in [("Info.plist", "text.plist.xml"), ("MovementForest.entitlements", "text.plist.entitlements")]]
@@ -67,6 +69,8 @@ def generated_files():
         products.append(product)
         source_builds = [add("build-" + name + "-" + ref, "PBXBuildFile", fileRef=ref) for ref in sources]
         resources = [add("resource-build-" + ref, "PBXBuildFile", fileRef=ref) for ref in resource_refs] if name == "MovementForest" else []
+        if name == "MovementForestTests":
+            resources.append(add("test-shared-placement-cases", "PBXBuildFile", fileRef=geometry_fixture))
         phases = [add("sources-" + name, "PBXSourcesBuildPhase", buildActionMask=2147483647, files=source_builds, runOnlyForDeploymentPostprocessing=0),
                   add("frameworks-" + name, "PBXFrameworksBuildPhase", buildActionMask=2147483647, files=[], runOnlyForDeploymentPostprocessing=0),
                   add("resources-" + name, "PBXResourcesBuildPhase", buildActionMask=2147483647, files=resources, runOnlyForDeploymentPostprocessing=0)]
@@ -100,7 +104,7 @@ def generated_files():
                            productReference=product, productType="com.apple.product-type." + product_type))
     groups = [add("app-group", "PBXGroup", name="App", children=app_sources, sourceTree="<group>"),
               add("resources-group", "PBXGroup", name="Resources", children=resource_refs + config_refs, sourceTree="<group>"),
-              add("unit-group", "PBXGroup", name="Unit tests", children=unit_sources, sourceTree="<group>"),
+              add("unit-group", "PBXGroup", name="Unit tests", children=unit_sources + [geometry_fixture], sourceTree="<group>"),
               add("ui-group", "PBXGroup", name="UI tests", children=ui_sources, sourceTree="<group>"),
               add("products-group", "PBXGroup", name="Products", children=products, sourceTree="<group>")]
     main_group = add("main-group", "PBXGroup", children=groups, sourceTree="<group>")

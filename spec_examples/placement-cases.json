@@ -1,0 +1,21 @@
+{
+  "description": "Shared exact geometry fixtures for B3 and F4; values are not approved species balance.",
+  "coordinateUnit": "garden_unit",
+  "coordinateDecimalPlaces": 3,
+  "rotationDecimalPlaces": 2,
+  "touchingIsValid": true,
+  "cases": [
+    {"name": "exact_lower_edge", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 0.9, "y": 0.9, "radius": 0.9}], "error": null},
+    {"name": "exact_upper_edge", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 9.1, "y": 9.1, "radius": 0.9}], "error": null},
+    {"name": "centre_inside_circle_outside", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 0.899, "y": 2, "radius": 0.9}], "error": "out_of_bounds"},
+    {"name": "upper_edge_overflow", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 9.101, "y": 2, "radius": 0.9}], "error": "out_of_bounds"},
+    {"name": "exact_tangency", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 2, "y": 2, "radius": 0.9}, {"id": "b", "x": 3.8, "y": 2, "radius": 0.9}], "error": null},
+    {"name": "just_overlapping", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 2, "y": 2, "radius": 0.9}, {"id": "b", "x": 3.799, "y": 2, "radius": 0.9}], "error": "clearance_overlap"},
+    {"name": "just_separated", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 2, "y": 2, "radius": 0.9}, {"id": "b", "x": 3.801, "y": 2, "radius": 0.9}], "error": null},
+    {"name": "unequal_radii", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 2, "y": 2, "radius": 0.9}, {"id": "b", "x": 3.2, "y": 2, "radius": 0.3}], "error": null},
+    {"name": "diagonal_tangency", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 2, "y": 2, "radius": 1}, {"id": "b", "x": 5, "y": 6, "radius": 4}], "error": null},
+    {"name": "diagonal_overlap", "width": 10, "depth": 10, "plants": [{"id": "a", "x": 2, "y": 2, "radius": 1}, {"id": "b", "x": 4.999, "y": 6, "radius": 4}], "error": "clearance_overlap"},
+    {"name": "radius_exceeds_board", "width": 1, "depth": 1, "plants": [{"id": "a", "x": 0.5, "y": 0.5, "radius": 0.9}], "error": "out_of_bounds"},
+    {"name": "empty_garden", "width": 10, "depth": 10, "plants": [], "error": null}
+  ]
+}

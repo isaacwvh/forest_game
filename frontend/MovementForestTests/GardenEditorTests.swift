@@ -1,0 +1,414 @@
+import XCTest
+import Foundation
+@testable import MovementForest
+
+private struct EditorContract: Decodable {
+    let profile: APIProfile
+    let catalogue: APICatalogue
+    let emptyGarden: APIGarden
+    let inventory: APIInventory
+    let plantRequest: GardenEditRequest
+    let plantResult: GardenEditResult
+    let placedInventory: APIInventory
+    static func load() throws -> Self {
+        let url = try XCTUnwrap(Bundle.main.url(forResource: "editor-contract", withExtension: "json", subdirectory: "Fixtures"))
+        return try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
+    }
+}
+
+private final class MemoryEditJournal: PendingEditPersisting {
+    var edits: [String: PendingGardenEdit] = [:]
+    var failSave = false
+    var failLoad = false
+    var failRemove = false
+    func load(server: String, user: UUID) throws -> PendingGardenEdit? {
+        if failLoad { throw URLError(.cannotDecodeContentData) }
+        return edits[server + user.uuidString]
+    }
+    func save(_ edit: PendingGardenEdit) throws {
+        if failSave { throw URLError(.cannotWriteToFile) }
+        edits[edit.serverID + edit.userID.uuidString] = edit
+    }
+    func remove(server: String, user: UUID) throws {
+        if failRemove { throw URLError(.cannotWriteToFile) }
+        edits.removeValue(forKey: server + user.uuidString)
+    }
+}
+
+@MainActor
+private final class EditorTestService: GardenServing {
+    var serverID = "https://garden.test"
+    let fixture: EditorContract
+    var current: APIGarden
+    var catalogueValue: APICatalogue
+    var receipts: [UUID: GardenEditResult] = [:]
+    var bodies: [Data] = []
+    var loseNextResponse = false
+    var nextError: APIError?
+    var failReads = false
+    var pauseNext = false
+    var gate: CheckedContinuation<Void, Never>?
+    var extraInventory: [APIOwnedPlant] = []
+    var pages: [String: APIInventory] = [:]
+
+    init(_ fixture: EditorContract) {
+        self.fixture = fixture; current = fixture.emptyGarden; catalogueValue = fixture.catalogue
+    }
+    func profile() async throws -> APIProfile { fixture.profile }
+    func catalogue() async throws -> APICatalogue {
+        if failReads { throw URLError(.notConnectedToInternet) }
+        return catalogueValue
+    }
+    func garden() async throws -> APIGarden { current }
+    func inventory(after: UUID?) async throws -> APIInventory {
+        if let page = pages[after?.uuidString ?? "first"] { return page }
+        let placed = Set(current.plants.map(\.id))
+        let copies = fixture.inventory.plants + extraInventory
+        return APIInventory(plants: copies.filter { !placed.contains($0.id) }, nextCursor: nil)
+    }
+    func edit(body: Data) async throws -> GardenEditResult {
+        bodies.append(body)
+        if pauseNext { pauseNext = false; await withCheckedContinuation { gate = $0 } }
+        if let error = nextError { nextError = nil; throw error }
+        let request = try JSONDecoder().decode(GardenEditRequest.self, from: body)
+        if let result = receipts[request.requestId] { return result }
+        guard request.expectedLayoutVersion == current.layoutVersion else {
+            throw APIError(status: 409, code: "stale_layout", message: "Refresh the garden before editing")
+        }
+        let action = try XCTUnwrap(request.actions.first)
+        let plant = try XCTUnwrap((current.plants + fixture.inventory.plants + extraInventory).first { $0.id == action.plantId })
+        let placement: APIPlacement? = action.action == .store ? nil : APIPlacement(
+            gardenId: current.gardenId, x: action.x ?? plant.placement?.x ?? 0,
+            y: action.y ?? plant.placement?.y ?? 0, rotationDegrees: action.rotationDegrees ?? plant.placement?.rotationDegrees ?? 0)
+        let updated = APIOwnedPlant(plantId: plant.id, speciesId: plant.speciesId, variantId: plant.variantId,
+                                    growthMicroUnits: plant.growthMicroUnits, growthStage: plant.growthStage,
+                                    modelKey: plant.modelKey, thumbnailKey: plant.thumbnailKey, placement: placement)
+        var plants = current.plants.filter { $0.id != plant.id }
+        if placement != nil { plants.append(updated) }
+        current = APIGarden(gardenId: current.gardenId, width: current.width, depth: current.depth,
+                            coordinateUnit: current.coordinateUnit, gardenUnitMetres: current.gardenUnitMetres,
+                            catalogVersion: current.catalogVersion, layoutVersion: current.layoutVersion + 1,
+                            stateVersion: current.stateVersion + 1, plants: plants)
+        let result = GardenEditResult(requestId: request.requestId, garden: current, updatedPlants: [updated])
+        receipts[request.requestId] = result
+        if loseNextResponse { loseNextResponse = false; throw URLError(.networkConnectionLost) }
+        return result
+    }
+}
+
+@MainActor
+final class GardenEditorTests: XCTestCase {
+    private func makeStore(_ service: EditorTestService, journal: MemoryEditJournal = MemoryEditJournal()) throws -> GardenEditorStore {
+        GardenEditorStore(profile: service.fixture.profile, service: service, assets: try BundleAssetCatalog(), journal: journal)
+    }
+
+    func testBackendWireFixtureMapsOwnershipAssetsAndNestedPlacement() throws {
+        let fixture = try EditorContract.load()
+        let assets = try BundleAssetCatalog()
+        let garden = try fixture.plantResult.garden.rendered(catalogue: fixture.catalogue, assets: assets)
+        let plant = try XCTUnwrap(garden.plants.first)
+        XCTAssertEqual(plant.id, fixture.inventory.plants.first?.id)
+        XCTAssertEqual(plant.x, 3.201, accuracy: 0.000001)
+        XCTAssertEqual(plant.y, 4.609, accuracy: 0.000001)
+        XCTAssertEqual(plant.rotationDegrees, 35.12, accuracy: 0.000001)
+        XCTAssertEqual(plant.assetVersion, "1.0.0")
+        _ = try assets.resolve(plant)
+        XCTAssertNil(fixture.inventory.plants.first?.placement)
+        XCTAssertEqual(fixture.inventory.plants.first?.growthMicroUnits, "0")
+        XCTAssertFalse(garden.isSample)
+    }
+
+    func testRequestEncodingPreservesNumericPrecisionAndOmitsAbsentFields() throws {
+        let fixture = try EditorContract.load()
+        let action = GardenEditAction(action: .move, plantId: fixture.plantRequest.actions[0].plantId,
+                                      x: Decimal(string: "3.201"), y: Decimal(string: "4.609"))
+        let request = GardenEditRequest(requestId: UUID(), expectedLayoutVersion: 1,
+                                        catalogVersion: fixture.catalogue.catalogVersion, actions: [action])
+        let data = try request.encoded()
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let actions = try XCTUnwrap(object["actions"] as? [[String: Any]])
+        XCTAssertTrue(actions[0]["x"] is NSNumber)
+        XCTAssertNil(actions[0]["rotationDegrees"])
+        XCTAssertEqual(try JSONDecoder().decode(GardenEditRequest.self, from: data), request)
+        XCTAssertTrue(String(decoding: data, as: UTF8.self).contains("3.201"))
+    }
+
+    func testPlaceMoveRotateStoreAndReplantKeepTheSameCopy() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service)
+        await store.start()
+        let copy = try XCTUnwrap(store.inventory.first)
+        store.begin(copy, kind: .plant)
+        store.updatePosition(x: 3.201, y: 4.609)
+        await store.releaseCandidate()
+        XCTAssertEqual(store.confirmed?.plants.first?.id, copy.id)
+        XCTAssertTrue(store.inventory.isEmpty)
+        store.begin(try XCTUnwrap(store.confirmed?.plants.first), kind: .move)
+        store.updatePosition(x: 5.001, y: 6.002)
+        await store.releaseCandidate()
+        XCTAssertEqual(store.confirmed?.plants.first?.placement?.x, Decimal(string: "5.001"))
+        store.begin(try XCTUnwrap(store.confirmed?.plants.first), kind: .rotate)
+        store.updateRotation(359.99)
+        await store.releaseCandidate()
+        XCTAssertEqual(store.confirmed?.plants.first?.placement?.rotationDegrees, Decimal(string: "359.99"))
+        store.selectedID = copy.id
+        await store.storeSelected()
+        XCTAssertTrue(store.confirmed?.plants.isEmpty == true)
+        XCTAssertEqual(store.inventory.first?.id, copy.id)
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        XCTAssertEqual(store.confirmed?.plants.first?.growthMicroUnits, fixture.inventory.plants.first?.growthMicroUnits)
+        XCTAssertEqual(store.confirmed?.plants.first?.id, copy.id)
+        XCTAssertEqual(store.confirmed?.layoutVersion, 5)
+    }
+
+    func testInvalidAndCancelledCandidatesSendNothing() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        let copy = try XCTUnwrap(store.inventory.first)
+        store.begin(copy, kind: .plant); store.updatePosition(x: 0.899, y: 2)
+        XCTAssertEqual(store.candidate?.validity, .outOfBounds)
+        await store.releaseCandidate()
+        XCTAssertTrue(service.bodies.isEmpty); XCTAssertTrue(journal.edits.isEmpty)
+        store.begin(copy, kind: .plant); store.cancelCandidate()
+        await store.releaseCandidate()
+        XCTAssertTrue(service.bodies.isEmpty)
+    }
+
+    func testLostResponseAndRelaunchReplayIdenticalBytesOnce() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let original = try makeStore(service, journal: journal)
+        await original.start()
+        service.loseNextResponse = true
+        original.begin(try XCTUnwrap(original.inventory.first), kind: .plant)
+        await original.releaseCandidate()
+        XCTAssertEqual(original.state, .unknown)
+        XCTAssertFalse(original.canEdit)
+        XCTAssertEqual(service.current.layoutVersion, 1)
+        let restored = try makeStore(service, journal: journal)
+        await restored.start()
+        XCTAssertEqual(service.bodies.count, 2)
+        XCTAssertEqual(service.bodies[0], service.bodies[1])
+        XCTAssertEqual(restored.confirmed?.layoutVersion, 1)
+        XCTAssertTrue(journal.edits.isEmpty)
+        XCTAssertTrue(restored.canEdit)
+    }
+
+    func testJournalFailurePreventsTransmissionAndCorruptionBlocksRefresh() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start(); journal.failSave = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        XCTAssertTrue(service.bodies.isEmpty)
+        journal.failLoad = true
+        let restored = try makeStore(service, journal: journal)
+        await restored.start(); await restored.refresh()
+        XCTAssertTrue(restored.recoveryLocked)
+        XCTAssertFalse(restored.canEdit)
+    }
+
+    func testExpiredTokenKeepsRequestAndReplacementResumesIt() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        service.nextError = APIError(status: 401, code: "invalid_token", message: "Expired")
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        XCTAssertEqual(store.state, .authenticationRequired)
+        XCTAssertFalse(journal.edits.isEmpty)
+        await store.replaceService(service)
+        XCTAssertTrue(store.canEdit)
+        XCTAssertEqual(service.bodies[0], service.bodies[1])
+    }
+
+    func testDefinitiveRejectionRefreshesWithoutReapplyingCandidate() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        service.nextError = APIError(status: 409, code: "stale_layout", message: "Refresh the garden")
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        XCTAssertNil(store.pending); XCTAssertNil(store.candidate)
+        XCTAssertTrue(store.confirmed?.plants.isEmpty == true)
+        XCTAssertTrue(store.canEdit)
+        XCTAssertEqual(service.bodies.count, 1)
+    }
+
+    func testSuccessfulReceiptWithFailedRefreshDoesNotEnableStaleEditing() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        service.failReads = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        XCTAssertNil(store.pending)
+        XCTAssertFalse(store.canEdit)
+        XCTAssertEqual(store.confirmed?.layoutVersion, 1)
+        service.failReads = false; await store.refresh()
+        XCTAssertTrue(store.canEdit)
+    }
+
+    func testOverlappingSubmissionsAreSerialized() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service)
+        await store.start()
+        service.pauseNext = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        let first = Task { await store.releaseCandidate() }
+        for _ in 0..<100 where service.gate == nil { try await Task.sleep(nanoseconds: 1_000_000) }
+        XCTAssertEqual(store.state, .saving)
+        await store.releaseCandidate()
+        XCTAssertEqual(service.bodies.count, 1)
+        let gate = try XCTUnwrap(service.gate)
+        gate.resume(); service.gate = nil
+        await first.value
+        XCTAssertEqual(store.confirmed?.layoutVersion, 1)
+    }
+
+    func testJournalSeparatesAccountsAndServersAndSurvivesRecreation() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("forest-editor-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try EditorContract.load()
+        let edit = PendingGardenEdit(serverID: "https://one.test", userID: fixture.profile.userId,
+                                     gardenID: fixture.emptyGarden.gardenId, body: try fixture.plantRequest.encoded())
+        try PendingGardenEditStore(directory: directory).save(edit)
+        let reopened = PendingGardenEditStore(directory: directory)
+        XCTAssertEqual(try reopened.load(server: edit.serverID, user: edit.userID)?.body, edit.body)
+        XCTAssertNil(try reopened.load(server: "https://two.test", user: edit.userID))
+        XCTAssertNil(try reopened.load(server: edit.serverID, user: UUID()))
+    }
+
+    func testInventoryPaginationDeduplicatesAndExcludesPlacedCopies() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let first = try XCTUnwrap(fixture.inventory.plants.first)
+        let second = APIOwnedPlant(plantId: UUID(), speciesId: first.speciesId, variantId: first.variantId,
+                                   growthMicroUnits: "0", growthStage: first.growthStage, modelKey: first.modelKey,
+                                   thumbnailKey: first.thumbnailKey, placement: nil)
+        service.pages["first"] = APIInventory(plants: [first, first], nextCursor: first.id)
+        service.pages[first.id.uuidString] = APIInventory(plants: [first, second, second], nextCursor: nil)
+        let store = try makeStore(service)
+        await store.start(); await store.loadMore()
+        XCTAssertEqual(store.inventory.map(\.id), [first.id, second.id])
+        XCTAssertNil(store.nextCursor)
+    }
+
+    func testReplayReceiptCannotHideNewerServerLayout() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let journal = MemoryEditJournal()
+        // Use the same journal for the relaunch, just as the file-backed implementation does.
+        let original = try makeStore(service, journal: journal)
+        await original.start(); service.loseNextResponse = true
+        original.begin(try XCTUnwrap(original.inventory.first), kind: .plant)
+        await original.releaseCandidate()
+        let plant = try XCTUnwrap(service.current.plants.first)
+        let changed = APIOwnedPlant(plantId: plant.id, speciesId: plant.speciesId, variantId: plant.variantId,
+                                    growthMicroUnits: plant.growthMicroUnits, growthStage: plant.growthStage,
+                                    modelKey: plant.modelKey, thumbnailKey: plant.thumbnailKey,
+                                    placement: APIPlacement(gardenId: service.current.gardenId, x: 7, y: 7, rotationDegrees: 90))
+        service.current = APIGarden(gardenId: service.current.gardenId, width: service.current.width,
+                                    depth: service.current.depth, coordinateUnit: "garden_unit", gardenUnitMetres: 1,
+                                    catalogVersion: fixture.catalogue.catalogVersion, layoutVersion: 2, stateVersion: 2, plants: [changed])
+        let restored = try makeStore(service, journal: journal)
+        await restored.start()
+        XCTAssertEqual(restored.confirmed?.layoutVersion, 2)
+        XCTAssertEqual(restored.confirmed?.plants.first?.placement?.x, 7)
+        XCTAssertNil(restored.pending)
+    }
+
+    func testReceiptCleanupFailureRetainsRequestUntilItCanBeReplayed() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start(); journal.failRemove = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        XCTAssertEqual(store.state, .unknown)
+        XCTAssertNotNil(store.pending)
+        journal.failRemove = false; await store.retryPending()
+        XCTAssertEqual(service.current.layoutVersion, 1)
+        XCTAssertTrue(store.canEdit)
+    }
+
+    func testIdempotencyConflictStopsRetriesAndDoesNotDiscardTheRequest() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        service.nextError = APIError(status: 409, code: "idempotency_conflict", message: "Conflict")
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate(); await store.retryPending()
+        XCTAssertTrue(store.recoveryLocked)
+        XCTAssertNotNil(store.pending)
+        XCTAssertEqual(service.bodies.count, 1)
+    }
+
+    func testStateOnlyUpdatesDoNotBecomeLayoutPreconditions() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        let garden = service.current
+        service.current = APIGarden(gardenId: garden.gardenId, width: garden.width, depth: garden.depth,
+                                    coordinateUnit: garden.coordinateUnit, gardenUnitMetres: garden.gardenUnitMetres,
+                                    catalogVersion: garden.catalogVersion, layoutVersion: 0, stateVersion: 99, plants: [])
+        let store = try makeStore(service)
+        await store.start()
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        let request = try JSONDecoder().decode(GardenEditRequest.self, from: XCTUnwrap(service.bodies.first))
+        XCTAssertEqual(request.expectedLayoutVersion, 0)
+        XCTAssertEqual(store.confirmed?.stateVersion, 100)
+        XCTAssertTrue(store.canEdit)
+    }
+
+    func testStaleCatalogueRefreshesRulesAndRequiresANewEdit() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service)
+        await store.start()
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        let catalog = service.catalogueValue, garden = service.current
+        service.catalogueValue = APICatalogue(catalogVersion: "new-rules", isFixture: true,
+                                              coordinateUnit: catalog.coordinateUnit, gardenUnitMetres: catalog.gardenUnitMetres,
+                                              coordinateDecimalPlaces: 3, rotationDecimalPlaces: 2, species: catalog.species)
+        service.current = APIGarden(gardenId: garden.gardenId, width: garden.width, depth: garden.depth,
+                                    coordinateUnit: garden.coordinateUnit, gardenUnitMetres: garden.gardenUnitMetres,
+                                    catalogVersion: "new-rules", layoutVersion: 0, stateVersion: 0, plants: [])
+        service.nextError = APIError(status: 409, code: "stale_catalogue", message: "Refresh the catalogue")
+        await store.releaseCandidate()
+        XCTAssertEqual(store.catalogue?.catalogVersion, "new-rules")
+        XCTAssertNil(store.candidate)
+        XCTAssertEqual(service.bodies.count, 1)
+        XCTAssertTrue(store.canEdit)
+    }
+}
+
+final class PlacementGeometryTests: XCTestCase {
+    private struct FixtureFile: Decodable {
+        struct Case: Decodable {
+            struct Plant: Decodable { let id: String; let x: Decimal; let y: Decimal; let radius: Decimal }
+            let name: String; let width: Decimal; let depth: Decimal; let plants: [Plant]; let error: String?
+        }
+        let cases: [Case]
+    }
+    func testSharedBackendGeometryFixtures() throws {
+        let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "placement-cases", withExtension: "json"))
+        let fixture = try JSONDecoder().decode(FixtureFile.self, from: Data(contentsOf: url))
+        XCTAssertEqual(fixture.cases.count, 12)
+        for item in fixture.cases {
+            let circles = try item.plants.map {
+                PlacementCircle(id: UUID(), x: try PlacementGeometry.units($0.x), y: try PlacementGeometry.units($0.y),
+                                radius: try PlacementGeometry.units($0.radius))
+            }
+            let result = try PlacementGeometry.validate(width: PlacementGeometry.units(item.width),
+                                                        depth: PlacementGeometry.units(item.depth), circles: circles)
+            let expected: PlacementValidity = item.error == nil ? .valid : (item.error == "out_of_bounds" ? .outOfBounds : .overlap)
+            XCTAssertEqual(result, expected, item.name)
+        }
+    }
+    func testCanonicalPrecisionWrappingAndOverflowBounds() throws {
+        XCTAssertEqual(PlacementGeometry.canonical(3.20149), Decimal(string: "3.201"))
+        XCTAssertEqual(PlacementGeometry.rotation(359.999), 0)
+        XCTAssertEqual(PlacementGeometry.rotation(-0.01), Decimal(string: "359.99"))
+        XCTAssertNil(PlacementGeometry.canonical(.nan))
+        XCTAssertThrowsError(try PlacementGeometry.units(Decimal(string: "3.2011")!))
+        let large = PlacementCircle(id: UUID(), x: 500_000_000, y: 500_000_000, radius: 999_999_999)
+        XCTAssertEqual(PlacementGeometry.validate(width: 999_999_999, depth: 999_999_999, circles: [large]), .outOfBounds)
+    }
+}

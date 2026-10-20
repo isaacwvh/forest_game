@@ -1,11 +1,11 @@
-# B1/B2 implementation verification
+# B1–B3 implementation verification
 
 Verified 20 October 2026 on Windows with Python 3.12.5 and a project-local,
 loopback-only PostgreSQL 17.11 runtime. Docker's engine was unavailable, so database
 verification used native PostgreSQL binaries without installing a Windows service.
 The portable runtime, databases, virtual environments and temporary files are ignored.
 
-## Passed
+## B1/B2 baseline verification
 
 - **60 tests passed** against real PostgreSQL, with warnings treated as errors.
 - Initial Alembic upgrade, schema/model drift check, downgrade to base and re-upgrade.
@@ -41,7 +41,8 @@ The portable runtime, databases, virtual environments and temporary files are ig
 
 - Initial verification used native PostgreSQL because Docker was unavailable at
   that time. Docker startup was subsequently verified as recorded below.
-- Remote GitHub Actions execution: workflow added; no commit/push or dispatch made.
+- Remote GitHub Actions execution of B3: not claimed. B1/B2 was committed/pushed;
+  the current B3 changes have not been committed or pushed in this session.
 - Selected managed authentication provider, live JWKS connection and native login:
   verifier support is implemented and tested locally; no provider was provisioned.
 - Approved production catalogue/balance values: the shipped oak game settings are
@@ -64,11 +65,60 @@ the full Linux CI suite has not been claimed as executed.
 
 ## Scope boundary
 
-B1/B2 source implementation and local verification are complete to the extent
-above. Deployment/provider integration is not claimed complete. B3 edit endpoints,
-geometry/concurrency validation, activity rewards, visitors, wallets, draws and
-social features remain future milestones. Placement records currently support
-schema ownership constraints and reads only.
+B1–B3 source implementation and local verification are complete to the extent
+recorded here. Deployment/provider integration is not claimed complete. Activity
+rewards, visitor accounting, wallets, draws, social features and the native editor
+remain future milestones.
 
 Setup and test commands are in [README.md](README.md). Tests create/drop their own
 random `forest_test_*` databases; they do not reset the configured admin database.
+
+## B3 verification — 20 October 2026
+
+**132 tests passed** against PostgreSQL 17.11, including all 60 B1/B2 cases and
+72 new B3 cases. Warnings are treated as errors. Ruff lint/format, Python
+compilation and dependency consistency checks passed.
+
+- Plant/move/rotate/store/replant preserve ownership, identity, pinned profiles,
+  stages, growth, fractional state and maturity information.
+- Exact board edges, tangent circles, just-overlapping/separated positions, unequal
+  radii and diagonal examples match `spec_examples/placement-cases.json`.
+- Raw JSON excess precision is rejected before float conversion or PostgreSQL
+  rounding; strings/booleans/nulls, nonfinite values, huge exponents, malformed and
+  duplicate JSON fields, excess precision and invalid yaw fail consistently.
+- Swagger retains typed/discriminated action schemas and advertises numeric
+  coordinates, allowed ranges and increments rather than accepting numeric strings.
+- Batch swaps and store/replace operations validate the final layout. Duplicate
+  plant actions, forged radius fields, oversized bodies and invalid batches fail
+  without partial placements, version increments or successful receipts.
+- Real edits advance both versions once. Valid no-ops preserve both versions.
+  State-only updates do not invalidate a layout edit. Sixteen valid plants can be
+  placed; no arbitrary 15-plant gameplay cap is introduced.
+- Stale catalogue/layout errors are distinct and provide current-version details.
+  Request receipts return the original response even after later membership,
+  catalogue or application-instance changes; changed payloads/operations fail.
+- Concurrent duplicate requests apply once. Competing edits and competing entries
+  into the same space cannot both commit; concurrent same-ID/different-input
+  requests yield one result and one conflict. Tests use independent SQLAlchemy
+  sessions and real PostgreSQL locks.
+- Garden reads hold a shared lock while constructing their snapshot; an edit waits
+  until the reader has completed. Inventory and individual plant reads use the same
+  garden lock convention. Foreign/missing plant IDs remain indistinguishable.
+- Injected failures after placement writes and future accounting refresh failures
+  roll back placements, versions and receipts. Before/after accounting callbacks
+  see the old/new layout at one injected server-time boundary and never rerun on replay.
+- Alembic upgrade/model-drift/downgrade/re-upgrade checks still pass. B3 introduces
+  no database migration and does not alter approved production configuration.
+
+A real Uvicorn server using the clean locked Python environment and a disposable
+database also passed startup/readiness, Swagger schema inspection, plant/move/
+rotate/store/replant, durable replay, exact precision, ownership rejection and
+boundary rejection through HTTP. The temporary HTTP server/database were removed
+after verification; no user garden or credentials were changed.
+
+The Docker engine returned HTTP 500 during this B3 session. A B3 Docker image
+rebuild/runtime check could not run; the prior B1/B2 Docker checks remain historical.
+The full PostgreSQL suite and native HTTP check above passed independently of Docker.
+CI is configured to run B3 tests and rebuild the image after a future push, including
+when the shared geometry examples change. The default `PlacementAccounting`
+implementation is explicitly disabled scaffolding for B6, not visitor settlement.

@@ -1,11 +1,20 @@
 import re
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Annotated, Literal
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    PlainSerializer,
+    WithJsonSchema,
+    field_validator,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
 
 STAGES = ("sprout", "seedling", "young", "adult")
@@ -228,3 +237,100 @@ class CatalogueDTO(DTO):
     rotation_decimal_places: Literal[2] = 2
     species: list[SpeciesDTO]
     profiles: dict[str, list[dict]]
+
+
+def canonical_number(value: object, places: int, maximum: Decimal) -> Decimal:
+    # Never coerce strings, booleans or nulls into a placement coordinate.
+    if type(value) not in {int, float, Decimal}:
+        raise ValueError("A JSON number is required")
+    number = Decimal(str(value))
+    if not number.is_finite() or number < 0 or number > maximum:
+        raise ValueError("Number outside the supported range")
+    try:
+        canonical = number.quantize(Decimal(1).scaleb(-places))
+    except InvalidOperation as exc:
+        raise ValueError("Invalid number precision") from exc
+    if number != canonical:
+        raise ValueError("Excess numeric precision")
+    return canonical.copy_abs()  # Canonicalise negative zero, too.
+
+
+COORDINATE_JSON_SCHEMA = {
+    "type": "number",
+    "minimum": 0,
+    "maximum": 999999.999,
+    "multipleOf": 0.001,
+}
+YAW_JSON_SCHEMA = {"type": "number", "minimum": 0, "maximum": 359.99, "multipleOf": 0.01}
+
+Coordinate = Annotated[
+    Decimal,
+    BeforeValidator(lambda value: canonical_number(value, 3, Decimal("999999.999"))),
+    PlainSerializer(float, return_type=float, when_used="json"),
+    WithJsonSchema(COORDINATE_JSON_SCHEMA, mode="validation"),
+]
+Yaw = Annotated[
+    Decimal,
+    BeforeValidator(lambda value: canonical_number(value, 2, Decimal("359.99"))),
+    PlainSerializer(float, return_type=float, when_used="json"),
+    WithJsonSchema(YAW_JSON_SCHEMA, mode="validation"),
+]
+
+
+class PlantAction(DTO):
+    action: Literal["plant"]
+    plant_id: UUID
+    x: Coordinate
+    y: Coordinate
+    rotation_degrees: Yaw
+
+
+class MoveAction(DTO):
+    action: Literal["move"]
+    plant_id: UUID
+    x: Coordinate
+    y: Coordinate
+    rotation_degrees: Annotated[Yaw | None, WithJsonSchema(YAW_JSON_SCHEMA, mode="validation")] = (
+        Field(default=None, json_schema_extra=lambda schema: schema.pop("default", None))
+    )
+
+    @model_validator(mode="after")
+    def no_explicit_null_rotation(self) -> "MoveAction":
+        if "rotation_degrees" in self.model_fields_set and self.rotation_degrees is None:
+            raise ValueError("Omit rotation to preserve it; null is invalid")
+        return self
+
+
+class RotateAction(DTO):
+    action: Literal["rotate"]
+    plant_id: UUID
+    rotation_degrees: Yaw
+
+
+class StoreAction(DTO):
+    action: Literal["store"]
+    plant_id: UUID
+
+
+PlacementAction = Annotated[
+    PlantAction | MoveAction | RotateAction | StoreAction, Field(discriminator="action")
+]
+
+
+class GardenEditRequest(DTO):
+    request_id: UUID
+    expected_layout_version: Annotated[int, Field(strict=True, ge=0, le=9223372036854775807)]
+    catalog_version: str = Field(min_length=1, max_length=100)
+    actions: list[PlacementAction] = Field(min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def unique_plants(self) -> "GardenEditRequest":
+        if len({action.plant_id for action in self.actions}) != len(self.actions):
+            raise ValueError("Each plant may appear only once per edit")
+        return self
+
+
+class GardenEditResult(DTO):
+    request_id: UUID
+    garden: GardenDTO
+    updated_plants: list[PlantDTO]

@@ -1,9 +1,9 @@
 name: Backend
 on:
   push:
-    paths: ['backend/**', 'assets/oak/**', '.github/workflows/backend.yml']
+    paths: ['backend/**', 'assets/oak/**', 'spec_examples/placement-cases.json', 'frontend/MovementForest/Resources/Fixtures/editor-contract.json', '.github/workflows/backend.yml']
   pull_request:
-    paths: ['backend/**', 'assets/oak/**', '.github/workflows/backend.yml']
+    paths: ['backend/**', 'assets/oak/**', 'spec_examples/placement-cases.json', 'frontend/MovementForest/Resources/Fixtures/editor-contract.json', '.github/workflows/backend.yml']
   workflow_dispatch:
 
 permissions:

@@ -1,9 +1,9 @@
-# Movement Forest backend — B1/B2
+# Movement Forest backend — B1–B3
 
 Python 3.12, FastAPI, synchronous SQLAlchemy 2, psycopg 3, PostgreSQL 17 and Alembic.
-This foundation implements accounts, catalogue/profile records, owned plants and
-owner-only garden/storage reads. B3 placement mutations and later game mechanics
-are not implemented.
+This foundation implements accounts, catalogue/profile records, owned plants,
+owner-only garden/storage reads and atomic B3 placement edits. Activity growth,
+visitors and the collection economy remain later milestones.
 
 ## Start locally with Docker
 
@@ -33,6 +33,51 @@ If startup fails, inspect `docker compose ps -a` and `docker compose logs --tail
 Open [API docs](http://127.0.0.1:8000/docs). Liveness is `/health/live`; readiness
 checks PostgreSQL and the expected Alembic revision at `/health/ready`.
 The API image also runs the migration and development CLI commands.
+
+## Inspect the local database with Adminer
+
+Adminer uses the official `adminer:6.1.2-standalone` image and is available only on
+this computer. From `backend/`, start it against the existing PostgreSQL database:
+
+```powershell
+docker compose up -d adminer
+```
+
+Normal `docker compose up` also starts Adminer. Open
+[Adminer](http://localhost:8080) and enter:
+
+| Login field | Value |
+| --- | --- |
+| System | PostgreSQL |
+| Server | `db` |
+| Username | `forest` |
+| Password | `forest-local-only` |
+| Database | `forest` |
+
+Use `db`, not `localhost`, because Adminer connects from inside Docker. These are
+the existing local development database credentials, not an API token. This login
+has write permissions; for inspection, use **Select data**, not edit/delete actions.
+Starting Adminer does not seed, reset or modify game records.
+
+Choose the `public` schema if prompted. Useful tables:
+
+| Table | Contents |
+| --- | --- |
+| `users` | Accounts; match `id` to plant/garden `owner_id`. |
+| `owned_plants` | Individual copies, growth and pinned profile IDs/versions. |
+| `gardens`, `garden_placements` | Garden settings, placed plant IDs, coordinates and rotations. |
+| `plant_species`, `plant_variants`, `plant_stages` | Shared catalogue defaults, overrides and stage assets. |
+| `growth_profiles` | Stage thresholds and maturity maximum. |
+| `growth_rule_profiles` | Behaviour definitions, including activity multipliers. |
+| `attraction_profiles` | Base attraction by growth stage. |
+
+Growth/attraction micro-units use 1,000,000 units per display point. Stage and final
+attraction are derived values, not independently editable plant stats. Profile
+versions remain immutable. Visitor balances and production are not implemented yet.
+
+If it does not load, run `docker compose ps` and
+`docker compose logs --tail 50 adminer`. Stop just this interface with
+`docker compose stop adminer`.
 
 ## Run Python on the host
 
@@ -90,6 +135,7 @@ For the host Python setup, obtain the token using
 | `GET /v1/me/garden` | Own garden and placed plants. A new account's garden is empty until B3. |
 | `GET /v1/me/inventory?limit=30&after=UUID` | Own stored plants only, UUID keyset pagination; limit 1–100. |
 | `GET /v1/me/plants/{plantId}` | Own stored or placed copy; foreign/missing IDs both return 404. |
+| `POST /v1/me/garden/edits` | Atomic batch plant/move/rotate/store using a request UUID, catalogue version and expected layout version. |
 
 Each mutation accepts `requestId` in its body. Reusing it with different canonical
 input or a different operation returns 409. Completed results are stored durably
@@ -123,10 +169,79 @@ are resolved before pinning. Supported B2 behaviour configuration has explicit
 metric multipliers and empty effects; omitted metrics mean zero. Enabling effects
 requires B8 handlers, validation and a migration of the supported schema contract.
 
-Placement rows are included as a persistence/read foundation. Composite foreign
-keys enforce equality of plant owner and garden owner. Bounds, overlap, canonical
-precision, optimistic edit versions and transactional placement writes arrive in
-B3; direct database writes are not a supported editor.
+Composite foreign keys enforce equality of plant owner and garden owner. B3
+validates canonical precision, full circular bounds and pairwise clearance under
+garden/account locks. Direct database writes are not a supported editor.
+
+## B3 placement and Swagger checks
+
+Open `/docs`, authorise with a development token and create an account as above.
+Read `/v1/me/garden` for `layoutVersion`/`catalogVersion`, and obtain an existing
+stored plant ID from `/v1/me/inventory`. Use those real values below:
+
+```json
+{
+  "requestId": "d53d5f76-0682-49cb-a4f5-3777b5bd9493",
+  "expectedLayoutVersion": 0,
+  "catalogVersion": "development-oak-v1",
+  "actions": [
+    {
+      "action": "plant",
+      "plantId": "REPLACE_WITH_YOUR_STORED_PLANT_UUID",
+      "x": 2,
+      "y": 2,
+      "rotationDegrees": 0
+    }
+  ]
+}
+```
+
+POST this body to `/v1/me/garden/edits`. It returns 200 with `requestId`, the complete
+confirmed `garden`, and `updatedPlants` for the requested copies. A first placement
+increments both garden versions to 1. That plant then appears in the garden and
+no longer in stored inventory. Repeating the exact request returns its original
+result without advancing versions again. Reusing its ID for changed input returns
+409 `idempotency_conflict`, including if that ID was used by another mutation.
+
+For each new edit, generate a fresh request UUID (PowerShell `[guid]::NewGuid()`),
+use the latest layout/catalogue versions and replace the action as follows:
+
+| Action | Fields besides `action` and `plantId` | Preconditions |
+| --- | --- | --- |
+| `plant` | `x`, `y`, `rotationDegrees` | Copy is stored and enabled for planting. |
+| `move` | `x`, `y`; optional `rotationDegrees` | Copy is placed. Omitting rotation preserves it; explicit null is invalid. |
+| `rotate` | `rotationDegrees` | Copy is placed. |
+| `store` | None | Copy is placed. It returns to inventory with identity, profiles and growth preserved. |
+
+- Every batch has 1–100 actions, with at most one per plant. The request-size bound
+  is 64 KiB. These technical limits do not impose a 15-plant gameplay cap.
+- X/Y use at most three significant fractional places; rotation uses two and must
+  satisfy `0 <= rotationDegrees < 360`. Numeric strings, booleans, nulls, nonfinite
+  values and noncanonical precision are rejected. Equivalent representations such
+  as `2`/`2.000` and negative zero are canonicalised without moving the plant.
+- The endpoint parses JSON numeric tokens as exact decimals before validation.
+  The database must not silently round an invalid request into a valid position.
+- Full circles must fit: `radius <= x <= width-radius`, similarly for Y. Tangency
+  is valid; penetration is not. Sprouts/adults/variants share the species radius.
+  Rotation and visible foliage overhang do not alter this rule.
+- A batch validates its final layout, allowing swaps and storing one copy while
+  planting another in the freed position. One invalid action rolls back everything.
+- Errors are 422 `invalid_request`, `out_of_bounds` or `clearance_overlap`; 404
+  `plant_not_found` for either missing or foreign IDs; and 409 for stale versions,
+  request-ID conflicts, `plant_already_placed`, `plant_not_placed` or disabled planting.
+  Conflict/geometry errors include owner-safe details. Refresh after a stale-version
+  response and send the revised edit with a new UUID.
+- A real batch increments layout/state versions once each; a valid no-op move or
+  rotation records a successful receipt without incrementing either. A replay returns
+  the original snapshot even if newer edits or catalogue changes have since occurred.
+  GET the garden for its newest state after replaying an old operation.
+- Existing placed copies can be moved/rotated/stored if their species is later
+  disabled for new planting. Geometry changes still require explicit compatibility
+  review, revalidation and a new catalogue version, never silent invalidation.
+
+Shared exact examples for F4 previews are in `spec_examples/placement-cases.json`.
+Automated tests create additional owned copies through internal fixtures for swaps
+and overlap cases; no public plant-grant endpoint is introduced.
 
 ## Managed authentication
 
@@ -187,9 +302,15 @@ and an application-image build. Remote CI runs after a push or manual dispatch.
 - Future combined mutations must use a common order: account/user → garden accounting
   → owned plants ordered by UUID → wallets ordered by currency. Onboarding's advisory
   identity lock precedes this order. Do not acquire these locks in reverse order.
-- B3 should centralise placement mutations. B6 must settle elapsed visitor time under
-  the old context before changing membership/stages/skills, then publish the future
-  context in the same transaction. No visitor accounting is claimed by this foundation.
+- B3 centralises writes in `placement.edit_garden`: user → garden → shared catalogue
+  lock → relevant owned plants in UUID order. Garden/inventory/plant reads hold a
+  shared garden lock while assembling their DTOs, preventing mixed layout/version
+  snapshots. Garden responses reuse the same transaction-owned presenter.
+- `PlacementAccounting.before_change`/`after_change` define a B6 integration seam
+  at one server-time boundary captured after locks. They run in the edit transaction
+  around actual layout changes, and do not rerun on replays/no-ops. The default is
+  explicitly disabled: no visitor time, attraction or rewards are implemented here.
+  B6 must replace it and prove old-context settlement before enabling visitor income.
 - Log configuration uses SQLAlchemy `hide_parameters`; documented Uvicorn commands
   disable access logs. Do not add tokens, raw health inputs or request bodies to logs.
 

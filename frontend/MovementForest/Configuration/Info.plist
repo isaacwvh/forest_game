@@ -14,4 +14,5 @@
     <key>UILaunchScreen</key><dict/>
     <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
     <key>NSHealthShareUsageDescription</key><string>Movement Forest reads your steps and recorded workouts to show your activity. In this early version, observations stay on your iPhone and do not award garden growth or rewards.</string>
+    <key>NSLocalNetworkUsageDescription</key><string>Connect to your development garden service on your private network to load and save plant arrangements.</string>
 </dict></plist>

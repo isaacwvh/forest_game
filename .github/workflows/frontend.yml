@@ -1,9 +1,9 @@
 name: iOS frontend
 on:
   push:
-    paths: ['frontend/**', 'assets/**', '.github/workflows/frontend.yml']
+    paths: ['frontend/**', 'assets/**', 'spec_examples/placement-cases.json', '.github/workflows/frontend.yml']
   pull_request:
-    paths: ['frontend/**', 'assets/**', '.github/workflows/frontend.yml']
+    paths: ['frontend/**', 'assets/**', 'spec_examples/placement-cases.json', '.github/workflows/frontend.yml']
   workflow_dispatch:
 
 permissions:

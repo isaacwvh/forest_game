@@ -3,6 +3,19 @@ import XCTest
 final class ForestUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    func testDevelopmentConnectionUsesExplicitURLAndSecureTokenEntry() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health"]
+        app.launch()
+        app.buttons["Settings"].tap()
+        let connection = app.buttons["settings.connection"]
+        XCTAssertTrue(connection.waitForExistence(timeout: 5))
+        connection.tap()
+        XCTAssertTrue(app.textFields["connection.url"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.secureTextFields["connection.token"].exists)
+        XCTAssertTrue(app.buttons["connection.connect"].exists)
+    }
+
     func testGardenOpensWithoutHealthAndPlantsHaveDetails() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]

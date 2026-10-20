@@ -14,6 +14,7 @@ final class AppContainer: ObservableObject {
     @Published private(set) var catalog: BundleAssetCatalog?
     @Published private(set) var startupError: String?
     let garden = GardenStore(repository: SampleGardenRepository())
+    let connection = GardenConnection()
     let activity: ActivityStore
 
     init() {
@@ -49,7 +50,8 @@ struct RootView: View {
             if let catalog = container.catalog {
                 TabView(selection: $selectedTab) {
                     NavigationStack {
-                        GardenScreen(store: container.garden, catalog: catalog, active: selectedTab == 0 && !settingsPresented)
+                        GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
+                                         active: selectedTab == 0 && !settingsPresented)
                             .toolbar { settingsButton }
                     }
                     .tabItem { Label("Garden", systemImage: "leaf") }.tag(0)
@@ -61,12 +63,15 @@ struct RootView: View {
                 }
                 .sheet(isPresented: $settingsPresented) {
                     NavigationStack {
-                        SettingsScreen(catalog: catalog, activity: container.activity)
+                        SettingsScreen(catalog: catalog, activity: container.activity, connection: container.connection)
                             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { settingsPresented = false } } }
                     }
                 }
                 .task {
                     if container.garden.garden == nil { await container.garden.load() }
+                    if !ProcessInfo.processInfo.arguments.contains("--fixture-health") {
+                        await container.connection.restore(assets: catalog)
+                    }
                     await container.activity.refresh()
                 }
                 .onChange(of: phase) { value in

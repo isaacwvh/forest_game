@@ -1,0 +1,328 @@
+{
+  "profile": {
+    "userId": "f6a05273-2e0a-4fc2-8773-5f152ca74c15",
+    "username": "f4_native_fixture",
+    "displayName": "Editor fixture",
+    "gameTimezone": "Asia/Singapore",
+    "createdAt": "2026-10-20T22:03:18.679051+08:00"
+  },
+  "catalogue": {
+    "catalogVersion": "development-oak-v1",
+    "isFixture": true,
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "coordinateDecimalPlaces": 3,
+    "rotationDecimalPlaces": 2,
+    "species": [
+      {
+        "speciesId": "oak",
+        "displayName": "Oak",
+        "description": "Development fixture; balance unapproved.",
+        "clearanceRadius": 0.9,
+        "isFixture": true,
+        "defaultProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "variants": [
+          {
+            "variantId": "blue",
+            "displayName": "Blue",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-blue.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-blue.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-blue.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-blue.png"
+              }
+            }
+          },
+          {
+            "variantId": "standard",
+            "displayName": "Standard",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-standard.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-standard.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-standard.png"
+              }
+            }
+          },
+          {
+            "variantId": "vined",
+            "displayName": "Vined",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-vined.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-vined.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-vined.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-vined.png"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "profiles": {
+      "growth": [
+        {
+          "id": "dev_oak_growth",
+          "version": 1,
+          "thresholdsMicroUnits": {
+            "sprout": "0",
+            "seedling": "100000000",
+            "young": "400000000",
+            "adult": "1000000000"
+          },
+          "maximumGrowthMicroUnits": "1000000000"
+        }
+      ],
+      "behaviour": [
+        {
+          "id": "dev_oak_behaviour",
+          "version": 1,
+          "schemaVersion": 1,
+          "metricMultipliers": {
+            "steps": 1.0
+          },
+          "conditionalModifiers": [],
+          "gardenEffects": []
+        }
+      ],
+      "attraction": [
+        {
+          "id": "dev_oak_attraction",
+          "version": 1,
+          "stageAttractionMicroUnits": {
+            "sprout": "2000000",
+            "seedling": "5000000",
+            "young": "12000000",
+            "adult": "20000000"
+          },
+          "gameplayTags": [
+            "tree",
+            "woodland"
+          ]
+        }
+      ]
+    }
+  },
+  "emptyGarden": {
+    "gardenId": "bd421d16-d86d-4763-9cc6-b1f81d19376a",
+    "width": 10.0,
+    "depth": 10.0,
+    "visibility": "friends",
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "catalogVersion": "development-oak-v1",
+    "layoutVersion": 0,
+    "stateVersion": 0,
+    "plants": []
+  },
+  "inventory": {
+    "plants": [
+      {
+        "plantId": "ba101ec0-fac9-4a34-9edd-a8939e58025a",
+        "speciesId": "oak",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "0",
+        "growthStage": "sprout",
+        "baseAttractionMicroUnits": "2000000",
+        "contributesAttraction": false,
+        "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+        "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+        "placement": null
+      }
+    ],
+    "nextCursor": null
+  },
+  "plantRequest": {
+    "requestId": "ea50fae0-3a78-4cac-ab44-36e5f4eaf86e",
+    "expectedLayoutVersion": 0,
+    "catalogVersion": "development-oak-v1",
+    "actions": [
+      {
+        "action": "plant",
+        "plantId": "ba101ec0-fac9-4a34-9edd-a8939e58025a",
+        "x": 3.201,
+        "y": 4.609,
+        "rotationDegrees": 35.12
+      }
+    ]
+  },
+  "plantResult": {
+    "requestId": "ea50fae0-3a78-4cac-ab44-36e5f4eaf86e",
+    "garden": {
+      "gardenId": "bd421d16-d86d-4763-9cc6-b1f81d19376a",
+      "width": 10.0,
+      "depth": 10.0,
+      "visibility": "friends",
+      "coordinateUnit": "garden_unit",
+      "gardenUnitMetres": 1.0,
+      "catalogVersion": "development-oak-v1",
+      "layoutVersion": 1,
+      "stateVersion": 1,
+      "plants": [
+        {
+          "plantId": "ba101ec0-fac9-4a34-9edd-a8939e58025a",
+          "speciesId": "oak",
+          "variantId": "standard",
+          "pinnedProfiles": {
+            "growth": {
+              "id": "dev_oak_growth",
+              "version": 1
+            },
+            "behaviour": {
+              "id": "dev_oak_behaviour",
+              "version": 1
+            },
+            "attraction": {
+              "id": "dev_oak_attraction",
+              "version": 1
+            }
+          },
+          "growthMicroUnits": "0",
+          "growthStage": "sprout",
+          "baseAttractionMicroUnits": "2000000",
+          "contributesAttraction": true,
+          "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+          "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+          "placement": {
+            "gardenId": "bd421d16-d86d-4763-9cc6-b1f81d19376a",
+            "x": 3.201,
+            "y": 4.609,
+            "rotationDegrees": 35.12
+          }
+        }
+      ]
+    },
+    "updatedPlants": [
+      {
+        "plantId": "ba101ec0-fac9-4a34-9edd-a8939e58025a",
+        "speciesId": "oak",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "0",
+        "growthStage": "sprout",
+        "baseAttractionMicroUnits": "2000000",
+        "contributesAttraction": true,
+        "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+        "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+        "placement": {
+          "gardenId": "bd421d16-d86d-4763-9cc6-b1f81d19376a",
+          "x": 3.201,
+          "y": 4.609,
+          "rotationDegrees": 35.12
+        }
+      }
+    ]
+  },
+  "placedInventory": {
+    "plants": [],
+    "nextCursor": null
+  },
+  "rejection": {
+    "error": {
+      "code": "out_of_bounds",
+      "message": "Plant clearance extends beyond the garden",
+      "details": {
+        "plantId": "ba101ec0-fac9-4a34-9edd-a8939e58025a"
+      }
+    }
+  }
+}

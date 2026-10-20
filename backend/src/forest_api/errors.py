@@ -4,18 +4,22 @@ from fastapi.responses import JSONResponse
 
 
 class ApiError(Exception):
-    def __init__(self, status: int, code: str, message: str):
+    def __init__(self, status: int, code: str, message: str, details: dict | None = None):
         self.status = status
         self.code = code
         self.message = message
+        self.details = details
 
 
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def api_error_handler(request: Request, error: ApiError) -> JSONResponse:
+        payload = {"code": error.code, "message": error.message}
+        if error.details is not None:
+            payload["details"] = error.details
         return JSONResponse(
             status_code=error.status,
-            content={"error": {"code": error.code, "message": error.message}},
+            content={"error": payload},
             headers={"WWW-Authenticate": "Bearer"} if error.status == 401 else None,
         )
 

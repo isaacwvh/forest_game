@@ -1,4 +1,4 @@
-# Movement Forest — frontend baseline
+# Movement Forest — native frontend and connected F4 editor
 
 Native SwiftUI + RealityKit + read-only HealthKit, targeting iPhone on **iOS 16+**.
 First physical validation target: iPhone 14 Pro, iOS 26.6.2.
@@ -43,6 +43,9 @@ in Health is enough to test workout reads. Phone steps do not imply a workout.
 
 - **Garden:** a stable 15-plant sample, continuous board coordinates, shared
   temporary ground, orbit/pan/zoom, camera reset, plant selection and details.
+- **Connected garden (Debug):** authenticated B3 catalogue/garden/inventory reads,
+  planting, moving, rotation, storage, adult previews and durable edit recovery.
+  See [F4_ACCEPTANCE.md](F4_ACCEPTANCE.md) for connection and database checks.
 - **Accessible plant list:** an alternative to selecting models behind foliage.
 - **Activity:** optional Health explanation/permission flow; seven calendar days
   of steps and up to 100 recorded workouts in the last 30 days; foreground/manual
@@ -61,17 +64,24 @@ invented. Asset versions are pinned to the delivered `1.0.0` packages.
 
 | Boundary | Current implementation | Later implementation |
 | --- | --- | --- |
-| `GardenRepository` | `SampleGardenRepository` reads a bundled fixture | API repository maps confirmed DTOs to `GardenSnapshot` |
+| `GardenRepository` / `GardenServing` | Explicit sample repository or authenticated `APIGardenRepository`; separate API DTOs map to render models | Managed-login token provider and activity sync |
 | `AssetCatalogProviding` | `BundleAssetCatalog` resolves package manifests | Versioned game/asset catalogue and downloaded file resolver |
-| `GardenRenderer` | `RealityGardenRenderer` | Reuse for F4 editing and F5 confirmed state updates |
+| `GardenRenderer` | Incremental confirmed updates and separate local drag/adult previews | F5 confirmed growth/stage updates |
 | `HealthDataProviding` | `HealthKitService` / fixture provider | Reuse reads under a durable activity-sync coordinator |
-| `GardenStore` / `ActivityStore` | Observable screen state | Add cached confirmed state and sync status |
+| `GardenEditorStore` / `ActivityStore` | Confirmed garden, inventory, local candidate and durable pending request; independent local Health reads | Cached viewing and durable activity uploads |
 
 `GardenSnapshot` is a frontend view model, **not** a frozen backend wire schema.
 Its UUIDs, `x`/`y`, degree yaw, catalogue and layout/state versions align with the
-spec. Keep API decoding/mapping in the repository when FastAPI is ready.
-The model currently represents placed plants only; F4 adds owned inventory and
-editing commands without turning catalogue assets into individual ownership.
+spec. `APIOwnedPlant` represents both stored and placed copies. Only the adapter
+produces placed rendering models; bundled asset lists never grant ownership.
+
+Development API addresses are saved in preferences and bearer tokens in Keychain.
+One unresolved edit per account/server is saved atomically in Application Support
+before transmission. Retries reuse identical request bytes and IDs. Pending saves
+survive app relaunch and disconnection; uninstalling the app removes its container.
+Other confirmed garden/inventory data remains in memory, so a cold offline launch
+does not offer editable cached state. Release builds retain the sample experience;
+development connection controls and automatic development-token loading are disabled.
 
 Health observations are kept in memory. The only persisted Health-related value
 is whether the user attempted the access request; this is never treated as proof
@@ -136,18 +146,19 @@ testing, set the Run scheme argument `--fixture-health`; optionally also use
 `.github/workflows/frontend.yml` runs the same Mac checks on GitHub after a push.
 This session does not push commits or run remote CI automatically.
 
-Unit tests cover asset resolution, stable scene identities, coordinates, axis
-conversion decisions, stage placement preservation, DST day boundaries and
-Health state semantics. They do not certify RealityKit rendering or HealthKit's
-device aggregation. Inspect both separately.
+Unit tests cover API mapping/encoding, shared exact geometry, pending-edit
+recovery, token replacement, conflicts, pagination, renderer entity reuse,
+asset resolution, DST day boundaries and Health state semantics. They require
+Xcode to execute. Portable parsing does not certify Apple SDK typechecking,
+RealityKit rendering or HealthKit device aggregation.
 
 ## Subsequent milestones
 
-- **F4:** owned inventory, editor input modes, exact shared clearance validation,
-  adult previews and pending edit state. Reuse the renderer/camera/ground ray.
-- **F5:** managed login, API repositories, cached viewing, durable retry queue,
+- **F4:** source implemented; native build, tests and live device acceptance pending.
+- **F5:** managed login, cached viewing, durable activity uploads,
   baseline and cumulative observations, confirmed growth/stage changes.
-- **F6:** packet collection and social screens backed by confirmed API results.
+- **F6:** visitor interaction backed by B6 accounting.
+- **F7:** collection economy and social screens backed by confirmed API results.
 
 Background Health delivery, CDN downloads/cache eviction, reward celebrations,
 full storage editing and server writes are deliberately outside F1–F3. Device

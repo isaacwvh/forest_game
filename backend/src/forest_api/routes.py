@@ -9,10 +9,14 @@ from forest_api import services
 from forest_api.auth import Identity
 from forest_api.dependencies import get_identity, get_session
 from forest_api.errors import ApiError
+from forest_api.exact_json import ExactJSONRoute
+from forest_api.placement import edit_garden
 from forest_api.schemas import (
     AccountDTO,
     CatalogueDTO,
     GardenDTO,
+    GardenEditRequest,
+    GardenEditResult,
     InventoryDTO,
     PlantDTO,
     RegisterAccount,
@@ -21,6 +25,7 @@ from forest_api.schemas import (
 )
 
 router = APIRouter()
+placement_router = APIRouter(route_class=ExactJSONRoute)
 SCHEMA_REVISION = "0001_b1_b2"
 
 
@@ -104,3 +109,16 @@ def plant(
     session: Session = Depends(get_session),
 ) -> PlantDTO:
     return services.read_plant(session, identity, plant_id)
+
+
+@placement_router.post("/v1/me/garden/edits", response_model=GardenEditResult, tags=["garden"])
+def garden_edits(
+    body: GardenEditRequest,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> GardenEditResult:
+    return edit_garden(session, request.app.state.settings, identity, body)
+
+
+router.include_router(placement_router)

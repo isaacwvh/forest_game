@@ -76,13 +76,30 @@ def get_user(session: Session, identity: Identity, *, lock: bool = False) -> Use
     return user
 
 
-def get_catalogue_state(session: Session, settings: Settings) -> GameCatalogue:
-    catalogue = session.get(GameCatalogue, 1)
+def get_catalogue_state(
+    session: Session, settings: Settings, *, lock: bool = False
+) -> GameCatalogue:
+    catalogue = (
+        session.scalar(
+            select(GameCatalogue).where(GameCatalogue.id == 1).with_for_update(read=True)
+        )
+        if lock
+        else session.get(GameCatalogue, 1)
+    )
     if catalogue is None:
         raise ApiError(503, "catalogue_unavailable", "Game catalogue has not been configured")
     if catalogue.is_fixture and settings.environment not in {"local", "test"}:
         raise ApiError(503, "fixture_catalogue_disabled", "Development catalogue is disabled")
     return catalogue
+
+
+def lock_garden(session: Session, owner_id: UUID, *, write: bool = False) -> Garden:
+    garden = session.scalar(
+        select(Garden).where(Garden.owner_id == owner_id).with_for_update(read=not write)
+    )
+    if garden is None:
+        raise ApiError(503, "garden_unavailable", "Account garden is unavailable")
+    return garden
 
 
 def profile_refs(row: Species | OwnedPlant) -> PinnedProfiles:
@@ -335,6 +352,7 @@ def read_inventory(
 ) -> InventoryDTO:
     with session.begin():
         user = get_user(session, identity)
+        lock_garden(session, user.id)
         query = select(OwnedPlant).where(
             OwnedPlant.owner_id == user.id,
             ~select(GardenPlacement.plant_id)
@@ -351,34 +369,45 @@ def read_inventory(
         )
 
 
+def present_garden(
+    session: Session,
+    garden: Garden,
+    catalogue: GameCatalogue,
+    presenter: PlantPresenter | None = None,
+) -> GardenDTO:
+    """Caller holds the garden lock for the entire snapshot/DTO assembly."""
+    rows = session.execute(
+        select(OwnedPlant, GardenPlacement)
+        .join(GardenPlacement, GardenPlacement.plant_id == OwnedPlant.id)
+        .where(GardenPlacement.garden_id == garden.id, OwnedPlant.owner_id == garden.owner_id)
+        .order_by(OwnedPlant.id)
+    ).all()
+    presenter = presenter or PlantPresenter(session)
+    return GardenDTO(
+        garden_id=garden.id,
+        width=garden.width,
+        depth=garden.depth,
+        visibility=garden.visibility,
+        garden_unit_metres=catalogue.unit_metres,
+        catalog_version=catalogue.version,
+        layout_version=garden.layout_version,
+        state_version=garden.state_version,
+        plants=[presenter.plant(plant, placement) for plant, placement in rows],
+    )
+
+
 def read_garden(session: Session, settings: Settings, identity: Identity) -> GardenDTO:
     with session.begin():
         user = get_user(session, identity)
-        catalogue = get_catalogue_state(session, settings)
-        garden = session.scalar(select(Garden).where(Garden.owner_id == user.id))
-        rows = session.execute(
-            select(OwnedPlant, GardenPlacement)
-            .join(GardenPlacement, GardenPlacement.plant_id == OwnedPlant.id)
-            .where(GardenPlacement.garden_id == garden.id, OwnedPlant.owner_id == user.id)
-            .order_by(OwnedPlant.id)
-        ).all()
-        presenter = PlantPresenter(session)
-        return GardenDTO(
-            garden_id=garden.id,
-            width=garden.width,
-            depth=garden.depth,
-            visibility=garden.visibility,
-            garden_unit_metres=catalogue.unit_metres,
-            catalog_version=catalogue.version,
-            layout_version=garden.layout_version,
-            state_version=garden.state_version,
-            plants=[presenter.plant(plant, placement) for plant, placement in rows],
-        )
+        garden = lock_garden(session, user.id)
+        catalogue = get_catalogue_state(session, settings, lock=True)
+        return present_garden(session, garden, catalogue)
 
 
 def read_plant(session: Session, identity: Identity, plant_id: UUID) -> PlantDTO:
     with session.begin():
         user = get_user(session, identity)
+        lock_garden(session, user.id)
         plant = owned_plant(session, user.id, plant_id)
         placement = session.get(GardenPlacement, plant.id)
         return PlantPresenter(session).plant(plant, placement)
