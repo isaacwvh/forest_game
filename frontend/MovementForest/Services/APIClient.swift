@@ -63,7 +63,12 @@ struct APIClient {
     let tokens: any TokenProviding
     let transport: any HTTPTransport
 
-    init(baseURL: URL, tokens: any TokenProviding, transport: any HTTPTransport = URLSessionTransport()) {
+    @MainActor
+    init(baseURL: URL, tokens: any TokenProviding) {
+        self.init(baseURL: baseURL, tokens: tokens, transport: URLSessionTransport())
+    }
+
+    init(baseURL: URL, tokens: any TokenProviding, transport: any HTTPTransport) {
         self.baseURL = baseURL; self.tokens = tokens; self.transport = transport
     }
 
