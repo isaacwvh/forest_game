@@ -5,7 +5,17 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from forest_api import services
+from forest_api import activity, services
+from forest_api.activity_schemas import (
+    AcknowledgeRecap,
+    ActivityStatus,
+    EnrolActivity,
+    EnrolResult,
+    RecapAcknowledgement,
+    RecapList,
+    SyncActivity,
+    SyncResult,
+)
 from forest_api.auth import Identity
 from forest_api.dependencies import get_identity, get_session
 from forest_api.errors import ApiError
@@ -26,7 +36,7 @@ from forest_api.schemas import (
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0001_b1_b2"
+SCHEMA_REVISION = "0002_b4_b5"
 
 
 @router.get("/health/live", tags=["health"])
@@ -118,7 +128,75 @@ def garden_edits(
     identity: Identity = Depends(get_identity),
     session: Session = Depends(get_session),
 ) -> GardenEditResult:
-    return edit_garden(session, request.app.state.settings, identity, body)
+    return edit_garden(
+        session,
+        request.app.state.settings,
+        identity,
+        body,
+        accounting=request.app.state.accounting,
+        clock=request.app.state.clock,
+    )
+
+
+@placement_router.post("/v1/activity/enrolments", response_model=EnrolResult, tags=["activity"])
+def enrol_activity(
+    body: EnrolActivity,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> EnrolResult:
+    return activity.enrol(
+        session, request.app.state.settings, identity, body, clock=request.app.state.clock
+    )
+
+
+@placement_router.post("/v1/activity/sync", response_model=SyncResult, tags=["activity"])
+def sync_activity(
+    body: SyncActivity,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> SyncResult:
+    return activity.sync(
+        session,
+        request.app.state.settings,
+        identity,
+        body,
+        clock=request.app.state.clock,
+        accounting=request.app.state.accounting,
+    )
+
+
+@router.get("/v1/me/activity", response_model=ActivityStatus, tags=["activity"])
+def activity_status(
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> ActivityStatus:
+    return activity.status(session, identity, clock=request.app.state.clock)
+
+
+@router.get("/v1/me/reward-recaps", response_model=RecapList, tags=["activity"])
+def pending_recaps(
+    limit: int = Query(default=30, ge=1, le=100),
+    after: UUID | None = None,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> RecapList:
+    return activity.recaps(session, identity, limit, after)
+
+
+@placement_router.post(
+    "/v1/reward-recaps/{recap_id}/ack", response_model=RecapAcknowledgement, tags=["activity"]
+)
+def acknowledge_recap(
+    recap_id: UUID,
+    body: AcknowledgeRecap,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> RecapAcknowledgement:
+    return activity.acknowledge(session, identity, recap_id, body, clock=request.app.state.clock)
 
 
 router.include_router(placement_router)

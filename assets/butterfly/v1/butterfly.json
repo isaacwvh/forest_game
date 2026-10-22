@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "assetType": "visitor",
+  "visitorId": "butterfly",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "authoringForwardAxis": "+Y",
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "thorax_center",
+    "rootMotion": false,
+    "note": "Flight, turning, arrival, tap response and departure are controlled by the app. Bounds are visual envelopes, not a gameplay hit target."
+  },
+  "animation": {
+    "name": "butterfly_wing_flap",
+    "durationSeconds": 0.8,
+    "fps": 30,
+    "frames": [
+      1,
+      25
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "motion": "Mirrored fore/hind hinges, slight hindwing delay and gentle distal flex. First and final poses match; no travel baked in.",
+    "endpointPolicy": "25 samples delimit 24 frame intervals; repeat a 0.8-second clip without holding the duplicated endpoint.",
+    "appearancePoses": {
+      "spread": 1,
+      "upstroke": 7,
+      "downstroke": 19
+    }
+  },
+  "materials": {
+    "count": 1,
+    "textures": [
+      {
+        "semantic": "baseColor",
+        "dimensions": [
+          2048,
+          2048
+        ],
+        "embedded": true
+      },
+      {
+        "semantic": "roughness",
+        "dimensions": [
+          2048,
+          2048
+        ],
+        "embedded": true
+      },
+      {
+        "semantic": "tangentNormal",
+        "dimensions": [
+          2048,
+          2048
+        ],
+        "embedded": true
+      }
+    ],
+    "surface": "Painted dorsal amber and paler ventral gold; broad charcoal veins; ivory border spots; subtle microscopic scale normals."
+  },
+  "assets": [
+    {
+      "variant": "standard",
+      "file": "models/butterfly-standard.usdz",
+      "bounds": {
+        "min": [
+          -0.370199,
+          -0.21244,
+          -0.052391
+        ],
+        "max": [
+          0.370199,
+          0.251136,
+          0.021606
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.368515,
+          -0.213905,
+          -0.198875
+        ],
+        "max": [
+          0.368515,
+          0.256957,
+          0.331967
+        ]
+      },
+      "animation": "butterfly_wing_flap",
+      "triangles": 7542,
+      "vertices": 3809,
+      "joints": 9,
+      "bytes": 7950697,
+      "sha256": "0f4c7e0b3f83ebef5e3427b3b2b14a679a184676bbfbaacd9186851e9ea1e36b"
+    }
+  ]
+}

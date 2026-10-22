@@ -7,6 +7,13 @@ protocol HealthDataProviding {
     var isFixture: Bool { get }
     func requestReadAccess() async throws
     func readActivity(now: Date, timeZone: TimeZone) async -> ActivityReport
+    func readStepObservation(now: Date, timeZone: TimeZone) async -> ActivityReport
+}
+
+extension HealthDataProviding {
+    func readStepObservation(now: Date, timeZone: TimeZone) async -> ActivityReport {
+        await readActivity(now: now, timeZone: timeZone)
+    }
 }
 
 @MainActor
@@ -16,7 +23,7 @@ final class ActivityStore: ObservableObject {
     @Published private(set) var hasRequestedAccess: Bool
     @Published private(set) var requestIssue: String?
     let provider: any HealthDataProviding
-    let timeZone: TimeZone
+    private(set) var timeZone: TimeZone
     private let defaults: UserDefaults
     private let requestKey = "health.readRequestAttempted.v1"
 
@@ -50,6 +57,16 @@ final class ActivityStore: ObservableObject {
         defer { isLoading = false }
         requestIssue = nil
         report = await provider.readActivity(now: Date(), timeZone: timeZone)
+    }
+
+    func readForUpload(timeZone: TimeZone) async -> ActivityReport {
+        self.timeZone = timeZone
+        let result = await provider.readStepObservation(now: Date(), timeZone: timeZone)
+        // Preserve workout diagnostics from a previous local read.
+        report = ActivityReport(observedAt: result.observedAt, timeZoneIdentifier: result.timeZoneIdentifier,
+                                days: result.days, workouts: report?.workouts ?? [], stepsIssue: result.stepsIssue,
+                                workoutsIssue: report?.workoutsIssue, isFixture: result.isFixture)
+        return result
     }
 }
 

@@ -1,9 +1,44 @@
 # Movement Forest implementation plan
 
-Revised 20 October 2026 against `forest_game_v1_spec.md`, version 0.9.
-This is a proposed delivery plan, not a source of approved balance values. F1–F3 are complete per the user's update. The B1–B3 backend is now implemented under `backend/`; see `backend/VALIDATION.md` for verification and remaining provider/container checks. B4 and subsequent mechanics are not implemented.
+Revised 23 October 2026 against `forest_game_v1_spec.md`, version 0.11.
+This is a proposed delivery plan, not a source of approved balance values. F1–F3 are complete per the user's update. The B1–B5 backend is implemented under `backend/`; see `backend/VALIDATION.md` for verification and remaining provider/container checks. B6 and subsequent mechanics remain future work.
 
-**Milestone status:** B1 and B2 accepted as complete by the user. Live managed-auth provider integration, approved production configuration and remote CI execution remain tracked follow-up work in `backend/VALIDATION.md`.
+**B4/B5 implementation — 22 October 2026:** exact neutral growth calculations, derived garden attraction, immutable fixture rule versions, steps-first activity enrolment/sync, one-device replacement/baseline policy, cumulative watermarks, atomic per-copy credits, counters and recoverable recaps are implemented. [backend/ACTIVITY_API.md](backend/ACTIVITY_API.md) is the F5 integration contract. The explicit queue policy accepts seven game dates per observation with a bounded 30-day unresolved-upload grace; completed receipts replay beyond it. Initial enabled maturity profiles require adult threshold = terminal maximum. No activity currency, visitor production, B8 handlers or cloud deployment is included. Test fixture values remain unapproved production balance.
+
+**Milestone status:** B1 and B2 accepted as complete by the user. Supabase Auth source integration is implemented in F5a; native/hosted-provider acceptance remains the next check to close B2's provider follow-up. Approved production configuration and remote CI execution remain tracked follow-up work in `backend/VALIDATION.md`.
+
+**F5 implementation — 22 October 2026:** the delivered slice uses development-token
+login under the earlier decision. That deferral is superseded by the Supabase
+selection and implemented F5a source; native/live login acceptance remains pending.
+Implemented in-app account provisioning, scoped confirmed-garden cache, separate
+Health upload consent, account-timezone step reads, durable enrolment/sync/recap
+requests, device replacement, membership preflight, monotonic confirmed growth,
+resolved pinned-profile progress and stage updates. Native Xcode/iPhone acceptance
+remains pending; use [frontend/F5_ACCEPTANCE.md](frontend/F5_ACCEPTANCE.md).
+Foreground/manual recovery is required now; Health observer background delivery
+and cosmetic watering remain deferred increments.
+
+**Architecture/auth update — 22 October 2026 (documentation only):** retain FastAPI,
+SQLAlchemy/psycopg and Alembic; target Cloud Run compute plus Supabase PostgreSQL,
+Auth and Storage/CDN. Deliver F5a next using hosted Supabase Auth and the existing
+local game database. Move the database and remote assets separately during B10.
+Email/password, Google, native Apple and explicit identity linking are planned;
+game usernames remain separate from authentication. Setup instructions are in
+[SUPABASE_SETUP.md](SUPABASE_SETUP.md). No cloud resources, code, dependencies,
+secrets or environment configuration are changed by this plan update.
+
+**F5a source implementation — 23 October 2026:** added pinned Supabase Swift Auth,
+email/password/confirmation/recovery, Keychain session restore/refresh,
+identity-scoped API retries, game onboarding, conditional Google browser and native
+Apple login/linking, logout/switch isolation and late-response protection. Docker
+forwards JWKS settings while retaining local game PostgreSQL. All **242 backend
+tests passed** using disposable local PostgreSQL databases; source/project/resource
+and Swift syntax checks passed. Xcode/XCTest, hosted Supabase/email/provider
+acceptance and physical iPhone checks remain pending. Configure email first using
+[frontend/F5A_AUTH_ACCEPTANCE.md](frontend/F5A_AUTH_ACCEPTANCE.md); leave Google/Apple
+disabled until their provider setup is ready. No project/credentials were created.
+
+**Workout guard / onboarding update — 22 October 2026:** the existing iOS workout query excludes `HKMetadataKeyWasUserEntered = true` before its result limit. B4/B5 still accept steps only; do not add workout uploads/rewards before B8. B8 must preserve the manual-entry flag and exclude flagged workouts/segments before reward accounting. Onboarding remains unimplemented; section 3.1 of the spec now defines Apple Fitness recording and third-party app → Apple Health setup, including Strava instructions, for implementation with onboarding.
 
 **B3 implementation:** atomic batch edits, canonical geometry, optimistic layout/catalogue checks, durable retries, consistent reads and disabled future visitor-accounting boundaries are implemented. All 132 backend tests and a real HTTP smoke check passed. No database migration or new production balance values are required. See backend validation for scope limits and the pending Docker image check.
 
@@ -19,6 +54,7 @@ The core loop is now:
 - Establish the transaction boundary in B3/B5 where elapsed visitor time will be settled before membership, stages or skills change. Implement actual visitor settlement in B6, with regression tests through the existing placement and growth paths.
 - Budget frontend visitor behaviour explicitly. Basic visitor interaction is required gameplay; advanced swarm art and cosmetic plant effects can follow.
 - Keep additional metrics, typed workouts and separate growth/visitor skill resolvers visible in the plan. A steps-first vertical slice does not remove the wider V1 input scope.
+- Insert F5a now to prove real sessions, stable linked identities and account-scoped retry recovery before visitor/currency integration. Preserve completed F5 mechanics and its still-pending native acceptance.
 
 Existing B6–B9 become B7–B10 below. Existing F6 becomes F7 and F7 becomes F8, with visitor UI inserted as F6.
 
@@ -27,7 +63,7 @@ Existing B6–B9 become B7–B10 below. Existing F6 becomes F7 and F7 becomes F8
 | Step | Work | Completion check |
 | --- | --- | --- |
 | **B1. Project foundation** | Docker-based FastAPI, SQLAlchemy, PostgreSQL, Alembic, environment configuration, request-scoped sessions, automated tests and GitHub CI. Establish explicit transaction ownership and a documented common lock order. | Fresh checkout can start the service, apply migrations explicitly and pass tests against PostgreSQL. CI is configured for the same database-backed checks. |
-| **B2. Catalogue, accounts and ownership** | Species, variants, stage/model/thumbnail references, immutable growth/behaviour/attraction profiles, pinned owned copies, one garden per user and paginated inventory. Verify managed-auth tokens and enforce ownership. Add repeat-safe account/starter provisioning. | Two test accounts see their own state; neither can modify the other's plants. Duplicate copies have distinct IDs/progress. Awarded copies retain pinned profiles. Starter retries cannot grant extra plants. |
+| **B2. Catalogue, accounts and ownership** | Species, variants, stage/model/thumbnail references, immutable growth/behaviour/attraction profiles, pinned owned copies, one garden per user and paginated inventory. Verify Supabase access tokens and enforce ownership. Add repeat-safe account/starter provisioning. Core implementation accepted; live-provider work closes in F5a. | Two test accounts see their own state; neither can modify the other's plants. Duplicate copies have distinct IDs/progress. Awarded copies retain pinned profiles. Starter retries cannot grant extra plants. Real linked-provider acceptance is tracked by F5a rather than assumed complete. |
 | **B3. Placement and transaction boundaries** | Continuous canonical coordinates, authoritative circular clearance, atomic batch plant/move/rotate/store, request deduplication, catalogue checks and separate layout/state versions. Centralise mutations so visitor settlement can be integrated before state changes. | Boundary/tangency/overlap, invalid precision, batch-swap, rollback, retry, stale-version and concurrent-edit tests pass. Storage preserves identity/progress; rotation and stage do not change radius. |
 | **B4. Growth and attraction calculations** | Independently test normalised per-metric water, species coefficients, cumulative stages, terminal maturity caps and fractional carry. Derive attraction from placed copies and pinned stage profiles; define versioned visitor curve/capacity configuration. Start with neutral modifiers. | Fixed fixtures give exact growth and attraction, including duplicates, adults, omitted metrics and stored plants. Splitting inputs within unchanged contexts preserves totals. Activity calculations award no currency. |
 | **B5. Activity synchronisation — priority** | `/v1/activity/sync`, enrolment baseline, game-date buckets, observed values versus per-metric credited watermarks, device policy, idempotency, per-plant growth credits, first-maturity/activity counters and recap records. Start with steps; add the wider input handlers incrementally in B8. | Replays, downward corrections, late totals, concurrent syncs and sync-versus-store races neither duplicate nor lose eligible growth. Stored plants remain unchanged. Sync mints no tokens/tickets. Reaching a stage leaves transforms intact. |
@@ -35,7 +71,7 @@ Existing B6–B9 become B7–B10 below. Existing F6 becomes F7 and F7 becomes F8
 | **B7. Collection economy** | Versioned visitor-token → ticket exchange, introductory/permanent visitor milestones, permanent packet unlocks, ticket spending and server-selected draws into sprout storage. Reuse shared wallet/idempotency rules. | Concurrent claims/exchanges/draws cannot overspend or double-grant. Retries return original amounts and awarded plant ID. Logical milestones cannot regrant on a rule-version edit. Spending never reverses permanent access or growth. |
 | **B8. Additional inputs, boosts and skills** | Daily distance/active energy/flights, typed workout import/deduplication, personal marginal water boosts and the two-layer growth resolver. Separately enable visitor attraction/capacity skills. Use neutral weather or controlled fixtures initially; live weather, offline-rate skills and complex synergies require explicit scope decisions. | Each handler passes independently before combinations. Workout parent/segments and overlapping records cannot duplicate duration; intentional overlap with ordinary daily activity remains. Same-group skills resolve deterministically and stage activation uses the proper snapshot. Capacity removal preserves earned storage. |
 | **B9. Social** | Friend requests, exact lookup, read-only visits, visibility and blocks. | Access tests pass; friend responses exclude health history, private visitor state and ledgers. Friends cannot redeem another garden's opportunities/storage. |
-| **B10. Staging and release readiness** | API/managed PostgreSQL, HTTPS, secrets, controlled migrations, asset delivery, logs, monitoring, backups/restore checks and account deletion. Run closed-loop economy and long-absence/load checks. Start minimal staging after B3/B5 if useful. | Automated API tests pass on staging. Starter-to-first-draw pacing and realistic active versus offline income are evaluated. Retention/deletion, restore and device-release checks are completed before alpha release. |
+| **B10. Staging and release readiness** | Deploy the FastAPI image to Cloud Run; migrate game PostgreSQL to Supabase with controlled Alembic, tested TLS/pooler/driver settings and bounded aggregate connections. Publish immutable shared assets to Supabase Storage/CDN. Add HTTPS, secrets, logs, monitoring, backup/restore and coordinated Supabase/game account deletion. Run economy and long-absence/load checks. | Automated API tests pass on isolated staging. No game-table access bypasses FastAPI. Database migration/restore, asset delivery, cold-start/first-sync latency and resource budgets are verified. Starter-to-first-draw pacing, retention/deletion and device-release checks pass before alpha. Real Auth is already delivered in F5a; full cloud deployment is not its prerequisite. |
 
 ### B6 should contain three increments
 
@@ -59,16 +95,63 @@ B6 is a substantial milestone with both accounting and behaviour requirements. I
 | --- | --- | --- |
 | **F1–F3. Native foundation, rendering and initial HealthKit feasibility — complete** | Retain the SwiftUI/RealityKit foundation, 15-plant scene, camera/lighting and Health diagnostics. | Marked complete from the user's update. Wider newly scoped metric/device coverage is verified during subsequent integration. |
 | **F4. Garden editor** | Inventory thumbnails, select/drag/rotate/store, exact shared clearance fixtures, adult previews and pending-versus-confirmed edits. | Local preview agrees with backend examples. Rejection restores confirmed state; offline previews do not imply committed edits. |
-| **F5. Backend and activity integration** | Login, catalogue/inventory/garden repositories, durable activity uploads, cached viewing and confirmed growth/stage updates. Extend diagnostics/read paths for the four daily inputs and typed workouts as each backend handler lands. | Reopening/interrupted/repeated syncs are safe. Missing optional Health data does not block steps. Activity confirmation displays growth without inventing tickets. |
+| **F5. Backend and activity integration — implemented steps slice** | Development-token account provisioning, catalogue/inventory/garden repositories, durable step uploads, scoped cached viewing and confirmed growth/stage updates are implemented. Real login follows in F5a. Extend wider metric/workout integration only as B8 handlers land. | Reopening/interrupted/repeated syncs are safe. Missing optional Health data does not block steps. Activity confirmation displays growth without inventing tickets. Existing Mac/iPhone acceptance remains pending; implementation is not device-validation evidence. |
+| **F5a. Supabase authentication and identity linking — source implemented; acceptance next** | Email/password, Google, native Apple; Keychain-backed SDK sessions; asynchronous API token refresh; existing account/starter onboarding; linked-method settings; safe logout/account switching and durable queue recovery. Configure FastAPI JWKS against hosted development Auth while keeping game PostgreSQL local. | Each method signs in on a real iPhone. Linked methods return the same Supabase subject/internal user/garden with one starter. Refresh/reauthentication preserve request UUIDs, watermarks and consent. Different accounts cannot share cached state or queued uploads. See acceptance gate below. |
 | **F6. Visitor interaction — new** | Attraction explanation; one shared visitor appearance/controller; arrival/flight/linger/tap/departure; server session lifecycle, heartbeat and opportunity expiry; pending/confirmed welcomes; stored capacity/time-to-full and one-interaction claim. | Background/edit/modal/friend-view transitions end or pause active mode correctly. Missed arrivals are not redeemed or converted into stored income. Connection loss, camera/foliage hit testing, reduced motion and device performance are acceptable. |
 | **F7. Collection and social UI** | Token/ticket balances and exchange, visitor milestones, packet access/probabilities, server-confirmed draws/results, friends and read-only visits, one screen at a time. | Prices and rewards match confirmed server versions; retries do not reroll. Friend-view visitors are non-rewarding visuals only. |
 | **F8. Hardening and polish** | Download/cache limits, durable retries, delayed Health inputs, session recovery, stage transitions, recap receipts, accessibility, long sessions and economy pacing. Cosmetic watering/swarm/unboxing effects follow durable mechanics. | A small TestFlight alpha completes the full loop over several days. No duplicate rewards on interruptions or reconnects; realistic active earnings and time-to-first-draw meet selected targets. |
 
-F4 can proceed alongside B1–B3 using shared geometry fixtures. F5 follows backend contracts. F6 can prototype visuals early but is validated against B6. Exchange/collection UI follows B7. Native changes continue to require Mac/iPhone validation.
+F4 can proceed alongside B1–B3 using shared geometry fixtures. F5 follows backend contracts. Complete F5a before integrated F6 visitor/reward acceptance or wider external testing. B6 domain work and F6 visual prototypes may proceed independently; their user-facing integration uses the validated session/account boundary. Exchange/collection UI follows B7. Native changes continue to require Mac/iPhone validation.
 
-## Tonight: start B1–B3
+## F5a: implemented source; native/provider acceptance next
 
-Proposed timebox: approximately **4–6 focused hours**, with environment/auth setup able to extend it. Aim to finish B1, deliver a narrow B2 and begin a tested B3 slice. Full B1–B3 completion is not a prerequisite for a successful evening.
+### Timing and scope
+
+**Proceed now.** B1–B5 and the F5 steps slice already provide authenticated profile lookup, repeat-safe account creation and account/server-scoped disk journals. This is sufficient to test real identity end to end, and early enough to avoid propagating the generated-token UI into visitors, wallets and social screens. F5a replaces the authentication/session boundary while retaining B4/B5 calculations, enrolment/device policy and F5 activity contracts. It does not add visitor rewards, broader Health uploads, onboarding polish, garden merges or cloud database/asset migration.
+
+The initial environment is **iPhone → hosted Supabase Auth + local FastAPI → local Docker PostgreSQL**, with the existing private HTTPS path to the development API. The phone needs internet access for provider login/refresh, but game data need not move to Supabase yet. Start on an eligible Free development project; paid infrastructure is not required to exercise real authentication.
+
+### Implementation scope and acceptance stages
+
+The source for A2–A4 and their regression coverage is implemented. A1's hosted
+provider proof and A5's native/device execution require project credentials and a
+Mac/iPhone. The pinned SDK supports native Apple linking, so the browser Apple
+fallback below is unnecessary for the delivered path. Native Google remains
+optional. Use the current [F5a walkthrough](frontend/F5A_AUTH_ACCEPTANCE.md).
+
+| Order | Planned work | Evidence required |
+| --- | --- | --- |
+| **A1. Configure and prove the provider contract** | Complete [SUPABASE_SETUP.md](SUPABASE_SETUP.md). Record project URL, callback scheme, bundle ID, supported Swift SDK version and asymmetric signing algorithm. Enable email, Google, Apple and manual linking. Verify the documented Swift linking path; use browser OAuth linking if native ID-token linking is unavailable, including Apple's web credentials. Begin with Google browser OAuth and native Apple login; a separate native Google SDK is optional. | Real test sessions validate through the configured JWKS verifier. A provider spike proves Apple-relay/different-email linking can preserve one Supabase subject. Failed/cancelled/conflicting linking leaves the original account intact. Do not label SDK support or provider acceptance complete from configuration alone. |
+| **A2. Integrate the iOS session boundary** | Add the supported Supabase Swift dependency and session service, Keychain persistence, email registration/confirmation/sign-in/reset, Google sign-in, native Apple nonce/token exchange and callback handling. Introduce asynchronous current-token retrieval with coordinated refresh; handle restore, network failure, explicit logout and account changes. Keep generated-token tooling restricted to isolated local/test builds/configuration. | Native tests cover session events and lifecycle races; Debug and Release builds compile. Release supports configured real login rather than relying on the current sample-only/development connection path. Secrets never enter app resources, logs or request journals. |
+| **A3. Reuse game onboarding and protect F5 recovery** | Resolve identity with `GET /v1/me`; create game profile/garden/starter through existing `POST /v1/accounts` only for an explicit missing account. Preserve the server's internal game UUID as the cache/queue scope. On a 401, refresh/retry at most once with the same request bytes/UUID and same identity; retain unknown outcomes. Cancel/detach old account work and ignore stale completions before attaching another account. | Registration retries/concurrency create one starter. Expired sessions, connection loss, relaunch and same-account reauthentication do not duplicate growth or reset baselines. Account A's queued operations/cache remain inaccessible to B and can recover when A signs in again. Existing B4/B5/F5 contract checks still pass. |
+| **A4. Link sign-in methods to the existing garden** | Add account settings showing linked methods and an explicit signed-in link action for Google/Apple. Distinguish linking from ordinary sign-in. Support email/password access on an existing social account through authenticated email verification/password setup where needed, not a second registration. Refresh identity/profile after linking and retain the current game account. | Linked providers reach exactly the same subject, internal user, garden, owned plants and pending receipts. Different/Apple relay email paths work. An identity already owned by another user produces a conflict with no automatic merge, transfer, second starter or lost journal. |
+| **A5. Native/regression acceptance and handoff** | Extend API auth/ownership checks and iOS session/queue tests, then repeat relevant F5 real-step and recovery cases using real sessions. Update frontend/backend setup and acceptance documents during implementation, recording live checks separately from mocks. | Complete the gate below on Mac/iPhone before calling F5a done. Record credentials/callback configuration privately and leave only nonsecret templates/documentation in Git. |
+
+The existing `TokenProviding`/`FixedTokenProvider` interface is synchronous and does not refresh. `GardenConnection` and the developer connection screen manage pasted development credentials, so substituting a Supabase JWT string alone is insufficient. Reuse `AccountDiskStore`'s server/internal-user partitioning; do not rename a saved journal to match a new subject. Before game provisioning supplies an internal user ID, scope pending account requests by environment and verified issuer/subject. Bind each repository/request to its expected issuer/subject and check identity before sending with a refreshed token and before applying responses. Audit editor/activity tasks for responses arriving after logout/account switching and serialize recovery with identity changes. Supabase currently labels manual linking beta; the A1 live-provider spike is an acceptance requirement.
+
+### F5a acceptance gate
+
+1. **Registration and return:** confirmed email/password, Google and native Apple each reach a game account on a real iPhone. Cancelled login and incomplete email confirmation create no game state. Missing profile versus network/auth failures are distinct. Duplicate/concurrent provisioning awards one starter.
+2. **Linking preserves ownership:** create one garden, place/grow a plant, then link another provider from that signed-in account. Sign out and sign in through each linked method: Supabase subject, internal user/garden/plant IDs, progress and starter count match. Exercise both a matching verified email and a differing/Apple relay address. Set up password access on an existing social account without re-registering it.
+3. **Conflict handling:** a provider identity already belonging to a second Supabase user cannot take over/merge the first garden. Cancelled/failed callbacks leave the active account unchanged. Do not remove the last usable sign-in method; full unlink controls remain deferred.
+4. **Durable F5 recovery:** expire an access token while an activity/edit result is unknown; refresh or reauthenticate and replay the original request UUID/body. Test offline relaunch and unavailable/invalid refresh separately. No duplicate growth, starter, recap or new baseline; no silent queue deletion. Linked login on the same installation does not trigger device replacement.
+5. **Account isolation:** switch A → B while A has pending activity/edit/recap work and an in-flight response. B sees only B's state and uploads only B's records; returning as A safely resolves A's requests. Login/linking does not enable Health upload consent for a different account. Signed-out UI hides private cached gardens.
+6. **Backend trust:** accept real project tokens with the configured issuer, `authenticated` audience and matching ES256/RS256 key. Reject tampered, expired, wrong-project/audience/algorithm and development tokens in JWKS mode. Exercise key changes and provider unavailability without accepting unverified identity. Disabled accounts cannot use an otherwise valid token.
+7. **Build/device evidence:** run appropriate existing PostgreSQL-backed backend tests and native Swift tests plus a Release build. Exercise signup confirmation/reset deep links, Google callbacks, Apple native login and the selected linking flow on a real iPhone. Re-run the relevant [F5 acceptance](frontend/F5_ACCEPTANCE.md) growth/storage/offline cases with real sessions; retain pending device evidence honestly.
+
+### Existing development account transition
+
+Generated-token users have a different issuer/subject from Supabase users. Default to fresh Supabase test accounts and separate fixture gardens; no production-player migration is currently required. If a specific development garden must survive, first design a reviewed one-time rebinding process proving control of both identities, enforcing target uniqueness and preserving the internal game user ID. Do not infer ownership from username/email, merge two populated accounts, reset growth/watermarks or rewrite journals to a different game user. This optional preservation work is separate from normal provider linking.
+
+### Deferred deployment work
+
+F5a does not change the game database connection, upload assets or deploy Cloud Run. B10 applies Alembic to Supabase PostgreSQL, verifies connection/SSL/pooler/grant compatibility, closes Data API bypasses and tests backup/restore. Asset delivery adds the remote resolver/download cache and trusted publishing. Cloud Run receives a bounded autoscaling/pool budget and measured cold-start policy. Account deletion across Supabase Auth and game state, including Apple revocation requirements, remains a release gate in B10; full unlink UI and garden-merge support remain outside F5a.
+
+## Historical B1–B3 delivery outline
+
+This outline records the earlier local-foundation scope; B1–B3 are now implemented. It is not the next-work instruction. F5a above supersedes its provider deferral and its original exclusion of frontend/provider work.
+
+The original timebox was approximately **4–6 focused hours**, with environment/auth setup able to extend it. It aimed to finish B1, deliver a narrow B2 and begin a tested B3 slice; the table below preserves that historical scope.
 
 | Order | Rough budget | Scope and evidence |
 | --- | --- | --- |
@@ -78,7 +161,7 @@ Proposed timebox: approximately **4–6 focused hours**, with environment/auth s
 | **4. B3 placement slice** | 75–105 min | Atomic batch-edit endpoint with ownership checks, canonical decimal geometry, final-layout validation, garden locking, expected layout/catalogue versions, persisted request IDs/payload hashes and original-response replay. Include plant/move/rotate/store and a swap fixture. |
 | **5. Verify and record handoff** | 30 min | Run migrations/tests against PostgreSQL and a small documented API walkthrough. Record completed checks, incomplete B2/B3 items and unresolved configuration decisions. |
 
-### Tonight's proposed minimal API surface
+### Original minimal API surface
 
 - Health/readiness endpoints.
 - `GET /v1/catalog`.
@@ -89,9 +172,9 @@ Proposed timebox: approximately **4–6 focused hours**, with environment/auth s
 
 Full bootstrap aggregation can follow when its visitor/wallet/activity fields exist. Do not populate future fields with fabricated production state.
 
-### Authentication scope
+### Original authentication scope and current follow-up
 
-B2 ultimately needs verified managed-auth tokens. If a provider is selected and available, wire verification now. Otherwise build the verifier interface with an explicitly local/test-only identity provider, test ownership, and leave real provider integration marked incomplete. Development identities must fail closed outside local/test configuration. No password system is required.
+The original local/test verifier allowed B2 ownership and F5 activity work before provider selection. Supabase is now selected and F5a closes live-provider integration. Development identities continue to fail closed outside isolated local/test configuration. Supabase handles password credentials; the game backend does not implement its own password system.
 
 ### Essential B3 checks
 
@@ -107,11 +190,11 @@ B2 ultimately needs verified managed-auth tokens. If a provider is selected and 
 
 Concurrency and retry coverage is required before calling B3 complete. If the timebox ends first, record B3 as partial rather than skipping its invariants.
 
-### Visitor preparation tonight
+### Original visitor preparation
 
 Pin attraction profiles now and put placement mutations behind one transaction-owning service. Define the old-state settlement → mutation → future-state refresh sequence and a server-clock boundary. Until B6, visitors remain disabled; no-op integration points are explicitly scaffolding, not completed accounting. B6 must replace them and add cross-feature regression tests before visitor earnings are enabled.
 
-Do not build visitor tables/endpoints, growth sync, wallets, draws, friends, live weather, full legendary skills, cloud infrastructure or frontend changes tonight. Add their migrations with the feature that uses them.
+The original foundation scope excluded visitor tables/endpoints, growth sync, wallets, draws, friends, live weather, full legendary skills, cloud infrastructure and frontend changes. Current milestones above now govern this work. Add migrations with the feature that uses them.
 
 ### Practical stopping point
 
@@ -129,3 +212,4 @@ Two local/test users can read their own inventories. One can place, move, rotate
 8. **Wider Health scope still needs coverage:** completed initial Health diagnostics do not by themselves certify the newly scoped distance, energy, flights and typed-workout cases. Extend and verify them as those features land.
 9. **Maturity and attraction rules stay consistent:** confirm whether the maturity maximum equals the adult threshold. If they differ, define the role of any post-adult growth rather than inventing another stage. Reject unusable profile configurations. All four stage attraction values are nonnegative and strictly increase under the proposed V1 profile contract.
 10. **Optional complexity stays explicit:** live weather needs activity-time buckets; daily totals alone cannot attribute rainy steps. Complex synergies, recurring daily quests, visitor species inventories, bespoke visitor AI and offline-rate skills are not silently included in the minimal loop.
+11. **Stable identity precedes more rewards:** F5a links provider methods within one Supabase user and preserves the internal game user ID. Auth refresh/linking must not regrant starters, reset activity enrolment or move queued Health data to another account. Real-provider acceptance is distinct from the completed generated-token F5 slice.

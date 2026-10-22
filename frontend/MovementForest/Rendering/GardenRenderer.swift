@@ -155,11 +155,13 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                     self.loadedCount += 1
                     continue
                 }
-                self.removePlant(plant.id)
                 do {
                     let asset = try catalog.resolve(plant)
                     let model = try await self.loader.load(asset)
                     guard !Task.isCancelled, self.generation == token else { return }
+                    // Keep the previous stage grounded and visible until its
+                    // replacement is ready. A failed load remains retryable.
+                    self.removePlant(plant.id)
                     self.modelLoadCount += 1
                     let placement = Entity()
                     placement.name = plant.id.uuidString
@@ -187,6 +189,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                 } catch is CancellationError { return }
                 catch {
                     self.errors.append("\(plant.speciesId) \(plant.growthStage.title): \(error.localizedDescription)")
+                    if self.placements[plant.id] != nil { continue }
                     let placeholder = ModelEntity(mesh: .generateSphere(radius: 0.12), materials: [SimpleMaterial(color: .systemGray, isMetallic: false)])
                     placeholder.name = plant.id.uuidString
                     placeholder.generateCollisionShapes(recursive: false)

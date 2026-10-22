@@ -86,6 +86,7 @@ struct PlantDetailScreen: View {
     let plant: GardenPlant
     let catalog: any AssetCatalogProviding
     let isSample: Bool
+    var owned: APIOwnedPlant? = nil
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         List {
@@ -93,6 +94,20 @@ struct PlantDetailScreen: View {
             Section {
                 DetailRow(title: "Variant", value: plant.variantId.capitalized)
                 DetailRow(title: "Growth stage", value: "\(plant.growthStage.number) of 4 · \(plant.growthStage.title)")
+                if let owned = owned {
+                    DetailRow(title: "Total water / growth", value: ExactAmount.water(owned.growthMicroUnits))
+                    if let progress = owned.growthProgress, let fraction = progress.fraction(growth: owned.growthMicroUnits) {
+                        ProgressView(value: fraction).accessibilityLabel("Progress to next growth stage")
+                        if let next = progress.nextStageMicroUnits {
+                            DetailRow(title: "Next stage at", value: "\(ExactAmount.water(next)) total water")
+                        } else { Text("Fully grown").foregroundStyle(.secondary) }
+                    }
+                    if let attraction = owned.baseAttractionMicroUnits {
+                        DetailRow(title: "Base attraction", value: ExactAmount.water(attraction))
+                    }
+                    Text(owned.placement == nil ? "In storage · Progress is preserved; activity does not grow this copy." :
+                         "Planted · Receives newly confirmed eligible activity.").font(.footnote).foregroundStyle(.secondary)
+                }
             }
             if isSample {
                 Section { Text("This plant is part of the sample garden. Your own collection and confirmed growth will appear when the garden service is connected.").foregroundStyle(.secondary) }

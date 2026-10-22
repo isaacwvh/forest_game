@@ -1,0 +1,394 @@
+{
+  "profile": {
+    "userId": "22d88710-f93e-430a-88ec-d9b9d9dc1926",
+    "username": "http_activity",
+    "displayName": "HTTP activity fixture",
+    "gameTimezone": "Asia/Singapore",
+    "createdAt": "2026-10-22T23:05:08.817605+08:00"
+  },
+  "catalogue": {
+    "catalogVersion": "development-oak-v1",
+    "isFixture": true,
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "coordinateDecimalPlaces": 3,
+    "rotationDecimalPlaces": 2,
+    "species": [
+      {
+        "speciesId": "oak",
+        "displayName": "Oak",
+        "description": "Development fixture; balance unapproved.",
+        "clearanceRadius": 0.9,
+        "isFixture": true,
+        "defaultProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "variants": [
+          {
+            "variantId": "blue",
+            "displayName": "Blue",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-blue.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-blue.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-blue.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-blue.png"
+              }
+            }
+          },
+          {
+            "variantId": "standard",
+            "displayName": "Standard",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-standard.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-standard.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-standard.png"
+              }
+            }
+          },
+          {
+            "variantId": "vined",
+            "displayName": "Vined",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-vined.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-vined.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-vined.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-vined.png"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "profiles": {
+      "growth": [
+        {
+          "id": "dev_oak_growth",
+          "version": 1,
+          "thresholdsMicroUnits": {
+            "sprout": "0",
+            "seedling": "100000000",
+            "young": "400000000",
+            "adult": "1000000000"
+          },
+          "maximumGrowthMicroUnits": "1000000000"
+        }
+      ],
+      "behaviour": [
+        {
+          "id": "dev_oak_behaviour",
+          "version": 1,
+          "schemaVersion": 1,
+          "metricMultipliers": {
+            "steps": 1.0
+          },
+          "conditionalModifiers": [],
+          "gardenEffects": []
+        }
+      ],
+      "attraction": [
+        {
+          "id": "dev_oak_attraction",
+          "version": 1,
+          "stageAttractionMicroUnits": {
+            "sprout": "2000000",
+            "seedling": "5000000",
+            "young": "12000000",
+            "adult": "20000000"
+          },
+          "gameplayTags": [
+            "tree",
+            "woodland"
+          ]
+        }
+      ]
+    }
+  },
+  "gardenBeforeSync": {
+    "gardenId": "f0f0c80e-65fa-4bc6-8d9f-b8ba6b33c0e2",
+    "width": 10.0,
+    "depth": 10.0,
+    "visibility": "friends",
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "catalogVersion": "development-oak-v1",
+    "layoutVersion": 1,
+    "stateVersion": 1,
+    "plants": [
+      {
+        "plantId": "d961d62f-4031-4978-bded-530baa7721d5",
+        "speciesId": "oak",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "0",
+        "growthStage": "sprout",
+        "baseAttractionMicroUnits": "2000000",
+        "contributesAttraction": true,
+        "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+        "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+        "placement": {
+          "gardenId": "f0f0c80e-65fa-4bc6-8d9f-b8ba6b33c0e2",
+          "x": 2.0,
+          "y": 2.0,
+          "rotationDegrees": 35.12
+        },
+        "growthProgress": {
+          "stageStartMicroUnits": "0",
+          "nextStageMicroUnits": "100000000",
+          "maximumGrowthMicroUnits": "1000000000"
+        }
+      }
+    ],
+    "totalAttractionMicroUnits": "2000000"
+  },
+  "enrolment": {
+    "requestId": "c4355dd2-69ad-428d-aaf0-34da6b73dd76",
+    "device": {
+      "deviceId": "bff59b13-328f-4709-99cf-362bffa95990",
+      "installationId": "12a8ff34-790a-4e85-b63d-57f588a88900",
+      "enrolledAt": "2026-10-22T15:05:08.938605Z",
+      "baselineDate": "2026-10-22",
+      "baselineObservedAt": "2026-10-22T15:05:08.911448Z",
+      "baselineSteps": 2000,
+      "ready": true
+    }
+  },
+  "syncRequest": {
+    "requestId": "df4d7f88-0f43-4c0d-8180-7b6c1d5fb6cb",
+    "installationId": "12a8ff34-790a-4e85-b63d-57f588a88900",
+    "deviceId": "bff59b13-328f-4709-99cf-362bffa95990",
+    "observedAt": "2026-10-22T15:05:09.015955+00:00",
+    "days": [
+      {
+        "gameDate": "2026-10-22",
+        "steps": 3000
+      }
+    ]
+  },
+  "syncResult": {
+    "requestId": "df4d7f88-0f43-4c0d-8180-7b6c1d5fb6cb",
+    "acceptedAt": "2026-10-22T15:05:09.058343Z",
+    "device": {
+      "deviceId": "bff59b13-328f-4709-99cf-362bffa95990",
+      "installationId": "12a8ff34-790a-4e85-b63d-57f588a88900",
+      "enrolledAt": "2026-10-22T23:05:08.938605+08:00",
+      "baselineDate": "2026-10-22",
+      "baselineObservedAt": "2026-10-22T23:05:08.911448+08:00",
+      "baselineSteps": 2000,
+      "ready": true
+    },
+    "days": [
+      {
+        "gameDate": "2026-10-22",
+        "available": true,
+        "baselineEstablished": false,
+        "newlyEligibleSteps": 1000,
+        "waterSteps": 1000,
+        "creditedSteps": 1000,
+        "ruleVersion": "development-neutral-v1",
+        "activityCreditId": "def96c80-e164-4fbc-81f2-79da180e3117"
+      }
+    ],
+    "garden": {
+      "gardenId": "f0f0c80e-65fa-4bc6-8d9f-b8ba6b33c0e2",
+      "width": 10.0,
+      "depth": 10.0,
+      "visibility": "friends",
+      "coordinateUnit": "garden_unit",
+      "gardenUnitMetres": 1.0,
+      "catalogVersion": "development-oak-v1",
+      "layoutVersion": 1,
+      "stateVersion": 2,
+      "plants": [
+        {
+          "plantId": "d961d62f-4031-4978-bded-530baa7721d5",
+          "speciesId": "oak",
+          "variantId": "standard",
+          "pinnedProfiles": {
+            "growth": {
+              "id": "dev_oak_growth",
+              "version": 1
+            },
+            "behaviour": {
+              "id": "dev_oak_behaviour",
+              "version": 1
+            },
+            "attraction": {
+              "id": "dev_oak_attraction",
+              "version": 1
+            }
+          },
+          "growthMicroUnits": "10000000",
+          "growthStage": "sprout",
+          "baseAttractionMicroUnits": "2000000",
+          "contributesAttraction": true,
+          "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+          "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+          "placement": {
+            "gardenId": "f0f0c80e-65fa-4bc6-8d9f-b8ba6b33c0e2",
+            "x": 2.0,
+            "y": 2.0,
+            "rotationDegrees": 35.12
+          },
+          "growthProgress": {
+            "stageStartMicroUnits": "0",
+            "nextStageMicroUnits": "100000000",
+            "maximumGrowthMicroUnits": "1000000000"
+          }
+        }
+      ],
+      "totalAttractionMicroUnits": "2000000"
+    },
+    "activitySteps": "1000",
+    "firstMaturityCount": 0,
+    "recapId": "c43a6b61-c95b-4320-81b4-a05888335e58"
+  },
+  "status": {
+    "serverTime": "2026-10-22T15:05:09.162459Z",
+    "gameTimezone": "Asia/Singapore",
+    "supportedMetrics": [
+      "steps"
+    ],
+    "reconciliationDays": 7,
+    "queuedUploadMaxAgeDays": 30,
+    "device": {
+      "deviceId": "bff59b13-328f-4709-99cf-362bffa95990",
+      "installationId": "12a8ff34-790a-4e85-b63d-57f588a88900",
+      "enrolledAt": "2026-10-22T23:05:08.938605+08:00",
+      "baselineDate": "2026-10-22",
+      "baselineObservedAt": "2026-10-22T23:05:08.911448+08:00",
+      "baselineSteps": 2000,
+      "ready": true
+    },
+    "activitySteps": "1000",
+    "firstMaturityCount": 0,
+    "lastSyncAt": "2026-10-22T23:05:09.058343+08:00"
+  },
+  "recaps": {
+    "recaps": [
+      {
+        "recapId": "c43a6b61-c95b-4320-81b4-a05888335e58",
+        "createdAt": "2026-10-22T23:05:09.058343+08:00",
+        "payload": {
+          "kind": "activity_growth",
+          "plants": [
+            {
+              "plantId": "d961d62f-4031-4978-bded-530baa7721d5",
+              "afterStage": "sprout",
+              "beforeStage": "sprout",
+              "afterGrowthMicroUnits": "10000000",
+              "beforeGrowthMicroUnits": "0",
+              "awardedGrowthMicroUnits": "10000000"
+            }
+          ],
+          "creditIds": [
+            "def96c80-e164-4fbc-81f2-79da180e3117"
+          ],
+          "activityDays": [
+            {
+              "gameDate": "2026-10-22",
+              "available": true,
+              "waterSteps": 1000,
+              "ruleVersion": "development-neutral-v1",
+              "creditedSteps": 1000,
+              "activityCreditId": "def96c80-e164-4fbc-81f2-79da180e3117",
+              "newlyEligibleSteps": 1000,
+              "baselineEstablished": false
+            }
+          ],
+          "resourceDeltas": {}
+        }
+      }
+    ],
+    "nextCursor": null
+  },
+  "acknowledgement": {
+    "requestId": "c116ebd3-4e87-428e-ae12-1e14a872de9d",
+    "recapId": "c43a6b61-c95b-4320-81b4-a05888335e58",
+    "acknowledgedAt": "2026-10-22T15:05:09.129030Z"
+  }
+}

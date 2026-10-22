@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from forest_api.auth import Identity
+from forest_api.calculations import stage_for
 from forest_api.config import Settings
 from forest_api.errors import ApiError
 from forest_api.models import (
@@ -34,6 +35,7 @@ from forest_api.schemas import (
     CatalogueDTO,
     GardenDTO,
     GrowthDefinition,
+    GrowthProgressDTO,
     InventoryDTO,
     PinnedProfiles,
     PlacementDTO,
@@ -310,11 +312,7 @@ class PlantPresenter:
             thresholds=growth.thresholds,
             maximum_growth_micro_units=growth.maximum_growth_micro_units,
         )
-        stage = next(
-            stage
-            for stage in reversed(STAGES)
-            if plant.growth_micro_units >= getattr(definition.thresholds, stage)
-        )
+        stage = stage_for(plant.growth_micro_units, definition.thresholds.model_dump())
         attraction = self.profile(
             "attraction", plant.attraction_profile_id, plant.attraction_profile_version
         )
@@ -325,6 +323,10 @@ class PlantPresenter:
         if stage_key not in self.stages:
             self.stages[stage_key] = self.session.get(PlantStage, stage_key)
         assets = self.stages[stage_key]
+        # Resolve from the owned copy's immutable profile, including versions no
+        # longer referenced by the currently enabled catalogue.
+        stage_index = STAGES.index(stage)
+        next_stage = STAGES[stage_index + 1] if stage_index + 1 < len(STAGES) else None
         return PlantDTO(
             plant_id=plant.id,
             species_id=plant.species_id,
@@ -332,6 +334,13 @@ class PlantPresenter:
             pinned_profiles=profile_refs(plant),
             growth_micro_units=str(plant.growth_micro_units),
             growth_stage=stage,
+            growth_progress=GrowthProgressDTO(
+                stage_start_micro_units=str(getattr(definition.thresholds, stage)),
+                next_stage_micro_units=(
+                    str(getattr(definition.thresholds, next_stage)) if next_stage else None
+                ),
+                maximum_growth_micro_units=str(definition.maximum_growth_micro_units),
+            ),
             base_attraction_micro_units=str(getattr(attraction_definition.stage_attraction, stage)),
             contributes_attraction=placement is not None,
             model_key=assets.model_key,
@@ -383,6 +392,7 @@ def present_garden(
         .order_by(OwnedPlant.id)
     ).all()
     presenter = presenter or PlantPresenter(session)
+    presented = [presenter.plant(plant, placement) for plant, placement in rows]
     return GardenDTO(
         garden_id=garden.id,
         width=garden.width,
@@ -392,7 +402,10 @@ def present_garden(
         catalog_version=catalogue.version,
         layout_version=garden.layout_version,
         state_version=garden.state_version,
-        plants=[presenter.plant(plant, placement) for plant, placement in rows],
+        plants=presented,
+        total_attraction_micro_units=str(
+            sum(int(plant.base_attraction_micro_units) for plant in presented)
+        ),
     )
 
 

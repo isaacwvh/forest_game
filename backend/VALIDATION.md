@@ -1,4 +1,4 @@
-# B1–B3 implementation verification
+# B1–B5 implementation verification
 
 Verified 20 October 2026 on Windows with Python 3.12.5 and a project-local,
 loopback-only PostgreSQL 17.11 runtime. Docker's engine was unavailable, so database
@@ -122,3 +122,94 @@ The full PostgreSQL suite and native HTTP check above passed independently of Do
 CI is configured to run B3 tests and rebuild the image after a future push, including
 when the shared geometry examples change. The default `PlacementAccounting`
 implementation is explicitly disabled scaffolding for B6, not visitor settlement.
+
+## B4/B5 verification — 22 October 2026
+
+Implemented and verified against an isolated, loopback-only PostgreSQL 17.11
+cluster. The configured developer garden/database was not migrated or reset.
+The full suite creates/drops only its randomly named disposable databases.
+
+- **218 backend tests passed**, including all prior ownership/placement/auth tests.
+- Alembic `0002_b4_b5` upgrade, schema/model drift check, downgrade to base and
+  re-upgrade pass. New accounting/configuration/recap records and partial unique
+  active-device index match the application models.
+- Pure exact calculations cover metric normalisation, omitted coefficients,
+  independent inputs, fractional carry/chunking invariance, cumulative stages,
+  terminal maturity clamp and bounded neutral visitor curve/capacity fixtures.
+- Steps HTTP/API tests cover enrolment without historical grants, unavailable
+  observations, fresh first-available baselines, atomic device replacement and
+  preservation of the original baseline/watermark across re-enrolment/retries.
+- Cumulative increases, downward corrections, stale observations, late queued
+  captures, seven-date reconciliation and the 30-day queue grace are exercised.
+  Day intervals are verified across 23-hour/25-hour DST transitions.
+- Concurrent identical and increasing syncs cannot duplicate credits. Concurrent
+  same-ID/different-input requests yield one commit and one conflict. Sync/store
+  races are exercised in both lock orderings with independent database sessions.
+- Placed duplicates grow independently; stored copies and their fractional state
+  remain unchanged. Empty gardens consume input without banking future growth.
+  Profile defaults cannot reprice previously awarded copies or established days.
+- Adult/maturity caps, first-maturity counts, lifetime activity independent of
+  water caps, unchanged transforms/layout versions and state-only growth versions
+  are verified. No wallets, token/ticket credits or visitor production are added.
+- B6 callbacks see old/new growth at one server boundary and do not rerun on
+  replay. Injected post-growth failures roll back growth, watermarks, counters,
+  events, recaps and receipts. Completed requests replay across app recreation,
+  device replacement and expired observation windows.
+- Owner-only recap retrieval/pagination, acknowledgement and reconnect recovery
+  pass. PostgreSQL rejects edits to configuration/credit/event history and recap
+  payloads or completed acknowledgements. Activity fields are not echoed in errors.
+- Ruff lint/format, Python compilation, dependency consistency and diff whitespace
+  checks pass.
+- `backend/scripts/smoke_activity.py` passed against a real hidden Uvicorn process:
+  readiness, account, enrolment, placement, confirmed growth/attraction, replay,
+  recap recovery/ack, activity status and store/replay preservation. Its process
+  and disposable database were cleaned up. The walkthrough is also added to CI.
+
+The HTTP/CI contract and exact policies are in [ACTIVITY_API.md](ACTIVITY_API.md).
+Calculation values are development fixtures, not approved production balance.
+New enabled growth configurations require the adult threshold to equal terminal
+maturity. Wider input handlers/modifiers remain B8; visitor time accounting and
+currency remain B6/B7. Managed auth, production configuration, hosting, retention,
+rate limiting and device HealthKit integration retain their existing release gates.
+
+Docker's local engine returned HTTP 500 when queried, so a B4/B5 image build/run
+could not be validated here. Native PostgreSQL and actual HTTP verification passed;
+remote GitHub Actions execution is configured but not claimed as executed.
+
+## F5 presentation contract — 22 October 2026
+
+Added owner-copy `growthProgress` presentation fields resolved from its pinned
+growth profile, including versions absent from the enabled catalogue. No database
+migration or accounting/economy change is introduced.
+
+**231 tests passed** against the isolated loopback PostgreSQL 17.11 test cluster.
+The 13 additional cases verify actual native wire fixtures and retired-profile
+progress at sprout, seedling and terminal adult. All prior 218 cases still pass.
+Ruff lint/format and diff whitespace checks pass. The real Uvicorn activity HTTP
+walkthrough also passed and exported synthetic responses for native regression
+tests with its explicit `--export-frontend-contract` flag. Its temporary process
+and database were cleaned up. No developer game database was changed.
+
+Native F5 XCTest, Xcode and physical iPhone/Tailscale acceptance remained pending
+at that checkpoint; the subsequent F5a work below supersedes its auth deferral.
+
+## F5a Supabase auth contract — 23 October 2026
+
+**242 tests passed** against isolated PostgreSQL 17.11, including 11 new tests
+through the actual JWT verifier, HTTP routes and database with locally generated
+EC keys/Supabase-shaped claims. Verified explicit game onboarding, one account/
+garden/starter across linked-provider-shaped tokens, signing-key changes, unchanged
+activity replay/baselines, cross-account isolation, wrong-project/raw-provider/
+expired token rejection, disabled users and development-token rejection in JWKS
+mode. These are not live Supabase linking tests.
+
+Compose forwards configured JWKS issuer/audience/algorithm while preserving its
+local database URL; `.env.supabase.example` documents operator configuration.
+Both Compose configurations parse; Ruff lint/format and dependency consistency
+passed. No new migration/accounting change was necessary. Disposable test databases
+were cleaned up and the temporary test cluster was stopped.
+
+iOS source/native tests/provider flags are implemented; Xcode/native execution,
+hosted project/SMTP and real iPhone/provider acceptance remain pending. Follow
+`frontend/F5A_AUTH_ACCEPTANCE.md`. Actual `.env`, development game state and cloud
+resources were not modified or provisioned.

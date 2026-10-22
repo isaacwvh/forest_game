@@ -1,5 +1,9 @@
 # Connected F4 editor — setup and acceptance
 
+**Current integration:** F5 now adds growth/Health uploads and cached viewing.
+Use [F5_ACCEPTANCE.md](F5_ACCEPTANCE.md) for the up-to-date end-to-end flow.
+The F4-only descriptions below are the historical editor acceptance baseline.
+
 F4 uses the existing B1–B3 API. No growth, Health uploads or visitor rewards are
 enabled. The connected editor currently runs in Debug with development tokens.
 Native compilation, XCTest and physical-device acceptance must run on the Mac.

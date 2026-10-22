@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "movement-forest-api"
 version = "0.1.0"
-description = "Movement Forest B1/B2 API foundation"
+description = "Movement Forest B1-B5 ownership, placement and activity API"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "fastapi>=0.115,<1",

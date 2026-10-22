@@ -1,0 +1,348 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "starcap",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "blue-gold"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "very slight, phase-offset two-bone stem sway; rigid caps and flush pigment move together"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/starcap-sprout-standard.png",
+        "blue-gold": "ui/starcap-sprout-blue-gold.png"
+      },
+      "seedling": {
+        "standard": "ui/starcap-seedling-standard.png",
+        "blue-gold": "ui/starcap-seedling-blue-gold.png"
+      },
+      "young": {
+        "standard": "ui/starcap-young-standard.png",
+        "blue-gold": "ui/starcap-young-blue-gold.png"
+      },
+      "adult": {
+        "standard": "ui/starcap-adult-standard.png",
+        "blue-gold": "ui/starcap-adult-blue-gold.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/starcap-sprout-standard.usdz",
+      "thumbnail": "ui/starcap-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.085352,
+          -0.085443,
+          0.0
+        ],
+        "max": [
+          0.085668,
+          0.085577,
+          0.1548
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.085352,
+          -0.085526,
+          0.0
+        ],
+        "max": [
+          0.085668,
+          0.08569,
+          0.1548
+        ]
+      },
+      "animation": "starcap_sprout_sway",
+      "mushroomCount": 1,
+      "triangles": 7100,
+      "joints": 3,
+      "bytes": 345728,
+      "sha256": "a8f9d496b0dfc5af92b343e565e8e0da7a55e3f1d5d72b5c26585447dfc0f345"
+    },
+    {
+      "stage": "sprout",
+      "variant": "blue-gold",
+      "file": "models/starcap-sprout-blue-gold.usdz",
+      "thumbnail": "ui/starcap-sprout-blue-gold.png",
+      "bounds": {
+        "min": [
+          -0.085352,
+          -0.085443,
+          0.0
+        ],
+        "max": [
+          0.085668,
+          0.085577,
+          0.1548
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.085352,
+          -0.085526,
+          0.0
+        ],
+        "max": [
+          0.085668,
+          0.08569,
+          0.1548
+        ]
+      },
+      "animation": "starcap_sprout_sway",
+      "mushroomCount": 1,
+      "triangles": 7100,
+      "joints": 3,
+      "bytes": 345945,
+      "sha256": "16dd84adb7b3b9f045b32550bae2bd5918f26ebb436c135adbe2c22246f9e3e0"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/starcap-seedling-standard.usdz",
+      "thumbnail": "ui/starcap-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.130064,
+          -0.140529,
+          0.0
+        ],
+        "max": [
+          0.161676,
+          0.151211,
+          0.337
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.130089,
+          -0.14095,
+          0.0
+        ],
+        "max": [
+          0.161711,
+          0.151796,
+          0.337011
+        ]
+      },
+      "animation": "starcap_seedling_sway",
+      "mushroomCount": 1,
+      "triangles": 7676,
+      "joints": 3,
+      "bytes": 367689,
+      "sha256": "466408508a60e6f8ae4c8c657c8670f9aeaf1daeb46c4d9f809dc25ce1c7c17f"
+    },
+    {
+      "stage": "seedling",
+      "variant": "blue-gold",
+      "file": "models/starcap-seedling-blue-gold.usdz",
+      "thumbnail": "ui/starcap-seedling-blue-gold.png",
+      "bounds": {
+        "min": [
+          -0.130064,
+          -0.140529,
+          0.0
+        ],
+        "max": [
+          0.161676,
+          0.151211,
+          0.337
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.130089,
+          -0.14095,
+          0.0
+        ],
+        "max": [
+          0.161711,
+          0.151796,
+          0.337011
+        ]
+      },
+      "animation": "starcap_seedling_sway",
+      "mushroomCount": 1,
+      "triangles": 7676,
+      "joints": 3,
+      "bytes": 367908,
+      "sha256": "dba35e32a00696a5dbe08336f771d202c77ca6fefea07c36a2bb60da002b0570"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/starcap-young-standard.usdz",
+      "thumbnail": "ui/starcap-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.39507,
+          -0.290493,
+          0.0
+        ],
+        "max": [
+          0.331561,
+          0.277004,
+          0.596
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.395553,
+          -0.290504,
+          0.0
+        ],
+        "max": [
+          0.332041,
+          0.278187,
+          0.596038
+        ]
+      },
+      "animation": "starcap_young_sway",
+      "mushroomCount": 3,
+      "triangles": 23028,
+      "joints": 7,
+      "bytes": 911800,
+      "sha256": "52d8d1e2ff359517239799c9c312fae5914b2e87e62de4678a328d4fdc33ef07"
+    },
+    {
+      "stage": "young",
+      "variant": "blue-gold",
+      "file": "models/starcap-young-blue-gold.usdz",
+      "thumbnail": "ui/starcap-young-blue-gold.png",
+      "bounds": {
+        "min": [
+          -0.39507,
+          -0.290493,
+          0.0
+        ],
+        "max": [
+          0.331561,
+          0.277004,
+          0.596
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.395553,
+          -0.290504,
+          0.0
+        ],
+        "max": [
+          0.332041,
+          0.278187,
+          0.596038
+        ]
+      },
+      "animation": "starcap_young_sway",
+      "mushroomCount": 3,
+      "triangles": 23028,
+      "joints": 7,
+      "bytes": 911887,
+      "sha256": "427042b0c595b18328848a17a17bff32b46b901693534480bd8962ba001bd2f2"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/starcap-adult-standard.usdz",
+      "thumbnail": "ui/starcap-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.660121,
+          -0.510675,
+          0.0
+        ],
+        "max": [
+          0.653237,
+          0.503173,
+          0.982
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.660842,
+          -0.511575,
+          0.0
+        ],
+        "max": [
+          0.653954,
+          0.505138,
+          0.982182
+        ]
+      },
+      "animation": "starcap_adult_sway",
+      "mushroomCount": 6,
+      "triangles": 46056,
+      "joints": 13,
+      "bytes": 1727559,
+      "sha256": "cbbd0f3358cacaa7d4138617517b5bdf8febbb66e2e11c65b889dcd87412dcf1"
+    },
+    {
+      "stage": "adult",
+      "variant": "blue-gold",
+      "file": "models/starcap-adult-blue-gold.usdz",
+      "thumbnail": "ui/starcap-adult-blue-gold.png",
+      "bounds": {
+        "min": [
+          -0.660121,
+          -0.510675,
+          0.0
+        ],
+        "max": [
+          0.653237,
+          0.503173,
+          0.982
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.660842,
+          -0.511575,
+          0.0
+        ],
+        "max": [
+          0.653954,
+          0.505138,
+          0.982182
+        ]
+      },
+      "animation": "starcap_adult_sway",
+      "mushroomCount": 6,
+      "triangles": 46056,
+      "joints": 13,
+      "bytes": 1727774,
+      "sha256": "e788ecff7ed8c1383be360002ebc74c5554852c620f82bbd15eebb7d9e28a0b5"
+    }
+  ]
+}

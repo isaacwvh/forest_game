@@ -22,6 +22,14 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private(set) var service: any GardenServing
     private let assets: any AssetCatalogProviding
     private let journal: any PendingEditPersisting
+    private let cache: AccountDiskStore?
+    @Published private(set) var confirmedAt: Date?
+    @Published private(set) var showingCached = false
+    @Published private(set) var activityBusy = false
+    @Published private(set) var preparingMembership = false
+    @Published var activityBlocked = false
+    var prepareMembershipChange: (() async -> Bool)?
+    var reconcileActivity: (() async -> Void)?
     @Published private(set) var catalogue: APICatalogue?
     @Published private(set) var confirmed: APIGarden?
     @Published private(set) var rendered: GardenSnapshot?
@@ -39,13 +47,27 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private var needsRefresh = true
     private var refreshInFlight = false
     private var inventoryGeneration = UUID()
+    private var started = false
+    private var lastReadIssue: String?
+    private(set) var isActive = true
 
-    init(profile: APIProfile, service: any GardenServing, assets: any AssetCatalogProviding,
-         journal: any PendingEditPersisting = PendingGardenEditStore()) {
-        self.profile = profile; self.service = service; self.assets = assets; self.journal = journal
+    func deactivate() {
+        isActive = false; inventoryGeneration = UUID(); endEditing()
+        prepareMembershipChange = nil; reconcileActivity = nil
+        state = .blocked
     }
 
-    var canEdit: Bool { state == .ready && pending == nil && !needsRefresh && !recoveryLocked && confirmed != nil && catalogue != nil }
+    init(profile: APIProfile, service: any GardenServing, assets: any AssetCatalogProviding,
+         journal: any PendingEditPersisting = PendingGardenEditStore(), cache: AccountDiskStore? = nil) {
+        self.profile = profile; self.service = service; self.assets = assets; self.journal = journal
+        self.cache = cache
+    }
+
+    var canEdit: Bool { readyForMutation && !activityBusy && !preparingMembership && !activityBlocked }
+    private var readyForMutation: Bool {
+        isActive && state == .ready && pending == nil && !needsRefresh && !recoveryLocked && confirmed != nil && catalogue != nil
+    }
+    var connectionBusy: Bool { state.busy || activityBusy || preparingMembership }
     var selected: APIOwnedPlant? { confirmed?.plants.first { $0.id == selectedID } ?? inventory.first { $0.id == selectedID } }
     var pendingRequestID: String? {
         guard let pending = pending else { return nil }
@@ -55,7 +77,9 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         catalogue.map { plant.rendered(catalogue: $0, assets: assets) }
     }
 
-    func start() async {
+    func start(refreshRemote: Bool = true) async {
+        started = true
+        restoreCached()
         do {
             pending = try journal.load(server: service.serverID, user: profile.userId)
         } catch {
@@ -63,17 +87,75 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             state = .blocked; message = "The saved edit could not be read. Editing is paused to protect that operation."
             return
         }
+        if !refreshRemote {
+            state = pending == nil ? .blocked : .unknown
+            return
+        }
         if pending != nil { await retryPending() } else { await refresh() }
+    }
+
+    func restoreCached() {
+        defer { if state == .loading { state = .blocked } }
+        guard confirmed == nil, let cache = cache else { return }
+        do {
+            guard let value = try cache.load(ConfirmedGardenCache.self, kind: "garden", server: service.serverID, user: profile.userId),
+                  value.serverID == service.serverID, value.profile.userId == profile.userId else { return }
+            let snapshot = try value.garden.rendered(catalogue: value.catalogue, assets: assets)
+            catalogue = value.catalogue; confirmed = value.garden; rendered = snapshot
+            inventory = filtered(value.inventory, garden: value.garden); nextCursor = value.nextCursor
+            confirmedAt = value.confirmedAt; showingCached = true
+        } catch {
+            message = "The cached garden could not be read. Reconnect to refresh it."
+            lastReadIssue = message
+        }
+    }
+
+    private func persistConfirmed() throws {
+        guard let cache = cache, let catalogue = catalogue, let confirmed = confirmed else { return }
+        try cache.save(ConfirmedGardenCache(serverID: service.serverID, profile: profile,
+                                           confirmedAt: confirmedAt ?? Date(), catalogue: catalogue,
+                                           garden: confirmed, inventory: inventory, nextCursor: nextCursor),
+                       kind: "garden", server: service.serverID, user: profile.userId)
+    }
+
+    /// All editor and activity receipts meet here. Historical receipts can never
+    /// replace newer confirmed state, even when they arrive after a relaunch.
+    func applyConfirmed(_ garden: APIGarden, at date: Date = Date(), updatedPlants: [APIOwnedPlant] = []) throws {
+        guard isActive else { throw CancellationError() }
+        guard let catalogue = catalogue, garden.catalogVersion == catalogue.catalogVersion else { return }
+        if let current = confirmed {
+            guard current.gardenId == garden.gardenId else { throw ForestError.invalidData("Unexpected garden identity.") }
+            guard garden.stateVersion >= current.stateVersion, garden.layoutVersion >= current.layoutVersion else { return }
+        }
+        let snapshot = try garden.rendered(catalogue: catalogue, assets: assets)
+        confirmed = garden; rendered = snapshot
+        inventory = filtered(inventory.filter { old in !updatedPlants.contains(where: { $0.id == old.id }) } + updatedPlants, garden: garden)
+        confirmedAt = date; showingCached = false
+        try persistConfirmed()
+    }
+
+    func beginActivityOperation() -> Bool {
+        guard isActive, !activityBusy, !state.busy, pending == nil, !refreshInFlight, !recoveryLocked else { return false }
+        activityBusy = true; cancelCandidate()
+        return true
+    }
+    func endActivityOperation() { activityBusy = false }
+
+    func reconcile() async {
+        if let reconcileActivity = reconcileActivity { await reconcileActivity() }
+        else if pending != nil { await retryPending() }
+        else { await refresh() }
     }
 
     func replaceService(_ replacement: any GardenServing) async {
         guard service.serverID == replacement.serverID, !state.busy else { return }
         service = replacement
+        if !started { await start(); return }
         if pending != nil { await retryPending() } else { await refresh() }
     }
 
     func refresh() async {
-        guard pending == nil, !refreshInFlight, !recoveryLocked else { return }
+        guard isActive, pending == nil, !refreshInFlight, !recoveryLocked else { return }
         refreshInFlight = true
         state = .loading; candidate = nil; needsRefresh = true
         inventoryGeneration = UUID()
@@ -86,21 +168,32 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 let before = try await service.garden()
                 let page = try await service.inventory(after: nil)
                 let after = try await service.garden()
-                guard before.layoutVersion == after.layoutVersion, before.catalogVersion == after.catalogVersion,
+                guard isActive else { return }
+                guard before.stateVersion == after.stateVersion, before.layoutVersion == after.layoutVersion, before.catalogVersion == after.catalogVersion,
                       catalog.catalogVersion == after.catalogVersion else { continue }
+                if let current = confirmed {
+                    guard after.gardenId == current.gardenId, after.stateVersion >= current.stateVersion,
+                          after.layoutVersion >= current.layoutVersion else { continue }
+                }
                 let snapshot = try after.rendered(catalogue: catalog, assets: assets)
                 _ = try PlacementGeometry.units(after.width)
                 _ = try PlacementGeometry.units(after.depth)
                 catalogue = catalog; confirmed = after; rendered = snapshot
                 inventory = filtered(page.plants, garden: after); nextCursor = page.nextCursor
+                confirmedAt = Date(); showingCached = false
+                try persistConfirmed()
                 needsRefresh = false; state = .ready
+                if message == lastReadIssue { message = nil }
+                lastReadIssue = nil
                 if !allOwnedIDs.contains(selectedID ?? UUID()) { selectedID = nil }
                 return
             }
             throw ForestError.invalidData("Your garden changed while loading. Refresh to try again.")
         } catch {
+            showingCached = confirmed != nil
             state = (error as? APIError)?.status == 401 ? .authenticationRequired : .blocked
             message = error.localizedDescription
+            lastReadIssue = message
         }
     }
 
@@ -118,9 +211,10 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         defer { inventoryLoading = false }
         do {
             let page = try await service.inventory(after: cursor)
-            guard generation == inventoryGeneration, let garden = confirmed else { return }
+            guard isActive, generation == inventoryGeneration, let garden = confirmed else { return }
             inventory = filtered(inventory + page.plants, garden: garden)
             nextCursor = page.nextCursor == cursor ? nil : page.nextCursor
+            try persistConfirmed()
         } catch { message = "Stored plants could not load. \(error.localizedDescription)" }
     }
 
@@ -195,7 +289,16 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     private func submit(_ action: GardenEditAction) async {
-        guard canEdit, let garden = confirmed else { return }
+        guard canEdit else { return }
+        preparingMembership = true
+        defer { preparingMembership = false }
+        if (action.action == .plant || action.action == .store), let prepare = prepareMembershipChange {
+            guard await prepare() else {
+                message = "Activity could not be confirmed before changing planted plants. Retry sync, then try this edit again."
+                cancelCandidate(); return
+            }
+        }
+        guard readyForMutation, !activityBusy, !activityBlocked, let garden = confirmed else { return }
         let request = GardenEditRequest(requestId: UUID(), expectedLayoutVersion: garden.layoutVersion,
                                         catalogVersion: garden.catalogVersion, actions: [action])
         do {
@@ -209,12 +312,13 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     func retryPending() async {
-        guard (!state.busy || state == .loading), !refreshInFlight, !recoveryLocked, let edit = pending else { return }
+        guard isActive, (!state.busy || state == .loading), !refreshInFlight, !recoveryLocked, let edit = pending else { return }
         guard state != .saving, edit.serverID == service.serverID, edit.userID == profile.userId else { return }
         state = .saving; message = "Saving…"; inventoryGeneration = UUID()
         do {
             let request = try edit.request
             let result = try await service.edit(body: edit.body)
+            guard isActive else { return }
             guard result.requestId == request.requestId, result.garden.gardenId == edit.gardenID else {
                 throw ForestError.invalidData("The server returned an unexpected edit receipt.")
             }
@@ -222,9 +326,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             // after acknowledging the durable receipt, rather than displaying it as current.
             if let catalogue = catalogue, result.garden.catalogVersion == catalogue.catalogVersion,
                confirmed == nil || result.garden.stateVersion >= (confirmed?.stateVersion ?? 0) {
-                let snapshot = try result.garden.rendered(catalogue: catalogue, assets: assets)
-                confirmed = result.garden; rendered = snapshot
-                inventory = filtered(inventory + result.updatedPlants, garden: result.garden)
+                try applyConfirmed(result.garden, updatedPlants: result.updatedPlants)
             }
             try journal.remove(server: edit.serverID, user: edit.userID)
             pending = nil; needsRefresh = true; state = .ready
@@ -232,7 +334,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             await refresh()
         } catch let error as APIError where (400..<500).contains(error.status) && error.status != 408 && error.status != 429 {
             if error.status == 401 {
-                state = .authenticationRequired; message = "Your token expired. Reconnect to finish confirming this edit."
+                state = .authenticationRequired; message = "Sign in again to finish confirming this edit. Your saved request is retained."
                 return
             }
             if error.code == "idempotency_conflict" {

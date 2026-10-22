@@ -1,9 +1,14 @@
-# Movement Forest backend — B1–B3
+# Movement Forest backend — B1–B5
 
 Python 3.12, FastAPI, synchronous SQLAlchemy 2, psycopg 3, PostgreSQL 17 and Alembic.
 This foundation implements accounts, catalogue/profile records, owned plants,
-owner-only garden/storage reads and atomic B3 placement edits. Activity growth,
-visitors and the collection economy remain later milestones.
+owner-only garden/storage reads, atomic B3 placement edits, exact B4 growth/attraction
+calculations and B5 steps synchronisation. Visitors, wider input handlers and the
+collection economy remain later milestones. See [ACTIVITY_API.md](ACTIVITY_API.md)
+for the F5 contract, enrolment/device policies, examples and verification commands.
+The Supabase email/password iPhone/Xcode/Tailscale flow and configuration locations
+are in [frontend/F5A_AUTH_ACCEPTANCE.md](../frontend/F5A_AUTH_ACCEPTANCE.md).
+The original [F5 guide](../frontend/F5_ACCEPTANCE.md) remains for local token fixtures.
 
 ## Start locally with Docker
 
@@ -245,19 +250,22 @@ and overlap cases; no public plant-grant endpoint is introduced.
 
 ## Managed authentication
 
-No authentication provider has been selected or provisioned by this code. For a
-provider issuing compatible access JWTs, configure:
+Supabase Auth is selected; the iOS SDK/UI integration is implemented. Creating the
+hosted project and validating real credentials on iPhone remain operator/device
+steps. Copy `.env.supabase.example` into the local `.env` workflow, preserving
+your existing game database configuration. Docker Compose forwards these settings:
 
 ```text
-FOREST_ENVIRONMENT=staging
+FOREST_ENVIRONMENT=local
 FOREST_AUTH_MODE=jwks
-FOREST_AUTH_ISSUER=https://your-provider.example/
-FOREST_AUTH_AUDIENCE=your-api-audience
-FOREST_AUTH_JWKS_URL=https://your-provider.example/.well-known/jwks.json
-FOREST_AUTH_ALGORITHM=RS256
+FOREST_AUTH_ISSUER=https://YOUR_PROJECT_REF.supabase.co/auth/v1
+FOREST_AUTH_AUDIENCE=authenticated
+FOREST_AUTH_JWKS_URL=https://YOUR_PROJECT_REF.supabase.co/auth/v1/.well-known/jwks.json
+FOREST_AUTH_ALGORITHM=ES256
 ```
 
-`ES256` is also supported when explicitly configured. The verifier restricts the
+Match the algorithm to the project's active asymmetric key (`ES256` or `RS256`).
+The verifier restricts the
 algorithm and verifies signature, issuer, audience, expiry, subject and any not-before
 claim. A single cached JWKS client is reused. Provider outages return retryable 503;
 invalid credentials return 401. Identity uses `(issuer, subject)`, preventing collisions
@@ -266,8 +274,11 @@ this API neither stores passwords nor implements Sign in with Apple itself.
 
 Development authentication requires a signing secret and is rejected at startup
 outside `local`/`test`. There are no unsigned tokens, owner headers or production
-fallback identities. Live provider/JWKS and native login validation remain pending
-provider selection. Unit tests verify real RSA/EC signatures using test keys.
+fallback identities. Live project/JWKS and native login validation remain pending
+configuration/device acceptance. Unit/integration tests verify actual RSA/EC
+signatures using local keys, including Supabase-shaped claims, stable linked
+subjects, signing-key changes, ownership and activity replay. Provider linking
+itself must still be exercised against the hosted project.
 
 ## Tests and CI
 

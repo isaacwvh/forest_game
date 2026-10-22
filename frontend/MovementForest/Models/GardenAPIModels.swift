@@ -24,6 +24,10 @@ struct APIOwnedPlant: Codable, Identifiable, Equatable {
     let modelKey: String
     let thumbnailKey: String
     let placement: APIPlacement?
+    var pinnedProfiles: APIPinnedProfiles? = nil
+    var growthProgress: APIGrowthProgress? = nil
+    var baseAttractionMicroUnits: String? = nil
+    var contributesAttraction: Bool? = nil
 
     func rendered(catalogue: APICatalogue, assets: any AssetCatalogProviding) -> GardenPlant {
         let version = catalogue.variant(species: speciesId, variant: variantId)?.assetCatalogVersion
@@ -51,6 +55,7 @@ struct APIGarden: Codable, Equatable {
     let layoutVersion: Int64
     let stateVersion: Int64
     let plants: [APIOwnedPlant]
+    var totalAttractionMicroUnits: String? = nil
 
     func rendered(catalogue: APICatalogue, assets: any AssetCatalogProviding) throws -> GardenSnapshot {
         guard coordinateUnit == "garden_unit", catalogue.coordinateUnit == coordinateUnit,
@@ -67,6 +72,46 @@ struct APIGarden: Codable, Equatable {
                                   catalogVersion: catalogVersion, layoutVersion: Int(layoutVersion),
                                   stateVersion: Int(stateVersion),
                                   plants: plants.map { $0.rendered(catalogue: catalogue, assets: assets) }).validated()
+    }
+}
+
+struct APIProfileReference: Codable, Equatable {
+    let id: String
+    let version: Int
+}
+
+struct APIPinnedProfiles: Codable, Equatable {
+    let growth: APIProfileReference
+    let behaviour: APIProfileReference
+    let attraction: APIProfileReference
+}
+
+struct APIGrowthProgress: Codable, Equatable {
+    let stageStartMicroUnits: String
+    let nextStageMicroUnits: String?
+    let maximumGrowthMicroUnits: String
+
+    func fraction(growth: String) -> Double? {
+        guard let current = ExactAmount.integer(growth),
+              let start = ExactAmount.integer(stageStartMicroUnits),
+              let maximum = ExactAmount.integer(maximumGrowthMicroUnits),
+              current >= start, current <= maximum else { return nil }
+        guard let nextValue = nextStageMicroUnits else { return current == maximum ? 1 : nil }
+        guard let next = ExactAmount.integer(nextValue), next > start, next <= maximum else { return nil }
+        return min(1, max(0, NSDecimalNumber(decimal: (current - start) / (next - start)).doubleValue))
+    }
+}
+
+enum ExactAmount {
+    static func integer(_ value: String) -> Decimal? {
+        guard !value.isEmpty, value.count <= 19, value.utf8.allSatisfy({ (48...57).contains($0) }),
+              let number = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")),
+              number <= Decimal(Int64.max) else { return nil }
+        return number
+    }
+    static func water(_ value: String) -> String {
+        guard let amount = integer(value) else { return "Unavailable" }
+        return (amount / 1_000_000).formatted(.number.precision(.fractionLength(0...6)))
     }
 }
 

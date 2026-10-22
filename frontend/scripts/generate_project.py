@@ -56,7 +56,14 @@ def generated_files():
                            name="placement-cases.json", path="../spec_examples/placement-cases.json", sourceTree="SOURCE_ROOT")
     config_refs = [add("config-" + name, "PBXFileReference", lastKnownFileType=kind, name=name,
                        path="MovementForest/Configuration/" + name, sourceTree="SOURCE_ROOT")
-                   for name, kind in [("Info.plist", "text.plist.xml"), ("MovementForest.entitlements", "text.plist.entitlements")]]
+                   for name, kind in [("Info.plist", "text.plist.xml"), ("MovementForest.entitlements", "text.plist.entitlements"),
+                                      ("MovementForestApple.entitlements", "text.plist.entitlements"),
+                                      ("Auth.xcconfig", "text.xcconfig"), ("Local.xcconfig.example", "text")]]
+    auth_config = identifier("config-Auth.xcconfig")
+    auth_package = add("supabase-package", "XCRemoteSwiftPackageReference",
+                       repositoryURL="https://github.com/supabase/supabase-swift.git",
+                       requirement={"kind": "exactVersion", "version": "2.55.4"})
+    auth_product = add("supabase-auth-product", "XCSwiftPackageProductDependency", package=auth_package, productName="Auth")
     products = []
     targets = []
     for name, sources, product_type, extension in [
@@ -71,8 +78,9 @@ def generated_files():
         resources = [add("resource-build-" + ref, "PBXBuildFile", fileRef=ref) for ref in resource_refs] if name == "MovementForest" else []
         if name == "MovementForestTests":
             resources.append(add("test-shared-placement-cases", "PBXBuildFile", fileRef=geometry_fixture))
+        frameworks = [add("supabase-auth-build", "PBXBuildFile", productRef=auth_product)] if name == "MovementForest" else []
         phases = [add("sources-" + name, "PBXSourcesBuildPhase", buildActionMask=2147483647, files=source_builds, runOnlyForDeploymentPostprocessing=0),
-                  add("frameworks-" + name, "PBXFrameworksBuildPhase", buildActionMask=2147483647, files=[], runOnlyForDeploymentPostprocessing=0),
+                  add("frameworks-" + name, "PBXFrameworksBuildPhase", buildActionMask=2147483647, files=frameworks, runOnlyForDeploymentPostprocessing=0),
                   add("resources-" + name, "PBXResourcesBuildPhase", buildActionMask=2147483647, files=resources, runOnlyForDeploymentPostprocessing=0)]
         configs = []
         for mode in ["Debug", "Release"]:
@@ -83,7 +91,6 @@ def generated_files():
                         "SWIFT_VERSION": "5.0"}
             if name == "MovementForest":
                 settings.update({"INFOPLIST_FILE": "MovementForest/Configuration/Info.plist",
-                                 "CODE_SIGN_ENTITLEMENTS": "MovementForest/Configuration/MovementForest.entitlements",
                                  "MARKETING_VERSION": "0.1.0", "CURRENT_PROJECT_VERSION": "1"})
             else:
                 settings["GENERATE_INFOPLIST_FILE"] = "YES"
@@ -92,7 +99,10 @@ def generated_files():
                                      "BUNDLE_LOADER": "$(TEST_HOST)"})
                 else:
                     settings["TEST_TARGET_NAME"] = "MovementForest"
-            configs.append(add("configuration-" + name + mode, "XCBuildConfiguration", buildSettings=settings, name=mode))
+            config_values = {"buildSettings": settings, "name": mode}
+            if name == "MovementForest":
+                config_values["baseConfigurationReference"] = auth_config
+            configs.append(add("configuration-" + name + mode, "XCBuildConfiguration", **config_values))
         config_list = add("configurations-" + name, "XCConfigurationList", buildConfigurations=configs, defaultConfigurationIsVisible=0, defaultConfigurationName="Release")
         dependencies = []
         if name != "MovementForest":
@@ -101,7 +111,8 @@ def generated_files():
             dependencies = [add("dependency-" + name, "PBXTargetDependency", target=identifier("target-MovementForest"), targetProxy=proxy)]
         targets.append(add("target-" + name, "PBXNativeTarget", buildConfigurationList=config_list, buildPhases=phases,
                            buildRules=[], dependencies=dependencies, name=name, productName=name,
-                           productReference=product, productType="com.apple.product-type." + product_type))
+                           productReference=product, productType="com.apple.product-type." + product_type,
+                           packageProductDependencies=[auth_product] if name == "MovementForest" else []))
     groups = [add("app-group", "PBXGroup", name="App", children=app_sources, sourceTree="<group>"),
               add("resources-group", "PBXGroup", name="Resources", children=resource_refs + config_refs, sourceTree="<group>"),
               add("unit-group", "PBXGroup", name="Unit tests", children=unit_sources + [geometry_fixture], sourceTree="<group>"),
@@ -123,7 +134,8 @@ def generated_files():
         "TargetAttributes": {identifier("target-MovementForest"): {"CreatedOnToolsVersion": "16.0", "SystemCapabilities": {"com.apple.HealthKit": {"enabled": 1}}}}},
         buildConfigurationList=config_list, compatibilityVersion="Xcode 14.0", developmentRegion="en",
         hasScannedForEncodings=0, knownRegions=["en", "Base"], mainGroup=main_group,
-        productRefGroup=identifier("products-group"), projectDirPath="", projectRoot="", targets=targets)
+        productRefGroup=identifier("products-group"), projectDirPath="", projectRoot="", targets=targets,
+        packageReferences=[auth_package])
     project = "// !$*UTF8*$!\n" + serialize({"archiveVersion": 1, "classes": {}, "objectVersion": 56, "objects": objects, "rootObject": identifier("project")}) + "\n"
 
     def reference(name):
@@ -136,6 +148,7 @@ def generated_files():
     <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">{reference("MovementForest")}</BuildActionEntry>
   </BuildActionEntries></BuildAction>
   <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="NO">
+    <EnvironmentVariables><EnvironmentVariable key="FOREST_DISABLE_AUTH" value="1" isEnabled="YES"/></EnvironmentVariables>
     <Testables><TestableReference skipped="NO">{reference("MovementForestTests")}</TestableReference><TestableReference skipped="NO">{reference("MovementForestUITests")}</TestableReference></Testables>
   </TestAction>
   <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="NO"><BuildableProductRunnable runnableDebuggingMode="0">{reference("MovementForest")}</BuildableProductRunnable></LaunchAction>

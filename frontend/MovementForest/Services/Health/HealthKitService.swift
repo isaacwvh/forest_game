@@ -35,6 +35,21 @@ final class HealthKitService: HealthDataProviding {
                               workouts: workouts, stepsIssue: stepsIssue, workoutsIssue: workoutsIssue, isFixture: false)
     }
 
+    func readStepObservation(now: Date, timeZone: TimeZone) async -> ActivityReport {
+        let intervals = ActivityCalendar.days(endingAt: now, count: 7, timeZone: timeZone)
+        do {
+            guard isAvailable else { throw ForestError.invalidData("Health data is unavailable on this device.") }
+            let days = try await readSteps(intervals: intervals, timeZone: timeZone, now: now)
+            return ActivityReport(observedAt: now, timeZoneIdentifier: timeZone.identifier, days: days,
+                                  workouts: [], stepsIssue: nil, workoutsIssue: nil, isFixture: false)
+        } catch {
+            return ActivityReport(observedAt: now, timeZoneIdentifier: timeZone.identifier,
+                                  days: intervals.map { ActivityDay(start: $0.start, end: $0.end, steps: nil) },
+                                  workouts: [], stepsIssue: "Steps could not be read. Unlock your iPhone and try again.",
+                                  workoutsIssue: nil, isFixture: false)
+        }
+    }
+
     private func readSteps(intervals: [DateInterval], timeZone: TimeZone, now: Date) async throws -> [ActivityDay] {
         guard let first = intervals.first, let type = HKQuantityType.quantityType(forIdentifier: .stepCount) else { return [] }
         let calendar = ActivityCalendar.calendar(timeZone: timeZone)
@@ -68,7 +83,8 @@ final class HealthKitService: HealthDataProviding {
         guard let start = calendar.date(byAdding: .day, value: -30, to: now) else { return [] }
         let runner = HealthQueryRunner<[WorkoutObservation]>(store: store)
         return try await runner.run { finish in
-            let predicate = HKQuery.predicateForSamples(withStart: start, end: now, options: .strictStartDate)
+            // Exclude manual entries in the query, before the 100-result limit.
+            let predicate = Self.recordedWorkoutPredicate(start: start, end: now)
             return HKSampleQuery(sampleType: .workoutType(), predicate: predicate, limit: 100,
                                  sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]) { _, samples, error in
                 if let error = error { finish(.failure(error)); return }
@@ -105,6 +121,16 @@ final class HealthKitService: HealthDataProviding {
                 finish(.success(workouts))
             }
         }
+    }
+
+    static func recordedWorkoutPredicate(start: Date, end: Date) -> NSPredicate {
+        let dates = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        let manuallyEntered = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyWasUserEntered,
+                                                         allowedValues: [NSNumber(value: true)])
+        // Missing metadata remains eligible for this preliminary guard; it is not proof of authenticity.
+        return NSCompoundPredicate(andPredicateWithSubpredicates: [
+            dates, NSCompoundPredicate(notPredicateWithSubpredicate: manuallyEntered)
+        ])
     }
 }
 

@@ -267,6 +267,26 @@ final class GardenEditorTests: XCTestCase {
         XCTAssertEqual(store.confirmed?.layoutVersion, 1)
     }
 
+    func testLogoutDuringEditRetainsReceiptRequestUntilTheAccountReturns() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start(); service.pauseNext = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        let pending = Task { await store.releaseCandidate() }
+        for _ in 0..<1000 where service.gate == nil { try await Task.sleep(nanoseconds: 1_000_000) }
+        let body = try XCTUnwrap(store.pending?.body)
+        store.deactivate()
+        let gate = try XCTUnwrap(service.gate); gate.resume(); service.gate = nil
+        await pending.value
+        XCTAssertEqual(store.confirmed?.layoutVersion, 0)
+        XCTAssertEqual(store.pending?.body, body)
+        let restored = try makeStore(service, journal: journal)
+        await restored.start()
+        XCTAssertEqual(service.bodies, [body, body])
+        XCTAssertNil(restored.pending)
+        XCTAssertEqual(restored.confirmed?.layoutVersion, 1)
+    }
+
     func testJournalSeparatesAccountsAndServersAndSurvivesRecreation() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("forest-editor-" + UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -356,6 +376,33 @@ final class GardenEditorTests: XCTestCase {
         XCTAssertEqual(request.expectedLayoutVersion, 0)
         XCTAssertEqual(store.confirmed?.stateVersion, 100)
         XCTAssertTrue(store.canEdit)
+    }
+
+    func testFailedActivityPreflightPreventsMembershipMutation() async throws {
+        let service = EditorTestService(try EditorContract.load()), store = try makeStore(service)
+        await store.start()
+        var preflights = 0
+        store.prepareMembershipChange = { preflights += 1; return false }
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        XCTAssertEqual(preflights, 1); XCTAssertTrue(service.bodies.isEmpty)
+        XCTAssertNil(store.pending); XCTAssertTrue(store.canEdit)
+    }
+
+    func testSuccessfulActivityPreflightUsesLatestConfirmedState() async throws {
+        let service = EditorTestService(try EditorContract.load()), store = try makeStore(service)
+        await store.start()
+        var preflights = 0
+        store.prepareMembershipChange = { preflights += 1; return true }
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        store.begin(try XCTUnwrap(store.confirmed?.plants.first), kind: .move)
+        store.updatePosition(x: 6, y: 6); await store.releaseCandidate()
+        XCTAssertEqual(preflights, 1) // A transform-only change does not change membership.
+        store.selectedID = store.confirmed?.plants.first?.id
+        await store.storeSelected()
+        XCTAssertEqual(preflights, 2)
+        XCTAssertEqual(service.bodies.count, 3)
     }
 
     func testStaleCatalogueRefreshesRulesAndRequiresANewEdit() async throws {

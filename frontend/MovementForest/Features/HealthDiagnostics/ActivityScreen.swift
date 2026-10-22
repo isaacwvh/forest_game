@@ -6,7 +6,7 @@ struct ActivityScreen: View {
         List {
             Section {
                 Text("Everyday movement, a growing forest.").font(.title2).fontWeight(.semibold)
-                Text("Connect Apple Health to see your steps and recorded workouts. Your activity stays on this device in this version; garden growth and rewards aren’t connected yet.")
+                Text("Read steps and recorded workouts from Apple Health. After connecting your garden, you can separately enable step uploads to grow your planted plants. Workouts remain local diagnostics at this stage.")
                     .foregroundStyle(.secondary)
             }
             if store.provider.isFixture {

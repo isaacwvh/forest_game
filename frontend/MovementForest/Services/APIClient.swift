@@ -12,8 +12,18 @@ private struct APIErrorEnvelope: Decodable {
     let error: Detail
 }
 
+@MainActor
 protocol TokenProviding {
-    func token() throws -> String
+    func token() async throws -> String
+    func refreshedToken() async throws -> String
+    func validate() throws
+}
+
+extension TokenProviding {
+    func validate() throws { }
+    func refreshedToken() async throws -> String {
+        throw APIError(status: 401, code: "session_required", message: "Sign in again to resume your saved requests.")
+    }
 }
 
 struct FixedTokenProvider: TokenProviding {
@@ -21,6 +31,7 @@ struct FixedTokenProvider: TokenProviding {
     func token() throws -> String { value }
 }
 
+@MainActor
 protocol HTTPTransport {
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse)
 }
@@ -61,7 +72,7 @@ struct APIClient {
               components.scheme == "https", components.host != nil, components.user == nil,
               components.password == nil, components.query == nil, components.fragment == nil,
               components.path.isEmpty || components.path == "/" else {
-            throw ForestError.invalidData("Enter the HTTPS address of your development API, without a path or credentials.")
+            throw ForestError.invalidData("Use an HTTPS server address without a path, query or credentials.")
         }
         components.path = ""
         components.host = components.host?.lowercased()
@@ -70,6 +81,7 @@ struct APIClient {
         return url
     }
 
+    @MainActor
     func request<T: Decodable>(_ path: String, method: String = "GET", body: Data? = nil,
                                query: [URLQueryItem] = [], authenticated: Bool = true) async throws -> T {
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false) else {
@@ -82,14 +94,57 @@ struct APIClient {
         request.httpBody = body
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
-        if authenticated { request.setValue("Bearer \(try tokens.token())", forHTTPHeaderField: "Authorization") }
-        let (data, response) = try await transport.send(request)
+        if authenticated {
+            request.setValue("Bearer \(try await tokens.token())", forHTTPHeaderField: "Authorization")
+            try tokens.validate()
+        }
+        var (data, response) = try await transport.send(request)
+        if authenticated {
+            try tokens.validate() // An old account's response cannot reach a new account.
+            if response.statusCode == 401 {
+                request.setValue("Bearer \(try await tokens.refreshedToken())", forHTTPHeaderField: "Authorization")
+                try tokens.validate()
+                // Keep the exact URL, method, body and mutation UUID on this one retry.
+                (data, response) = try await transport.send(request)
+                try tokens.validate()
+            }
+        }
         guard (200..<300).contains(response.statusCode) else {
             let detail = try? JSONDecoder().decode(APIErrorEnvelope.self, from: data)
             throw APIError(status: response.statusCode, code: detail?.error.code ?? "http_error",
                            message: detail?.error.message ?? "The server could not complete this request (\(response.statusCode)).")
         }
-        return try JSONDecoder().decode(T.self, from: data)
+        return try ActivityWire.decoder().decode(T.self, from: data)
+    }
+}
+
+@MainActor
+protocol ActivityServing {
+    var serverID: String { get }
+    func activityStatus() async throws -> APIActivityStatus
+    func enrol(body: Data) async throws -> APIActivityEnrolment
+    func sync(body: Data) async throws -> APIActivitySyncResult
+    func recaps(after: UUID?) async throws -> APIRewardRecaps
+    func acknowledge(recap: UUID, body: Data) async throws -> APIRecapAcknowledgement
+}
+
+struct APIActivityRepository: ActivityServing {
+    let client: APIClient
+    var serverID: String { client.baseURL.absoluteString }
+    func activityStatus() async throws -> APIActivityStatus { try await client.request("v1/me/activity") }
+    func enrol(body: Data) async throws -> APIActivityEnrolment {
+        try await client.request("v1/activity/enrolments", method: "POST", body: body)
+    }
+    func sync(body: Data) async throws -> APIActivitySyncResult {
+        try await client.request("v1/activity/sync", method: "POST", body: body)
+    }
+    func recaps(after: UUID?) async throws -> APIRewardRecaps {
+        var query = [URLQueryItem(name: "limit", value: "100")]
+        if let after = after { query.append(URLQueryItem(name: "after", value: after.uuidString)) }
+        return try await client.request("v1/me/reward-recaps", query: query)
+    }
+    func acknowledge(recap: UUID, body: Data) async throws -> APIRecapAcknowledgement {
+        try await client.request("v1/reward-recaps/\(recap.uuidString)/ack", method: "POST", body: body)
     }
 }
 

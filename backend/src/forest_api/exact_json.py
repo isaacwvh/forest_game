@@ -70,7 +70,7 @@ class ExactJSONRoute(APIRoute):
             async for chunk in request.stream():
                 size += len(chunk)
                 if size > MAX_BODY_BYTES:
-                    raise ApiError(413, "request_too_large", "Placement request is too large")
+                    raise ApiError(413, "request_too_large", "Request body is too large")
                 chunks.append(chunk)
             body = b"".join(chunks)
             parsed_json = parse_exact_json(body)

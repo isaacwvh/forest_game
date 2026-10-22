@@ -36,10 +36,14 @@ services:
   api:
     build: .
     environment:
-      FOREST_ENVIRONMENT: local
+      FOREST_ENVIRONMENT: ${FOREST_ENVIRONMENT:-local}
       FOREST_DATABASE_URL: postgresql+psycopg://forest:forest-local-only@db:5432/forest
-      FOREST_AUTH_MODE: development
-      FOREST_DEV_AUTH_SECRET: ${FOREST_DEV_AUTH_SECRET:?Set FOREST_DEV_AUTH_SECRET in .env}
+      FOREST_AUTH_MODE: ${FOREST_AUTH_MODE:-development}
+      FOREST_DEV_AUTH_SECRET: ${FOREST_DEV_AUTH_SECRET:-}
+      FOREST_AUTH_ISSUER: ${FOREST_AUTH_ISSUER:-}
+      FOREST_AUTH_AUDIENCE: ${FOREST_AUTH_AUDIENCE:-}
+      FOREST_AUTH_JWKS_URL: ${FOREST_AUTH_JWKS_URL:-}
+      FOREST_AUTH_ALGORITHM: ${FOREST_AUTH_ALGORITHM:-RS256}
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:

@@ -37,4 +37,30 @@ final class GardenRendererTests: XCTestCase {
         XCTAssertTrue(original === moved)
         XCTAssertEqual(renderer.modelLoadCount, 1)
     }
+
+    func testConfirmedStageChangePreservesTransformAndSameStageRefreshReusesModel() async throws {
+        let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
+        defer { renderer.stop() }
+        var garden = DevelopmentScene.single.garden()
+        garden.plants[0].x = 3.201; garden.plants[0].y = 4.609; garden.plants[0].rotationDegrees = 35.12
+        let id = garden.plants[0].id
+        renderer.display(garden, catalog: catalog)
+        try await waitUntil { renderer.modelLoadCount == 1 && !renderer.isLoading }
+        let original = try XCTUnwrap(renderer.view.scene.anchors.first?.findEntity(named: id.uuidString))
+        let position = original.position, orientation = original.orientation
+        garden.plants[0].growthStage = garden.plants[0].growthStage == .adult ? .young : .adult
+        renderer.display(garden, catalog: catalog)
+        try await waitUntil { renderer.modelLoadCount == 2 && !renderer.isLoading }
+        let changed = try XCTUnwrap(renderer.view.scene.anchors.first?.findEntity(named: id.uuidString))
+        XCTAssertEqual(changed.position, position)
+        XCTAssertEqual(changed.orientation.vector, orientation.vector)
+        let refreshed = GardenSnapshot(gardenId: garden.gardenId, title: garden.title, isSample: garden.isSample,
+                                       width: garden.width, depth: garden.depth, gardenUnitMetres: garden.gardenUnitMetres,
+                                       catalogVersion: garden.catalogVersion, layoutVersion: garden.layoutVersion,
+                                       stateVersion: garden.stateVersion + 1, plants: garden.plants)
+        renderer.display(refreshed, catalog: catalog)
+        try await waitUntil { !renderer.isLoading }
+        XCTAssertEqual(renderer.modelLoadCount, 2)
+        XCTAssertTrue(changed === renderer.view.scene.anchors.first?.findEntity(named: id.uuidString))
+    }
 }

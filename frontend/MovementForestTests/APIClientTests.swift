@@ -13,6 +13,7 @@ private final class RecordingHTTPTransport: HTTPTransport {
     }
 }
 
+@MainActor
 final class APIClientTests: XCTestCase {
     func testConnectionURLsAreCanonicalAndCannotContainCredentialsOrPaths() throws {
         XCTAssertEqual(try APIClient.validatedURL("https://GARDEN.test:443/").absoluteString, "https://garden.test")

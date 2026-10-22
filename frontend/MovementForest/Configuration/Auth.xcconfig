@@ -1,0 +1,9 @@
+// Public client configuration. Override these values in ignored Local.xcconfig.
+FOREST_SUPABASE_URL =
+FOREST_SUPABASE_PUBLISHABLE_KEY =
+FOREST_GAME_API_URL =
+FOREST_AUTH_CALLBACK_SCHEME = $(PRODUCT_BUNDLE_IDENTIFIER)
+FOREST_AUTH_GOOGLE_ENABLED = NO
+FOREST_AUTH_APPLE_ENABLED = NO
+CODE_SIGN_ENTITLEMENTS = MovementForest/Configuration/MovementForest.entitlements
+#include? "Local.xcconfig"

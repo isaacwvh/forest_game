@@ -1,5 +1,6 @@
 """Explicit local/test fixtures. No balance values here are approved game data."""
 
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import select, text
@@ -9,6 +10,7 @@ from forest_api.config import Settings
 from forest_api.models import (
     AttractionProfile,
     BehaviourProfile,
+    EconomyConfig,
     GameCatalogue,
     GrowthProfile,
     PlantStage,
@@ -20,6 +22,44 @@ from forest_api.schemas import STAGES, AttractionDefinition, BehaviourDefinition
 FIXTURE_VERSION = "development-oak-v1"
 
 
+def seed_calculation_config(session: Session) -> None:
+    from forest_api.calculations import CalculationRules
+
+    version = "development-neutral-v1"
+    if session.get(EconomyConfig, version) is not None:
+        return
+    rules = CalculationRules.model_validate(
+        {
+            "metrics": {
+                "steps": {
+                    "normalisation": "1000",
+                    "water_micro_units": 10_000_000,
+                    "daily_cap": 100_000,
+                }
+            },
+            "visitors": {
+                "k_micro_units": 20_000_000,
+                "starter_probability": "0.1",
+                "maximum_probability": "0.8",
+                "slot_seconds": 30,
+                "offline_fraction": "0.25",
+                "offline_rate_cap_per_second": "0.01",
+                "base_capacity": 30,
+                "maximum_capacity": 120,
+            },
+        }
+    )
+    session.add(
+        EconomyConfig(
+            version=version,
+            effective_at=datetime(1970, 1, 1, tzinfo=UTC),
+            is_fixture=True,
+            rules=rules.model_dump(mode="json"),
+        )
+    )
+    session.flush()
+
+
 def seed_development_catalogue(session: Session, settings: Settings) -> None:
     if settings.environment not in {"local", "test"}:
         raise ValueError("Development catalogue seeding is disabled outside local/test")
@@ -27,6 +67,7 @@ def seed_development_catalogue(session: Session, settings: Settings) -> None:
         session.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended('forest-dev-seed', 0))")
         )
+        seed_calculation_config(session)
         existing = session.get(GameCatalogue, 1)
         if existing is not None:
             if existing.version == FIXTURE_VERSION and existing.is_fixture:

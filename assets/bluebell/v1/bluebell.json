@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "bluebell",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "phase-offset three-bone bowed flower stems and two-bone leaf flutter; fixed root; no physics"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/bluebell-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/bluebell-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/bluebell-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/bluebell-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/bluebell-sprout-standard.usdz",
+      "thumbnail": "ui/bluebell-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.025595,
+          -0.08164,
+          0.0
+        ],
+        "max": [
+          0.086451,
+          0.030551,
+          0.212955
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.025759,
+          -0.081956,
+          0.0
+        ],
+        "max": [
+          0.086778,
+          0.033934,
+          0.21451
+        ]
+      },
+      "animation": "bluebell_sprout_sway",
+      "stemCount": 0,
+      "leafCount": 2,
+      "bellCount": 0,
+      "budCount": 1,
+      "budScapeCount": 1,
+      "basalSheathCount": 0,
+      "triangles": 3436,
+      "joints": 5,
+      "bytes": 189963,
+      "sha256": "2cf2326780ff0cb386c73d38b68690c762dfdd6897caab6dcf2a555994c85584"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/bluebell-seedling-standard.usdz",
+      "thumbnail": "ui/bluebell-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.156029,
+          -0.190456,
+          0.0
+        ],
+        "max": [
+          0.17864,
+          0.074737,
+          0.379107
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.159798,
+          -0.190602,
+          0.0
+        ],
+        "max": [
+          0.179091,
+          0.080354,
+          0.379491
+        ]
+      },
+      "animation": "bluebell_seedling_sway",
+      "stemCount": 0,
+      "leafCount": 4,
+      "bellCount": 0,
+      "budCount": 3,
+      "budScapeCount": 1,
+      "basalSheathCount": 0,
+      "triangles": 7004,
+      "joints": 9,
+      "bytes": 324029,
+      "sha256": "af883a6a9765eb2fa17f8c2666928798d6bfc6688e007c362736ca2d7ed20550"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/bluebell-young-standard.usdz",
+      "thumbnail": "ui/bluebell-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.256119,
+          -0.344574,
+          0.0
+        ],
+        "max": [
+          0.367155,
+          0.251337,
+          0.791648
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.260968,
+          -0.347166,
+          0.0
+        ],
+        "max": [
+          0.368166,
+          0.252114,
+          0.791935
+        ]
+      },
+      "animation": "bluebell_young_sway",
+      "stemCount": 1,
+      "leafCount": 6,
+      "bellCount": 3,
+      "budCount": 2,
+      "budScapeCount": 0,
+      "basalSheathCount": 0,
+      "triangles": 13404,
+      "joints": 16,
+      "bytes": 563966,
+      "sha256": "ef8b590ca0921a19b41ea813e575b71d6a34b4f5f2f6d32035aae7d5ecdce644"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/bluebell-adult-standard.usdz",
+      "thumbnail": "ui/bluebell-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.519895,
+          -0.488186,
+          0.0
+        ],
+        "max": [
+          0.57,
+          0.292966,
+          1.280057
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.521782,
+          -0.490591,
+          0.0
+        ],
+        "max": [
+          0.572544,
+          0.294044,
+          1.281264
+        ]
+      },
+      "animation": "bluebell_adult_sway",
+      "stemCount": 3,
+      "leafCount": 9,
+      "bellCount": 18,
+      "budCount": 0,
+      "budScapeCount": 0,
+      "basalSheathCount": 0,
+      "triangles": 41760,
+      "joints": 28,
+      "bytes": 1574331,
+      "sha256": "e5db7fb71b2cbbff5e71df6113bced50c9136b1b7bfa0f462e1ce09caef3896c"
+    }
+  ]
+}

@@ -31,7 +31,7 @@ class PlacementAccounting(Protocol):
 
 
 class DisabledPlacementAccounting:
-    """B6 integration seam only. No visitor time, attraction or rewards are settled yet."""
+    """B6 integration seam only. No visitor timeline or rewards are settled yet."""
 
     def before_change(self, session: Session, garden: Garden, boundary: datetime) -> None:
         pass

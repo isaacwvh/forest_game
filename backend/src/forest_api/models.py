@@ -1,6 +1,6 @@
-"""Relational B1/B2 state; placement writes arrive in B3."""
+"""Relational ownership, immutable configuration and B4/B5 activity accounting."""
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -8,6 +8,7 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
@@ -19,6 +20,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -277,3 +279,144 @@ class ApiRequest(Base):
     payload_hash: Mapped[str] = mapped_column(String(64))
     response: Mapped[dict] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class EconomyConfig(Base):
+    __tablename__ = "economy_configs"
+    __table_args__ = (CheckConstraint("jsonb_typeof(rules) = 'object'", name="rules_object"),)
+    version: Mapped[str] = mapped_column(String(100), primary_key=True)
+    effective_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, unique=True)
+    is_fixture: Mapped[bool] = mapped_column(Boolean)
+    rules: Mapped[dict] = mapped_column(JSONB)
+
+
+class ActivityDevice(Base):
+    __tablename__ = "activity_devices"
+    __table_args__ = (
+        UniqueConstraint("id", "owner_id"),
+        CheckConstraint("revoked_at IS NULL OR revoked_at >= enrolled_at", name="revocation"),
+        CheckConstraint(
+            "(baseline_at IS NULL AND baseline_observed_at IS NULL "
+            "AND baseline_date IS NULL AND baseline_steps IS NULL) OR (baseline_at IS NOT NULL "
+            "AND baseline_observed_at IS NOT NULL AND baseline_date IS NOT NULL "
+            "AND baseline_at >= enrolled_at AND baseline_steps IS NOT NULL "
+            "AND baseline_steps >= 0)",
+            name="baseline",
+        ),
+        Index(
+            "uq_activity_active_owner",
+            "owner_id",
+            unique=True,
+            postgresql_where=text("revoked_at IS NULL"),
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    installation_id: Mapped[UUID] = mapped_column()
+    enrolled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    baseline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    baseline_observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    baseline_date: Mapped[date | None] = mapped_column(Date)
+    baseline_steps: Mapped[int | None] = mapped_column(BigInteger)
+
+
+class ActivityDay(Base):
+    __tablename__ = "activity_days"
+    __table_args__ = (
+        CheckConstraint(
+            "credited_steps >= 0 AND baseline_steps >= 0 AND baseline_credit_steps >= 0",
+            name="steps",
+        ),
+        CheckConstraint("observed_steps IS NULL OR observed_steps >= 0", name="observed"),
+        CheckConstraint("bucket_end > bucket_start", name="interval"),
+        ForeignKeyConstraint(
+            ["device_id", "owner_id"], ["activity_devices.id", "activity_devices.owner_id"]
+        ),
+    )
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    game_date: Mapped[date] = mapped_column(Date, primary_key=True)
+    game_timezone: Mapped[str] = mapped_column(String(64))
+    bucket_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    bucket_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    device_id: Mapped[UUID] = mapped_column()
+    rule_version: Mapped[str] = mapped_column(ForeignKey("economy_configs.version"))
+    baseline_steps: Mapped[int] = mapped_column(BigInteger, default=0)
+    baseline_credit_steps: Mapped[int] = mapped_column(BigInteger, default=0)
+    observed_steps: Mapped[int | None] = mapped_column(BigInteger)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    is_available: Mapped[bool] = mapped_column(Boolean)
+    credited_steps: Mapped[int] = mapped_column(BigInteger, default=0)
+
+
+class ActivityCredit(Base):
+    __tablename__ = "activity_credits"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_id", "game_date"], ["activity_days.owner_id", "activity_days.game_date"]
+        ),
+        ForeignKeyConstraint(
+            ["device_id", "owner_id"], ["activity_devices.id", "activity_devices.owner_id"]
+        ),
+        UniqueConstraint("owner_id", "game_date", "end_steps"),
+        CheckConstraint(
+            "start_steps >= 0 AND end_steps > start_steps "
+            "AND water_steps >= 0 AND water_steps <= end_steps - start_steps",
+            name="range",
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    game_date: Mapped[date] = mapped_column(Date)
+    device_id: Mapped[UUID] = mapped_column()
+    request_id: Mapped[UUID] = mapped_column()
+    rule_version: Mapped[str] = mapped_column(ForeignKey("economy_configs.version"))
+    start_steps: Mapped[int] = mapped_column(BigInteger)
+    end_steps: Mapped[int] = mapped_column(BigInteger)
+    water_steps: Mapped[int] = mapped_column(BigInteger)
+    accepted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class PlantGrowthCredit(Base):
+    __tablename__ = "plant_growth_credits"
+    __table_args__ = (
+        CheckConstraint("before_growth >= 0 AND after_growth >= before_growth", name="growth"),
+    )
+    plant_id: Mapped[UUID] = mapped_column(ForeignKey("owned_plants.id"), primary_key=True)
+    activity_credit_id: Mapped[UUID] = mapped_column(
+        ForeignKey("activity_credits.id"), primary_key=True
+    )
+    before_growth: Mapped[int] = mapped_column(BigInteger)
+    after_growth: Mapped[int] = mapped_column(BigInteger)
+    context: Mapped[dict] = mapped_column(JSONB)
+
+
+class PlayerProgress(Base):
+    __tablename__ = "player_progress"
+    __table_args__ = (
+        CheckConstraint("activity_steps >= 0 AND first_maturity_count >= 0", name="counters"),
+    )
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    activity_steps: Mapped[int] = mapped_column(BigInteger, default=0)
+    first_maturity_count: Mapped[int] = mapped_column(BigInteger, default=0)
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class RewardEvent(Base):
+    __tablename__ = "reward_events"
+    __table_args__ = (UniqueConstraint("owner_id", "request_id"),)
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    request_id: Mapped[UUID] = mapped_column()
+    accepted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    payload: Mapped[dict] = mapped_column(JSONB)
+
+
+class RewardRecap(Base):
+    __tablename__ = "reward_recaps"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    event_id: Mapped[UUID] = mapped_column(ForeignKey("reward_events.id"), unique=True)
+    payload: Mapped[dict] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

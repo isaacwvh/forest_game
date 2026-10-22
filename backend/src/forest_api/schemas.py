@@ -170,6 +170,12 @@ class PlacementDTO(DTO):
     rotation_degrees: GroundNumber
 
 
+class GrowthProgressDTO(DTO):
+    stage_start_micro_units: str
+    next_stage_micro_units: str | None
+    maximum_growth_micro_units: str
+
+
 class PlantDTO(DTO):
     plant_id: UUID
     species_id: str
@@ -182,6 +188,7 @@ class PlantDTO(DTO):
     model_key: str
     thumbnail_key: str
     placement: PlacementDTO | None
+    growth_progress: GrowthProgressDTO | None = None
 
 
 class InventoryDTO(DTO):
@@ -200,6 +207,7 @@ class GardenDTO(DTO):
     layout_version: int
     state_version: int
     plants: list[PlantDTO]
+    total_attraction_micro_units: str = "0"
 
 
 class StageAssetDTO(DTO):

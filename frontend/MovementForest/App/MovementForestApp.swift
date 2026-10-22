@@ -5,7 +5,10 @@ import SwiftUI
 struct MovementForestApp: App {
     @StateObject private var container = AppContainer()
     var body: some Scene {
-        WindowGroup { RootView(container: container).tint(.forestTint) }
+        WindowGroup {
+            RootView(container: container).tint(.forestTint)
+                .onOpenURL { url in Task { await container.connection.authentication?.handleCallback(url) } }
+        }
     }
 }
 
@@ -30,6 +33,7 @@ final class AppContainer: ObservableObject {
         #else
         activity = ActivityStore(provider: HealthKitService())
         #endif
+        connection.configureHealth(activity)
         loadCatalog()
     }
 
@@ -56,7 +60,7 @@ struct RootView: View {
                     }
                     .tabItem { Label("Garden", systemImage: "leaf") }.tag(0)
                     NavigationStack {
-                        ActivityScreen(store: container.activity)
+                        ConnectedActivityScreen(connection: container.connection, store: container.activity)
                             .toolbar { settingsButton }
                     }
                     .tabItem { Label("Activity", systemImage: "figure.walk") }.tag(1)
@@ -75,7 +79,11 @@ struct RootView: View {
                     await container.activity.refresh()
                 }
                 .onChange(of: phase) { value in
-                    if value == .active { Task { await container.activity.refresh() } }
+                    if value == .active { Task {
+                        await container.connection.connectManaged(assets: catalog)
+                        if let sync = container.connection.activitySync { _ = await sync.synchronize() }
+                        await container.activity.refresh()
+                    } }
                 }
             } else {
                 RecoveryView(title: "Your forest couldn’t load", message: container.startupError ?? "Resources are unavailable.",

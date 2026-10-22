@@ -36,6 +36,8 @@ toolchain or use another Mac; changing the deployment target won't resolve it.
 - [ ] Record any total differences, source combinations and timezone used; don't sum source totals to “fix” them.
 - [ ] Take a short walk, reopen/refresh, and observe a changed total when Health has updated.
 - [ ] An existing recorded run appears as Running with stable UUID/source in diagnostics.
+- [ ] Add a manual workout in Health/Fitness: it does not appear in the game's workout read. A normally recorded workout still appears. False/missing manual-entry flags pass this guard; this is not workout authenticity verification.
+- [ ] With a test Health store containing more than 100 newer flagged manual workouts, an older recorded workout in the 30-day window still appears (the exclusion runs before the query limit). An all-manual window displays the normal empty state, not a permission error.
 - [ ] If no recorded run exists, record one with your normal compatible tracker and wait for it to appear in Health first. Ordinary phone steps alone do not create a workout.
 - [ ] Refresh twice: observation lists/totals replace previous results rather than accumulating.
 - [ ] Revoke a type in Health, refresh, and confirm the UI does not retain stale values as current after a successful empty query.
@@ -94,3 +96,9 @@ time**. Do not infer a minimum-device performance guarantee from this iPhone.
 
 Keep the app installed for follow-up observations. Free Personal Team signing
 expires after seven days, after which it needs rebuilding/reinstallation.
+
+## F5 connected acceptance
+
+Follow [F5_ACCEPTANCE.md](F5_ACCEPTANCE.md) for the current backend/Tailscale flow.
+Record native results, including Xcode/OS versions, there. The earlier checklist
+above also applies to rendering, accessibility and local Health diagnostics.

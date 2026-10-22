@@ -1,0 +1,369 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "lanternbirch",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "gold-glow"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "slight structural sway, phase-offset leafy sprays and short pod pendulums; embedded skeleton; no runtime physics"
+  },
+  "materials": {
+    "roughness": 0.81,
+    "sharedRefinedAtlasAcrossStages": true,
+    "goldGlow": "emissive golden birch markings and lantern husks; cream bark and foliage preserved"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/lanternbirch-sprout-standard.png",
+        "gold-glow": "ui/lanternbirch-sprout-gold-glow.png"
+      },
+      "seedling": {
+        "standard": "ui/lanternbirch-seedling-standard.png",
+        "gold-glow": "ui/lanternbirch-seedling-gold-glow.png"
+      },
+      "young": {
+        "standard": "ui/lanternbirch-young-standard.png",
+        "gold-glow": "ui/lanternbirch-young-gold-glow.png"
+      },
+      "adult": {
+        "standard": "ui/lanternbirch-adult-standard.png",
+        "gold-glow": "ui/lanternbirch-adult-gold-glow.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/lanternbirch-sprout-standard.usdz",
+      "thumbnail": "ui/lanternbirch-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.156021,
+          -0.08123,
+          0.0
+        ],
+        "max": [
+          0.169065,
+          0.080396,
+          0.258685
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.156578,
+          -0.081883,
+          0.0
+        ],
+        "max": [
+          0.169274,
+          0.082044,
+          0.259635
+        ]
+      },
+      "animation": "lanternbirch_sprout_sway",
+      "leafCount": 3,
+      "podCount": 0,
+      "sprayCount": 0,
+      "triangles": 2698,
+      "joints": 3,
+      "bytes": 341333,
+      "sha256": "9860169fc5f81f750d34bc1e706f9b1395b4a2b968c7b782fc9f6a41712733d8"
+    },
+    {
+      "stage": "sprout",
+      "variant": "gold-glow",
+      "file": "models/lanternbirch-sprout-gold-glow.usdz",
+      "thumbnail": "ui/lanternbirch-sprout-gold-glow.png",
+      "bounds": {
+        "min": [
+          -0.156021,
+          -0.08123,
+          0.0
+        ],
+        "max": [
+          0.169065,
+          0.080396,
+          0.258685
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.156578,
+          -0.081883,
+          0.0
+        ],
+        "max": [
+          0.169274,
+          0.082044,
+          0.259635
+        ]
+      },
+      "animation": "lanternbirch_sprout_sway",
+      "leafCount": 3,
+      "podCount": 0,
+      "sprayCount": 0,
+      "triangles": 2698,
+      "joints": 3,
+      "bytes": 371895,
+      "sha256": "c46211acedb935b7bcf196beb8c19b1525bc1a272fc9ece053e6bfe6e3fcade0"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/lanternbirch-seedling-standard.usdz",
+      "thumbnail": "ui/lanternbirch-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.261506,
+          -0.187484,
+          0.0
+        ],
+        "max": [
+          0.3199,
+          0.227299,
+          0.909324
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.26161,
+          -0.192439,
+          0.0
+        ],
+        "max": [
+          0.319975,
+          0.22899,
+          0.909664
+        ]
+      },
+      "animation": "lanternbirch_seedling_sway",
+      "leafCount": 9,
+      "podCount": 0,
+      "sprayCount": 0,
+      "triangles": 3410,
+      "joints": 3,
+      "bytes": 373545,
+      "sha256": "de9116dac8d32cfe83598156db6c94473a78025e91c21cf2e6b7c31e6aff4aa1"
+    },
+    {
+      "stage": "seedling",
+      "variant": "gold-glow",
+      "file": "models/lanternbirch-seedling-gold-glow.usdz",
+      "thumbnail": "ui/lanternbirch-seedling-gold-glow.png",
+      "bounds": {
+        "min": [
+          -0.261506,
+          -0.187484,
+          0.0
+        ],
+        "max": [
+          0.3199,
+          0.227299,
+          0.909324
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.26161,
+          -0.192439,
+          0.0
+        ],
+        "max": [
+          0.319975,
+          0.22899,
+          0.909664
+        ]
+      },
+      "animation": "lanternbirch_seedling_sway",
+      "leafCount": 9,
+      "podCount": 0,
+      "sprayCount": 0,
+      "triangles": 3410,
+      "joints": 3,
+      "bytes": 404235,
+      "sha256": "4c697ba4b22e34e6cf4a3cc3153718ef07499d7a888576ce93c2d9c82636ff54"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/lanternbirch-young-standard.usdz",
+      "thumbnail": "ui/lanternbirch-young-standard.png",
+      "bounds": {
+        "min": [
+          -1.056012,
+          -0.539529,
+          0.0
+        ],
+        "max": [
+          1.068921,
+          0.858265,
+          2.545054
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.064069,
+          -0.55553,
+          0.0
+        ],
+        "max": [
+          1.080369,
+          0.872002,
+          2.545465
+        ]
+      },
+      "animation": "lanternbirch_young_sway",
+      "leafCount": 136,
+      "podCount": 2,
+      "sprayCount": 4,
+      "triangles": 33274,
+      "joints": 13,
+      "bytes": 1699983,
+      "sha256": "04602b171d0d6fdb674d362ccf5aa385d26a16e7097ba1baa1ec847187a30133"
+    },
+    {
+      "stage": "young",
+      "variant": "gold-glow",
+      "file": "models/lanternbirch-young-gold-glow.usdz",
+      "thumbnail": "ui/lanternbirch-young-gold-glow.png",
+      "bounds": {
+        "min": [
+          -1.056012,
+          -0.539529,
+          0.0
+        ],
+        "max": [
+          1.068921,
+          0.858265,
+          2.545054
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.064069,
+          -0.55553,
+          0.0
+        ],
+        "max": [
+          1.080369,
+          0.872002,
+          2.545465
+        ]
+      },
+      "animation": "lanternbirch_young_sway",
+      "leafCount": 136,
+      "podCount": 2,
+      "sprayCount": 4,
+      "triangles": 33274,
+      "joints": 13,
+      "bytes": 1730802,
+      "sha256": "dd977beee4436641770fec93b6eb748e81a6efa2c504346ead1a4e04df81f4f1"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/lanternbirch-adult-standard.usdz",
+      "thumbnail": "ui/lanternbirch-adult-standard.png",
+      "bounds": {
+        "min": [
+          -2.377875,
+          -0.869665,
+          0.0
+        ],
+        "max": [
+          2.245504,
+          1.736987,
+          4.692173
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.384064,
+          -0.870969,
+          0.0
+        ],
+        "max": [
+          2.263408,
+          1.74584,
+          4.697209
+        ]
+      },
+      "animation": "lanternbirch_adult_sway",
+      "leafCount": 455,
+      "podCount": 5,
+      "sprayCount": 7,
+      "triangles": 97530,
+      "joints": 22,
+      "bytes": 4501655,
+      "sha256": "528b33220e2d5aa9fc66f23e4673614a4ff9ae6fe68661a3b1f90e63fa74ba2c"
+    },
+    {
+      "stage": "adult",
+      "variant": "gold-glow",
+      "file": "models/lanternbirch-adult-gold-glow.usdz",
+      "thumbnail": "ui/lanternbirch-adult-gold-glow.png",
+      "bounds": {
+        "min": [
+          -2.377875,
+          -0.869665,
+          0.0
+        ],
+        "max": [
+          2.245504,
+          1.736987,
+          4.692173
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.384064,
+          -0.870969,
+          0.0
+        ],
+        "max": [
+          2.263408,
+          1.74584,
+          4.697209
+        ]
+      },
+      "animation": "lanternbirch_adult_sway",
+      "leafCount": 455,
+      "podCount": 5,
+      "sprayCount": 7,
+      "triangles": 97530,
+      "joints": 22,
+      "bytes": 4532346,
+      "sha256": "f070a2e00e1cc8949bd4ac112ff79bed890d13b5623617ec27c2c1090641a763"
+    }
+  ]
+}

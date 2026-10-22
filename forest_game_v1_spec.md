@@ -1,8 +1,8 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.9\
-Date: 20 October 2026\
+Document version: 0.11\
+Date: 22 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
 
@@ -38,7 +38,7 @@ The core experience is: move → water/grow individual plants → increase garde
 - Activity supplies automatic watering/growth. Visitors supply the collection economy: active welcomes and claimed stored visits award visitor tokens, exchanged for seed tickets. Activity no longer directly awards tickets. Spending tokens or tickets never consumes plant growth.
 - Every owned plant grows independently, including duplicate species/variant copies. Only placed copies contribute attraction, with higher growth stages contributing more. Attraction and applicable skills determine bounded active visitor opportunities and slower, capacity-limited offline accumulation.
 - Active visitors use one shared arrival/flight/tap/departure behaviour. Tapping welcomes a visitor; it does not trap or spend a creature. Offline visits are collected together on return. Capacity skills can extend the time before storage fills; stored value is not lost through absence.
-- Each plant lists its supported metric multipliers; omitted metrics are 0 and an explicitly configured 1.0 is neutral. Percentage boosts resolve in two layers: per-activity conversion factors, then one combined-water factor. Weather, events and skills declare which layer they affect.
+- Each plant lists its supported metric multipliers; omitted metrics are 0 unless a workout type inherits `workout_minutes.*`; an explicitly configured 1.0 is neutral. Percentage boosts resolve in two layers: per-activity conversion factors, then one combined-water factor. Weather, events and skills declare which layer they affect.
 - Species-specific activity responses are a permanent core requirement: plants can have different step, distance, active-energy, flights-climbed and per-workout-type weights.
 - The behaviour model must support conditional modifiers such as weather. Exact weather sourcing and launch scope remain open.
 - Each species has a fixed circular reserved-clearance footprint, measured in garden units and shared across its stages and variants. Positions are free within the board where clearance fits; footprint size is independent of screen pixels and growth stage.
@@ -50,6 +50,8 @@ The core experience is: move → water/grow individual plants → increase garde
 - Friends can view each other's gardens.
 - Client-server architecture; PostgreSQL stores structured state, object storage holds heavier shared assets.
 - Backend: Python with FastAPI, SQLAlchemy for database access and Alembic for PostgreSQL schema migrations, containerised using Docker. This replaces Java + Spring Boot.
+- Deployment baseline: the FastAPI container runs on Google Cloud Run; Supabase provides managed PostgreSQL, authentication and shared asset storage/CDN. Local API/PostgreSQL development remains supported. Provider integration and deployment are planned work, not provisioned infrastructure.
+- Account access supports email/password, Sign in with Google and native Sign in with Apple through Supabase Auth. A unique game username is separate from the login credential; linked sign-in methods must resolve to the same game account.
 - Mechanics and architecture remain revisable.
 
 ### 2.2 Proposed V1 boundaries
@@ -70,14 +72,26 @@ The core experience is: move → water/grow individual plants → increase garde
 ### 3.1 Onboarding
 
 1. Explain the game and show a small example garden.
-2. Create or sign into an account through managed authentication.
-3. Choose a unique username and display name.
+2. Create or sign into a Supabase Auth account using email/password, Google or Apple. Email signup requires confirmation; social sign-in creates the authentication account on first use without a separate game password.
+3. Load `GET /v1/me` using the Supabase access token. If game onboarding is required, choose a unique game username and display name and call the repeat-safe `POST /v1/accounts` to create the profile, garden and starter together. Returning or successfully linked identities resume their existing account and skip account/starter creation. A username is for game identity/discovery, not password login.
 4. Explain why step and workout access are requested, then present HealthKit permission prompts.
-5. Establish the activity baseline; do not grant rewards for all lifetime historical activity.
-6. Grant a starter sprout in plant storage and guide the user through placing it.
-7. Show how movement grows the starter plant and increases its attraction, demonstrate a visitor welcome and token-to-ticket exchange, and explain sync and stored-visit status. The starter garden must support the first draw without requiring a rare plant or another draw first; floor, introductory milestones and tutorial pacing remain to be balanced.
+5. Show the short workout-recording setup below, with a path for Apple Fitness and a path for an existing third-party tracker. Explain that workouts must be recorded and saved to Apple Health; manually entered workouts do not qualify for workout growth. This setup is optional; steps alone support progression.
+6. Establish the activity baseline; do not grant rewards for all lifetime historical activity.
+7. Show the starter sprout already granted by account provisioning and guide the user through placing it; this tutorial step must not grant another copy.
+8. Show how movement grows the starter plant and increases its attraction, demonstrate a visitor welcome and token-to-ticket exchange, and explain sync and stored-visit status. The starter garden must support the first draw without requiring a rare plant or another draw first; floor, introductory milestones and tutorial pacing remain to be balanced.
+
+**Agreed workout setup (specification only; implement with onboarding):**
+
+| User's setup | Simple guidance shown during onboarding |
+| --- | --- |
+| No third-party workout app | Use the built-in **Apple Fitness** app: **Fitness → Workout → choose an available workout → Start → End Workout → Done**. Record the session as you exercise; do not use Log Workout/Add Data. Available workout types and any accessory requirements depend on iOS and hardware. If session recording is unavailable on the user's setup, offer a compatible iPhone tracker connected to Health. |
+| Already uses a compatible workout app | Keep recording in that app and enable its **write/share workouts to Apple Health** connection. Example, Strava: **You/Profile → Settings → Manage Apps and Devices → Health → Connect → allow Workouts → Send to Health ON**. Some versions label this menu **Applications, Services and Devices** and the action **Connect with Health**. Other apps have their own Health connection under settings. |
+
+After either path, let the user continue and explain: **record workout → tracker saves to Apple Health → Movement Forest reads it on sync**. Movement Forest's own Health read permission is separate from the tracker's permission to write workouts. Allow time for tracker syncing; ordinary phone steps do not automatically create a workout. Keep these instructions available for later reference when onboarding is implemented. Recheck current app menu labels and Apple Fitness availability against supported OS versions then; do not imply that Apple Fitness session recording works on every supported iOS version. See the Apple Fitness and Strava references in section 19.
 
 Health access must be optional for account access and viewing the game. If data is unavailable, explain that activity rewards cannot currently update. An empty query result must not be presented as proof that permission was denied.
+
+Account settings provide linked sign-in methods, **Link Google/Apple**, password recovery where applicable and sign-out. Linking starts while signed in to the garden the player intends to keep, using Supabase's supported linking operation; an ordinary sign-in button must not be used as a substitute. Explain that Apple Hide My Email can prevent email-based matching. A method already attached to another account produces a recoverable conflict, not an automatic garden merge. See section 7.4 for the identity/session contract.
 
 ### 3.2 Garden
 
@@ -154,7 +168,7 @@ No reward should require continually beating a personal distance record. Persona
 
 **Agreed design direction:** movement waters the planted garden automatically. Each plant's watering/progress meter shows its progress toward the next stage. Water and growth are the same accounting quantity; do not implement both a water wallet and a second growth award for the same credit. Stored plants preserve progress and receive no watering. Progress does not evaporate and inactivity does not kill plants or reset a streak.
 
-Use separate, explicit metric IDs: `steps`, `walking_running_distance_km`, `active_energy_kcal`, `flights_climbed` and workout duration qualified by type, proposed as `workout_minutes.<type>` (for example `workout_minutes.running`). Each supported workout type is a distinct calculation input with its own base rate and plant multiplier; there is no additional untyped workout-duration award. These are proposed internal IDs, not a deployed wire contract. Normalise the quantities before applying plant multipliers. A multiplier of 1.0 means neutral treatment of that metric's configured contribution, not that one step equals one kilometre. Example values for balance exploration only:
+Use separate, explicit metric IDs: `steps`, `walking_running_distance_km`, `active_energy_kcal`, `flights_climbed` and workout duration qualified by type, proposed as `workout_minutes.<type>` (for example `workout_minutes.running`). Each supported workout type is a distinct calculation input with its own base rate and resolved plant multiplier; `workout_minutes.*` is a plant-multiplier fallback, not another activity input or untyped workout-duration award. These are proposed internal IDs, not a deployed wire contract. Normalise the quantities before applying plant multipliers. A multiplier of 1.0 means neutral treatment of that metric's configured contribution, not that one step equals one kilometre. Example values for balance exploration only:
 
 | Metric | Normalisation quantity | Example base water per quantity |
 | --- | --- | --- |
@@ -164,7 +178,7 @@ Use separate, explicit metric IDs: `steps`, `walking_running_distance_km`, `acti
 | `active_energy_kcal` | TBD kcal | TBD |
 | `flights_climbed` | 5 flights | 2 |
 
-All example rates remain unapproved balance values. Only metrics explicitly listed in a plant's behaviour contribute water; omitted metrics, including individual workout types, default to 0. An explicit multiplier of 1.0 gives the normal configured conversion for that metric. Differences by species/variant must be intentional, versioned configuration. Combined walking/running distance, active energy and workout inputs overlap with steps: their contributions are deliberate additional rewards, not claims of independent movement. Balance their combined contribution explicitly. Steps alone must support ordinary progression.
+All example rates remain unapproved balance values. Only configured metrics contribute water. For each supported, enabled workout type, use its explicit `workout_minutes.<type>` plant multiplier, otherwise `workout_minutes.*`, otherwise 0. An explicit type value, including 0, replaces the fallback; never combine both or award the same minutes twice. Other omitted metrics default to 0. An explicit multiplier of 1.0 gives the normal configured conversion for that metric. Differences by species/variant must be intentional, versioned configuration. Combined walking/running distance, active energy and workout inputs overlap with steps: their contributions are deliberate additional rewards, not claims of independent movement. Balance their combined contribution explicitly. Steps alone must support ordinary progression.
 
 The calculation has two boost layers: first convert each activity into water using its plant multiplier and resolved activity factor; then sum those contributions and apply one combined-water factor. Water is added directly to cumulative growth, with no second water-to-growth exchange rate, consumption or efficiency boost. Growth stage is derived from the resulting total and the configured thresholds. See section 6.6 for formulas and stacking rules.
 
@@ -329,6 +343,7 @@ If exact time-of-activity attribution becomes a requirement, add placement histo
 - Use one consistent HealthKit aggregation strategy; do not naively sum overlapping raw iPhone and Watch samples or add per-source totals together.
 - Test multi-source records on real hardware. Do not promise exact equality with the Health app without verification.
 - Identify uploaded workouts by HealthKit UUID within the user account. Exact UUID uniqueness handles retries; different apps can still record the same physical session under different UUIDs.
+- **Agreed preliminary manual-entry guard:** inspect `HKMetadataKeyWasUserEntered` on each workout. Exclude records with a true flag before workout selection limits, deduplication, duration aggregation or growth calculations; excluded parent workouts cannot contribute through child segments. False or absent flags pass this guard, subject to all other eligibility rules. An absent flag is not proof of a genuine workout, and source allowlisting/attestation is not part of this change. Preserve the flag's true/false/absent state in future workout imports and enforce the same exclusion in the backend when that handler is implemented. This guard applies to workout contributions only; it does not change daily quantity aggregation or claw back previous credits.
 - Detect likely duplicate workouts using overlapping times and source metadata; choose a deterministic policy so a session is not rewarded twice, including overlaps assigned different types. Splitting one session into multiple records must not increase its eligible duration or entitlement. This deduplication applies within workout rewards; intentional overlap with ordinary activity water remains allowed.
 - Reject future/out-of-range timestamps and unreasonable payload sizes. Apply configurable reward caps and log anomalies.
 - Device data is client-reported and cannot be treated as tamper-proof. Stronger device attestation may raise the cost of abuse but does not prove that steps are genuine.
@@ -368,7 +383,7 @@ metric_water = eligible_metric_quantity / normalisation_quantity
 plant_water = sum(metric_water) × resolved_combined_water_factor
 ```
 
-For example, `workout_minutes.running` and `workout_minutes.cycling` may have different plant multipliers; omitted types contribute 0. An activity-scoped workout modifier targets the qualified metric ID, so it cannot silently affect every workout type. Workout duration is an intentional additional water component above ordinary activity, not another contribution to base step/distance/energy totals. Pin units, type mappings, modifier ordering, stacking rules and caps in the rule version. Use fixed-point integer arithmetic, for example micro-growth units, with carried remainders so frequent syncing does not change rewards through rounding. External API growth can remain expressed as display points.
+For example, `workout_minutes.running` and `workout_minutes.cycling` may have different plant multipliers; omitted types use `workout_minutes.*` when configured, otherwise 0. The fallback selects one coefficient for each deduplicated typed minute and preserves that type's base conversion rate. An activity-scoped workout modifier targets the qualified metric ID, so it cannot silently affect every workout type. Workout duration is an intentional additional water component above ordinary activity, not another contribution to base step/distance/energy totals. Pin units, type mappings, modifier ordering, stacking rules and caps in the rule version. Use fixed-point integer arithmetic, for example micro-growth units, with carried remainders so frequent syncing does not change rewards through rounding. External API growth can remain expressed as display points.
 
 ### 6.2 Per-plant settlement
 
@@ -453,7 +468,7 @@ Record applied skill IDs, profile versions, source plants, relevant weather/even
 | Element | Role | Neutral / missing behaviour |
 | --- | --- | --- |
 | Base conversion rate | Global water per unit of the metric | Explicit versioned configuration |
-| Plant behaviour multiplier | Permanent plant coefficient for that metric | Explicit 1.0 is neutral; omitted/0 disables the contribution |
+| Plant behaviour multiplier | Permanent plant coefficient for that metric | Explicit 1.0 is neutral; workouts resolve exact type then `workout_minutes.*` then 0; explicit 0 disables the contribution |
 | `activity`-scoped bonus | Changes one metric's conversion to water | No eligible bonuses gives factor 1.0 |
 | `water`-scoped bonus | Changes the sum of all activity-water contributions | No eligible bonuses gives factor 1.0 |
 
@@ -492,7 +507,7 @@ Personal spike bonuses are activity-scoped band rules, not a fixed percentage ap
 
 ```text
 rate_i = base_water_per_normalisation_quantity_i / normalisation_quantity_i
-plant_i = configured_metric_multiplier_i, or 0 when omitted
+plant_i = exact workout-type multiplier, else workout_minutes.*, else 0; other metrics use configured multiplier or 0
 activity_factor_i,b = 1 + capped resolved activity bonus for metric i, band/context b
 metric_water_i = sum_b(quantity_i,b × rate_i × plant_i × activity_factor_i,b)
 water_factor = 1 + capped resolved water-scoped bonus
@@ -535,12 +550,15 @@ Persist enough context to explain each visitor-production segment: placed source
 ```mermaid
 flowchart TD
     H["HealthKit on device"] --> I["iOS app and local cache"]
-    I --> A["FastAPI backend (Docker)"]
-    A --> Q["SQLAlchemy"]
-    Q --> D["Managed PostgreSQL"]
-    I --> U["Managed authentication"]
-    I --> C["Asset CDN"]
-    C --> S["S3 object storage"]
+    I -->|"Sign up, sign in, refresh and link"| U["Supabase Auth"]
+    P["Apple / Google identity providers"] <--> U
+    U -->|"Session and access token"| I
+    I -->|"HTTPS API + Supabase access token"| A["FastAPI Docker container on Cloud Run"]
+    A -->|"Cached public signing keys"| J["Supabase Auth JWKS"]
+    A --> Q["SQLAlchemy / psycopg"]
+    Q --> D["Supabase PostgreSQL"]
+    I -->|"Versioned asset downloads"| C["Supabase Storage CDN"]
+    C --> S["Supabase Storage: shared catalogue assets"]
 ```
 
 ### 7.1 Technology baseline and decision status
@@ -549,33 +567,57 @@ flowchart TD
 | --- | --- | --- |
 | iOS UI | Swift and SwiftUI | Native HealthKit integration; proposed |
 | 3D rendering | RealityKit behind a garden-renderer interface | Prototype ground picking, continuous dragging, camera controls and a mature 10–15-plant garden on the minimum device; test the supported maximum before committing |
-| Local persistence | SwiftData or SQLite-backed repository | Cache server state and durable sync queue; exact library open |
+| Local persistence | Account/server-scoped repositories and durable request journals; Keychain for sessions | F5 currently uses protected atomic files for confirmed state/activity queues. Retain account isolation; changing the persistence library is not required for auth integration |
 | Backend | Python + FastAPI modular monolith | Agreed framework; replaces Java + Spring Boot. Modular-monolith organisation remains proposed |
-| Database access | SQLAlchemy | Agreed ORM and SQL access layer; explicit transactions preserve ownership, reward and wallet invariants |
+| Database access | Synchronous SQLAlchemy + psycopg | Current backend implementation; explicit transactions preserve ownership, reward and wallet invariants |
 | Schema migrations | Alembic | Agreed migration tooling for the PostgreSQL schema; version-controlled revisions |
 | API | HTTPS JSON REST | Simple request/response and retry semantics |
-| Database | PostgreSQL; managed hosting proposed | Agreed database engine; transactions, relational ownership and durable state |
-| Authentication | Managed provider with Sign in with Apple support | Avoid implementing password handling; vendor open |
-| Assets | S3 + CloudFront or equivalent CDN | Shared, versioned binary content |
-| Deployment | Docker containers; one API service in one region proposed | Docker is agreed; hosting vendor remains open. Expand replicas after load evidence |
+| Database | Supabase PostgreSQL for deployed environments; Docker PostgreSQL locally | Same PostgreSQL/Alembic game schema and transaction rules; hosting transition is separate from auth integration |
+| Authentication | Supabase Auth: email/password, Google and Apple | Selected provider; Supabase handles credentials and sessions, FastAPI verifies its access tokens. Real provider integration remains pending |
+| Assets | Supabase Storage with its CDN | Versioned shared runtime assets; public read bucket for nonprivate catalogue art, deployment-only writes. Basic CDN is available on Free; Smart CDN requires Pro or above |
+| Deployment | FastAPI Docker container on Google Cloud Run, with one initial region near Supabase | Selected hosting baseline; bounded autoscaling and database pools. Exact regions, resource limits and warm-instance policy require measurement |
 
-FastAPI, SQLAlchemy, Alembic, PostgreSQL and Docker are agreed technology choices. Other entries remain proposed or open as labelled; no infrastructure has been provisioned by this specification. Microservices, Kubernetes, Redis and a message broker are not V1 requirements.
+Cloud Run plus Supabase is the selected deployment direction. Cloud Run supplies serverless API compute; the database remains a provisioned managed PostgreSQL service, so the system is not entirely scale-to-zero. Supabase Edge Functions are not required for the game API: the existing FastAPI transaction boundaries stay authoritative. No cloud resources or application integration are created by this specification update. Microservices, Kubernetes, Redis and a message broker are not V1 requirements.
 
 ### 7.2 Responsibility split
 
-Client: HealthKit reads, scene rendering, input, placement preview, cache, offline viewing and durable upload queue; shared visitor animation, active-session lifecycle signals and pending/confirmed welcome/claim presentation.
+Client: Supabase signup/sign-in/linking and session recovery; HealthKit reads, scene rendering, input, placement preview, cache, offline viewing and durable upload queue; shared visitor animation, active-session lifecycle signals and pending/confirmed welcome/claim presentation.
 
 Server: authentication verification, permissions, canonical garden state, placement validation, activity accounting, derived attraction, visitor time/mode settlement, opportunity issuance/expiry, offline storage, currency ledgers/exchanges/milestones, randomness, inventory and friend relationships.
 
-Database: source of truth for game state. S3 is the source for shared asset binaries, not per-user progress. Clients never receive database credentials or cloud storage write credentials.
+Supabase Auth: password handling, provider identities, email confirmation/recovery and access/refresh sessions. Apple/Google authenticate the upstream identity; FastAPI trusts the resulting Supabase access token, not a raw Apple/Google ID token. Native sign-in describes the iOS integration; OAuth/OIDC still underlies social authentication. Cloud Run deployment/service IAM is a separate operational concern.
+
+Database: source of truth for game state. FastAPI accesses Supabase PostgreSQL through SQLAlchemy; the iOS app does not use Supabase's Data API to mutate or read private game tables. Disable that Data API when unused, or explicitly exclude/protect game tables before migration. Supabase Storage is the source for shared asset binaries, not per-user progress. Clients receive the project URL and publishable API key, never database passwords, secret/service-role keys or storage write credentials.
 
 ### 7.3 Backend implementation baseline
 
 FastAPI exposes the HTTPS JSON REST API. Keep game rules and transactional use cases in application/domain modules, with SQLAlchemy handling persistence. Separate request/response schemas from ORM models so database changes do not implicitly change the client contract.
 
-Use a request-scoped SQLAlchemy session with explicit transaction boundaries for mutations. A growth/visitor settlement, welcome, stored-visit claim, exchange, milestone grant, draw or placement operation must commit related state changes atomically, rolling back on failure. Establish one consistent lock order across garden accounting and wallets. Existing idempotency, locking, version-check and constraint requirements still apply; choosing an ORM does not replace them. The synchronous/asynchronous database access mode and PostgreSQL driver remain implementation decisions.
+Use a request-scoped synchronous SQLAlchemy session and psycopg with explicit transaction boundaries for mutations. A growth/visitor settlement, welcome, stored-visit claim, exchange, milestone grant, draw or placement operation must commit related state changes atomically, rolling back on failure. Establish one consistent lock order across garden accounting and wallets. Existing idempotency, locking, version-check and constraint requirements still apply; choosing an ORM or hosting provider does not replace them.
 
 Alembic owns schema evolution through reviewed, version-controlled migrations. Do not use ORM table auto-creation as the deployment migration mechanism. Runtime API containers and the migration command use the same application image; run migrations once as a controlled deployment step before starting the compatible API release, rather than independently from every API replica.
+
+### 7.4 Authentication, sessions and stable game identity
+
+The account contract is **one internal game user → one garden**, mapped uniquely by `(auth_issuer, auth_subject)`. For Supabase, the subject is its stable Auth user ID and the issuer identifies the environment's project. Apple/Google provider IDs, email addresses, display names and game usernames are not game ownership keys. Supabase keeps linked provider identities on its Auth user; successful linking must preserve the subject and the existing internal game user ID. Do not add a game account per provider or a database trigger that independently grants starters.
+
+After Supabase establishes a session, the app calls `GET /v1/me`. Only an explicit game-account-missing response enters onboarding; timeouts, provider failures and invalid tokens do not imply a new account. `POST /v1/accounts` owns atomic profile/garden/starter creation and replay safety. Pending provisioning requests are scoped by environment and verified issuer/subject before an internal game user ID exists, and must not replay under another identity. A signed-in Supabase user may legitimately exist before game onboarding is complete. Uniqueness conflicts ask for another game username without replacing the authenticated identity.
+
+Use the Supabase Swift SDK for session persistence in Keychain and refresh. The API token provider must support asynchronous retrieval of a current token and coordinate concurrent refreshes. On an authentication 401, refresh at most once and retry with the original method, path, body and request UUID, only if the authenticated account is unchanged. Preserve uncertain mutation outcomes; a new token is not a new operation. Provider/network failures pause uploads without deleting their journals. A rejected refresh requires sign-in again; it must not cause automatic signup or a new activity baseline.
+
+On sign-out or account/environment change, stop activity work, detach the previous garden and prevent old in-flight responses from updating the new account. Bind each repository/request to its expected issuer/subject and internal user; recheck identity before sending with a refreshed token and before applying a response. Explicit sign-out hides private cached state; temporary offline expiry may retain cached viewing for the previously confirmed account while protected operations pause. Keep unresolved requests partitioned by API environment and internal game user; resolve them only after fresh authenticated account confirmation. Never rewrite or submit account A's journal as account B. Successful linking or refresh within one account preserves plant IDs, watermarks, device enrolment, baseline, pending receipts and recaps. Health upload consent remains separately scoped and is not implied by login or linking. Reinstallation/device replacement retains section 5.5's policy; changing login method alone is not device replacement.
+
+FastAPI verifies the configured project issuer, `authenticated` audience, expiry and asymmetric signing algorithm against the project's JWKS. Match the configured algorithm to the active Supabase key; the current verifier supports ES256/RS256, not a legacy shared-secret project in JWKS mode. Cloud Run's public mobile endpoint performs app authentication inside FastAPI; players need no Google Cloud IAM account. Normal verification needs public signing keys, not a Supabase admin secret. Disabled/deleted game accounts are rejected even while a previously issued JWT remains unexpired; sign-out alone does not instantly revoke every access token.
+
+Enable manual identity linking and exercise the supported Swift SDK flow before broadening gameplay. Supabase currently labels manual linking beta, so live acceptance is required. It can automatically link matching verified email identities, but Apple relay addresses may differ. Explicit linking requires a valid existing session and provider proof. An identity already owned by another Supabase user must not silently transfer or merge game progress. Garden merges and a full unlink-management UI are outside this increment. If native ID-token linking is unavailable in the selected Swift SDK version, use its documented browser OAuth linking flow and provision the corresponding provider callbacks/Apple web credentials. Ordinary native Apple sign-in remains the default login experience.
+
+### 7.5 Development and staged provider adoption
+
+**Next integration:** F5a, immediately after the implemented F5 steps slice and before integrated F6 visitor/reward work. F5's account-scoped cache and durable journals make this a useful point to prove real session recovery and linking before more private state/currency depends on them. Existing F5 device acceptance remains required. The increment is planned in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); provider setup is in [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
+
+Start with hosted Supabase Auth on a Free development project while FastAPI and game PostgreSQL remain local. Select JWKS auth for this integration environment; generated development tokens remain only for isolated local/test fixtures and fail closed in staging/production. Existing generated-token test accounts do not automatically become Supabase accounts. Default to fresh Supabase test accounts and separate fixture state. Preserving a particular development garden requires an explicit reviewed identity-rebinding procedure with ownership proof and uniqueness checks; do not infer ownership from matching usernames/emails or rewrite saved queues to a new user.
+
+Move game PostgreSQL to Supabase and publish remote assets as separate B10/deployment increments. Reuse Alembic revisions; plan credentials, SSL, connection/pooler compatibility, grants, backups and validation as well as the connection URL. Do not add a cross-database foreign key or require a local copy of Supabase's `auth` schema for game ownership. Prepare isolated staging/production projects when needed; moving between Auth projects changes the issuer and subject, so test identity/state migration explicitly if real accounts ever move.
 
 ## 8. PostgreSQL data model
 
@@ -587,7 +629,7 @@ Implement this model with SQLAlchemy mappings and Alembic revisions targeting Po
 
 | Table | Key fields and constraints |
 | --- | --- |
-| `users` | `id uuid PK`, `auth_subject text UNIQUE`, `username text`, `display_name text`, `avatar_key text NULL`, `game_timezone text`, `status text`, `created_at`, `updated_at`; unique case-normalised username index |
+| `users` | `id uuid PK` for stable internal game identity; `auth_issuer text`, `auth_subject text`, composite `UNIQUE(auth_issuer, auth_subject)`; `username text`, `display_name text`, `avatar_key text NULL`, `game_timezone text`, `status text`, `created_at`, `updated_at`; unique case-normalised username index. Supabase subject is its Auth user ID, not an Apple/Google ID; no credential/password or cross-database Auth foreign key |
 | `activity_devices` | `id uuid PK`, `user_id FK`, `installation_id`, `is_active boolean`, enrolment/baseline timestamps; partial unique active-device index per user |
 | `friendships` | `id uuid PK`, `user_low_id FK`, `user_high_id FK`, `requested_by FK`, `status text`, timestamps; unique canonical user pair, disallow self-pair; status pending/accepted |
 | `blocks` | `blocker_id FK`, `blocked_id FK`, `created_at`; composite PK, disallow self-block |
@@ -603,7 +645,7 @@ Blocking overrides friendship and visibility. Remove/disable conflicting request
 | `plant_variants` | `(species_id, variant_id) PK`, display name/description, rarity, optional growth/behaviour/attraction profile overrides, enabled flag, immutable asset-catalogue reference; standard/blue/vined are oak's current visual variants. Overrides resolve before pinning on award; rarity is shared variant configuration, not rolled per-copy stats |
 | `growth_profiles` | `(id, version) PK`, `thresholds jsonb`, maximum growth; immutable once used |
 | `attraction_profiles` | `(id, version) PK`, immutable nonnegative `stageAttractionMicroUnits` for all four stages, strictly increasing for the V1 growth incentive, optional pinned gameplay tags for visitor targeting; no user state or currency |
-| `growth_rule_profiles` | `(id, version) PK`, validated immutable `metricMultipliers` (omitted metrics = 0), `conditionalModifiers` and `gardenEffects` JSONB; effects declare `system` growth/visitors, supported scope, recipient/filter, conditions/activation and stacking metadata. Growth activity scope requires a canonical metric; growth water and visitor scopes forbid one. Schema version and activation metadata; an empty effects array means no emitted skills |
+| `growth_rule_profiles` | `(id, version) PK`, validated immutable `metricMultipliers` (exact workout type → `workout_minutes.*` → 0; other omitted metrics = 0), `conditionalModifiers` and `gardenEffects` JSONB; effects declare `system` growth/visitors, supported scope, recipient/filter, conditions/activation and stacking metadata. Growth activity scope requires a canonical metric; growth water and visitor scopes forbid one. Schema version and activation metadata; an empty effects array means no emitted skills |
 | `plant_stages` | Species/variant/stage reference, visual model key, PNG thumbnail key and stage display metadata; four stable stage IDs |
 | `owned_plants` | `id uuid PK`, `owner_id FK`, `(species_id, variant_id) FK` to shared variant, resolved/pinned growth/behaviour/attraction profile references and versions, `growth_micro_units bigint CHECK >= 0` representing individual cumulative water, fractional accounting state if needed, acquisition source/reference, `first_matured_at NULL`, timestamps; stage and base attraction derived from that copy's progress and pinned profiles, not separate authoritative balances. Duplicate copies have distinct IDs and progress |
 | `garden_placements` | `plant_id FK PK`, `garden_id FK`, `x numeric(9,3)`, `y numeric(9,3)` in board-local garden units, `rotation_degrees numeric(5,2)` with `0 <= value < 360`; a plant has at most one placement; coordinates are the ground-centred anchor, not a rectangle corner |
@@ -627,7 +669,7 @@ Planning workbook mapping: replace `Footprint (tiles)` with `Clearance radius (g
 | Table | Key fields and constraints |
 | --- | --- |
 | `activity_days` | `(user_id, game_date) PK`, timezone, UTC bucket boundaries, observed daily steps, combined walking/running distance, active energy and flights climbed, availability flags, per-metric enrolment baselines and credited watermarks, frozen personal baseline/target and water-boost-profile snapshot/version, economy version, last observation time; workout duration aggregates derive from deduplicated session/segment credits. No step-derived ticket watermark |
-| `workout_imports` | `id uuid PK`, `user_id FK`, `healthkit_uuid`, source metadata, original HealthKit type, mapped game type and mapping version, start/end, recorded and eligible duration seconds, distance metres nullable, active energy kcal nullable, optional typed segment references/data, status, bonus credited, duplicate-group reference; unique `(user_id, healthkit_uuid)`; retain segment identities and credited attribution when splitting by type/day, with no second parent-duration award |
+| `workout_imports` | `id uuid PK`, `user_id FK`, `healthkit_uuid`, source metadata, nullable `was_user_entered` from `HKMetadataKeyWasUserEntered` (true excludes the entire workout from rewards; null means absent, not verified), original HealthKit type, mapped game type and mapping version, start/end, recorded and eligible duration seconds, distance metres nullable, active energy kcal nullable, optional typed segment references/data, status, bonus credited, duplicate-group reference; unique `(user_id, healthkit_uuid)`; retain segment identities and credited attribution when splitting by type/day, with no second parent-duration award |
 | `activity_credits` | `id uuid PK`, user/garden, source key, eligible input quantities, time interval, input revision, rule/economy versions and optional weather-context reference; unique logical input credit |
 | `plant_growth_credits` | `(plant_id, activity_credit_id) PK`, pinned behaviour version, before/after cumulative growth and stage, quantities/plant coefficients and per-metric/band activity factors, post-activity water subtotal, combined-water factor, input/context/effect/source references, cap/maturity adjustments and actual-awarded growth micro-units, created_at; breakdowns must reconcile to the final award without double-counting cross-layer bonuses |
 | `weather_contexts` | `id uuid PK`, coarse region key, provider, observation interval, normalised condition, retrieval time; shared cached observations, no precise route |
@@ -795,8 +837,12 @@ The 10–15-plant target is separate from the approximately 10–15 launch speci
 
 All authenticated requests derive the acting user from the verified token, not a client-provided owner ID. Paths are illustrative.
 
+Signup, sign-in, email confirmation/recovery, refresh and identity linking use Supabase Auth through its SDK. The following routes are the game API, not another password/token-issuing service.
+
 | Endpoint | Purpose |
 | --- | --- |
+| `GET /v1/me` | Resolve the verified Supabase identity to the internal game profile; an explicit missing account continues game onboarding |
+| `POST /v1/accounts` | Repeat-safe authenticated game profile/garden/starter provisioning after username selection; never accepts a password or grants another starter on login/linking |
 | `GET /v1/bootstrap` | Profile, configuration versions, own garden, token/ticket wallets, visitor storage/context/session summary, milestone state, permanent packet access, pending recap and sync settings; a read may settle storage but does not claim currency |
 | `PATCH /v1/me` | Display name, username and supported preferences |
 | `GET /v1/catalog` | Versioned species/variant definitions, circular clearance, growth/behaviour/attraction profiles, supported skill handlers, assets, visitor visuals and pool/exchange/milestone descriptions |
@@ -859,7 +905,7 @@ All operations verify idempotency and use the common account/garden/wallet lock 
 - Model/sprite, texture, sound and animation files are shared catalogue assets.
 - Store references in metadata, not binary assets in PostgreSQL.
 - Use versioned keys, e.g. `plants/oak/v1/models/oak-seedling-blue.usdz`. Local v1 may be refined during authoring as requested; published CDN versions must be immutable, with a new version for later changes.
-- Serve through a CDN backed by a private S3 origin. Shared catalogue art does not require per-user signed URLs unless content access needs it.
+- Serve shared catalogue art from a public-read Supabase Storage bucket through its CDN. Only trusted asset publishing tooling may upload/replace/delete; game login does not confer asset write access. Public art does not require per-user signed URLs. Keep any future private user media in a separate private bucket with explicit access policies.
 - App downloads directly from CDN; do not proxy binaries through the API.
 - Asset manifest records key, version, checksum, size and compatible format.
 - Bundle the starter garden and a few common plants; download additional assets as needed.
@@ -913,22 +959,28 @@ Cap simultaneous visible visitors and define how rendering limits interact with 
 
 ## 13. Security, privacy and product safeguards
 
-- Managed authentication; verify token issuer, audience, signature and expiry on the backend. Store tokens in Keychain, not plain preferences.
+- Supabase Auth; verify its access-token issuer, audience, signature and expiry on the backend under section 7.4. Store sessions in Keychain, not plain preferences. Passwords and provider secrets are handled by Supabase/provider configuration, never the game database or logs.
 - Enforce ownership and friendship checks on every applicable API route.
 - Encrypt transport; use managed database/storage encryption and server-side secrets management.
 - Rate-limit account discovery, friend requests, activity uploads, visitor sessions/heartbeats/welcomes/claims, exchanges and draws. Authorise own-garden opportunities; do not accept client-provided attraction, elapsed time, random outcomes or currency amounts as authority.
 - Collect daily totals and minimal workout summaries; avoid raw GPS routes and unrelated health metrics.
 - Keep health data out of logs, friend responses, advertising targeting and public analytics events.
 - Provide clear consent, retention and deletion policies. Recheck Apple HealthKit and App Store requirements before release, particularly the health/fitness purpose of the app.
-- Account deletion removes profile, friendships, private activity and owned game state under a documented retention policy; backups expire under a separate schedule.
+- Account deletion coordinates disabling game access, removing profile/friendships/private activity/owned game state and deleting the Supabase Auth user through trusted server tooling. Make this recoverable/idempotent across both services and cover Apple token-revocation requirements before release. A client sign-out or deleting only one service's row is not account deletion; backups expire under a separate documented schedule. Full deletion delivery remains B10.
 - Username moderation and blocking are required if discovery and user-generated names ship.
 - Paid currency, random paid items and subscriptions require a separate purchase/economy design review. They are not implied by this specification.
 
 ## 14. Deployment and scaling
 
-Start with one region, a managed Postgres instance with backups, one API deployment, managed auth and CDN/object storage. Maintain separate development/staging/production environments and migration history.
+Deploy one Cloud Run API service near the selected Supabase PostgreSQL region. Supabase provides Auth and Storage/CDN alongside the database. Choose the exact region pair using expected player geography, database latency and availability; similarly named regions across vendors are not necessarily colocated. Maintain separate environment credentials, Auth projects, database state and migration history as environments are introduced.
 
-Package the FastAPI application and its SQLAlchemy/Alembic dependencies in a Docker image. Proposed local setup: Docker Compose runs the API and PostgreSQL, with a named volume for database persistence and an explicit Alembic migration command. Production uses the API image with the proposed managed PostgreSQL service; the database is separate from the API container. Inject environment-specific configuration and secrets at runtime, keep credentials out of images/source control, and deploy reviewed Alembic revisions through the controlled migration step in section 7.3. Docker Compose is a local-development proposal, not a selected production hosting platform.
+Package FastAPI and its SQLAlchemy/Alembic dependencies in a Docker image. Local Docker Compose runs the API and PostgreSQL with a named volume and explicit Alembic migrations; hosted development Auth can be used independently. Deployed Cloud Run uses the same API image with Supabase PostgreSQL outside the container. Inject configuration and secrets at runtime and run the controlled migration step in section 7.3. Keep native tests, migrations and provider acceptance distinct from deployment completion.
+
+Budget Cloud Run concurrency and maximum instances together with per-instance SQLAlchemy pool size/overflow and Supabase connection limits, reserving headroom for migrations and administration. Prefer a tested Supabase transaction-pooler connection for autoscaling request traffic; disable incompatible psycopg prepared statements and avoid session-state assumptions before adopting it. A direct or session-pooler connection is an alternative if bounded instance/connection totals fit the database budget. Use a suitable direct/session connection for Alembic and verify IPv4/IPv6 reachability and TLS. Changing only the database hostname is not the deployment acceptance check.
+
+Cloud Run may scale to zero in development or low-traffic pilots. Measure cold-start, first-login and first-sync latency before choosing a production warm-instance minimum; a continuously warm API is a cost/experience tradeoff, not an initial requirement. Game time settlement and durable receipts cannot depend on an API instance remaining alive.
+
+Supabase Free is acceptable for development and a bounded pilot; Pro's current US$25/month base is not a prerequisite for real authentication. Free has inactivity pausing and smaller quotas; production requires an explicit availability/backup/restore decision. Smart CDN is a paid-tier feature, whereas ordinary Storage CDN delivery is available on Free. Track Supabase plan/compute/MAU/storage/egress, Cloud Run requests/CPU/memory/egress and SMTP separately; no single subscription covers all operating costs. Recheck live pricing at deployment.
 
 The API should be stateless across instances, with visitor leases, cursors and idempotency in durable shared state rather than process memory. Use database connection pooling with bounded totals across replicas. Keep transactions short and activity uploads batched. Do not upload once per step or every animation frame; heartbeat/poll cadence must respect the visitor rate and device/network budgets.
 
@@ -938,21 +990,26 @@ Settle offline visitor accrual lazily on relevant reads/mutations with server-ti
 
 Add infrastructure only for observed needs: additional API replicas for request load, workers for optional whole-garden preview generation/notifications, caching for hot catalogue/read data, and read replicas only after query optimisation. Plant storage PNGs are prebuilt catalogue assets and need no per-user thumbnail worker. A real-time socket connection is unnecessary for V1 friend visits.
 
-Costs to monitor: asset egress, art sizes, authentication users, database capacity, excessive activity sync/visitor heartbeat requests, opportunity/settlement history and logs. Scalability is a property to load-test, not guaranteed by choosing PostgreSQL/S3.
+Costs to monitor: asset egress, art sizes, authentication users, database capacity, excessive activity sync/visitor heartbeat requests, opportunity/settlement history and logs. Scalability is a property to load-test, not guaranteed by choosing Cloud Run/Supabase.
 
 ## 15. Validation and observability
 
 ### Essential automated checks
 
+- Supabase-signed tokens accept only the configured project/audience/algorithm and valid lifetime; wrong-project, expired, tampered and development tokens fail in the integration/staging/production configuration. Exercise signing-key rollover/provider failure without accepting unverified identities.
+- New verified identities provision exactly one game account/garden/starter under retries and concurrent requests. Incomplete email confirmation and cancelled login/linking do not create game state. Existing authenticated accounts resume without regranting starters.
+- Linked Google/Apple/email access retains the same Supabase subject, internal user/garden/plant IDs, consent, baseline, watermarks and pending receipts. Test differing/relay emails and provider-already-linked conflicts; no implicit merge of two existing gardens.
+- Refresh and reauthentication preserve exact queued request bodies/UUIDs and resume only for the same confirmed account. Logout/switch/in-flight-response races never expose cached health/garden data or upload another account's requests; offline expiry pauses protected operations without losing unresolved state.
 - Same activity payload retried produces no extra reward.
 - HealthKit syncs and personal activity boosts award no visitor tokens/tickets directly. Token and ticket ledgers reconcile independently through welcomes, stored claims, milestone grants, exchanges and draws.
 - Increasing, decreasing and late totals follow the watermark policy.
 - Workout retries, record splitting and overlapping duplicate sessions cannot earn repeated bonuses. Typed segments and their parent never both award the same minutes; unsupported types follow the explicit no-reward policy.
+- Workouts flagged `HKMetadataKeyWasUserEntered = true` are excluded before the query limit and earn no workout water, including through segments. False and absent flags remain eligible under the other rules; an all-manual result is handled as empty, not a permission error. Verify the guard in the current iOS reader and, when B8 workout rewards are implemented, in uploads/backend accounting; steps and other daily inputs retain their existing policy.
 - All four daily quantity inputs reconcile by date/metric. New-day buckets do not erase historical watermarks; cross-midnight workout attribution, pauses and source delays follow the selected policy.
 - Workout water deliberately stacks with daily steps/distance/active-energy water without subtracting the workout from daily totals or adding its measurements to those totals again.
 - Stored plants never advance; replanting resumes from settled growth.
 - Activity growth updates racing with storage moves settle consistently.
-- Species weights, combined-distance/energy/flight inputs, distinct per-workout-type multipliers, modifier targets and neutral missing-weather fallback evaluate correctly.
+- Species weights, combined-distance/energy/flight inputs, distinct per-workout-type multipliers, modifier targets and neutral missing-weather fallback evaluate correctly. Check workout fallback, exact-type replacement (including 0), single-type-only plants and no duplicate wildcard/type award.
 - Growth is invariant to retry and sync chunking, including fixed-point rounding and caps.
 - Rule migrations affect only intended future credits; late context cannot credit new recipients.
 - Invalid coordinates/precision, nonpositive or missing published radii, circle overlaps, board-edge violations and stale layout/configuration versions are rejected. Check tangent circles, a just-overlapping pair, exact boundary contact and a centre-inside/circle-outside case using shared decimal rules.
@@ -963,7 +1020,7 @@ Costs to monitor: asset egress, art sizes, authentication users, database capaci
 - Completed draw retries return the same owned sprout ID; unboxing does not require an available planting position.
 - Placing/storing a plant preserves ownership, stage, variant and growth; no separate seed consumption occurs.
 - Every supported stage/variant resolves to a model and transparent thumbnail; all stages use the same ground anchor.
-- Explicit 1.0 multipliers preserve configured normalised contributions; omitted/0 plant multipliers stay zero under ordinary activity/water boosts. Overlapping metrics receive only their deliberate configured contributions.
+- Explicit 1.0 multipliers preserve configured normalised contributions; resolved 0 plant multipliers (after workout fallback) stay zero under ordinary activity/water boosts. Overlapping metrics receive only their deliberate configured contributions.
 - Growth activity scope requires a valid metric; growth water and visitor scopes forbid one. Effects route by explicit system/scope, each applies once, and base plant coefficients remain unchanged.
 - Same-layer bonuses add after strongest-per-group resolution and caps; the two layers deliberately compound. Check 10×1.20×1.10 = 13.2 before limits, and verify the water factor applies once after summing different metrics.
 - Marginal personal-boost bands, baseline floors/warm-up, frozen daily targets, fractional carry and cap boundaries behave consistently across sync chunking.
@@ -988,6 +1045,8 @@ Costs to monitor: asset egress, art sizes, authentication users, database capaci
 
 Test on a real iPhone without a paired Watch first: all four daily inputs, active-energy recording/read availability on the minimum supported OS, foreground reads, denied/empty data, locked-phone failures, background delivery, offline retries, reinstall/device switching and supported iPhone workout-app imports. Then test optional Watch/other-source workouts, delayed syncing, multisport segments and records from multiple sources. Missing optional data must not block step progression.
 
+Verify that a manual Health/Fitness workout is excluded while a normally recorded workout remains readable, and that many recent manual entries cannot crowd recorded workouts out of the limited query. When onboarding is implemented, walk through both Apple Fitness and third-party Health setup on supported OS versions, including unavailable recording, skipped setup and delayed tracker sync. No onboarding UI or B8 workout-reward handler is introduced by these specification updates.
+
 On the minimum supported iPhone, review 10–15 mature plants, mixed stages, duplicates and tree-heavy layouts at actual garden framing. Check visual fullness, readable silhouettes, acceptable canopy/branch overlap and wind, grounded roots/bases, board-edge overhang, selection behind trees, finger occlusion, ground picking beneath foliage, adult previews, guide contrast and zoom/perspective-correct rings. Also load-test the separately defined supported maximum; the visual target is not a performance bound.
 
 Review shared visitor motion/tap targets with foliage and camera changes, reduced motion, edit/modal transitions, missed taps, connection loss and pending confirmations. Test offline collection as one interaction even at the capacity maximum. Measure a starter player's time to first welcome/draw and compare realistic active income with long-absence storage across supported skills; tune away from constant tapping or required attendance.
@@ -1003,13 +1062,14 @@ Provisional targets: smooth interaction on the selected minimum device; fast cac
 1. **3D prototype:** provisional 10×10-garden-unit shared board, continuous ground picking/dragging, fractional saved positions, circular species clearance, rotation, valid/invalid rings and adult previews. Review a mature 10–15-plant composition, tune relative model/board scale and radii, then test the supported maximum before producing the full species set.
 2. **Persistent ownership:** Docker-based FastAPI service, SQLAlchemy models, Alembic migrations against PostgreSQL, authentication, own garden, storage, placement API and transaction rules.
 3. **Movement integration:** iPhone-only HealthKit reads for steps, combined walking/running distance, active energy and flights climbed; enrolment baseline, idempotent typed activity accounting, normalised water contributions and per-plant multipliers.
-4. **Attraction and visitors:** pinned stage-attraction profiles, independent placed-copy aggregation, bounded starter/active curve, server-time contexts and active leases/slots, one shared visitor appearance/controller and idempotent welcomes; slower capped storage and one-interaction claims.
-5. **Typed workouts:** session/segment import, duplicate handling, supported type/category mapping and duration-based additional water with per-plant, per-type multipliers; verify intentional overlap with ordinary activity rewards.
-6. **Collection economy:** token/ticket wallets and ledgers, stable versioned exchange, introductory/permanent visitor milestones, permanent packet access, server-side draws and individually owned sprout storage. No direct activity-to-ticket implementation.
-7. **Boosts and conditional context:** separate growth and visitor resolvers, personal water bands, attraction/capacity skills, caps and versioned stacking; defer complex synergies and optional rate skills until balanced. Implement growth weather buckets if live weather ships, otherwise keep weather neutral.
-8. **Social:** requests, friends, visibility, blocks and read-only, non-rewarding garden visits.
-9. **Resilience:** activity queue, asset cache, background delivery, correction/device-switch flow, visitor session recovery and bounded elapsed-time settlement.
-10. **Release preparation:** closed-loop economy simulation, starter pacing, active versus offline income, minimum-device visitors, privacy/account deletion, backups and monitoring.
+4. **Real authentication checkpoint — F5a, next:** connect Supabase Auth to the implemented B1–B5/F5 slice while retaining local game PostgreSQL. Deliver email/password, Google, native Apple, session refresh/recovery and explicit identity linking; prove same-garden access and durable queue isolation on a real iPhone before integrated F6 rewards. This closes B2's pending live-provider verification; it does not require moving the database/assets now.
+5. **Attraction and visitors:** pinned stage-attraction profiles, independent placed-copy aggregation, bounded starter/active curve, server-time contexts and active leases/slots, one shared visitor appearance/controller and idempotent welcomes; slower capped storage and one-interaction claims.
+6. **Typed workouts:** session/segment import, duplicate handling, supported type/category mapping and duration-based additional water with per-plant, per-type multipliers; verify intentional overlap with ordinary activity rewards.
+7. **Collection economy:** token/ticket wallets and ledgers, stable versioned exchange, introductory/permanent visitor milestones, permanent packet access, server-side draws and individually owned sprout storage. No direct activity-to-ticket implementation.
+8. **Boosts and conditional context:** separate growth and visitor resolvers, personal water bands, attraction/capacity skills, caps and versioned stacking; defer complex synergies and optional rate skills until balanced. Implement growth weather buckets if live weather ships, otherwise keep weather neutral.
+9. **Social:** requests, friends, visibility, blocks and read-only, non-rewarding garden visits.
+10. **Resilience:** activity queue, asset cache, background delivery, correction/device-switch flow, visitor session recovery and bounded elapsed-time settlement.
+11. **Release preparation:** Cloud Run deployment, Supabase PostgreSQL migration/Storage publishing, closed-loop economy simulation, starter pacing, active versus offline income, minimum-device visitors, privacy/account deletion, backups and monitoring.
 
 Shared watering/recap and cosmetic plant effects remain deferred polish work. Basic visitor rendering/tap feedback and stored-claim presentation are required for the new core loop; advanced visitor art and swarm effects can follow. Durable rewards precede presentation. Do not treat the current oak asset pack as an implemented game, visitor or skill system.
 
@@ -1019,7 +1079,8 @@ A useful first vertical slice is: sign in → place starter → sync steps/grow 
 
 - Final name, audience and minimum iOS/device support; the plant design language is agreed in section 12.
 - RealityKit validation and final rendering framework.
-- Authentication/cloud hosting vendors and deployment region. FastAPI, SQLAlchemy, Alembic, PostgreSQL and Docker are agreed; database access mode/driver and production container hosting remain open.
+- Exact Cloud Run/Supabase region pair, resource/connection limits, pooler mode and warm-instance policy. Vendors are selected; synchronous SQLAlchemy/psycopg is implemented. Live provider acceptance, cloud provisioning and database/asset deployment remain pending.
+- Development bundle ID, login/reset callback URLs, Google consent/client credentials, Apple App/Services IDs as required, SMTP domain and supported Swift identity-linking path. Complete these in F5a; keep full unlink/garden-merge tooling outside this increment.
 - Exact water rates/normalisation, per-workout-type multipliers, stage thresholds and caps. Input scope remains four iPhone-supported daily quantities plus typed workouts. No direct step-ticket rate remains.
 - Stage attraction values, species-size/duplicate efficiency, garden curve, diminishing returns, starter floor, gap protection, slot duration, realistic active capture target and maximum arrival/visible count.
 - Slower offline rate, base/max capacity, skill caps, fixed-point precision, overflow rounding, foreground lease/heartbeat/expiry/pause policy and empty-garden/tutorial handling. Mature gardens can continue visitor production without fresh movement; additional movement-to-visitor bonuses remain deferred.
@@ -1044,6 +1105,12 @@ A useful first vertical slice is: sign in → place starter → sync steps/grow 
 
 | Date | Decision / proposal | Status |
 | --- | --- | --- |
+| 2026-10-22 | Select Cloud Run for the existing FastAPI container and Supabase for deployed PostgreSQL, Auth and Storage/CDN; retain local Docker PostgreSQL and authoritative game transactions | Agreed architecture direction; provider/cloud integration not implemented or provisioned |
+| 2026-10-22 | Support email/password, Google and native Apple via Supabase Auth; game username is separate. Linked methods share one Supabase subject and internal game account; no implicit garden merge | Agreed auth specification; implementation pending |
+| 2026-10-22 | Insert F5a real authentication/linking immediately after the implemented F5 steps slice and before integrated F6 visitor/reward work; test hosted Auth with local game DB first | Planned next increment; existing generated-token F5 implementation/acceptance remains historical evidence, not real-provider validation |
+| 2026-10-22 | Exclude workouts explicitly flagged as user-entered in HealthKit as a preliminary guard; false/missing flags are not authenticity guarantees. Apply in the existing iOS workout reader now and in backend workout accounting when B8 is implemented | Agreed; existing reader updated; B4/B5 remain steps-only; workout rewards deferred |
+| 2026-10-22 | Onboarding directs users without a tracker to supported Apple Fitness recording, or shows how to connect their existing tracker to Apple Health, including a short Strava flow; manual workout entry is ineligible | Agreed specification; onboarding implementation deferred |
+| 2026-10-22 | Plant workout multipliers resolve exact type → `workout_minutes.*` → 0; an explicit type value replaces the fallback, with no duplicate award. Existing additive boost stacking is unchanged | Agreed design; implementation pending |
 | 2026-10-20 | Independent growth remains per owned copy; increasing stage attraction from placed plants drives bounded visitor opportunities through diminishing returns, starter pacing and explicit visitor skills | Agreed loop; attraction/rate values and caps pending; no game implementation |
 | 2026-10-20 | Active visitors share one simple controller and require a confirmed welcome; slower offline visits accumulate to a skill-modifiable capacity and are collected together. Active/inactive time cannot both pay; earned storage survives absence or capacity-skill removal | Agreed behaviour; server-time leases/context settlement are proposed implementation defaults |
 | 2026-10-20 | Replace direct step-to-ticket and personal ticket boosts with visitor tokens → stable versioned ticket exchange → draws; introductory/permanent visitor milestones can add rewards without consuming tokens or imposing attendance | Agreed economy direction; token naming, costs, milestones and rates pending; recurring quests/complex synergies later |
@@ -1086,11 +1153,26 @@ References support platform capabilities, not final product approval. Recheck cu
 - [HealthKit observer queries](https://developer.apple.com/documentation/healthkit/hkobserverquery)
 - [Executing observer queries](https://developer.apple.com/documentation/healthkit/executing-observer-queries)
 - [HealthKit workouts](https://developer.apple.com/documentation/healthkit/hkworkout)
+- [HealthKit user-entered metadata flag](https://developer.apple.com/documentation/healthkit/hkmetadatakeywasuserentered)
+- [HealthKit metadata predicates](https://developer.apple.com/documentation/healthkit/hkquery/predicateforobjects(withmetadatakey:allowedvalues:))
+- [Start a workout in Apple Fitness on iPhone](https://support.apple.com/en-ca/guide/iphone/iph8475d8510/ios)
+- [Connect Strava to Apple Health and enable Send to Health](https://support.strava.com/en-us/articles/15402024-apple-health-and-strava)
 - [HealthKit workout activity types](https://developer.apple.com/documentation/healthkit/hkworkoutactivitytype)
 - [HealthKit activities within a workout](https://developer.apple.com/documentation/healthkit/hkworkoutactivity)
 - [Activity tracking and active-calorie estimation on iPhone](https://support.apple.com/en-gb/guide/iphone/iph4c34a8a95/27/ios/27)
 - [iPhone-only Fitness support introduced in iOS 16](https://support.apple.com/en-gb/101566)
 - [Running workout activity type](https://developer.apple.com/documentation/healthkit/hkworkoutactivitytype/running)
 - [Protecting HealthKit user privacy](https://developer.apple.com/documentation/healthkit/protecting-user-privacy)
-- [CloudFront with S3 origins](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/RequestAndResponseBehaviorS3Origin.html)
+- [Cloud Run end-user authentication](https://docs.cloud.google.com/run/docs/authenticating/end-users)
+- [Supabase password authentication](https://supabase.com/docs/guides/auth/passwords)
+- [Supabase Google provider](https://supabase.com/docs/guides/auth/social-login/auth-google)
+- [Supabase Apple provider](https://supabase.com/docs/guides/auth/social-login/auth-apple)
+- [Supabase identities and linking](https://supabase.com/docs/guides/auth/auth-identity-linking)
+- [Supabase Swift identity linking](https://supabase.com/docs/reference/swift/auth-linkidentity)
+- [Apple account deletion and token revocation](https://developer.apple.com/support/offering-account-deletion-in-your-app/)
+- [Supabase JWT verification](https://supabase.com/docs/guides/auth/jwts)
+- [Supabase database connections and pooling](https://supabase.com/docs/guides/database/connecting-to-postgres)
+- [Supabase Data API access](https://supabase.com/docs/guides/api/securing-your-api)
+- [Supabase Storage CDN](https://supabase.com/docs/guides/storage/cdn/fundamentals) and [Smart CDN](https://supabase.com/docs/guides/storage/cdn/smart-cdn)
+- [Supabase pricing](https://supabase.com/pricing) and [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp)
 

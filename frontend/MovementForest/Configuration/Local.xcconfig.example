@@ -1,0 +1,9 @@
+// Copy to Local.xcconfig beside this file. $() prevents // becoming a comment.
+FOREST_SUPABASE_URL = https:/$()/YOUR_PROJECT_REF.supabase.co
+FOREST_SUPABASE_PUBLISHABLE_KEY = sb_publishable_REPLACE_ME
+FOREST_GAME_API_URL = https:/$()/YOUR_PRIVATE_API_HOST
+// Choose your own bundle identifier/team in Xcode before enabling Apple.
+FOREST_AUTH_GOOGLE_ENABLED = NO
+FOREST_AUTH_APPLE_ENABLED = NO
+// Enable only after configuring Sign in with Apple for this App ID:
+// CODE_SIGN_ENTITLEMENTS = MovementForest/Configuration/MovementForestApple.entitlements

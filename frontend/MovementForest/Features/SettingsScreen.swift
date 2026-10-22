@@ -12,17 +12,24 @@ struct SettingsScreen: View {
                     .foregroundStyle(.secondary)
             }
             Section("Your data") {
-                Text("Health observations stay in memory on this device and are not uploaded. A connected development garden saves plant arrangements to your own API.")
+                Text("Health reads stay local until you separately enable step sync in Activity. When enabled, daily step totals and observation dates are saved on this iPhone for reliable retries and uploaded to your connected backend. Recorded workouts remain local diagnostics.")
+                Text("Your confirmed garden is cached for offline viewing. Pausing sync retains unresolved requests; reconnect and re-enable sync to confirm them. Disconnecting keeps each account’s pending operations separate.")
                 Text("The app remembers only whether you have tried connecting Health. That preference is not proof of permission.")
                     .font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("Your account") {
+                NavigationLink("Account and sign-in") { AccountScreen(connection: connection, catalog: catalog) }
+                    .accessibilityIdentifier("settings.account")
             }
             Section("Accessibility") {
                 Text("Plant details are also available through the Plants button. Wind animation follows your iPhone’s Reduce Motion setting.")
             }
             #if DEBUG
             Section("Development") {
-                NavigationLink("Garden connection") { GardenConnectionScreen(connection: connection, catalog: catalog) }
+                if connection.authentication == nil && connection.configurationIssue == nil {
+                    NavigationLink("Garden connection") { GardenConnectionScreen(connection: connection, catalog: catalog) }
                     .accessibilityIdentifier("settings.connection")
+                }
                 NavigationLink("Developer tools") { DeveloperToolsScreen(catalog: catalog, activity: activity) }
                     .accessibilityIdentifier("settings.developer")
             }

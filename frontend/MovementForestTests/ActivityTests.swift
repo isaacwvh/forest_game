@@ -1,7 +1,33 @@
 import XCTest
+import HealthKit
 @testable import MovementForest
 
 final class ActivityTests: XCTestCase {
+    @MainActor
+    func testRecordedWorkoutQueryExcludesManualEntriesButKeepsFalseAndMissingFlags() {
+        let end = Date(timeIntervalSince1970: 1_792_627_200)
+        let start = end.addingTimeInterval(-30 * 24 * 60 * 60)
+        let predicate = HealthKitService.recordedWorkoutPredicate(start: start, end: end)
+        let cases: [(metadata: [String: Any]?, included: Bool)] = [
+            ([HKMetadataKeyWasUserEntered: NSNumber(value: true)], false),
+            ([HKMetadataKeyWasUserEntered: NSNumber(value: false)], true),
+            ([:], true),
+            (nil, true)
+        ]
+        for testCase in cases {
+            let workout = HKWorkout(activityType: .running, start: end.addingTimeInterval(-1800),
+                                    end: end.addingTimeInterval(-60), duration: 1740,
+                                    totalEnergyBurned: nil, totalDistance: nil, metadata: testCase.metadata)
+            XCTAssertEqual(predicate.evaluate(with: workout), testCase.included)
+        }
+        let oldWorkout = HKWorkout(activityType: .running, start: start.addingTimeInterval(-1800),
+                                   end: start.addingTimeInterval(-60))
+        let futureWorkout = HKWorkout(activityType: .running, start: end.addingTimeInterval(60),
+                                      end: end.addingTimeInterval(1800))
+        XCTAssertFalse(predicate.evaluate(with: oldWorkout))
+        XCTAssertFalse(predicate.evaluate(with: futureWorkout))
+    }
+
     @MainActor
     func testEmptyHealthIsNotZeroAndDoesNotImplyDeniedPermission() async {
         let provider = FixtureHealthDataProvider(scenario: .empty)

@@ -6,6 +6,7 @@
 .env.*
 !.env.example
 !.env.sample
+!.env.supabase.example
 *.p12
 *.pfx
 *.mobileprovision

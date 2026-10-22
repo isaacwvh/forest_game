@@ -10,6 +10,7 @@ struct ConnectedGardenScreen: View {
     @ObservedObject var store: GardenEditorStore
     let catalog: any AssetCatalogProviding
     var active: Bool
+    var activitySync: ActivitySyncCoordinator? = nil
     @StateObject private var renderer = RealityGardenRenderer()
     @State private var sheet: GardenEditorSheet?
     @State private var visible = false
@@ -84,7 +85,13 @@ struct ConnectedGardenScreen: View {
                 case .position, .rotation:
                     CandidateControlsScreen(store: store, rotationOnly: item == .rotation)
                 case .errors:
-                    List { ForEach(Array(renderer.errors.enumerated()), id: \.offset) { _, error in Text(error) } }.navigationTitle("Plant assets")
+                    List {
+                        ForEach(Array(renderer.errors.enumerated()), id: \.offset) { _, error in Text(error) }
+                        Button("Reload plant assets") {
+                            sheet = nil
+                            if let garden = store.rendered { renderer.retry(garden, catalog: catalog) }
+                        }
+                    }.navigationTitle("Plant assets")
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
                 }
             }
@@ -93,11 +100,11 @@ struct ConnectedGardenScreen: View {
         .onChange(of: store.canEdit) { if !$0 { store.cancelCandidate() } }
         .onChange(of: active) { value in
             if !value { store.cancelCandidate() }
-            else { Task { if store.pending != nil { await store.retryPending() } else { await store.refresh() } } }
+            else { Task { await store.reconcile() } }
         }
         .onChange(of: phase) { value in
             if value != .active { store.cancelCandidate() }
-            else { Task { if store.pending != nil { await store.retryPending() } else { await store.refresh() } } }
+            else { Task { await store.reconcile() } }
         }
         .onAppear { visible = true }
         .onDisappear { visible = false; store.cancelCandidate(); renderer.stop() }
@@ -106,6 +113,14 @@ struct ConnectedGardenScreen: View {
     private var statusPanel: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(store.profile.displayName + "’s forest").font(.headline)
+            if store.showingCached {
+                Text("Cached garden · Last confirmed \(store.confirmedAt.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "earlier")")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if let attraction = store.confirmed?.totalAttractionMicroUnits {
+                Text("Garden attraction: \(ExactAmount.water(attraction))").font(.caption)
+            }
+            if let activitySync = activitySync { GardenActivityStatus(sync: activitySync) }
             if let candidate = store.candidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
                     .font(.callout).accessibilityIdentifier("editor.validity")
@@ -152,7 +167,7 @@ struct ConnectedGardenScreen: View {
                     }.buttonStyle(.bordered).controlSize(.large).disabled(!store.canEdit || renderer.isLoading)
                 }
                 if !store.editing, let rendered = store.render(selected) {
-                    NavigationLink("Plant details") { PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false) }
+                    NavigationLink("Plant details") { PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false, owned: selected) }
                 }
             }
             if let candidate = store.candidate {
@@ -282,7 +297,7 @@ struct GardenHostScreen: View {
     var active: Bool
     var body: some View {
         if let editor = connection.editor {
-            ConnectedGardenScreen(store: editor, catalog: catalog, active: active).id(editor.id)
+            ConnectedGardenScreen(store: editor, catalog: catalog, active: active, activitySync: connection.activitySync).id(editor.id)
         } else if connection.connecting {
             ProgressView("Connecting to your garden…")
         } else if !connection.savedURL.isEmpty {

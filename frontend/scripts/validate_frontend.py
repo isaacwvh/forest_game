@@ -98,6 +98,13 @@ def main():
     require(bool(info.get("NSHealthShareUsageDescription")), "Missing Health read explanation")
     require("NSCameraUsageDescription" not in info, "Non-AR baseline should not request camera")
     require(entitlements == {"com.apple.developer.healthkit": True}, "Unexpected entitlements")
+    apple_entitlements = plistlib.loads((config / "MovementForestApple.entitlements").read_bytes())
+    require(apple_entitlements == {"com.apple.developer.healthkit": True,
+                                  "com.apple.developer.applesignin": ["Default"]}, "Invalid optional Apple entitlement")
+    require(info["CFBundleURLTypes"][0]["CFBundleURLSchemes"] == ["$(FOREST_AUTH_CALLBACK_SCHEME)"],
+            "Auth callback scheme differs from configuration")
+    require(set(info["ForestAuth"]) == {"SupabaseURL", "PublishableKey", "GameAPIURL", "CallbackScheme",
+                                       "GoogleEnabled", "AppleEnabled"}, "Missing auth configuration fields")
     ET.parse(ROOT / "MovementForest.xcodeproj/xcshareddata/xcschemes/MovementForest.xcscheme")
     sources = list((ROOT / "MovementForest").rglob("*.swift"))
     require(len(sources) >= 15, "Source set incomplete")

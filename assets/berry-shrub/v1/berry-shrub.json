@@ -1,0 +1,340 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "berry-shrub",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "red-berry"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "wispMotion": "three-joint outer leafy shoot chains with staggered phase and increasing tip motion"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/berry-shrub-sprout-standard.png",
+        "red-berry": "ui/berry-shrub-sprout-red-berry.png"
+      },
+      "seedling": {
+        "standard": "ui/berry-shrub-seedling-standard.png",
+        "red-berry": "ui/berry-shrub-seedling-red-berry.png"
+      },
+      "young": {
+        "standard": "ui/berry-shrub-young-standard.png",
+        "red-berry": "ui/berry-shrub-young-red-berry.png"
+      },
+      "adult": {
+        "standard": "ui/berry-shrub-adult-standard.png",
+        "red-berry": "ui/berry-shrub-adult-red-berry.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/berry-shrub-sprout-standard.usdz",
+      "thumbnail": "ui/berry-shrub-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.13499,
+          -0.04877,
+          0.0
+        ],
+        "max": [
+          0.11005,
+          0.04976,
+          0.28285
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.13681,
+          -0.05165,
+          0.0
+        ],
+        "max": [
+          0.11155,
+          0.05119,
+          0.2831
+        ]
+      },
+      "animation": "berry-shrub_sprout_sway",
+      "triangles": 2654,
+      "joints": 12,
+      "bytes": 198732,
+      "sha256": "fbeeb4d252063fb3ee1dd86c57cf9b7d0d9ee6619a95606eaccb60bba847feaa"
+    },
+    {
+      "stage": "sprout",
+      "variant": "red-berry",
+      "file": "models/berry-shrub-sprout-red-berry.usdz",
+      "thumbnail": "ui/berry-shrub-sprout-red-berry.png",
+      "bounds": {
+        "min": [
+          -0.13499,
+          -0.04877,
+          0.0
+        ],
+        "max": [
+          0.11005,
+          0.04976,
+          0.28285
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.13681,
+          -0.05165,
+          0.0
+        ],
+        "max": [
+          0.11155,
+          0.05119,
+          0.2831
+        ]
+      },
+      "animation": "berry-shrub_sprout_sway",
+      "triangles": 2654,
+      "joints": 12,
+      "bytes": 197247,
+      "sha256": "5117438a5d2c360cb645f824061c214e4006ca266fd7a984d52d90cf2d1b1701"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/berry-shrub-seedling-standard.usdz",
+      "thumbnail": "ui/berry-shrub-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.26442,
+          -0.20329,
+          0.0
+        ],
+        "max": [
+          0.26507,
+          0.25563,
+          0.46344
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.26529,
+          -0.20674,
+          0.0
+        ],
+        "max": [
+          0.26665,
+          0.25884,
+          0.46752
+        ]
+      },
+      "animation": "berry-shrub_seedling_sway",
+      "triangles": 6480,
+      "joints": 30,
+      "bytes": 394937,
+      "sha256": "709194019c18cbfe3d990e702b775707f95284d6252cf673856c6dbd03b02fbf"
+    },
+    {
+      "stage": "seedling",
+      "variant": "red-berry",
+      "file": "models/berry-shrub-seedling-red-berry.usdz",
+      "thumbnail": "ui/berry-shrub-seedling-red-berry.png",
+      "bounds": {
+        "min": [
+          -0.26442,
+          -0.20329,
+          0.0
+        ],
+        "max": [
+          0.26507,
+          0.25563,
+          0.46344
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.26529,
+          -0.20674,
+          0.0
+        ],
+        "max": [
+          0.26665,
+          0.25884,
+          0.46752
+        ]
+      },
+      "animation": "berry-shrub_seedling_sway",
+      "triangles": 6480,
+      "joints": 30,
+      "bytes": 393580,
+      "sha256": "1bc2b6f6ca46635be1b2c38691b2ecfd7c492dd06ffdf2b05cc49c1b6be70c84"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/berry-shrub-young-standard.usdz",
+      "thumbnail": "ui/berry-shrub-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.52829,
+          -0.57271,
+          0.0
+        ],
+        "max": [
+          0.44443,
+          0.55637,
+          0.86823
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.58803,
+          -0.58787,
+          0.0
+        ],
+        "max": [
+          0.46397,
+          0.5958,
+          0.88922
+        ]
+      },
+      "animation": "berry-shrub_young_sway",
+      "triangles": 17634,
+      "joints": 18,
+      "bytes": 848690,
+      "sha256": "ea376231e44ad522794ebecacd45b3aecfdc7a30d5fe7e0b24f4f167d89aebe1"
+    },
+    {
+      "stage": "young",
+      "variant": "red-berry",
+      "file": "models/berry-shrub-young-red-berry.usdz",
+      "thumbnail": "ui/berry-shrub-young-red-berry.png",
+      "bounds": {
+        "min": [
+          -0.52829,
+          -0.57271,
+          0.0
+        ],
+        "max": [
+          0.44443,
+          0.55637,
+          0.86823
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.58803,
+          -0.58787,
+          0.0
+        ],
+        "max": [
+          0.46397,
+          0.5958,
+          0.88922
+        ]
+      },
+      "animation": "berry-shrub_young_sway",
+      "triangles": 17634,
+      "joints": 18,
+      "bytes": 847334,
+      "sha256": "650f8565c647bc3d5fdb5b582a80b93d11a081d07a5ec924cf1ca9bcd334a7b8"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/berry-shrub-adult-standard.usdz",
+      "thumbnail": "ui/berry-shrub-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.91368,
+          -0.87667,
+          0.0
+        ],
+        "max": [
+          0.88627,
+          0.77714,
+          1.3624
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.99865,
+          -0.90987,
+          0.0
+        ],
+        "max": [
+          0.91792,
+          0.82574,
+          1.41149
+        ]
+      },
+      "animation": "berry-shrub_adult_sway",
+      "triangles": 47808,
+      "joints": 42,
+      "bytes": 2166463,
+      "sha256": "8312fb0ffcf7160a9d6972f2e2f11e648a0d871d7fe5431fb1c0137a3bc32792"
+    },
+    {
+      "stage": "adult",
+      "variant": "red-berry",
+      "file": "models/berry-shrub-adult-red-berry.usdz",
+      "thumbnail": "ui/berry-shrub-adult-red-berry.png",
+      "bounds": {
+        "min": [
+          -0.91368,
+          -0.87667,
+          0.0
+        ],
+        "max": [
+          0.88627,
+          0.77714,
+          1.3624
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.99865,
+          -0.90987,
+          0.0
+        ],
+        "max": [
+          0.91792,
+          0.82574,
+          1.41149
+        ]
+      },
+      "animation": "berry-shrub_adult_sway",
+      "triangles": 47808,
+      "joints": 42,
+      "bytes": 2164990,
+      "sha256": "2100299a52e4eeda82589c13e1ba9ec8e940572bd2fddacd0597e2c90a30a4e7"
+    }
+  ]
+}

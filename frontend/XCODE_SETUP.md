@@ -1,5 +1,10 @@
 # Run Movement Forest in Xcode
 
+For the current Supabase login/game flow, follow **[F5A_AUTH_ACCEPTANCE.md](F5A_AUTH_ACCEPTANCE.md)**
+after the signing/pairing steps below. It covers the Windows backend, Tailscale,
+email/password configuration, step sync and provider setup. The sample/local-Health
+walkthrough below remains useful when testing without a backend.
+
 Start here after pushing from Windows and pulling/cloning the repository onto
 the borrowed Mac. Code is prepared for iOS 16+, with your iPhone 14 Pro on
 iOS 26.6.2 as the first physical test device. Native compilation and device
@@ -52,6 +57,10 @@ otherwise. Finder also lets you navigate without typing the path.
    Platforms in some versions).
 5. Keep the phone's OS version separate from the app's deployment target:
    **iOS 16.0 is the app minimum**, not the SDK/Xcode version you should install.
+
+The pinned Supabase Auth dependency requires **Swift 6.1 / Xcode 16.3 or later**.
+Use a newer Xcode when needed for your phone. Xcode automatically resolves the
+package when opening/building; do not add a duplicate package manually.
 
 The borrowed Mac may already have everything needed. Do not change unrelated
 Mac or iCloud accounts to set up the app.

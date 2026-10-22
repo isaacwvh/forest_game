@@ -6,6 +6,7 @@ from forest_api.auth import TokenVerifier
 from forest_api.config import Settings
 from forest_api.database import Database
 from forest_api.errors import install_error_handlers
+from forest_api.placement import DISABLED_ACCOUNTING, utc_now
 from forest_api.routes import router
 
 
@@ -29,6 +30,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.database = database
     app.state.verifier = TokenVerifier(settings)
+    app.state.clock = utc_now
+    app.state.accounting = DISABLED_ACCOUNTING
     install_error_handlers(app)
     app.include_router(router)
     return app
