@@ -24,11 +24,14 @@ final class VisitorCoordinator: ObservableObject {
     private var needsRead = true
 
     init(userID: UUID, installationID: UUID, service: any VisitorServing,
-         journal: any VisitorJournalPersisting = VisitorJournalStore(),
+         journal: (any VisitorJournalPersisting)? = nil,
          uptime: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
         self.userID = userID; self.installationID = installationID
-        self.service = service; self.journal = journal; self.uptime = uptime
-        do { pending = try journal.load(server: service.serverID, user: userID); try pending?.validate() }
+        // Default arguments are evaluated outside this actor on the supported
+        // toolchain. Construct the actor-isolated store inside the initializer.
+        let resolvedJournal = journal ?? VisitorJournalStore()
+        self.service = service; self.journal = resolvedJournal; self.uptime = uptime
+        do { pending = try resolvedJournal.load(server: service.serverID, user: userID); try pending?.validate() }
         catch { recoveryLocked = true; message = "The saved visitor request needs attention. It has been retained." }
     }
 

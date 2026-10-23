@@ -2,6 +2,22 @@
 
 Prepared on Windows; native acceptance is pending.
 
+## F6 initializer actor-isolation correction — 23 October 2026
+
+The user's Xcode build reported that the `VisitorJournalStore()` default argument
+in `VisitorCoordinator.init` invoked a main-actor-isolated initializer from a
+synchronous nonisolated context. Changed the parameter to an optional defaulting
+to nil, then construct/resolve the journal inside the main-actor initializer,
+matching the existing `ActivitySyncCoordinator` pattern. Explicit injected journals
+retain their previous behaviour. Added a native regression case exercising the
+omitted-journal initializer used by the connected app, bringing visitor cases to 13.
+
+Reviewed nearby visitor/repository defaults; no other visitor default constructs
+an actor-isolated dependency. Portable project/resource and Swift syntax checks
+passed. These checks cannot certify Swift actor isolation: Xcode typechecking and
+native test execution still require the Mac. No backend, migration, account data,
+credentials or local Xcode settings changed.
+
 ## F6 visitor interaction — 23 October 2026
 
 Implemented the shared native butterfly appearance/controller over the garden,

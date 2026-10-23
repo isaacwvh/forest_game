@@ -63,6 +63,17 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testDefaultJournalIsConstructedInsideMainActorInitializer() throws {
+        let fixture = try VisitorContract.load()
+        // Exercise the same omitted-journal call used by GardenConnection.
+        // A unique user only reads a missing journal; no account files are written.
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: FakeVisitors(fixture))
+        XCTAssertFalse(store.recoveryLocked)
+        XCTAssertFalse(store.busy)
+        XCTAssertNil(store.pending)
+        XCTAssertNil(store.summary)
+    }
+
     func testActualHTTPWireContractAndFractions() throws {
         let fixture = try VisitorContract.load()
         XCTAssertEqual(fixture.initial.tokenBalance, "0")
