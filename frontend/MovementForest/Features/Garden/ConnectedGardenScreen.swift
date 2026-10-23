@@ -20,8 +20,7 @@ struct ConnectedGardenScreen: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     private var visitorEligible: Bool {
-        active && visible && phase == .active && sheet == nil && !store.editing &&
-        !store.showingCached && store.state == .ready && store.pending == nil
+        active && visible && phase == .active && sheet == nil && store.canPresentVisitors
     }
 
     private var preview: EditorRenderPreview? {
@@ -38,31 +37,28 @@ struct ConnectedGardenScreen: View {
     var body: some View {
         Group {
             if let garden = store.rendered {
-                GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
-                                motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil,
-                                editorPreview: preview, onSelect: { id in
-                    guard store.candidate == nil else { return }
-                    store.selectedID = id
-                }, onGroundDrag: { point, event in
-                    guard store.canEdit else { return }
-                    switch event {
-                    case .began: break
-                    case .cancelled: store.cancelCandidate()
-                    case .changed, .ended:
-                        if let point = point { store.updatePosition(x: point.x, y: point.y) }
-                        else { store.invalidateCandidate() }
-                        if event == .ended { Task { await store.releaseCandidate() } }
+                GardenViewportLayout(compact: verticalSizeClass == .compact) {
+                    GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
+                                    motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil,
+                                    editorPreview: preview, onSelect: { id in
+                        guard store.candidate == nil else { return }
+                        store.selectedID = id
+                    }, onGroundDrag: { point, event in
+                        guard store.canEdit else { return }
+                        switch event {
+                        case .began: break
+                        case .cancelled: store.cancelCandidate()
+                        case .changed, .ended:
+                            if let point = point { store.updatePosition(x: point.x, y: point.y) }
+                            else { store.invalidateCandidate() }
+                            if event == .ended { Task { await store.releaseCandidate() } }
+                        }
+                    })
+                    .accessibilityHidden(true)
+                    .overlay {
+                        if let visitors = visitors { VisitorGardenOverlay(store: visitors) }
                     }
-                })
-                .accessibilityHidden(true)
-                .overlay {
-                    if let visitors = visitors { VisitorGardenOverlay(store: visitors) }
-                }
-                .safeAreaInset(edge: .top, spacing: 0) { statusPanel }
-                .safeAreaInset(edge: .bottom, spacing: 0) { if verticalSizeClass != .compact { controls } }
-                .safeAreaInset(edge: .trailing, spacing: 0) {
-                    if verticalSizeClass == .compact { ScrollView { controls }.frame(width: 280).background(Color(uiColor: .systemBackground)) }
-                }
+                } status: { statusPanel } controls: { controls }
             } else if store.state.busy {
                 ProgressView("Opening your forest…").frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if store.recoveryLocked {
@@ -118,7 +114,7 @@ struct ConnectedGardenScreen: View {
         .onChange(of: visitorEligible) { visitors?.setEligible($0) }
         .onChange(of: visitors?.id) { _ in visitors?.setEligible(visitorEligible) }
         .onAppear { visible = true; visitors?.setEligible(visitorEligible) }
-        .onDisappear { visible = false; visitors?.setEligible(false); store.cancelCandidate(); renderer.stop() }
+        .onDisappear { visible = false; visitors?.setEligible(false); store.cancelCandidate(); renderer.setActive(false) }
     }
 
     private var statusPanel: some View {

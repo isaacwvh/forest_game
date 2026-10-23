@@ -25,26 +25,71 @@ struct VisitorGardenOverlay: View {
     @ObservedObject var store: VisitorCoordinator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
-        TimelineView(.periodic(from: .now, by: reduceMotion ? 1 : 1.0 / 30)) { _ in
-            GeometryReader { geometry in
-                if let visitor = store.visibleOpportunity, let now = store.serverNow {
-                    let age = max(0, now.timeIntervalSince(visitor.issuedAt))
-                    let remaining = max(0, visitor.expiresAt.timeIntervalSince(now))
-                    let entry = min(age / 1.5, 1)
-                    let exit = min(remaining / 1.5, 1)
-                    let x = reduceMotion ? 0.5 : (1 - entry) * -0.15 + entry * (0.5 + 0.17 * sin(age * 0.6)) + (1 - exit) * 0.7
-                    let y = reduceMotion ? 0.36 : 0.36 + 0.09 * sin(age * 0.9)
+        if let visitor = store.visibleOpportunity {
+            VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion)
+                .id(visitor.id)
+        }
+    }
+}
+
+struct VisitorFlightPose: Equatable {
+    let x: Double
+    let y: Double
+    let flap: Double
+    init(elapsed: TimeInterval, remaining: TimeInterval, reduceMotion: Bool) {
+        let age = max(0, elapsed)
+        let entry = 1 - pow(1 - min(age / 1.5, 1), 3)
+        let exit = min(max(remaining, 0) / 1.5, 1)
+        x = reduceMotion ? 0.5 : (1 - entry) * -0.15 + entry * (0.5 + 0.17 * sin(age * 0.6)) + (1 - exit) * 0.7
+        y = reduceMotion ? 0.36 : 0.36 + 0.09 * sin(age * 0.9)
+        flap = reduceMotion ? 1 : (sin(age * 9) + 1) / 2
+    }
+}
+
+#if DEBUG
+/// Optional native rendering test probe; no UI, logging or Release code.
+@MainActor
+enum VisitorVisualDiagnostics {
+    static var onFrame: ((UUID, VisitorFlightPose) -> Void)?
+    static var onVisibility: ((UUID, Bool) -> Void)?
+}
+#endif
+
+@MainActor
+private struct VisitorFlightView: View {
+    @ObservedObject var store: VisitorCoordinator
+    let visitor: APIVisitorOpportunity
+    let reduceMotion: Bool
+    // Identity is the opportunity, so heartbeats do not restart its flight.
+    @State private var appearedAt = Date()
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: reduceMotion ? 1 : 1.0 / 30)) { context in
+            // Compute changing frame inputs BEFORE GeometryReader. Its cached
+            // layout closure must not be the only reader of the clock.
+            if store.visibleOpportunity?.id == visitor.id, let now = store.serverNow {
+                let pose = VisitorFlightPose(elapsed: context.date.timeIntervalSince(appearedAt),
+                                            remaining: visitor.expiresAt.timeIntervalSince(now), reduceMotion: reduceMotion)
+                GeometryReader { geometry in
                     Button { Task { await store.welcome(visitor) } } label: {
-                        ForestButterfly(flap: reduceMotion ? 1 : (sin(age * 9) + 1) / 2)
+                        ForestButterfly(flap: pose.flap)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .position(x: max(36, min(geometry.size.width - 36, geometry.size.width * x)),
-                              y: max(36, geometry.size.height * y))
+                    .disabled(!store.canRequestReward)
+                    .position(x: max(36, min(geometry.size.width - 36, geometry.size.width * pose.x)),
+                              y: max(36, min(geometry.size.height - 36, geometry.size.height * pose.y)))
                     .accessibilityLabel("Welcome visitor")
                     .accessibilityHint("Earn \(visitor.tokens) visitor tokens after server confirmation")
                     .accessibilityIdentifier("visitors.butterfly")
                 }
+                #if DEBUG
+                .onAppear {
+                    VisitorVisualDiagnostics.onFrame?(visitor.id, pose)
+                    VisitorVisualDiagnostics.onVisibility?(visitor.id, true)
+                }
+                .onDisappear { VisitorVisualDiagnostics.onVisibility?(visitor.id, false) }
+                .onChange(of: pose) { VisitorVisualDiagnostics.onFrame?(visitor.id, $0) }
+                #endif
             }
         }
     }
@@ -77,11 +122,12 @@ struct VisitorStatusPanel: View {
                 }
                 HStack {
                     Button("Collect stored visits") { Task { await store.claim() } }
-                        .disabled(!store.connected || store.busy || store.pending != nil || value.claimableVisits == "0")
+                        .disabled(!store.canRequestReward || value.claimableVisits == "0")
                         .accessibilityIdentifier("visitors.claim")
                     Spacer(minLength: 4)
                     if let opportunity = store.visibleOpportunity {
                         Button("Welcome visitor") { Task { await store.welcome(opportunity) } }
+                            .disabled(!store.canRequestReward)
                             .accessibilityIdentifier("visitors.welcome")
                     }
                 }.font(.callout).frame(minHeight: 44)
@@ -97,9 +143,11 @@ struct VisitorStatusPanel: View {
                     }.font(.caption).foregroundStyle(.secondary).padding(.top, 4)
                 }.font(.caption)
             } else { Text("Connecting visitors…").font(.caption) }
-            if store.pending != nil { Label("Confirming saved visitor request…", systemImage: "clock").font(.caption) }
+            if store.recoveringRequest || store.confirmingReward {
+                Label("Confirming saved visitor request…", systemImage: "clock").font(.caption)
+            }
             if let message = store.message { Text(message).font(.caption).accessibilityIdentifier("visitors.status") }
-            if !store.connected || store.pending != nil {
+            if !store.connected || store.recoveringRequest {
                 Button("Retry visitors") { Task { await store.tick(force: true) } }
                     .disabled(store.busy || store.recoveryLocked).font(.callout).frame(minHeight: 44)
                     .accessibilityIdentifier("visitors.retry")

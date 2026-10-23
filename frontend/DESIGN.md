@@ -21,6 +21,12 @@ specification. Preserve their calm, stylized miniature-world appearance.
   Reduce Motion keeps it stationary; server expiry ends its presentation.
 - Visitor UI exposes pending/confirmed status and recovery without optimistically
   adding tokens. Development balance is labelled; no ticket exchange is implied.
+- Garden panel regions depend on available screen size and orientation. Status,
+  progress and validation text scroll within those regions; they never resize the
+  camera viewport. Compact height places status and controls beside the scene.
+- Butterfly flight uses its own frame clock and retains its phase for each
+  opportunity. A routine heartbeat keeps the visitor visible and accepts a saved
+  tap; a read-only activity refresh does not end the foreground visitor session.
 
 Evidence is source inspection only. Dark Mode, Dynamic Type, landscape layout,
 VoiceOver, touch interaction, lighting, imported orientation and performance need

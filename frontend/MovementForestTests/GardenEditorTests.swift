@@ -47,6 +47,7 @@ private final class EditorTestService: GardenServing {
     var nextError: APIError?
     var failReads = false
     var pauseNext = false
+    var pauseRead = false
     var gate: CheckedContinuation<Void, Never>?
     var extraInventory: [APIOwnedPlant] = []
     var pages: [String: APIInventory] = [:]
@@ -56,6 +57,7 @@ private final class EditorTestService: GardenServing {
     }
     func profile() async throws -> APIProfile { fixture.profile }
     func catalogue() async throws -> APICatalogue {
+        if pauseRead { pauseRead = false; await withCheckedContinuation { gate = $0 } }
         if failReads { throw URLError(.notConnectedToInternet) }
         return catalogueValue
     }
@@ -98,6 +100,26 @@ private final class EditorTestService: GardenServing {
 
 @MainActor
 final class GardenEditorTests: XCTestCase {
+    func testConfirmedGardenRemainsVisitorEligibleDuringReadOnlyRefresh() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(fixture)
+        let store = try makeStore(service)
+        XCTAssertFalse(store.canPresentVisitors)
+        await store.start()
+        XCTAssertTrue(store.canPresentVisitors)
+        service.pauseRead = true
+        let refresh = Task { await store.refresh() }
+        for _ in 0..<1000 where service.gate == nil { try await Task.sleep(nanoseconds: 1_000_000) }
+        let gate = try XCTUnwrap(service.gate)
+        XCTAssertEqual(store.state, .loading)
+        XCTAssertTrue(store.canPresentVisitors)
+        store.editing = true
+        XCTAssertFalse(store.canPresentVisitors)
+        store.editing = false
+        gate.resume(); service.gate = nil; await refresh.value
+        service.failReads = true; await store.refresh()
+        XCTAssertFalse(store.canPresentVisitors, "Offline cached viewing must pause active visitors")
+    }
+
     private func makeStore(_ service: EditorTestService, journal: MemoryEditJournal = MemoryEditJournal()) throws -> GardenEditorStore {
         GardenEditorStore(profile: service.fixture.profile, service: service, assets: try BundleAssetCatalog(), journal: journal)
     }

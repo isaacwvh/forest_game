@@ -64,6 +64,10 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     var canEdit: Bool { readyForMutation && !activityBusy && !preparingMembership && !activityBlocked }
+    var canPresentVisitors: Bool {
+        isActive && !editing && !showingCached && !recoveryLocked && pending == nil && confirmed != nil &&
+            (state == .ready || state == .loading)
+    }
     private var readyForMutation: Bool {
         isActive && state == .ready && pending == nil && !needsRefresh && !recoveryLocked && confirmed != nil && catalogue != nil
     }

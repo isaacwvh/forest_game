@@ -62,6 +62,7 @@ final class GardenConnection: ObservableObject {
     private var visitorUpdates: AnyCancellable?
     private var authUpdates: AnyCancellable?
     private var managedTokens: ScopedAuthTokenProvider?
+    private var managedProfileVerified = false
     private var managedGeneration = UUID()
     private var pendingIdentity: AuthIdentity?
     private static let urlKey = "development.gardenAPI.url.v1"
@@ -187,6 +188,7 @@ final class GardenConnection: ObservableObject {
     private func detachManaged() {
         visitors?.deactivate(); visitors = nil; visitorUpdates = nil
         managedGeneration = UUID(); managedTokens?.invalidate(); managedTokens = nil
+        managedProfileVerified = false
         activitySync?.deactivate(); activitySync = nil
         editor?.deactivate(); editor = nil
         editorUpdates = nil; syncUpdates = nil
@@ -197,13 +199,15 @@ final class GardenConnection: ObservableObject {
     func connectManaged(assets: any AssetCatalogProviding, restoreCache: Bool = false) async {
         guard let auth = authentication, auth.user != nil, !auth.recoveringPassword, !connecting else { return }
         if let tokens = managedTokens, (try? tokens.validate()) != nil,
-           editor?.state == .ready, !restoreCache { return }
+           tokens.identity == auth.user?.identity, editor?.isActive == true,
+           managedProfileVerified, !restoreCache { return }
         let operation = UUID(); managedGeneration = operation
         connecting = true; status = "Loading your account…"
         defer { if managedGeneration == operation { connecting = false } }
         do {
             let tokens = try auth.scopedTokens()
             managedTokens?.invalidate(); managedTokens = tokens
+            managedProfileVerified = false
             let client = APIClient(baseURL: auth.configuration.apiURL, tokens: tokens)
             let repository = APIGardenRepository(client: client)
             if restoreCache, let data = defaults.data(forKey: "supabase.gameProfile.v1"),
@@ -229,6 +233,7 @@ final class GardenConnection: ObservableObject {
             defaults.set(try JSONEncoder().encode(ManagedProfile(identity: tokens.identity, server: repository.serverID, profile: profile)),
                          forKey: "supabase.gameProfile.v1")
             accountRequired = false; pendingIdentity = nil; pendingClient = nil
+            managedProfileVerified = true
             activitySync?.deactivate(); editor?.deactivate()
             let store = GardenEditorStore(profile: profile, service: repository, assets: assets, cache: disk)
             editor = store

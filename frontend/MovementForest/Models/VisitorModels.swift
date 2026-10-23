@@ -108,19 +108,61 @@ struct APIVisitorRepository: VisitorServing {
 
 @MainActor
 protocol VisitorJournalPersisting {
-    func load(server: String, user: UUID) throws -> PendingVisitorOperation?
-    func save(_ value: PendingVisitorOperation?, server: String, user: UUID) throws
+    func load(server: String, user: UUID) throws -> VisitorJournalState?
+    func save(_ value: VisitorJournalState, server: String, user: UUID) throws
+}
+
+/// A tap made during a heartbeat is saved atomically with that heartbeat. Only
+/// one reward can wait behind it; retries always retain the original UUID/body.
+struct VisitorJournalState: Codable, Equatable {
+    var pending: PendingVisitorOperation?
+    var queuedReward: PendingVisitorOperation?
+
+    init(pending: PendingVisitorOperation? = nil, queuedReward: PendingVisitorOperation? = nil) {
+        self.pending = pending; self.queuedReward = queuedReward
+    }
+    private enum CodingKeys: String, CodingKey { case formatVersion, pending, queuedReward, kind }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        if values.contains(.kind) {
+            // Read the original single-request journal without discarding it.
+            pending = try PendingVisitorOperation(from: decoder); queuedReward = nil
+        } else {
+            guard try values.decode(Int.self, forKey: .formatVersion) == 2 else {
+                throw ForestError.invalidData("Unsupported visitor journal format.")
+            }
+            pending = try values.decodeIfPresent(PendingVisitorOperation.self, forKey: .pending)
+            queuedReward = try values.decodeIfPresent(PendingVisitorOperation.self, forKey: .queuedReward)
+        }
+        try validate()
+    }
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(2, forKey: .formatVersion)
+        try values.encodeIfPresent(pending, forKey: .pending)
+        try values.encodeIfPresent(queuedReward, forKey: .queuedReward)
+    }
+    func validate() throws {
+        try pending?.validate(); try queuedReward?.validate()
+        if let reward = queuedReward {
+            guard pending?.kind == .heartbeat, reward.id != pending?.id,
+                  reward.kind == .welcome || reward.kind == .claim else {
+                throw ForestError.invalidData("The queued visitor reward could not be verified.")
+            }
+        }
+    }
 }
 
 struct VisitorJournalStore: VisitorJournalPersisting {
     var disk = AccountDiskStore()
-    func load(server: String, user: UUID) throws -> PendingVisitorOperation? {
-        let value = try disk.load(PendingVisitorOperation.self, kind: "visitor-request", server: server, user: user)
+    func load(server: String, user: UUID) throws -> VisitorJournalState? {
+        let value = try disk.load(VisitorJournalState.self, kind: "visitor-request", server: server, user: user)
         try value?.validate()
         return value
     }
-    func save(_ value: PendingVisitorOperation?, server: String, user: UUID) throws {
-        if let value = value { try value.validate(); try disk.save(value, kind: "visitor-request", server: server, user: user) }
+    func save(_ value: VisitorJournalState, server: String, user: UUID) throws {
+        try value.validate()
+        if value.pending != nil { try disk.save(value, kind: "visitor-request", server: server, user: user) }
         else { try disk.remove(kind: "visitor-request", server: server, user: user) }
     }
 }

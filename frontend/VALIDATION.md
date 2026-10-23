@@ -204,3 +204,35 @@ No Mac build, remote CI execution, device aggregation or native visual acceptanc
 is claimed. Use **F5_ACCEPTANCE.md** for setup, expected API/database evidence,
 failure cases and the acceptance record. Existing development game state was not
 migrated, seeded or reset by this validation.
+
+## F6 smoothness fix — 23 October 2026
+
+Separated butterfly frame rendering from network updates; preserved opportunity
+identity during heartbeats; added one atomic, durable reward queue behind an
+in-flight heartbeat, with backwards-compatible single-request journal loading.
+Read-only activity refreshes keep a confirmed foreground garden visitor-eligible.
+Expiry uses monotonic elapsed time and cannot be extended by an old receipt.
+
+Reserved scrollable status/control panel regions by screen geometry, avoiding
+viewport changes for sync, loading and invalid-placement messages. Metadata-only
+snapshots skip renderer reloads; pause/resume and asset retries preserve camera
+pose. A single-finger gesture keeps its initial plant/camera ownership even when
+the preview is cancelled midway. Verified managed accounts retain their editor
+across foreground refreshes.
+
+Windows verification: portable asset/resource/project validation passed (20 USDZs,
+20 alpha PNGs, 36 app source references); all 46 Swift files parsed without syntax
+errors; diff whitespace check passed. These are not Apple SDK typechecks.
+
+Added 14 native regression cases for heartbeat visibility, duplicate/queued taps,
+lost-heartbeat recovery/relaunch, save failure, account detachment, stored claims,
+legacy journal compatibility, monotonic expiry, real hosted timeline rendering
+(five-second heartbeat and Reduce Motion), read-only refresh eligibility, camera
+preservation, gesture ownership and stable portrait/compact viewport sizing with
+large text. They require Mac execution; no native test pass or Release build is
+claimed here. Rendering probes are Debug-only and nil by default. Artificial
+delays exist only in test fakes.
+
+Run `bash frontend/scripts/test-mac.sh` on the Mac, then the smoothness section in
+`F6_VISITOR_ACCEPTANCE.md` on the existing iPhone/account over Tailscale. Backend,
+migrations, account data and ignored local configuration were not changed.

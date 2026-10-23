@@ -53,6 +53,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var snapshot: GardenSnapshot?
     private var loadTask: Task<Void, Never>?
     private var generation = UUID()
+    private var needsAssetReload = false
     private var placements: [UUID: Entity] = [:]
     private var plantPlaybacks: [UUID: [AnimationPlaybackController]] = [:]
     private var renderedPlants: [UUID: GardenPlant] = [:]
@@ -65,6 +66,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var previewKey: String?
     private var dragOffset: SIMD2<Double>?
     private var dragging = false
+    private var oneFingerMovesPlant: Bool?
     private var playbacks: [AnimationPlaybackController] { plantPlaybacks.values.flatMap { $0 } }
     private var updateSubscription: Cancellable?
     private var selectionMarker: Entity?
@@ -89,6 +91,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         view.scene.addAnchor(root)
         view.scene.addAnchor(rig)
         camera.camera.fieldOfViewInDegrees = 42
+        camera.name = "garden-camera"
         rig.addChild(camera)
         let sun = DirectionalLight()
         sun.light.color = UIColor(red: 1, green: 0.95, blue: 0.85, alpha: 1)
@@ -116,18 +119,28 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
 
     func display(_ garden: GardenSnapshot, catalog: any AssetCatalogProviding) {
         subscribeToUpdates()
-        guard snapshot != garden else { return }
+        guard snapshot != garden || needsAssetReload else { return }
         let dimensionsChanged = snapshot?.gardenId != garden.gardenId || snapshot?.width != garden.width ||
             snapshot?.depth != garden.depth || snapshot?.gardenUnitMetres != garden.gardenUnitMetres
+        let requiresLoads = dimensionsChanged || garden.plants.contains { plant in
+            guard let old = renderedPlants[plant.id], placements[plant.id] != nil else { return true }
+            return old.speciesId != plant.speciesId || old.variantId != plant.variantId ||
+                old.assetVersion != plant.assetVersion || old.growthStage != plant.growthStage
+        }
+        let visualsChanged = dimensionsChanged || snapshot?.plants != garden.plants ||
+            snapshot?.catalogVersion != garden.catalogVersion || needsAssetReload || (loadTask == nil && requiresLoads)
         snapshot = garden
+        guard visualsChanged else { return }
+        needsAssetReload = false
         loadTask?.cancel()
         generation = UUID()
         let token = generation
         // Start after SwiftUI's update pass; publishing synchronously there is invalid.
         loadTask = Task { [weak self] in
             guard let self = self else { return }
-            self.isLoading = true
-            self.errors = []
+            guard !Task.isCancelled, self.generation == token else { return }
+            self.isLoading = requiresLoads
+            if requiresLoads { self.errors = [] }
             self.loadedCount = 0
             self.loadSeconds = 0
             let start = Date()
@@ -205,11 +218,12 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
             self.updateSelection()
             self.updateDebugGeometry()
             self.updatePreview(self.preview, catalog: catalog)
+            self.loadTask = nil
         }
     }
 
     func retry(_ garden: GardenSnapshot, catalog: any AssetCatalogProviding) {
-        snapshot = nil
+        needsAssetReload = true
         renderedPlants.removeAll()
         loader.clear()
         display(garden, catalog: catalog)
@@ -275,6 +289,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         plantPlaybacks.removeAll()
         previewTask?.cancel(); previewTask = nil
         preview = nil; previewKey = nil
+        dragging = false; dragOffset = nil; oneFingerMovesPlant = nil
         onSelect = nil; onGroundDrag = nil
         updateSubscription?.cancel()
         updateSubscription = nil
@@ -368,14 +383,29 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         (otherGestureRecognizer is UIPinchGestureRecognizer && gestureRecognizer is UIPanGestureRecognizer)
     }
     @objc private func orbitGesture(_ gesture: UIPanGestureRecognizer) {
-        if preview?.movable == true {
-            moveGesture(gesture)
+        handleSingleFingerPan(state: gesture.state, translation: gesture.translation(in: view),
+                              location: gesture.location(in: view))
+        gesture.setTranslation(.zero, in: view)
+    }
+
+    // Lock ownership at the beginning. Cancelling/invalidating a plant preview
+    // during a drag must never turn its remaining events into camera movement.
+    func handleSingleFingerPan(state: UIGestureRecognizer.State, translation: CGPoint, location: CGPoint) {
+        if state == .began { oneFingerMovesPlant = preview?.movable == true }
+        defer {
+            if state == .ended || state == .cancelled || state == .failed {
+                oneFingerMovesPlant = nil; dragging = false; dragOffset = nil
+            }
+        }
+        guard let movesPlant = oneFingerMovesPlant else { return }
+        if movesPlant {
+            moveGesture(state: state, translation: translation, point: location)
             return
         }
-        let change = gesture.translation(in: view)
+        guard state == .began || state == .changed || state == .ended else { return }
+        let change = translation
         yaw -= Float(change.x) * 0.007
         elevation = min(max(elevation + Float(change.y) * 0.005, 0.25), 1.35)
-        gesture.setTranslation(.zero, in: view)
         updateCamera()
     }
     @objc private func panGesture(_ gesture: UIPanGestureRecognizer) {
@@ -430,20 +460,18 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         return SIMD2(Double(hit.x) / garden.gardenUnitMetres, Double(hit.z) / garden.gardenUnitMetres)
     }
 
-    private func moveGesture(_ gesture: UIPanGestureRecognizer) {
+    private func moveGesture(state: UIGestureRecognizer.State, translation: CGPoint, point: CGPoint) {
         guard let preview = preview else { return }
-        let point = gesture.location(in: view)
-        switch gesture.state {
+        switch state {
         case .began:
             dragging = true
-            let translation = gesture.translation(in: view)
             let start = groundPoint(CGPoint(x: point.x - translation.x, y: point.y - translation.y))
             dragOffset = start.map { SIMD2(preview.plant.x, preview.plant.y) - $0 }
             onGroundDrag?(nil, .began)
         case .changed, .ended:
             let hit = groundPoint(point).map { $0 + (dragOffset ?? .zero) }
-            onGroundDrag?(hit, gesture.state == .ended ? .ended : .changed)
-            if gesture.state == .ended { dragging = false; dragOffset = nil }
+            onGroundDrag?(hit, state == .ended ? .ended : .changed)
+            if state == .ended { dragging = false; dragOffset = nil }
         case .cancelled, .failed:
             dragging = false; dragOffset = nil; onGroundDrag?(nil, .cancelled)
         default: break

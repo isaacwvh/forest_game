@@ -147,3 +147,46 @@ physical-device cases above and observed capture rate. Windows portable checks
 and synthetic PostgreSQL/HTTP tests cannot certify Apple SDK typechecking or
 physical interaction/performance. See backend/frontend `VALIDATION.md` for the
 checks actually executed during implementation.
+
+## Smoothness regression checks — 23 October 2026
+
+This frontend fix needs no backend migration or reseeding. Use the same running
+API, Tailscale origin, Isaac Test account and iPhone installation. After updating
+the Mac checkout, preserve ignored `Local.xcconfig` and run from the repo root:
+
+```bash
+bash frontend/scripts/test-mac.sh
+```
+
+This runs Debug unit/UI tests and a Release simulator build. New tests host the
+actual SwiftUI timeline and RealityKit viewport, including a five-second held
+heartbeat, rather than only checking flight formulas. Native execution is still
+required; Windows parsing cannot establish that these tests pass.
+
+On the physical iPhone:
+
+1. Turn Reduce Motion off. Stay in the normal garden until a butterfly arrives.
+   Within three seconds it should drift and flap continuously between responses.
+   Leave one untouched: it leaves at its server expiry, without awarding tokens.
+2. Zoom/orbit to a recognisable camera position. Watch through several heartbeats
+   and trigger an activity sync. The board and camera should remain steady;
+   ordinary read-only refreshes should not remove the butterfly or restart flight.
+3. Tap an arrival once, including while a heartbeat is in flight. The butterfly
+   disappears after the accepted tap; only a confirmed reward updates the wallet.
+   Repeated taps must not duplicate it. Repeat with stored collection.
+4. In Edit, drag a plant across a boundary and back several times, then cancel.
+   The clearance changes colour without a camera jump. A cancelled plant drag
+   must not turn into camera orbit; a subsequent normal orbit must still work.
+5. Open a plant detail or change tabs, then return. The camera pose should survive.
+   Active visitors still pause in obstructed views, Edit and the background.
+6. Repeat in landscape and large accessibility text. Scroll the status/control
+   panels to reach overflowing content; messages must not resize the scene. Enable
+   Reduce Motion: the butterfly stays still and remains tappable until expiry.
+7. Repeat the existing network-loss and force-close recovery cases, including a
+   tap queued during a heartbeat. Unknown requests retain their original UUID and
+   bytes; expiry may cause a rejected welcome, never a local/duplicate reward.
+
+The permanent regression tests remain in the project. The two optional rendering
+callbacks in `VisitorVisualDiagnostics` are nil by default, used only by native
+tests and compiled out of Release. There are no artificial network delays or
+diagnostic controls in the shipping app; the held heartbeat is in the test fake.

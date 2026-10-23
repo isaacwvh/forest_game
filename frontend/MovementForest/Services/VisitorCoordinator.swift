@@ -7,6 +7,7 @@ final class VisitorCoordinator: ObservableObject {
     let id = UUID()
     @Published private(set) var summary: APIVisitorSummary?
     @Published private(set) var pending: PendingVisitorOperation?
+    @Published private(set) var queuedReward: PendingVisitorOperation?
     @Published private(set) var message: String?
     @Published private(set) var busy = false
     @Published private(set) var eligible = false
@@ -18,6 +19,7 @@ final class VisitorCoordinator: ObservableObject {
     private let journal: any VisitorJournalPersisting
     private let uptime: () -> TimeInterval
     private var receivedUptime: TimeInterval = 0
+    private var receivedServerTime: Date?
     private var nextPoll: TimeInterval = 0
     private var worker: Task<Void, Never>?
     private var attached = true
@@ -31,13 +33,26 @@ final class VisitorCoordinator: ObservableObject {
         // toolchain. Construct the actor-isolated store inside the initializer.
         let resolvedJournal = journal ?? VisitorJournalStore()
         self.service = service; self.journal = resolvedJournal; self.uptime = uptime
-        do { pending = try resolvedJournal.load(server: service.serverID, user: userID); try pending?.validate() }
+        do {
+            let saved = try resolvedJournal.load(server: service.serverID, user: userID)
+            try saved?.validate()
+            pending = saved?.pending; queuedReward = saved?.queuedReward
+        }
         catch { recoveryLocked = true; message = "The saved visitor request needs attention. It has been retained." }
     }
 
-    var serverNow: Date? { summary.map { $0.serverTime.addingTimeInterval(max(0, uptime() - receivedUptime)) } }
+    var serverNow: Date? { receivedServerTime.map { $0.addingTimeInterval(max(0, uptime() - receivedUptime)) } }
+    var canRequestReward: Bool {
+        attached && connected && !recoveryLocked && queuedReward == nil &&
+            ((!busy && pending == nil) || pending?.kind == .heartbeat)
+    }
+    var recoveringRequest: Bool { pending != nil && !busy }
+    var confirmingReward: Bool {
+        queuedReward != nil || pending?.kind == .welcome || pending?.kind == .claim
+    }
     var visibleOpportunity: APIVisitorOpportunity? {
-        guard attached, eligible, connected, pending == nil,
+        guard attached, eligible, connected, queuedReward == nil,
+              pending == nil || pending?.kind == .heartbeat,
               let now = serverNow, let session = summary?.session,
               session.installationId == installationID, session.leaseExpiresAt > now else { return nil }
         return summary?.opportunities.first { $0.sessionId == session.sessionId && $0.expiresAt > now }
@@ -71,38 +86,48 @@ final class VisitorCoordinator: ObservableObject {
 
     func apply(_ value: APIVisitorSummary) {
         guard attached, summary == nil || (summary?.gardenId == value.gardenId && value.version >= (summary?.version ?? 0)) else { return }
+        // A replayed receipt can have an old server timestamp. It must never
+        // rewind the presentation clock or extend a visitor's remaining life.
+        receivedServerTime = max(serverNow ?? value.serverTime, value.serverTime)
         summary = value; receivedUptime = uptime(); connected = true
     }
 
     private func recover() async throws {
-        guard let operation = pending else { return }
-        do {
-            let (value, reward) = try await service.mutate(operation)
-            guard attached else { return }
-            apply(value)
-            try journal.save(nil, server: service.serverID, user: userID)
-            pending = nil
-            if let reward = reward {
-                message = reward.visits == "0" ? "No whole stored visits to collect yet." :
-                    "Welcomed \(reward.visits) · +\(reward.tokens) visitor tokens"
+        while let operation = pending {
+            do {
+                let (value, reward) = try await service.mutate(operation)
+                guard attached else { return }
+                apply(value)
+                try persist(VisitorJournalState(pending: queuedReward))
+                if let reward = reward {
+                    message = reward.visits == "0" ? "No whole stored visits to collect yet." :
+                        "Welcomed \(reward.visits) · +\(reward.tokens) visitor tokens"
+                }
+            } catch let error as APIError where (400..<500).contains(error.status) &&
+                        ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
+                guard attached else { return }
+                try persist(VisitorJournalState(pending: queuedReward))
+                needsRead = true; connected = false
+                throw error
             }
-        } catch let error as APIError where (400..<500).contains(error.status) &&
-                    ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
-            guard attached else { return }
-            try journal.save(nil, server: service.serverID, user: userID)
-            pending = nil; needsRead = true; connected = false
-            throw error
         }
+    }
+
+    private func operation(_ kind: PendingVisitorOperation.Kind, target: UUID?) throws -> PendingVisitorOperation {
+        let id = UUID()
+        let installation = kind == .start || kind == .heartbeat || kind == .end ? installationID : nil
+        let body = try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: installation))
+        return PendingVisitorOperation(id: id, kind: kind, target: target, body: body)
+    }
+
+    private func persist(_ state: VisitorJournalState) throws {
+        try journal.save(state, server: service.serverID, user: userID)
+        pending = state.pending; queuedReward = state.queuedReward
     }
 
     private func submit(_ kind: PendingVisitorOperation.Kind, target: UUID? = nil) async throws {
         guard pending == nil, attached else { return }
-        let id = UUID()
-        let installation = kind == .start || kind == .heartbeat || kind == .end ? installationID : nil
-        let body = try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: installation))
-        let operation = PendingVisitorOperation(id: id, kind: kind, target: target, body: body)
-        try journal.save(operation, server: service.serverID, user: userID)
-        pending = operation
+        try persist(VisitorJournalState(pending: operation(kind, target: target)))
         try await recover()
     }
 
@@ -141,16 +166,25 @@ final class VisitorCoordinator: ObservableObject {
     }
 
     func welcome(_ opportunity: APIVisitorOpportunity) async {
-        guard !busy, attached, visibleOpportunity?.id == opportunity.id else { return }
+        guard canRequestReward, visibleOpportunity?.id == opportunity.id else { return }
         await reward(.welcome, target: opportunity.id)
     }
 
     func claim() async {
-        guard !busy, attached, connected, pending == nil, (Int64(summary?.claimableVisits ?? "0") ?? 0) > 0 else { return }
+        guard canRequestReward, (Int64(summary?.claimableVisits ?? "0") ?? 0) > 0 else { return }
         await reward(.claim)
     }
 
     private func reward(_ kind: PendingVisitorOperation.Kind, target: UUID? = nil) async {
+        if pending?.kind == .heartbeat {
+            do {
+                try persist(VisitorJournalState(pending: pending, queuedReward: operation(kind, target: target)))
+                if !busy { await tick(force: true) }
+            } catch {
+                message = "The visitor tap could not be saved. Please try again."
+            }
+            return
+        }
         busy = true
         defer { busy = false }
         do { try await submit(kind, target: target) }
