@@ -78,7 +78,8 @@ Choose the `public` schema if prompted. Useful tables:
 
 Growth/attraction micro-units use 1,000,000 units per display point. Stage and final
 attraction are derived values, not independently editable plant stats. Profile
-versions remain immutable. Visitor balances and production are not implemented yet.
+versions remain immutable. B6 visitor balances and production are implemented;
+see [VISITOR_API.md](VISITOR_API.md) and the frontend F6 acceptance walkthrough.
 
 If it does not load, run `docker compose ps` and
 `docker compose logs --tail 50 adminer`. Stop just this interface with

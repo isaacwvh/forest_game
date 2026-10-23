@@ -1,0 +1,191 @@
+{
+  "initial": {
+    "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+    "serverTime": "2026-10-23T04:00:00Z",
+    "version": 1,
+    "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+    "ruleVersion": "development-visitors-v1",
+    "isFixture": true,
+    "totalAttractionMicroUnits": "2000000",
+    "sources": [
+      {
+        "stage": "sprout",
+        "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+        "profile": {
+          "id": "dev_oak_attraction",
+          "version": 1
+        },
+        "attractionMicroUnits": "2000000"
+      }
+    ],
+    "storedVisitsMicroUnits": "0",
+    "claimableVisits": "0",
+    "capacity": 30,
+    "offlineVisitsPerHour": "15.0",
+    "secondsUntilFull": 7200,
+    "tokenBalance": "0",
+    "hostedActive": "0",
+    "hostedOffline": "0",
+    "hostedTotal": "0",
+    "heartbeatSeconds": 10,
+    "session": null,
+    "opportunities": []
+  },
+  "active": {
+    "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+    "serverTime": "2026-10-23T04:00:30Z",
+    "version": 8,
+    "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+    "ruleVersion": "development-visitors-v1",
+    "isFixture": true,
+    "totalAttractionMicroUnits": "2000000",
+    "sources": [
+      {
+        "stage": "sprout",
+        "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+        "profile": {
+          "id": "dev_oak_attraction",
+          "version": 1
+        },
+        "attractionMicroUnits": "2000000"
+      }
+    ],
+    "storedVisitsMicroUnits": "0",
+    "claimableVisits": "0",
+    "capacity": 30,
+    "offlineVisitsPerHour": "15.0",
+    "secondsUntilFull": null,
+    "tokenBalance": "0",
+    "hostedActive": "0",
+    "hostedOffline": "0",
+    "hostedTotal": "0",
+    "heartbeatSeconds": 10,
+    "session": {
+      "sessionId": "a76a4847-d71e-4bf6-bf8c-8f58a3f62516",
+      "installationId": "ebafb7f4-ecd7-48fc-b833-1141543ceb18",
+      "leaseExpiresAt": "2026-10-23T04:01:15Z"
+    },
+    "opportunities": [
+      {
+        "opportunityId": "38f355a3-feac-497b-ba54-eb762e30e3d0",
+        "sessionId": "a76a4847-d71e-4bf6-bf8c-8f58a3f62516",
+        "issuedAt": "2026-10-23T12:00:30+08:00",
+        "expiresAt": "2026-10-23T12:00:50+08:00",
+        "visualKey": "forest-butterfly-v1",
+        "tokens": "1"
+      }
+    ]
+  },
+  "welcome": {
+    "requestId": "5e918ae9-049c-46e9-963c-75bc3d2177f7",
+    "eventId": "6bfed860-b2e1-4b88-ba11-edb13405edaa",
+    "visits": "1",
+    "tokens": "1",
+    "summary": {
+      "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+      "serverTime": "2026-10-23T04:00:30Z",
+      "version": 9,
+      "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+      "ruleVersion": "development-visitors-v1",
+      "isFixture": true,
+      "totalAttractionMicroUnits": "2000000",
+      "sources": [
+        {
+          "stage": "sprout",
+          "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+          "profile": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          },
+          "attractionMicroUnits": "2000000"
+        }
+      ],
+      "storedVisitsMicroUnits": "0",
+      "claimableVisits": "0",
+      "capacity": 30,
+      "offlineVisitsPerHour": "15.0",
+      "secondsUntilFull": null,
+      "tokenBalance": "1",
+      "hostedActive": "1",
+      "hostedOffline": "0",
+      "hostedTotal": "1",
+      "heartbeatSeconds": 10,
+      "session": {
+        "sessionId": "a76a4847-d71e-4bf6-bf8c-8f58a3f62516",
+        "installationId": "ebafb7f4-ecd7-48fc-b833-1141543ceb18",
+        "leaseExpiresAt": "2026-10-23T12:01:15+08:00"
+      },
+      "opportunities": []
+    }
+  },
+  "stored": {
+    "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+    "serverTime": "2026-10-23T04:10:30Z",
+    "version": 11,
+    "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+    "ruleVersion": "development-visitors-v1",
+    "isFixture": true,
+    "totalAttractionMicroUnits": "2000000",
+    "sources": [
+      {
+        "stage": "sprout",
+        "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+        "profile": {
+          "id": "dev_oak_attraction",
+          "version": 1
+        },
+        "attractionMicroUnits": "2000000"
+      }
+    ],
+    "storedVisitsMicroUnits": "2500000",
+    "claimableVisits": "2",
+    "capacity": 30,
+    "offlineVisitsPerHour": "15.0",
+    "secondsUntilFull": 6600,
+    "tokenBalance": "1",
+    "hostedActive": "1",
+    "hostedOffline": "0",
+    "hostedTotal": "1",
+    "heartbeatSeconds": 10,
+    "session": null,
+    "opportunities": []
+  },
+  "claim": {
+    "requestId": "6a0f9e46-420e-4b95-a235-cead77d07494",
+    "eventId": "07caeef8-91f5-4d8b-8fda-e0f544d538ef",
+    "visits": "2",
+    "tokens": "2",
+    "summary": {
+      "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+      "serverTime": "2026-10-23T04:10:30Z",
+      "version": 12,
+      "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+      "ruleVersion": "development-visitors-v1",
+      "isFixture": true,
+      "totalAttractionMicroUnits": "2000000",
+      "sources": [
+        {
+          "stage": "sprout",
+          "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+          "profile": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          },
+          "attractionMicroUnits": "2000000"
+        }
+      ],
+      "storedVisitsMicroUnits": "500000",
+      "claimableVisits": "0",
+      "capacity": 30,
+      "offlineVisitsPerHour": "15.0",
+      "secondsUntilFull": 7080,
+      "tokenBalance": "3",
+      "hostedActive": "1",
+      "hostedOffline": "2",
+      "hostedTotal": "3",
+      "heartbeatSeconds": 10,
+      "session": null,
+      "opportunities": []
+    }
+  }
+}

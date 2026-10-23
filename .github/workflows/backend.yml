@@ -1,9 +1,9 @@
 name: Backend
 on:
   push:
-    paths: ['backend/**', 'assets/oak/**', 'spec_examples/placement-cases.json', 'frontend/MovementForest/Resources/Fixtures/editor-contract.json', 'frontend/MovementForest/Resources/Fixtures/activity-contract.json', '.github/workflows/backend.yml']
+    paths: ['backend/**', 'assets/oak/**', 'spec_examples/placement-cases.json', 'frontend/MovementForest/Resources/Fixtures/editor-contract.json', 'frontend/MovementForest/Resources/Fixtures/activity-contract.json', 'frontend/MovementForest/Resources/Fixtures/visitor-contract.json', '.github/workflows/backend.yml']
   pull_request:
-    paths: ['backend/**', 'assets/oak/**', 'spec_examples/placement-cases.json', 'frontend/MovementForest/Resources/Fixtures/editor-contract.json', 'frontend/MovementForest/Resources/Fixtures/activity-contract.json', '.github/workflows/backend.yml']
+    paths: ['backend/**', 'assets/oak/**', 'spec_examples/placement-cases.json', 'frontend/MovementForest/Resources/Fixtures/editor-contract.json', 'frontend/MovementForest/Resources/Fixtures/activity-contract.json', 'frontend/MovementForest/Resources/Fixtures/visitor-contract.json', '.github/workflows/backend.yml']
   workflow_dispatch:
 
 permissions:
@@ -49,5 +49,9 @@ jobs:
         run: python -m pytest backend/tests -q
       - name: Activity HTTP walkthrough
         run: python backend/scripts/smoke_activity.py
+      - name: Visitor HTTP walkthrough and pacing model
+        run: |
+          python backend/scripts/smoke_visitors.py
+          python backend/scripts/simulate_visitors.py
       - name: Build application image
         run: docker build -t movement-forest-api:ci backend

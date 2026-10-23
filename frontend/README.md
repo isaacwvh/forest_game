@@ -1,4 +1,11 @@
-# Movement Forest — native frontend, F5 steps and F5a authentication
+# Movement Forest — native frontend, activity, authentication and visitors
+
+**F6 visitor implementation:** one shared butterfly controller, server sessions,
+stored-visit collection, confirmed tokens/hosted counts and account-scoped durable
+recovery are implemented. Use [F6_VISITOR_ACCEPTANCE.md](F6_VISITOR_ACCEPTANCE.md)
+with your existing account over Tailscale. New F6 native/device acceptance remains
+required. The user accepts the earlier B5/F5/F5a tested path; SMTP and Google/Apple
+setup/live checks remain deferred. Earlier milestone status notes below are historical.
 
 Native SwiftUI + RealityKit + read-only HealthKit, targeting iPhone on **iOS 16+**.
 First physical validation target: iPhone 14 Pro, iOS 26.6.2.

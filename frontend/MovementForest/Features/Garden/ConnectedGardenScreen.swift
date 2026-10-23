@@ -11,12 +11,18 @@ struct ConnectedGardenScreen: View {
     let catalog: any AssetCatalogProviding
     var active: Bool
     var activitySync: ActivitySyncCoordinator? = nil
+    var visitors: VisitorCoordinator? = nil
     @StateObject private var renderer = RealityGardenRenderer()
     @State private var sheet: GardenEditorSheet?
     @State private var visible = false
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+
+    private var visitorEligible: Bool {
+        active && visible && phase == .active && sheet == nil && !store.editing &&
+        !store.showingCached && store.state == .ready && store.pending == nil
+    }
 
     private var preview: EditorRenderPreview? {
         guard let candidate = store.candidate, var plant = store.render(candidate.plant) else { return nil }
@@ -49,6 +55,9 @@ struct ConnectedGardenScreen: View {
                     }
                 })
                 .accessibilityHidden(true)
+                .overlay {
+                    if let visitors = visitors { VisitorGardenOverlay(store: visitors) }
+                }
                 .safeAreaInset(edge: .top, spacing: 0) { statusPanel }
                 .safeAreaInset(edge: .bottom, spacing: 0) { if verticalSizeClass != .compact { controls } }
                 .safeAreaInset(edge: .trailing, spacing: 0) {
@@ -106,8 +115,10 @@ struct ConnectedGardenScreen: View {
             if value != .active { store.cancelCandidate() }
             else { Task { await store.reconcile() } }
         }
-        .onAppear { visible = true }
-        .onDisappear { visible = false; store.cancelCandidate(); renderer.stop() }
+        .onChange(of: visitorEligible) { visitors?.setEligible($0) }
+        .onChange(of: visitors?.id) { _ in visitors?.setEligible(visitorEligible) }
+        .onAppear { visible = true; visitors?.setEligible(visitorEligible) }
+        .onDisappear { visible = false; visitors?.setEligible(false); store.cancelCandidate(); renderer.stop() }
     }
 
     private var statusPanel: some View {
@@ -121,6 +132,7 @@ struct ConnectedGardenScreen: View {
                 Text("Garden attraction: \(ExactAmount.water(attraction))").font(.caption)
             }
             if let activitySync = activitySync { GardenActivityStatus(sync: activitySync) }
+            if let visitors = visitors { VisitorStatusPanel(store: visitors) }
             if let candidate = store.candidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
                     .font(.callout).accessibilityIdentifier("editor.validity")
@@ -297,7 +309,8 @@ struct GardenHostScreen: View {
     var active: Bool
     var body: some View {
         if let editor = connection.editor {
-            ConnectedGardenScreen(store: editor, catalog: catalog, active: active, activitySync: connection.activitySync).id(editor.id)
+            ConnectedGardenScreen(store: editor, catalog: catalog, active: active, activitySync: connection.activitySync,
+                                  visitors: connection.visitors).id(editor.id)
         } else if connection.connecting {
             ProgressView("Connecting to your garden…")
         } else if !connection.savedURL.isEmpty {

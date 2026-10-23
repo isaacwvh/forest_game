@@ -1,7 +1,24 @@
 # Movement Forest implementation plan
 
-Revised 23 October 2026 against `forest_game_v1_spec.md`, version 0.11.
-This is a proposed delivery plan, not a source of approved balance values. F1–F3 are complete per the user's update. The B1–B5 backend is implemented under `backend/`; see `backend/VALIDATION.md` for verification and remaining provider/container checks. B6 and subsequent mechanics remain future work.
+Revised 23 October 2026 against `forest_game_v1_spec.md`, version 0.12.
+This delivery plan is not a source of approved balance values. F1–F3 are complete per the user's update. B1–B6 and F6 source are implemented; see `backend/VALIDATION.md` for verification and remaining provider/container checks. B7 and subsequent mechanics remain future work.
+
+**Current checkpoint — 23 October 2026:** the user accepts work through B5 and
+the tested F5/F5a email-authentication path. SMTP and Google/Apple configuration
+and their dependent live acceptance remain deferred; earlier pending-device notes
+below are historical. B6a–B6c and F6 source are now implemented. See
+[backend/VISITOR_API.md](backend/VISITOR_API.md) for the delivered contract and
+[frontend/F6_VISITOR_ACCEPTANCE.md](frontend/F6_VISITOR_ACCEPTANCE.md) for the
+existing-account Tailscale walkthrough. Executed validation is recorded separately
+in backend/frontend `VALIDATION.md`; new F6 Xcode/device acceptance remains required.
+
+Delivered policies: PostgreSQL time after accounting locks; first B6 interaction
+activates a garden without historical grants; stable UTC 30-second slots; one
+installation-bound session and one visible opportunity; bounded leases; exact
+fractional inactive storage and pinned whole-visit reward lots; atomic token
+ledger/hosted counters; durable iOS control/reward requests. Visitor skills remain
+B8, exchange/draws remain B7/F7 and deployment remains B10. New visitor fixture
+rates are provisional and do not replace approved balance.
 
 **B4/B5 implementation — 22 October 2026:** exact neutral growth calculations, derived garden attraction, immutable fixture rule versions, steps-first activity enrolment/sync, one-device replacement/baseline policy, cumulative watermarks, atomic per-copy credits, counters and recoverable recaps are implemented. [backend/ACTIVITY_API.md](backend/ACTIVITY_API.md) is the F5 integration contract. The explicit queue policy accepts seven game dates per observation with a bounded 30-day unresolved-upload grace; completed receipts replay beyond it. Initial enabled maturity profiles require adult threshold = terminal maximum. No activity currency, visitor production, B8 handlers or cloud deployment is included. Test fixture values remain unapproved production balance.
 

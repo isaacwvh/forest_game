@@ -2,6 +2,51 @@
 
 Prepared on Windows; native acceptance is pending.
 
+## F6 visitor interaction — 23 October 2026
+
+Implemented the shared native butterfly appearance/controller over the garden,
+server-session start/heartbeat/end, expiry, pending/confirmed welcome and one-action
+stored collection, token/hosted display and attraction/storage explanation. Editing,
+navigation, sheets, background and logout pause presentation. Reduce Motion uses
+a stationary appearance; an accessible welcome button avoids precise scene taps.
+
+`VisitorCoordinator` owns confirmed versioned state and installation-scoped sessions.
+All uncertain controls/rewards persist exact UUID/body before transmission in
+account/server-scoped protected files. Logout detaches work and ignores late results.
+Old receipts cannot roll back a newer wallet/visitor snapshot. Time projection uses
+server time plus local uptime; it does not authorise rewards.
+
+Executed on Windows:
+
+- All **287 backend tests** passed on disposable PostgreSQL databases, including
+  actual wire fixture validation and pre-B6 partially grown account preservation.
+- Both real Uvicorn HTTP walkthroughs passed, including process-restart visitor
+  replay; `visitor-contract.json` contains only synthetic server-generated responses.
+- Portable project/resource checks passed for all 20 USDZs/alpha PNGs and the
+  deterministic Xcode source/project configuration.
+- All **44 Swift files** parsed without syntax errors. This is not Apple SDK
+  typechecking, native XCTest execution or a Release build.
+- Python lint/format/compilation, dependency consistency and diff whitespace passed.
+
+Added **12 native visitor tests** covering actual HTTP decoding, active/pause
+lifecycle, pause during start, unknown welcome retry bytes/UUID, persistence failure,
+receipt-cleanup recovery, detached late responses, monotonic wallet snapshots,
+uptime expiry/offline gating, another installation, scoped journals and corrupt
+journal preservation. They are included in the generated project but **not executed
+here**. Existing native unit/UI tests remain in the Mac test script.
+
+Required on Mac/iPhone: Debug XCTest/UI suite, Release build, actual connected
+Isaac Test walkthrough over Tailscale, touch/camera/foliage behaviour, VoiceOver,
+Reduce Motion, Dynamic Type/landscape, interruptions and sustained frame/memory
+performance. No native screenshots or visual acceptance are claimed. Follow
+`F6_VISITOR_ACCEPTANCE.md`; keep the existing bundle ID and do not uninstall/reset.
+
+The user accepts the earlier tested F5/F5a path except SMTP/Google/Apple setup and
+dependent provider/email acceptance. The older pending notes below predate that
+update. F6 native acceptance is a new, separate gate. Docker image validation also
+remains unavailable because the local engine returned HTTP 500; no live account,
+provider settings, database, credentials or service configuration were changed.
+
 ## F5a Supabase authentication — 23 October 2026
 
 Implemented the pinned supabase-swift 2.55.4 Auth adapter, email-first account UI,

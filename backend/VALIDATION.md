@@ -1,4 +1,52 @@
-# B1–B5 implementation verification
+# B1–B6 implementation verification
+
+## B6/F6 implementation — 23 October 2026
+
+**287 backend tests passed** on isolated PostgreSQL 17.11 with Python 3.12, including
+all earlier 242 checks and 45 new cases. The dedicated loopback validation cluster
+created/dropped only random `forest_test_*` databases and was stopped after each
+run. No developer game database, existing account, `.env`, volume or live service
+was migrated, reset or reseeded during this implementation.
+
+Executed and passed:
+
+- Complete PostgreSQL suite, including schema/model drift, upgrade/downgrade/
+  re-upgrade and upgrade from a pre-B6 account with a partially grown placed plant.
+  User, garden, plant, growth and transform rows match before/after the B6 upgrade.
+- Exact inactive accrual, reconciliation-frequency invariance, fractional carry,
+  cap overflow without hidden backlog, preservation above a lowered capacity and
+  whole-visit payout lots across effective-time rule changes.
+- Single-session ownership, second-device rejection, stable slots/no reconnect
+  reroll, bounded lease expiry, no active/offline overlap, expiry/foreign welcome
+  rejection and backwards-clock protection.
+- Durable welcome/claim receipts through expiry and process recreation, distinct-
+  UUID concurrent welcomes, concurrent claims, per-account request UUID scope,
+  wrong-target/operation conflicts, failure rollback and ledger/lot reconciliation.
+- Actual B3 storage and B5 late stage advancement settle old visitor contexts;
+  growth still awards no currency. Future-rule publication, backdate rejection,
+  invalid/unfair timing configuration and durable polling limits are covered.
+- Real hidden Uvicorn activity walkthrough using runtime DB time, and visitor
+  walkthrough using a strictly test-only injected-clock factory: activation,
+  heartbeat/arrival, welcome, end, inactive claim/fraction and original receipt
+  replay after stopping/restarting the API process. Temporary processes/databases
+  were cleaned up. Synthetic visitor responses were explicitly exported for iOS.
+- Reproducible 100,000-slot development simulation for empty/starter/adult/15-adult/
+  dense stress cases: at assumed 50% capture, active successful welcomes exceed
+  inactive production. Starter approximately 34.11 active versus 15 stored/hour;
+  adult approximately 44.38 versus 21.82. These are fixture simulations, not measured
+  human performance or approved production balance. New skills remain B8.
+- Ruff lint/format, Python compilation, installed dependency consistency and diff
+  whitespace checks. Backend CI includes both visitor HTTP and pacing scripts.
+
+Docker engine queries, including an unsandboxed availability check, returned HTTP
+500. A B6 container build/run could not be verified; no live Docker service was
+changed. Native PostgreSQL/HTTP verification passed. Remote CI was configured but
+not invoked. F6 Xcode/native tests/Release build and physical iPhone acceptance
+cannot run on this Windows host and remain required. See `VISITOR_API.md` and
+`frontend/F6_VISITOR_ACCEPTANCE.md` for the delivered contract and safe rollout.
+
+Earlier milestone records below remain historical. The user accepts testing
+through B5/F5/F5a except SMTP/Google/Apple setup and their dependent live checks.
 
 Verified 20 October 2026 on Windows with Python 3.12.5 and a project-local,
 loopback-only PostgreSQL 17.11 runtime. Docker's engine was unavailable, so database

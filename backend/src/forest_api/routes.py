@@ -33,10 +33,11 @@ from forest_api.schemas import (
     UpdateProfile,
     UserDTO,
 )
+from forest_api.server_clock import request_clock
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0002_b4_b5"
+SCHEMA_REVISION = "0003_visitors"
 
 
 @router.get("/health/live", tags=["health"])
@@ -134,7 +135,7 @@ def garden_edits(
         identity,
         body,
         accounting=request.app.state.accounting,
-        clock=request.app.state.clock,
+        clock=request_clock(request, session),
     )
 
 
@@ -146,7 +147,7 @@ def enrol_activity(
     session: Session = Depends(get_session),
 ) -> EnrolResult:
     return activity.enrol(
-        session, request.app.state.settings, identity, body, clock=request.app.state.clock
+        session, request.app.state.settings, identity, body, clock=request_clock(request, session)
     )
 
 
@@ -162,7 +163,7 @@ def sync_activity(
         request.app.state.settings,
         identity,
         body,
-        clock=request.app.state.clock,
+        clock=request_clock(request, session),
         accounting=request.app.state.accounting,
     )
 
@@ -173,7 +174,7 @@ def activity_status(
     identity: Identity = Depends(get_identity),
     session: Session = Depends(get_session),
 ) -> ActivityStatus:
-    return activity.status(session, identity, clock=request.app.state.clock)
+    return activity.status(session, identity, clock=request_clock(request, session))
 
 
 @router.get("/v1/me/reward-recaps", response_model=RecapList, tags=["activity"])
@@ -196,7 +197,9 @@ def acknowledge_recap(
     identity: Identity = Depends(get_identity),
     session: Session = Depends(get_session),
 ) -> RecapAcknowledgement:
-    return activity.acknowledge(session, identity, recap_id, body, clock=request.app.state.clock)
+    return activity.acknowledge(
+        session, identity, recap_id, body, clock=request_clock(request, session)
+    )
 
 
 router.include_router(placement_router)

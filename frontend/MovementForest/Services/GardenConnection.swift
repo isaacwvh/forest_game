@@ -46,6 +46,7 @@ final class GardenConnection: ObservableObject {
     let configurationIssue: String?
     @Published private(set) var editor: GardenEditorStore?
     @Published private(set) var activitySync: ActivitySyncCoordinator?
+    @Published private(set) var visitors: VisitorCoordinator?
     @Published private(set) var accountRequired = false
     @Published private(set) var connecting = false
     @Published private(set) var status: String?
@@ -58,6 +59,7 @@ final class GardenConnection: ObservableObject {
     private let disk = AccountDiskStore()
     private var editorUpdates: AnyCancellable?
     private var syncUpdates: AnyCancellable?
+    private var visitorUpdates: AnyCancellable?
     private var authUpdates: AnyCancellable?
     private var managedTokens: ScopedAuthTokenProvider?
     private var managedGeneration = UUID()
@@ -116,7 +118,7 @@ final class GardenConnection: ObservableObject {
                     store.restoreCached()
                     editor = store
                     await store.start(refreshRemote: false)
-                    installActivity(client: client, store: store)
+                    installActivity(client: client, store: store, visitorsEnabled: false)
                 }
                 await connect(url: savedURL, token: token, assets: assets)
                 if editor?.showingCached == true, let activitySync = activitySync {
@@ -183,6 +185,7 @@ final class GardenConnection: ObservableObject {
     }
 
     private func detachManaged() {
+        visitors?.deactivate(); visitors = nil; visitorUpdates = nil
         managedGeneration = UUID(); managedTokens?.invalidate(); managedTokens = nil
         activitySync?.deactivate(); activitySync = nil
         editor?.deactivate(); editor = nil
@@ -242,6 +245,7 @@ final class GardenConnection: ObservableObject {
     }
 
     func signOut() async {
+        await visitors?.pause()
         if let authentication = authentication {
             guard !authentication.busy else { return }
             detachManaged()
@@ -250,8 +254,18 @@ final class GardenConnection: ObservableObject {
         } else { disconnect() }
     }
 
-    private func installActivity(client: APIClient, store: GardenEditorStore) {
+    private func installActivity(client: APIClient, store: GardenEditorStore, visitorsEnabled: Bool = true) {
         editorUpdates = store.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+        visitors?.deactivate(); visitors = nil; visitorUpdates = nil
+        if visitorsEnabled {
+            do {
+                let visitor = VisitorCoordinator(userID: store.profile.userId,
+                    installationID: try InstallationIdentity.load(disk: disk), service: APIVisitorRepository(client: client))
+                visitors = visitor
+                visitorUpdates = visitor.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+                visitor.start()
+            } catch { status = "Visitors paused: the installation identity could not be read." }
+        }
         guard let health = health else { return }
         do {
             let coordinator = ActivitySyncCoordinator(editor: store, health: health,
@@ -350,6 +364,7 @@ final class GardenConnection: ObservableObject {
         guard authentication == nil else { return }
         guard !busy else { return }
         do {
+            visitors?.deactivate(); visitors = nil; visitorUpdates = nil
             try DevelopmentCredential.remove()
             activitySync?.deactivate(); activitySync = nil
             editor?.endEditing(); editor = nil

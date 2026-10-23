@@ -1,12 +1,20 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.11\
-Date: 22 October 2026\
+Document version: 0.12\
+Date: 23 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
 
 This project-root copy is the working specification for future sessions. It incorporates the plant production decisions below and supersedes the older Downloads copy. The practical asset production procedure is [PLANT_ASSET_WORKFLOW.md](PLANT_ASSET_WORKFLOW.md). These documents record requirements and plans; they do not mean the game behaviours have been implemented.
+
+**Implementation checkpoint, 23 October 2026:** work through B5 and the tested
+F5/F5a email-authentication path is accepted by the user, except deferred SMTP and
+Google/Apple setup and dependent live checks. B6 visitor accounting/rewards and F6
+interaction source are implemented; see `backend/VISITOR_API.md` and
+`frontend/F6_VISITOR_ACCEPTANCE.md`. New F6 native/device acceptance remains a
+separate gate. Fixture rates/rewards are not approved production balance. Older
+“next” and “not implemented” notes describe earlier checkpoints.
 
 The editable plant/game planning workbook is [Plant_Game_Data.xlsx](outputs/plant-planning/Plant_Game_Data.xlsx). It starts with oak only. Agreed design rules, provisional defaults, illustrative balance examples and undecided values are labelled separately. Editing the workbook does not automatically publish game configuration or change runtime assets.
 
@@ -266,6 +274,15 @@ Balance the offline rate below **realistic successful active welcomes**, not mer
 **Proposed V1 accounting:** use server time and settle elapsed inactive intervals into fixed-point stored visits, carrying fractions until a whole visit can be claimed. Each interval uses the attraction/rate/capacity/economy snapshot that was effective during that interval. Stop production at capacity; discard overflow, including overflow fractions, so collecting cannot reveal a hidden backlog. At full capacity nothing expires. If a skill removal reduces capacity below an already earned stored amount, retain that amount and pause production until storage falls below the new capacity. Do not clip earned storage or wallets when a capacity bonus ends.
 
 Use one server-authorised active session per account, with bounded renewable leases and foreground-owner-garden eligibility. Partition server time into nonoverlapping active and inactive intervals; active intervals never also accumulate offline visits. Leaving/pausing closes active mode, and a lost connection expires its lease. Missed active opportunities remain missed; inactivity cannot retroactively convert them into guaranteed stored visits. Only the server decides covered time and issues opportunities; client clocks, repeated opens, reconnects or a second device cannot reroll a covered slot. Define lease duration, heartbeat cadence, opportunity expiry and pause/background handling before release.
+
+**Delivered B6 boundary:** runtime time comes from PostgreSQL `clock_timestamp()`
+after accounting locks and is captured once per operation, with no backwards
+settlement. Each garden activates at its first B6 interaction, using its current
+placed stages; pre-activation history earns no visits. Exact rational carry avoids
+rounding losses; displayed micro-units round down. Start mid-slot waits for the
+next stable 30-second UTC grid slot. Explicit end expires outstanding opportunities;
+failed delivery leaves coverage bounded by the durable lease. The current fixture
+permits one visible opportunity. See `backend/VISITOR_API.md` for concrete policies.
 
 Choose one stable server slot grid per garden, not a fresh timer on every session. A slot has at most one decision using its recorded context; entering active mode or changing plants within an already decided slot cannot create another roll. Unpresentable old opportunities are marked missed/expired rather than replayed as a catch-up burst. Pacing protection is durable state, not a resettable client timer.
 

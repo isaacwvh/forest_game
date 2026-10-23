@@ -14,6 +14,13 @@ specification. Preserve their calm, stylized miniature-world appearance.
 - Embedded wind respects Reduce Motion and inactive views. Scene changes preserve identity.
 - A native Plants list provides access to details without precise 3D touch selection.
 - Detailed inspection and synthetic fixtures are under Debug-only developer tools.
+- Visitor controls extend the existing native garden status area with confirmed
+  tokens, stored visits, one collection action and a collapsed explanation.
+- One shared green butterfly uses native geometry in a screen-space layer above
+  foliage, with a 64-point rectangular hit target and a separate accessible action.
+  Reduce Motion keeps it stationary; server expiry ends its presentation.
+- Visitor UI exposes pending/confirmed status and recovery without optimistically
+  adding tokens. Development balance is labelled; no ticket exchange is implied.
 
 Evidence is source inspection only. Dark Mode, Dynamic Type, landscape layout,
 VoiceOver, touch interaction, lighting, imported orientation and performance need

@@ -25,6 +25,7 @@ FIXTURE_VERSION = "development-oak-v1"
 def seed_calculation_config(session: Session) -> None:
     from forest_api.calculations import CalculationRules
 
+    seed_visitor_rules(session)
     version = "development-neutral-v1"
     if session.get(EconomyConfig, version) is not None:
         return
@@ -58,6 +59,37 @@ def seed_calculation_config(session: Session) -> None:
         )
     )
     session.flush()
+
+
+def seed_visitor_rules(session: Session) -> None:
+    from forest_api.visitor_models import VisitorRules
+    from forest_api.visitor_schemas import VisitorRuleDefinition
+
+    version = "development-visitors-v1"
+    if session.get(VisitorRules, version) is None:
+        definition = VisitorRuleDefinition.model_validate(
+            {
+                "curve": {
+                    "k_micro_units": 2_000_000,
+                    "starter_probability": "0.5",
+                    "maximum_probability": "0.8",
+                    "slot_seconds": 30,
+                    "offline_fraction": "0.25",
+                    "offline_rate_cap_per_second": "0.01",
+                    "base_capacity": 30,
+                    "maximum_capacity": 120,
+                }
+            }
+        )
+        session.add(
+            VisitorRules(
+                version=version,
+                effective_at=datetime(1970, 1, 1, tzinfo=UTC),
+                is_fixture=True,
+                rules=definition.model_dump(mode="json"),
+            )
+        )
+        session.flush()
 
 
 def seed_development_catalogue(session: Session, settings: Settings) -> None:
