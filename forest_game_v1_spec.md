@@ -1,7 +1,7 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.12\
+Document version: 0.13\
 Date: 23 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
@@ -15,6 +15,15 @@ interaction source are implemented; see `backend/VISITOR_API.md` and
 `frontend/F6_VISITOR_ACCEPTANCE.md`. New F6 native/device acceptance remains a
 separate gate. Fixture rates/rewards are not approved production balance. Older
 “next” and “not implemented” notes describe earlier checkpoints.
+
+**Collection decision, 23 October 2026:** the approved current flow is
+**visitor tokens → unopened packs → owned sprouts**. Seed tickets and immediate
+ticket-funded draws below are superseded. B7/F7 now delivers exchange, versioned
+owned packs, rarity-first server draws and a simple Exchange/Catalog/Draws menu.
+All test offers are immediately accessible; permanent unlocks and milestone
+rewards are deferred along with social work. See [COLLECTION_API.md](backend/COLLECTION_API.md)
+and [F7 acceptance](frontend/F7_COLLECTION_ACCEPTANCE.md) for the implemented
+contract. Native execution/device acceptance remains a separate gate.
 
 The editable plant/game planning workbook is [Plant_Game_Data.xlsx](outputs/plant-planning/Plant_Game_Data.xlsx). It starts with oak only. Agreed design rules, provisional defaults, illustrative balance examples and undecided values are labelled separately. Editing the workbook does not automatically publish game configuration or change runtime assets.
 
@@ -35,7 +44,7 @@ When a decision changes, update this document and add a short decision-log entry
 
 Users grow a collectible 3D forest through everyday steps. Other iPhone-supported activity metrics and recorded workouts provide additional growth inputs under the scope in section 5.1. Users unbox owned plants through a gacha system. Every result starts at stage 1, sprout, and enters plant storage ready to place in the garden. Plants grow through four stages; users arrange their garden and visit friends' gardens.
 
-The core experience is: move → water/grow individual plants → increase garden attraction → welcome visitors actively or collect a smaller stored return → exchange visitor tokens for seed tickets → draw and place new sprouts → grow and arrange a richer garden. Friends can view the resulting gardens. There is no separate seed growth stage or seed-to-plant conversion on placement. “Attraction,” “visitor tokens,” “seed draw” and “seed tickets” are working names.
+The core experience is: move → water/grow individual plants → increase garden attraction → welcome visitors actively or collect a smaller stored return → exchange visitor tokens for unopened packs → open and place new sprouts → grow and arrange a richer garden. Friends can view the resulting gardens. There is no separate seed growth stage or seed-to-plant conversion on placement. “Attraction,” “visitor tokens,” “packs” and “draws” are working names.
 
 ### 2.1 Agreed requirements
 
@@ -43,7 +52,7 @@ The core experience is: move → water/grow individual plants → increase garde
 - Steps are the main progression input; workouts provide an optional additional boost, with plant-specific responses by workout type. Other iPhone-supported activity inputs are in the proposed scope in section 5.1.
 - A shared garden surface displayed as a 3D board, with continuous placement on its logical 2D ground plane. The working board example is 10×10 garden units; final dimensions remain open. This supersedes the earlier N×N cell-placement requirement.
 - Plants have different rarities, properties and four growth stages: sprout, seedling, young plant and adult plant.
-- Activity supplies automatic watering/growth. Visitors supply the collection economy: active welcomes and claimed stored visits award visitor tokens, exchanged for seed tickets. Activity no longer directly awards tickets. Spending tokens or tickets never consumes plant growth.
+- Activity supplies automatic watering/growth. Visitors supply the collection economy: active welcomes and claimed stored visits award visitor tokens, exchanged for unopened packs. Activity awards no currency directly. Spending tokens or opening packs never consumes growth.
 - Every owned plant grows independently, including duplicate species/variant copies. Only placed copies contribute attraction, with higher growth stages contributing more. Attraction and applicable skills determine bounded active visitor opportunities and slower, capacity-limited offline accumulation.
 - Active visitors use one shared arrival/flight/tap/departure behaviour. Tapping welcomes a visitor; it does not trap or spend a creature. Offline visits are collected together on return. Capacity skills can extend the time before storage fills; stored value is not lost through absence.
 - Each plant lists its supported metric multipliers; omitted metrics are 0 unless a workout type inherits `workout_minutes.*`; an explicitly configured 1.0 is neutral. Percentage boosts resolve in two layers: per-activity conversion factors, then one combined-water factor. Weather, events and skills declare which layer they affect.
@@ -86,7 +95,7 @@ The core experience is: move → water/grow individual plants → increase garde
 5. Show the short workout-recording setup below, with a path for Apple Fitness and a path for an existing third-party tracker. Explain that workouts must be recorded and saved to Apple Health; manually entered workouts do not qualify for workout growth. This setup is optional; steps alone support progression.
 6. Establish the activity baseline; do not grant rewards for all lifetime historical activity.
 7. Show the starter sprout already granted by account provisioning and guide the user through placing it; this tutorial step must not grant another copy.
-8. Show how movement grows the starter plant and increases its attraction, demonstrate a visitor welcome and token-to-ticket exchange, and explain sync and stored-visit status. The starter garden must support the first draw without requiring a rare plant or another draw first; floor, introductory milestones and tutorial pacing remain to be balanced.
+8. Show how movement grows the starter plant and increases its attraction, demonstrate a visitor welcome and token-to-pack exchange, and explain sync and stored-visit status. The starter garden must support the first draw without requiring a rare plant or another draw first; floor, introductory milestones and tutorial pacing remain to be balanced.
 
 **Agreed workout setup (specification only; implement with onboarding):**
 
@@ -112,7 +121,7 @@ Account settings provide linked sign-in methods, **Link Google/Apple**, password
 - Display resources, unboxing access and last successful activity sync.
 - Distinguish pending local edits from server-confirmed state.
 - On a visit with newly confirmed activity rewards, present the watering/progress recap described in section 4.4. Reward settlement does not depend on watching an animation.
-- Show each selected plant's base attraction and relevant applied modifiers, and an explainable garden attraction summary. Display active visitor availability, stored visits/capacity, estimated time until full, visitor-token balance and ticket exchange access.
+- Show each selected plant's base attraction and relevant applied modifiers, and an explainable garden attraction summary. Display active visitor availability, stored visits/capacity, estimated time until full, visitor-token balance and pack exchange access.
 - Render server-issued active visitors through the shared visitor controller. An owner's tap requests an idempotent welcome; show pending versus confirmed rewards. Collect stored visits with one short interaction, optionally presenting a swarm. Missed active visitors are not auto-captured or converted into offline storage.
 - End active visitor mode when leaving the owner's garden, backgrounding or entering an obstructing edit/modal flow; use the slower accumulation mode for eligible time outside active mode. Cached garden viewing without a connection cannot authoritatively issue or redeem visitors.
 
@@ -157,8 +166,8 @@ Exact quantities, rates, probabilities and caps are **open**. Keep them in versi
 | Plant attraction | Derived from each placed copy's pinned stage-based attraction profile and applicable skills; not currency |
 | Garden attraction | Aggregate of placed-copy contributions and eligible garden effects; controls bounded visitor production |
 | Stored visits | Slower offline production, limited by effective storage capacity; not spendable until claimed |
-| Visitor tokens | Spendable resource awarded by confirmed active welcomes and stored-visit claims; exchanged for seed tickets |
-| Seed tickets | Acquired through visitor-token exchange and configured visitor milestone rewards; spent on seed draws |
+| Visitor tokens | Spendable resource awarded by confirmed active welcomes and stored-visit claims; exchanged for unopened packs |
+| Unopened packs | Acquired through explicit visitor-token exchange; consumed once to award a plant |
 | Unboxed result | A new individual owned plant at stage 1, sprout; no separate seed item |
 | Owned plants | Individual persistent objects with growth and optional placement; stored immediately after unboxing |
 | Forest level | Optional long-term collection/expansion system; later unless needed |
@@ -194,19 +203,27 @@ Workout rewards use deduplicated eligible duration by workout type, not a fixed 
 
 Store cumulative water thresholds in immutable growth profiles: sprout begins at 0, followed by strictly increasing seedling, young and adult thresholds. Numeric thresholds remain blank/TBD until balanced. The water needed for a stage transition is the difference between successive cumulative thresholds, not another separately maintained source of truth. Adult is terminal; cap awarded growth at its configured maturity maximum.
 
-### 4.2 Visitor currency, seed tickets and packet unlocks
+### 4.2 Visitor tokens, unopened packs and future progression
 
-**Agreed, superseding step-to-ticket rewards:** movement awards water/growth, not seed tickets or visitor tokens directly. Confirmed active visitor welcomes and claims of stored visits award the working currency `visitor_tokens`. Exchange those tokens for `seed_tickets`; spending either currency never reduces growth or lifetime collection progress. The currencies represent visitor rewards, not butterflies removed from a collection.
+Movement awards growth, not currency. Confirmed active welcomes and stored-visit
+claims award whole visitor tokens. Exchange explicitly spends tokens for unopened
+packs at the disclosed offer version and price. Opening consumes one owned pack
+and awards one independently owned zero-growth sprout into storage. No seed-ticket
+currency is used. Spending never reduces growth or lifetime hosted progress.
 
-Keep spendable currency separate from permanent access:
+Published pack versions separate fixed rarity weights from explicit per-rarity
+species/variant membership. Choose rarity first, then uniformly choose an outcome
+within that rarity. Adding/removing outcomes does not alter rarity probabilities;
+individual outcome probabilities change within their tier. Reject empty
+positive-weight tiers rather than redistributing odds. Acquire a specific pack
+version; later edits publish another version and cannot reprice or reroll old packs.
+Pin each outcome's profile versions in the contract and on the awarded copy.
 
-- **Visitor tokens:** a nonnegative wallet balance backed by a ledger. An active welcome awards its pinned token reward once; a stored-visit claim converts its claimed whole visits under the pinned reward rule once. Exact token amounts remain open. Unclaimed storage is not already in the token wallet.
-- **Seed tickets:** acquired through explicit token exchanges and configured visitor milestones, then spent on packets. Use a clear versioned exchange price, stable across player levels within that version; do not automatically raise the ordinary exchange cost as a player levels up. Cost, packet prices and introductory rewards remain TBD.
-- **Visitor milestones:** proposed introductory/permanent goals based on authoritative lifetime hosted visits, with explicit rewards. The first goals must be achievable with the starter garden. Increasing later milestone thresholds must not erase progress, change the ordinary exchange price or impose daily attendance. By default both active welcomes and claimed offline visits count once; any active-only objective must say so. Milestone grants do not consume visitor tokens; exchanges do not count as new visits. Recurring daily quests, level-scaled quest generation and a forest-level system are not required for V1.
-- **Packet access:** unlocked permanently by versioned cumulative movement, individual-plant maturity and/or explicitly defined visitor milestones. Movement may unlock access but does not pay for draws. Avoid gates requiring a rare random result. Count each owned plant's first maturity once, including duplicates; this is not shared species mastery.
-- **Working packet progression:** starter woodland packet available immediately; later packet names, costs, contents, unlock rules, rarity tiers, weights and pity remain TBD. An awarded plant enters storage even when the garden is full.
-
-Evaluate unlocks and milestones from authoritative lifetime counters and unique events, never current balances. Storing plants, exchanging tokens or spending tickets cannot revoke granted packet access. Economy revisions apply prospectively, preserve existing balances/awards and never reroll prior draws.
+Both development offers are immediately available. Permanent pack access and
+one-time milestones remain later progression work: unlocks would allow repeated
+purchase; milestones could grant tokens, packs or access once. They are separate
+from spending, need stable logical identities and may not regrant on rule edits.
+Final prices, rarity tiers/weights and progression thresholds remain unapproved.
 
 ### 4.3 Personal activity boosts
 
@@ -232,7 +249,7 @@ Calculate the day's cumulative eligible boosted entitlement and subtract already
 **Agreed presentation direction; implementation deferred:** on opening/returning to the app, sync new activity and show a short garden-wide watering animation followed by a compact recap of newly confirmed rewards:
 
 - Newly credited activity, water/progress gained per affected garden plant, previous/current stages and any stage advances.
-- Newly available stored visits and capacity, shown separately from already claimed visitor tokens. After a confirmed welcome, claim, milestone or exchange, show its visitor-token/ticket changes separately from water; a HealthKit sync itself earns no tickets.
+- Newly available stored visits and capacity, shown separately from already claimed visitor tokens. After a confirmed welcome, claim, milestone or exchange, show its visitor-token/pack changes separately from water; a HealthKit sync itself earns no tickets.
 - Personal-boost and garden-skill contributions when applicable. The detailed view can explain individual plants without forcing a long animation sequence.
 
 Show no duplicate reward celebration when opening again without new credits. Bundle multiple changes into one recap; a plant that advances several stages may present its previous and final stage rather than forcing every intermediate animation. Keep rewards durable before presentation, allow skip/interruption and offer reduced motion. Track presentation receipts separately from reward settlement, so a crash or retry never grants rewards again. Offline/delayed sync permits cached garden viewing and a recap once results are confirmed; do not present unavailable activity as zero.
@@ -294,7 +311,7 @@ Every active welcome references a unique issued opportunity, valid owner/session
 
 A stored-visit claim first settles eligible time, snapshots the claimable whole amount and its reward lots, then atomically removes those visits, credits tokens and increments lifetime offline/total hosted counters. Each whole stored visit pins its token reward/version when generated; aggregate equal-reward lots so a later rule change cannot reprice already earned whole visits. A shared sub-visit remainder carries across production contexts, with a newly completed whole visit using the reward rule effective when it completes. Fractions remain in storage unless discarded at the cap. A retried claim returns its original result rather than also claiming visits accrued later. Offline visits are aggregate income, not fabricated rare-species captures. Guestbook/species-collection rules would need separate future design.
 
-Token exchange atomically debits the visitor-token wallet and credits the seed-ticket wallet using a disclosed configuration version and a positive integer exchange quantity. Insufficient funds fail without partial changes. Milestone grants use a unique player/logical-milestone identity and record the granted rule version; a new rule version cannot regrant an already completed logical milestone without an explicit new entitlement. Exchanges, claims, quest grants and draws must coordinate wallet locks and idempotency. Record token earning, token spending, ticket earning and ticket spending separately.
+Token exchange atomically debits the visitor-token wallet and grants unopened packs under the disclosed offer/pack versions and a positive integer exchange quantity. Tickets are superseded; milestone grants remain future work. Insufficient funds fail without partial changes. Milestone grants use a unique player/logical-milestone identity and record the granted rule version; a new rule version cannot regrant an already completed logical milestone without an explicit new entitlement. Exchanges, claims, quest grants and draws must coordinate wallet locks and idempotency. Record token earning/spending, pack acquisition and pack opening separately.
 
 ## 5. Activity integration and synchronisation
 
@@ -666,12 +683,14 @@ Blocking overrides friendship and visibility. Remove/disable conflicting request
 | `plant_stages` | Species/variant/stage reference, visual model key, PNG thumbnail key and stage display metadata; four stable stage IDs |
 | `owned_plants` | `id uuid PK`, `owner_id FK`, `(species_id, variant_id) FK` to shared variant, resolved/pinned growth/behaviour/attraction profile references and versions, `growth_micro_units bigint CHECK >= 0` representing individual cumulative water, fractional accounting state if needed, acquisition source/reference, `first_matured_at NULL`, timestamps; stage and base attraction derived from that copy's progress and pinned profiles, not separate authoritative balances. Duplicate copies have distinct IDs and progress |
 | `garden_placements` | `plant_id FK PK`, `garden_id FK`, `x numeric(9,3)`, `y numeric(9,3)` in board-local garden units, `rotation_degrees numeric(5,2)` with `0 <= value < 360`; a plant has at most one placement; coordinates are the ground-centred anchor, not a rectangle corner |
-| `wallets` | `(user_id, currency_code) PK`, `balance bigint CHECK >= 0`; V1 currencies `visitor_tokens` and `seed_tickets`, in whole units. No water wallet, implicit step-to-ticket balance or offline-storage balance duplicated here |
-| `economy_configs` | `version PK`, immutable water normalisation/base rates and caps, personal-water-boost policy, attraction/visitor curve parameters and caps, starter floor/gap protection, active slot/lease/expiry policy, slower offline rate/capacity rules, token reward rules, token-to-ticket exchange cost, milestone rules, rounding/grouping policies and activation time. No direct step-to-ticket rate; changes apply prospectively |
-| `gacha_pools` | `(id, version) PK`, packet name/description, immutable weighted species/variant outcomes, ticket cost, unlock-rule JSONB/version, active flag; separate packet access from purchase |
-| `gacha_draws` | `id uuid PK`, `user_id FK`, pool/version, economy version, cost, result species/variant, awarded `plant_id FK UNIQUE`, `request_id`, timestamps; unique `(user_id, request_id)` |
+| `visitor_wallets` | One authoritative token balance plus hosted counters and a monotonic economy version; B6 earning entries and B7 collection-event token deltas reconcile to it. No ticket or water wallet |
+| `economy_configs` | `version PK`, immutable water normalisation/base rates and caps, personal-water-boost policy, attraction/visitor curve parameters and caps, starter floor/gap protection, active slot/lease/expiry policy, slower offline rate/capacity rules, token reward rules, token-to-pack exchange cost, milestone rules, rounding/grouping policies and activation time. No direct step-to-ticket rate; changes apply prospectively |
+| `pack_definitions`, `pack_members` | Immutable `(id, version)` contract with rarity weights, explicit species/variant outcomes and pinned profiles; relational references retain dependencies |
+| `exchange_offers` | Versioned token price and pack reference; only sales availability is mutable |
+| `owned_packs` | Individually owned acquired pack version and exchange provenance; opening is separate from purchase |
+| `pack_openings` | Unique consumed pack, event and awarded plant references plus rarity/time; retries cannot create another plant |
 | `player_progress` | `user_id FK PK`, cumulative eligible movement, unique first-maturity counts, lifetime active/offline/total hosted visits and milestone aggregates, version/timestamps; derived from unique confirmed events and independent of wallet spending. A stored visit counts as hosted on claim, not both on accrual and claim |
-| `packet_unlocks` | `(user_id, pool_id) PK`, granted_at, unlock-rule version and supporting milestone/context reference; permanent access, never revoked by storage moves or ticket purchases |
+| `packet_unlocks` — future | Permanent access separate from spending; deferred from the current immediately available test offers |
 
 No separate storage-location flag is required: an owned plant without a placement is stored. Unboxing creates this owned plant immediately. No separate `seed_inventory` table is required for the agreed flow. Never maintain two conflicting sources of truth for location. Validate owned species/variant combinations against the variant catalogue; rarity and probabilities are configuration, not extra model geometry.
 
@@ -701,7 +720,7 @@ Planning workbook mapping: replace `Footprint (tiles)` with `Clearance radius (g
 | `visitor_settlements` | `id uuid PK`, garden, interval start/end, mode, context reference, covered slot range, generated/stored/discarded fixed-point amounts, before/after storage, logical key UNIQUE; serialise on visitor state so intervals/slots are never processed twice |
 | `visitor_opportunities` | `id uuid PK`, session/garden/owner, stable slot identity UNIQUE per garden, visual visitor key, issued/expires timestamps, pinned context and token-reward version/amount, status issued/welcomed/expired and welcome-event reference UNIQUE nullable; issued randomness/outcome cannot reroll on retry |
 | `visitor_reward_events` | `id uuid PK`, user/garden, source kind active_welcome/offline_claim, source ID UNIQUE within kind, claimed visit count, total tokens and pinned opportunity/reward-lot breakdown, before/after storage when applicable, server timestamp; one event drives ledger entries and lifetime hosted counters |
-| `token_exchanges` | `id uuid PK`, user, request ID UNIQUE per user, exchange config version, positive integer quantity, total token debit and ticket credit, linked ledger/reward references; immutable completed result |
+| `collection_events` | Unique owner/request, operation, payload hash, signed token delta and immutable exchange/opening receipt; B7 has nonpositive deltas because reward milestones are deferred |
 | `visitor_milestone_grants` | `id uuid PK`, user, logical milestone ID, granted rule version, authoritative threshold/event context, reward references and timestamp; UNIQUE(user, logical milestone ID) prevents retries/version edits regranting a completed entitlement |
 
 A reused request ID with a different payload must fail. Keep durable draw/reward uniqueness even if short-lived API response records are cleaned up.
@@ -867,16 +886,20 @@ Signup, sign-in, email confirmation/recovery, refresh and identity linking use S
 | `GET /v1/me/garden` | Garden with saved growth and derived attraction; owner visitor summary separated from public garden fields |
 | `POST /v1/me/garden/edits` | Atomic batch plant/store/move/rotate actions using canonical continuous X/Y and `rotationDegrees`, expected layout version and matching catalogue/configuration version |
 | `GET /v1/me/inventory` | Paginated stored plants, including stage, variant, progress and thumbnail references |
-| `POST /v1/seed-draws` | Working route name: verify packet access, spend earned tickets and award an owned sprout into storage |
+| `POST /v1/me/packs/{ownedPackId}/open` | Consume one owned pack and award its server-selected sprout once |
+| `GET /v1/me/collection` | Token balance, economy version and current offers with exact contents |
+| `GET /v1/me/packs` | Paginated unopened packs |
+| `GET /v1/me/pack-openings` | Paginated confirmed opening history |
+| `GET /v1/pack-definitions/{id}/versions/{version}` | Exact immutable contents and probabilities |
 | `GET /v1/me/visitors` | Settle/read stored visits, effective capacity/rates, pending opportunities and current visitor version; does not award wallet currency |
 | `POST /v1/me/visitor-sessions` | Start the single owner-garden active session, closing inactive accounting at the server boundary; issue/poll eligible opportunities without rerolling covered slots |
 | `POST /v1/me/visitor-sessions/{id}/heartbeat` | Renew an eligible foreground session and return new server-issued opportunities under rate/slot limits |
 | `POST /v1/me/visitor-sessions/{id}/end` | Close active time once; slower accumulation resumes for subsequent eligible time |
 | `POST /v1/me/visitor-opportunities/{id}/welcome` | Consume one valid owned opportunity and atomically award its pinned tokens/lifetime progress |
 | `POST /v1/me/stored-visits/claim` | Settle and claim available whole stored visits together; award tokens/lifetime progress once |
-| `POST /v1/me/token-exchanges` | Spend visitor tokens for a positive integer ticket quantity under a disclosed exchange version |
-| `GET /v1/me/visitor-milestones` | Authoritative counters, permanent milestone progress and granted/claimable rewards |
-| `POST /v1/me/visitor-milestones/{id}/claim` | Validate and grant a configured milestone reward once; no token consumption or repeated entitlement on rule-version changes |
+| `POST /v1/me/exchanges` | Spend tokens for a positive integer number of packs under a disclosed offer version |
+| `GET /v1/me/visitor-milestones` | Future progression: authoritative counters, permanent milestone progress and granted/claimable rewards |
+| `POST /v1/me/visitor-milestones/{id}/claim` | Future progression: validate and grant a configured milestone reward once; no token consumption or repeated entitlement on rule-version changes |
 | `POST /v1/reward-recaps/{id}/ack` | Mark confirmed recap presentation seen, idempotently; never changes rewards |
 | `GET /v1/users/lookup?username=...` | Minimal exact-match discovery |
 | `POST /v1/friend-requests` | Request friendship |
@@ -889,7 +912,7 @@ Signup, sign-in, email confirmation/recovery, refresh and identity linking use S
 | `GET /v1/users/{userId}/garden` | Authorised read-only garden view |
 | `DELETE /v1/me` | Account deletion workflow |
 
-Mutations carry a request UUID. Return canonical changed state or version identifiers, structured error codes and retry guidance. Common errors: stale layout/configuration, stale visitor context, insufficient tokens/tickets, expired/already welcomed opportunity, inactive/wrong session, unachieved milestone, clearance overlap, out-of-bounds, invalid coordinates/precision, unavailable inventory and access denied. A reused mutation ID with a different payload fails. If a hard planted-count policy is enabled, give its limit error explicitly. Do not expose private visitor state, health data or ledger details from another garden.
+Mutations carry a request UUID. Return canonical changed state or version identifiers, structured error codes and retry guidance. Common errors: stale layout/configuration, stale visitor context, insufficient tokens, expired/already welcomed opportunity, inactive/wrong session, unachieved milestone, clearance overlap, out-of-bounds, invalid coordinates/precision, unavailable inventory and access denied. A reused mutation ID with a different payload fails. If a hard planted-count policy is enabled, give its limit error explicitly. Do not expose private visitor state, health data or ledger details from another garden.
 
 ## 11. Critical transactions
 
@@ -903,9 +926,19 @@ Attempt available HealthKit sync in the foreground first. On the server, lock ga
 
 A sync that fails must not silently imply exact settlement. Proposed UI: require online confirmation for membership-changing edits; allow cached viewing and edit previews offline. Late health data follows the credit-time policy in section 5.
 
-### Seed draw
+### Pack exchange and opening
 
-Verify idempotency → lock the ticket wallet in the common lock order → load pinned pool → verify permanent access, funds and any configured plant-storage capacity → choose outcome with server-side secure randomness → debit tickets and create one owned sprout at zero growth without a placement, pinning growth/behaviour/attraction profiles → save draw, plant ID and ledger → commit. Visitor-storage capacity is unrelated to plant-inventory capacity. Never reroll or create another plant on retry.
+Exchange verifies request replay, locks the account/garden/catalogue in the common
+order, validates the disclosed offer/version and positive bounded quantity, checks
+funds and atomically debits tokens, grants owned packs and saves the receipt.
+
+Opening verifies request replay and pack ownership, returns an already completed
+pack's result, loads its pinned immutable pool, chooses rarity then outcome with
+secure server randomness and atomically awards one unplaced zero-growth sprout
+with pinned profiles plus its unique opening/receipt. A retry or another request
+against the same pack returns the original plant. A full garden does not prevent
+an award. Visitor storage is unrelated to plant inventory. No reward is returned
+successfully before commit. See the B7 contract for actual tables/endpoints.
 
 ### Visitor session and time settlement
 
@@ -913,7 +946,7 @@ Verify owner/session → lock garden visitor state → use server time to close 
 
 ### Welcome, stored-visit claim, exchange and milestone grant
 
-All operations verify idempotency and use the common account/garden/wallet lock order. Welcome validates an issued, unexpired owner opportunity and commits its unique consumption, token credit, hosted counters and milestone eligibility together. Stored-visit claim settles elapsed time, removes whole visits from pinned reward lots and commits one token/hosted event with its lot breakdown; a retry reuses the original claimed amount. Exchange atomically debits tokens and credits tickets at the pinned disclosed price. Milestone claim validates authoritative progress and atomically inserts a unique logical grant plus its wallet entries. Claims and exchanges do not change plant growth. Never return a successful award before commit.
+All operations verify idempotency and use the common account/garden/wallet lock order. Welcome validates an issued, unexpired owner opportunity and commits its unique consumption, token credit, hosted counters and milestone eligibility together. Stored-visit claim settles elapsed time, removes whole visits from pinned reward lots and commits one token/hosted event with its lot breakdown; a retry reuses the original claimed amount. Exchange atomically debits tokens and grants unopened packs at the pinned disclosed price. Milestone claim validates authoritative progress and atomically inserts a unique logical grant plus its wallet entries. Claims and exchanges do not change plant growth. Never return a successful award before commit.
 
 ## 12. Assets and rendering
 
@@ -1033,7 +1066,7 @@ Costs to monitor: asset egress, art sizes, authentication users, database capaci
 - Fractional X/Y survive save/reload and friend viewing; camera orbit/zoom or parent transforms do not change logical positions, radii or units. Different yaw values leave circular validity unchanged.
 - Batch swaps validate the final layout, exclude the moved plant's old circle and remain atomic under concurrent edits. Geometry/configuration migrations cannot silently invalidate existing gardens.
 - Stage swaps and storage/replant preserve the species radius; a sprout cannot be packed using a smaller temporary footprint. Foliage extending beyond clearance alone is not a placement-validation error.
-- Concurrent draws cannot overspend a wallet.
+- Concurrent exchanges cannot overspend the token wallet; concurrent openings cannot consume a pack twice.
 - Completed draw retries return the same owned sprout ID; unboxing does not require an available planting position.
 - Placing/storing a plant preserves ownership, stage, variant and growth; no separate seed consumption occurs.
 - Every supported stage/variant resolves to a model and transparent thumbnail; all stages use the same ground anchor.
@@ -1052,7 +1085,7 @@ Costs to monitor: asset egress, art sizes, authentication users, database capaci
 - Active/inactive intervals and stable slots never overlap or reroll across heartbeats, repeated opens, crashes, backgrounding, reconnects, clock changes, concurrent requests or multiple devices. Missed active slots are never backfilled as stored visits.
 - Offline accrual is invariant to reconciliation frequency, carries fractions, stops without hidden overflow at capacity, and preserves earned storage when capacity falls. Claims collect whole visits once, retain valid fractions and count lifetime hosting only on claim. Reward lots preserve previously earned whole-visit payouts across later reward-rule changes; lot counts plus remainder reconcile to aggregate storage.
 - Opportunity owner/session/expiry checks reject forged or stale welcomes. Replayed welcomes/claims return the original amount; friend visits and purely local animations cannot issue currency.
-- Concurrent welcomes/claims/exchanges/draws/milestone grants cannot overspend, double-count hosted progress or regrant logical milestones under new rule versions. Positive integer exchange quantities and disclosed price versions are enforced.
+- Concurrent welcomes/claims/exchanges/draws/milestone grants cannot overspend, double-count hosted progress or regrant logical milestones under new rule versions. Positive integer exchange quantities and disclosed offer versions are enforced.
 - Fixed shared-example JSON parses and profile references resolve; derived stage/attraction matches individual growth, and shared definitions contain no user-owned growth, placement or wallet state.
 - Recap acknowledgement/skip/crash cannot grant rewards, and reopen without new credits does not replay a new award.
 - Friend-only/private gardens and blocks enforce visibility.

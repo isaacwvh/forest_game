@@ -44,6 +44,7 @@ struct APIVisitorSummary: Codable, Equatable {
     let heartbeatSeconds: Int
     let session: APIVisitorSession?
     let opportunities: [APIVisitorOpportunity]
+    var economyVersion: Int64? = nil
 }
 
 struct APIVisitorReward: Codable {

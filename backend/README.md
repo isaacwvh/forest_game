@@ -1,10 +1,11 @@
-# Movement Forest backend — B1–B5
+# Movement Forest backend — B1–B7 collection slice
 
 Python 3.12, FastAPI, synchronous SQLAlchemy 2, psycopg 3, PostgreSQL 17 and Alembic.
 This foundation implements accounts, catalogue/profile records, owned plants,
 owner-only garden/storage reads, atomic B3 placement edits, exact B4 growth/attraction
-calculations and B5 steps synchronisation. Visitors, wider input handlers and the
-collection economy remain later milestones. See [ACTIVITY_API.md](ACTIVITY_API.md)
+calculations, B5 steps synchronisation, B6 visitors and B7 token exchange/pack draws.
+Wider inputs, collection unlocks/milestones and social work remain deferred.
+See [COLLECTION_API.md](COLLECTION_API.md) and [F7 acceptance](../frontend/F7_COLLECTION_ACCEPTANCE.md). See [ACTIVITY_API.md](ACTIVITY_API.md)
 for the F5 contract, enrolment/device policies, examples and verification commands.
 The Supabase email/password iPhone/Xcode/Tailscale flow and configuration locations
 are in [frontend/F5A_AUTH_ACCEPTANCE.md](../frontend/F5A_AUTH_ACCEPTANCE.md).

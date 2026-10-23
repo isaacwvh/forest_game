@@ -6,7 +6,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import create_engine, pool
 from sqlalchemy.engine import make_url
 
-from forest_api import visitor_models  # noqa: F401 - register B6 metadata
+from forest_api import (
+    collection_models,  # noqa: F401 - register B7 metadata
+    visitor_models,  # noqa: F401 - register B6 metadata
+)
 from forest_api.models import Base
 
 

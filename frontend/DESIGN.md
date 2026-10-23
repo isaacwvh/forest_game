@@ -20,7 +20,7 @@ specification. Preserve their calm, stylized miniature-world appearance.
   foliage, with a 64-point rectangular hit target and a separate accessible action.
   Reduce Motion keeps it stationary; server expiry ends its presentation.
 - Visitor UI exposes pending/confirmed status and recovery without optimistically
-  adding tokens. Development balance is labelled; no ticket exchange is implied.
+  adding tokens. Development balance is labelled. B7 exchanges visitor tokens directly for packs.
 - Garden panel regions depend on available screen size and orientation. Status,
   progress and validation text scroll within those regions; they never resize the
   camera viewport. Compact height places status and controls beside the scene.
@@ -31,3 +31,14 @@ specification. Preserve their calm, stylized miniature-world appearance.
 Evidence is source inspection only. Dark Mode, Dynamic Type, landscape layout,
 VoiceOver, touch interaction, lighting, imported orientation and performance need
 native validation. No HTML/CSS detector or browser screenshot substitutes for it.
+
+- A leading collection menu opens Exchange, Catalog and Draws. Preserve the
+  mounted garden/camera while browsing; the menu and collection routes pause
+  active visitors. Garden/Activity and settings retain their native navigation.
+- Exchange discloses pack price, bounded quantity, total cost and probabilities;
+  Draws separates unopened packs, the persisted confirmed result and history.
+  Catalogue inspection is independent of ownership. Use native lists, text
+  styles, SF Symbols, 44-point actions and explicit pending/error/empty states.
+- Wallet presentation accepts newer server economy versions only. A durable
+  opening result never depends on a reveal animation. Add artwork via the bundled
+  asset index; remote asset delivery remains a later milestone.

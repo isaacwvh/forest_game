@@ -48,7 +48,8 @@ def generated_files():
     unit_sources = files("MovementForestTests")
     ui_sources = files("MovementForestUITests")
     resource_refs = []
-    for name, path in [("oak", "../assets/oak"), ("moonwillow", "../assets/moonwillow"),
+    asset_ids = json.loads((ROOT / "MovementForest/Resources/Fixtures/asset-index.json").read_text())
+    for name, path in [(name, f"../assets/{name}") for name in asset_ids] + [
                        ("Fixtures", "MovementForest/Resources/Fixtures")]:
         resource_refs.append(add("resource-" + name, "PBXFileReference", lastKnownFileType="folder",
                                  name=name, path=path, sourceTree="SOURCE_ROOT"))

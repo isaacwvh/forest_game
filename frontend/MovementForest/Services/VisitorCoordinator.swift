@@ -24,6 +24,15 @@ final class VisitorCoordinator: ObservableObject {
     private var worker: Task<Void, Never>?
     private var attached = true
     private var needsRead = true
+    @Published private(set) var confirmedTokenBalance: String?
+    private var economyVersion: Int64 = -1
+    var onWallet: ((String, Int64) -> Void)?
+    var tokenBalance: String { confirmedTokenBalance ?? summary?.tokenBalance ?? "0" }
+
+    func applyWallet(_ balance: String, version: Int64) {
+        guard attached, version > economyVersion, ExactAmount.integer(balance) != nil else { return }
+        economyVersion = version; confirmedTokenBalance = balance; onWallet?(balance, version)
+    }
 
     init(userID: UUID, installationID: UUID, service: any VisitorServing,
          journal: (any VisitorJournalPersisting)? = nil,
@@ -85,6 +94,7 @@ final class VisitorCoordinator: ObservableObject {
     }
 
     func apply(_ value: APIVisitorSummary) {
+        if let version = value.economyVersion { applyWallet(value.tokenBalance, version: version) }
         guard attached, summary == nil || (summary?.gardenId == value.gardenId && value.version >= (summary?.version ?? 0)) else { return }
         // A replayed receipt can have an old server timestamp. It must never
         // rewind the presentation clock or extend a visitor's remaining life.

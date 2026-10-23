@@ -1,16 +1,21 @@
 # Movement Forest implementation plan
 
-Revised 23 October 2026 against `forest_game_v1_spec.md`, version 0.12.
-This delivery plan is not a source of approved balance values. F1–F3 are complete per the user's update. B1–B6 and F6 source are implemented; see `backend/VALIDATION.md` for verification and remaining provider/container checks. B7 and subsequent mechanics remain future work.
+Revised 23 October 2026 against `forest_game_v1_spec.md`, version 0.13.
+This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
-**Current checkpoint — 23 October 2026:** the user accepts work through B5 and
-the tested F5/F5a email-authentication path. SMTP and Google/Apple configuration
-and their dependent live acceptance remain deferred; earlier pending-device notes
-below are historical. B6a–B6c and F6 source are now implemented. See
+**Current checkpoint — 23 October 2026:** the user accepts work through **B6/F6**,
+including B6a–B6c, the F5 steps slice and the tested F5a email-authentication path.
+Physical-iPhone testing confirmed active butterfly welcomes, token/count updates,
+stored accrual/claims, smooth visitor motion and removal of sync/placement camera
+jerks. SMTP and Google/Apple configuration and their dependent live acceptance
+remain deferred. The placeholder visitor art and flat screen-space flight are
+accepted for development; final art and garden-depth presentation move to **F8**
+and do not reopen B6/F6. See
 [backend/VISITOR_API.md](backend/VISITOR_API.md) for the delivered contract and
 [frontend/F6_VISITOR_ACCEPTANCE.md](frontend/F6_VISITOR_ACCEPTANCE.md) for the
-existing-account Tailscale walkthrough. Executed validation is recorded separately
-in backend/frontend `VALIDATION.md`; new F6 Xcode/device acceptance remains required.
+existing-account Tailscale walkthrough. Executed automated validation is recorded
+separately in backend/frontend `VALIDATION.md`; user-reported device acceptance
+does not imply unrecorded XCTest, Release-build or remote-CI results.
 
 Delivered policies: PostgreSQL time after accounting locks; first B6 interaction
 activates a garden without historical grants; stable UTC 30-second slots; one
@@ -19,6 +24,12 @@ fractional inactive storage and pinned whole-visit reward lots; atomic token
 ledger/hosted counters; durable iOS control/reward requests. Visitor skills remain
 B8, exchange/draws remain B7/F7 and deployment remains B10. New visitor fixture
 rates are provisional and do not replace approved balance.
+
+## Implementation history
+
+The dated notes below preserve the original delivery/validation record. Their
+pending-device and next-work statements are historical; the current checkpoint
+and milestone tables govern accepted scope and remaining work.
 
 **B4/B5 implementation — 22 October 2026:** exact neutral growth calculations, derived garden attraction, immutable fixture rule versions, steps-first activity enrolment/sync, one-device replacement/baseline policy, cumulative watermarks, atomic per-copy credits, counters and recoverable recaps are implemented. [backend/ACTIVITY_API.md](backend/ACTIVITY_API.md) is the F5 integration contract. The explicit queue policy accepts seven game dates per observation with a bounded 30-day unresolved-upload grace; completed receipts replay beyond it. Initial enabled maturity profiles require adult threshold = terminal maximum. No activity currency, visitor production, B8 handlers or cloud deployment is included. Test fixture values remain unapproved production balance.
 
@@ -63,7 +74,7 @@ disabled until their provider setup is ready. No project/credentials were create
 
 The core loop is now:
 
-**Movement → independent planted-plant growth → stage-based attraction → active welcomes / stored-visit claims → visitor tokens → seed tickets → new sprouts.**
+**Movement → independent planted-plant growth → stage-based attraction → active welcomes / stored-visit claims → visitor tokens → unopened packs → new sprouts.**
 
 - Remove ticket entitlement from B4 and direct currency settlement from activity sync in B5. Activity may still advance permanent packet access.
 - Add a substantial visitor milestone before collection. Separate its time accounting, active opportunities and stored claims into reviewable increments.
@@ -71,7 +82,7 @@ The core loop is now:
 - Establish the transaction boundary in B3/B5 where elapsed visitor time will be settled before membership, stages or skills change. Implement actual visitor settlement in B6, with regression tests through the existing placement and growth paths.
 - Budget frontend visitor behaviour explicitly. Basic visitor interaction is required gameplay; advanced swarm art and cosmetic plant effects can follow.
 - Keep additional metrics, typed workouts and separate growth/visitor skill resolvers visible in the plan. A steps-first vertical slice does not remove the wider V1 input scope.
-- Insert F5a now to prove real sessions, stable linked identities and account-scoped retry recovery before visitor/currency integration. Preserve completed F5 mechanics and its still-pending native acceptance.
+- F5a supplied the real-session boundary for the accepted F5/F6 slice. Preserve completed mechanics; finish SMTP and Google/Apple setup and dependent acceptance before enabling those deferred paths.
 
 Existing B6–B9 become B7–B10 below. Existing F6 becomes F7 and F7 becomes F8, with visitor UI inserted as F6.
 
@@ -79,24 +90,24 @@ Existing B6–B9 become B7–B10 below. Existing F6 becomes F7 and F7 becomes F8
 
 | Step | Work | Completion check |
 | --- | --- | --- |
-| **B1. Project foundation** | Docker-based FastAPI, SQLAlchemy, PostgreSQL, Alembic, environment configuration, request-scoped sessions, automated tests and GitHub CI. Establish explicit transaction ownership and a documented common lock order. | Fresh checkout can start the service, apply migrations explicitly and pass tests against PostgreSQL. CI is configured for the same database-backed checks. |
-| **B2. Catalogue, accounts and ownership** | Species, variants, stage/model/thumbnail references, immutable growth/behaviour/attraction profiles, pinned owned copies, one garden per user and paginated inventory. Verify Supabase access tokens and enforce ownership. Add repeat-safe account/starter provisioning. Core implementation accepted; live-provider work closes in F5a. | Two test accounts see their own state; neither can modify the other's plants. Duplicate copies have distinct IDs/progress. Awarded copies retain pinned profiles. Starter retries cannot grant extra plants. Real linked-provider acceptance is tracked by F5a rather than assumed complete. |
-| **B3. Placement and transaction boundaries** | Continuous canonical coordinates, authoritative circular clearance, atomic batch plant/move/rotate/store, request deduplication, catalogue checks and separate layout/state versions. Centralise mutations so visitor settlement can be integrated before state changes. | Boundary/tangency/overlap, invalid precision, batch-swap, rollback, retry, stale-version and concurrent-edit tests pass. Storage preserves identity/progress; rotation and stage do not change radius. |
-| **B4. Growth and attraction calculations** | Independently test normalised per-metric water, species coefficients, cumulative stages, terminal maturity caps and fractional carry. Derive attraction from placed copies and pinned stage profiles; define versioned visitor curve/capacity configuration. Start with neutral modifiers. | Fixed fixtures give exact growth and attraction, including duplicates, adults, omitted metrics and stored plants. Splitting inputs within unchanged contexts preserves totals. Activity calculations award no currency. |
-| **B5. Activity synchronisation — priority** | `/v1/activity/sync`, enrolment baseline, game-date buckets, observed values versus per-metric credited watermarks, device policy, idempotency, per-plant growth credits, first-maturity/activity counters and recap records. Start with steps; add the wider input handlers incrementally in B8. | Replays, downward corrections, late totals, concurrent syncs and sync-versus-store races neither duplicate nor lose eligible growth. Stored plants remain unchanged. Sync mints no tokens/tickets. Reaching a stage leaves transforms intact. |
-| **B6. Visitors — new core milestone** | Deliver B6a–B6c below. Integrate elapsed-time settlement into B3/B5 before their state changes. Include token wallet/ledger and authoritative lifetime hosted counters. | Active/inactive time never pays twice; slots cannot reroll; welcomes/claims pay once. Storage caps/fractions/reward versions survive reconnects, state changes and concurrent requests. |
-| **B7. Collection economy** | Versioned visitor-token → ticket exchange, introductory/permanent visitor milestones, permanent packet unlocks, ticket spending and server-selected draws into sprout storage. Reuse shared wallet/idempotency rules. | Concurrent claims/exchanges/draws cannot overspend or double-grant. Retries return original amounts and awarded plant ID. Logical milestones cannot regrant on a rule-version edit. Spending never reverses permanent access or growth. |
+| **B1. Project foundation — complete** | Docker-based FastAPI, SQLAlchemy, PostgreSQL, Alembic, environment configuration, request-scoped sessions, automated tests and GitHub CI. Establish explicit transaction ownership and a documented common lock order. | Fresh checkout can start the service, apply migrations explicitly and pass tests against PostgreSQL. CI is configured for the same database-backed checks. |
+| **B2. Catalogue, accounts and ownership — complete** | Species, variants, stage/model/thumbnail references, immutable growth/behaviour/attraction profiles, pinned owned copies, one garden per user and paginated inventory. Verify Supabase access tokens and enforce ownership. Add repeat-safe account/starter provisioning. Core implementation accepted; email-authentication integration accepted in F5a. SMTP and Google/Apple follow-ups remain explicit there. | Two test accounts see their own state; neither can modify the other's plants. Duplicate copies have distinct IDs/progress. Awarded copies retain pinned profiles. Starter retries cannot grant extra plants. Real linked-provider acceptance is tracked by F5a rather than assumed complete. |
+| **B3. Placement and transaction boundaries — complete** | Continuous canonical coordinates, authoritative circular clearance, atomic batch plant/move/rotate/store, request deduplication, catalogue checks and separate layout/state versions. Centralise mutations so visitor settlement can be integrated before state changes. | Boundary/tangency/overlap, invalid precision, batch-swap, rollback, retry, stale-version and concurrent-edit tests pass. Storage preserves identity/progress; rotation and stage do not change radius. |
+| **B4. Growth and attraction calculations — complete** | Independently test normalised per-metric water, species coefficients, cumulative stages, terminal maturity caps and fractional carry. Derive attraction from placed copies and pinned stage profiles; define versioned visitor curve/capacity configuration. Start with neutral modifiers. | Fixed fixtures give exact growth and attraction, including duplicates, adults, omitted metrics and stored plants. Splitting inputs within unchanged contexts preserves totals. Activity calculations award no currency. |
+| **B5. Activity synchronisation — complete steps slice** | `/v1/activity/sync`, enrolment baseline, game-date buckets, observed values versus per-metric credited watermarks, device policy, idempotency, per-plant growth credits, first-maturity/activity counters and recap records. Start with steps; add the wider input handlers incrementally in B8. | Replays, downward corrections, late totals, concurrent syncs and sync-versus-store races neither duplicate nor lose eligible growth. Stored plants remain unchanged. Sync mints no tokens/tickets. Reaching a stage leaves transforms intact. |
+| **B6. Visitors — complete** | Deliver B6a–B6c below. Integrate elapsed-time settlement into B3/B5 before their state changes. Include token wallet/ledger and authoritative lifetime hosted counters. | Active/inactive time never pays twice; slots cannot reroll; welcomes/claims pay once. Storage caps/fractions/reward versions survive reconnects, state changes and concurrent requests. |
+| **B7. Collection economy — source implemented** | Versioned token exchange for owned unopened packs, immutable rarity-first pools, server openings into sprout storage, shared wallet/idempotency and controlled publication/retirement. All test offers available; unlock/milestone progression deferred. | PostgreSQL concurrency/rollback/replay, migration preservation, ledger reconciliation, pool-edit invariance and real HTTP loop pass; see backend validation. |
 | **B8. Additional inputs, boosts and skills** | Daily distance/active energy/flights, typed workout import/deduplication, personal marginal water boosts and the two-layer growth resolver. Separately enable visitor attraction/capacity skills. Use neutral weather or controlled fixtures initially; live weather, offline-rate skills and complex synergies require explicit scope decisions. | Each handler passes independently before combinations. Workout parent/segments and overlapping records cannot duplicate duration; intentional overlap with ordinary daily activity remains. Same-group skills resolve deterministically and stage activation uses the proper snapshot. Capacity removal preserves earned storage. |
 | **B9. Social** | Friend requests, exact lookup, read-only visits, visibility and blocks. | Access tests pass; friend responses exclude health history, private visitor state and ledgers. Friends cannot redeem another garden's opportunities/storage. |
 | **B10. Staging and release readiness** | Deploy the FastAPI image to Cloud Run; migrate game PostgreSQL to Supabase with controlled Alembic, tested TLS/pooler/driver settings and bounded aggregate connections. Publish immutable shared assets to Supabase Storage/CDN. Add HTTPS, secrets, logs, monitoring, backup/restore and coordinated Supabase/game account deletion. Run economy and long-absence/load checks. | Automated API tests pass on isolated staging. No game-table access bypasses FastAPI. Database migration/restore, asset delivery, cold-start/first-sync latency and resource budgets are verified. Starter-to-first-draw pacing, retention/deletion and device-release checks pass before alpha. Real Auth is already delivered in F5a; full cloud deployment is not its prerequisite. |
 
-### B6 should contain three increments
+### B6 completed increments
 
 1. **B6a — Server timeline and stored production.** Injectable server clock; immutable attraction/rate/capacity contexts; lazy interval settlement; inactive accrual, fractions, cap overflow and pinned whole-visit reward lots. Integrate old-context settlement into placement, growth-stage and configuration boundaries. Prove no retroactive use of improved attraction.
 2. **B6b — Active sessions and opportunities.** One authorised active session, bounded leases, heartbeat/end/expiry, durable active/inactive coverage, stable slot grid, persisted outcomes/gap protection, opportunity expiry and presentation limits. Reconnects must neither reroll slots nor replay missed arrivals in a burst.
 3. **B6c — Welcome and claim rewards.** Consume valid issued opportunities once; claim whole stored visits in one transaction; retain valid fractions; token ledger and hosted counters. Replays return the completed result, including after its original opportunity/session has expired. Concurrent consumption and state changes are covered by PostgreSQL tests.
 
-B6 is a substantial milestone with both accounting and behaviour requirements. It should not be treated as one small endpoint or one evening of work.
+B6a–B6c are complete and accepted for the current development slice. Final visitor art and depth presentation are F8 follow-ups; they do not change the completed accounting contract.
 
 ### Backend checkpoints
 
@@ -111,28 +122,30 @@ B6 is a substantial milestone with both accounting and behaviour requirements. I
 | Step | Work | Completion check |
 | --- | --- | --- |
 | **F1–F3. Native foundation, rendering and initial HealthKit feasibility — complete** | Retain the SwiftUI/RealityKit foundation, 15-plant scene, camera/lighting and Health diagnostics. | Marked complete from the user's update. Wider newly scoped metric/device coverage is verified during subsequent integration. |
-| **F4. Garden editor** | Inventory thumbnails, select/drag/rotate/store, exact shared clearance fixtures, adult previews and pending-versus-confirmed edits. | Local preview agrees with backend examples. Rejection restores confirmed state; offline previews do not imply committed edits. |
-| **F5. Backend and activity integration — implemented steps slice** | Development-token account provisioning, catalogue/inventory/garden repositories, durable step uploads, scoped cached viewing and confirmed growth/stage updates are implemented. Real login follows in F5a. Extend wider metric/workout integration only as B8 handlers land. | Reopening/interrupted/repeated syncs are safe. Missing optional Health data does not block steps. Activity confirmation displays growth without inventing tickets. Existing Mac/iPhone acceptance remains pending; implementation is not device-validation evidence. |
-| **F5a. Supabase authentication and identity linking — source implemented; acceptance next** | Email/password, Google, native Apple; Keychain-backed SDK sessions; asynchronous API token refresh; existing account/starter onboarding; linked-method settings; safe logout/account switching and durable queue recovery. Configure FastAPI JWKS against hosted development Auth while keeping game PostgreSQL local. | Each method signs in on a real iPhone. Linked methods return the same Supabase subject/internal user/garden with one starter. Refresh/reauthentication preserve request UUIDs, watermarks and consent. Different accounts cannot share cached state or queued uploads. See acceptance gate below. |
-| **F6. Visitor interaction — new** | Attraction explanation; one shared visitor appearance/controller; arrival/flight/linger/tap/departure; server session lifecycle, heartbeat and opportunity expiry; pending/confirmed welcomes; stored capacity/time-to-full and one-interaction claim. | Background/edit/modal/friend-view transitions end or pause active mode correctly. Missed arrivals are not redeemed or converted into stored income. Connection loss, camera/foliage hit testing, reduced motion and device performance are acceptable. |
-| **F7. Collection and social UI** | Token/ticket balances and exchange, visitor milestones, packet access/probabilities, server-confirmed draws/results, friends and read-only visits, one screen at a time. | Prices and rewards match confirmed server versions; retries do not reroll. Friend-view visitors are non-rewarding visuals only. |
-| **F8. Hardening and polish** | Download/cache limits, durable retries, delayed Health inputs, session recovery, stage transitions, recap receipts, accessibility, long sessions and economy pacing. Cosmetic watering/swarm/unboxing effects follow durable mechanics. | A small TestFlight alpha completes the full loop over several days. No duplicate rewards on interruptions or reconnects; realistic active earnings and time-to-first-draw meet selected targets. |
+| **F4. Garden editor — complete** | Inventory thumbnails, select/drag/rotate/store, exact shared clearance fixtures, adult previews and pending-versus-confirmed edits. | Local preview agrees with backend examples. Rejection restores confirmed state; offline previews do not imply committed edits. |
+| **F5. Backend and activity integration — complete steps slice** | Development-token account provisioning, catalogue/inventory/garden repositories, durable step uploads, scoped cached viewing and confirmed growth/stage updates are implemented. The accepted F5a email path provides real login. Extend wider metric/workout integration only as B8 handlers land. | Reopening/interrupted/repeated syncs are safe. Missing optional Health data does not block steps. Activity confirmation displays growth without inventing tickets. Accepted by the user for the steps slice; wider inputs remain B8. Automated native/Release results require their own execution record. |
+| **F5a. Supabase authentication — accepted email slice; provider setup deferred** | Email/password, Google, native Apple; Keychain-backed SDK sessions; asynchronous API token refresh; existing account/starter onboarding; linked-method settings; safe logout/account switching and durable queue recovery. Configure FastAPI JWKS against hosted development Auth while keeping game PostgreSQL local. | Each method signs in on a real iPhone. Linked methods return the same Supabase subject/internal user/garden with one starter. Refresh/reauthentication preserve request UUIDs, watermarks and consent. Different accounts cannot share cached state or queued uploads. Email path accepted; SMTP and Google/Apple setup and dependent live/linking acceptance remain deferred below. |
+| **F6. Visitor interaction — complete** | Attraction explanation; one shared visitor appearance/controller; arrival/flight/linger/tap/departure; server session lifecycle, heartbeat and opportunity expiry; pending/confirmed welcomes; stored capacity/time-to-full and one-interaction claim. | Background/edit/modal/friend-view transitions end or pause active mode correctly. Missed arrivals are not redeemed or converted into stored income. Functional visitor logic is accepted from user testing, including smooth motion and stable framing. Final visitor render and garden-depth presentation are deferred to F8; retain lifecycle, retry, accessibility and performance regression checks. |
+| **F7. Collection UI — source implemented** | Simple Exchange/Catalog/Draws side menu, disclosed prices/odds, owned packs, confirmed results/history and durable account-scoped recovery. Social screens follow B9; unlocks/milestones are deferred. | Portable resource/contract/syntax checks pass. Xcode/Release and physical iPhone acceptance remain pending; use F7_COLLECTION_ACCEPTANCE.md. |
+| **F8. Hardening and polish** | Download/cache limits, durable retries, delayed Health inputs, session recovery, stage transitions, recap receipts, accessibility, long sessions and economy pacing. Final visitor render and garden-relative depth/perspective, plus cosmetic watering/swarm/unboxing effects, follow durable mechanics; see the F8 backlog below. | A small TestFlight alpha completes the full loop over several days. No duplicate rewards on interruptions or reconnects; realistic active earnings and time-to-first-draw meet selected targets. |
 
-F4 can proceed alongside B1–B3 using shared geometry fixtures. F5 follows backend contracts. Complete F5a before integrated F6 visitor/reward acceptance or wider external testing. B6 domain work and F6 visual prototypes may proceed independently; their user-facing integration uses the validated session/account boundary. Exchange/collection UI follows B7. Native changes continue to require Mac/iPhone validation.
+Work through B6/F6 is accepted for the steps/email-authentication slice. Next deliver B7 collection mechanics with F7 exchange/draw UI; F7 social screens follow B9. SMTP and Google/Apple setup and dependent acceptance remain explicit F5a follow-ups before those paths are enabled or relied on in wider testing. Wider Health inputs remain B8. Final visitor art and depth polish remain F8. Native changes continue to require Mac/iPhone validation.
 
-## F5a: implemented source; native/provider acceptance next
+## F5a: accepted email-authentication slice; deferred provider follow-ups
 
 ### Timing and scope
 
-**Proceed now.** B1–B5 and the F5 steps slice already provide authenticated profile lookup, repeat-safe account creation and account/server-scoped disk journals. This is sufficient to test real identity end to end, and early enough to avoid propagating the generated-token UI into visitors, wallets and social screens. F5a replaces the authentication/session boundary while retaining B4/B5 calculations, enrolment/device policy and F5 activity contracts. It does not add visitor rewards, broader Health uploads, onboarding polish, garden merges or cloud database/asset migration.
+The user has accepted the email-authentication/session boundary used by the current F5/F6 slice. SMTP and Google/Apple setup, live linking and dependent provider tests remain deferred. The scope and acceptance requirements below remain the reference for closing those follow-ups; they are not a new instruction to repeat accepted work. F5a retains B4/B5 calculations, enrolment/device policy and F5 activity contracts. Broader Health uploads, onboarding polish, garden merges and cloud database/asset migration remain separate milestones.
 
 The initial environment is **iPhone → hosted Supabase Auth + local FastAPI → local Docker PostgreSQL**, with the existing private HTTPS path to the development API. The phone needs internet access for provider login/refresh, but game data need not move to Supabase yet. Start on an eligible Free development project; paid infrastructure is not required to exercise real authentication.
 
 ### Implementation scope and acceptance stages
 
-The source for A2–A4 and their regression coverage is implemented. A1's hosted
-provider proof and A5's native/device execution require project credentials and a
-Mac/iPhone. The pinned SDK supports native Apple linking, so the browser Apple
+The source for A2–A4 and their regression coverage is implemented. The current
+email path is accepted from user testing; SMTP and Google/Apple portions of A1,
+A4 and A5 still need provider configuration and live evidence. Unrecorded native
+test/Release-build results must remain distinct from manual acceptance. The pinned
+SDK supports native Apple linking, so the browser Apple
 fallback below is unnecessary for the delivered path. Native Google remains
 optional. Use the current [F5a walkthrough](frontend/F5A_AUTH_ACCEPTANCE.md).
 
@@ -144,9 +157,13 @@ optional. Use the current [F5a walkthrough](frontend/F5A_AUTH_ACCEPTANCE.md).
 | **A4. Link sign-in methods to the existing garden** | Add account settings showing linked methods and an explicit signed-in link action for Google/Apple. Distinguish linking from ordinary sign-in. Support email/password access on an existing social account through authenticated email verification/password setup where needed, not a second registration. Refresh identity/profile after linking and retain the current game account. | Linked providers reach exactly the same subject, internal user, garden, owned plants and pending receipts. Different/Apple relay email paths work. An identity already owned by another user produces a conflict with no automatic merge, transfer, second starter or lost journal. |
 | **A5. Native/regression acceptance and handoff** | Extend API auth/ownership checks and iOS session/queue tests, then repeat relevant F5 real-step and recovery cases using real sessions. Update frontend/backend setup and acceptance documents during implementation, recording live checks separately from mocks. | Complete the gate below on Mac/iPhone before calling F5a done. Record credentials/callback configuration privately and leave only nonsecret templates/documentation in Git. |
 
-The existing `TokenProviding`/`FixedTokenProvider` interface is synchronous and does not refresh. `GardenConnection` and the developer connection screen manage pasted development credentials, so substituting a Supabase JWT string alone is insufficient. Reuse `AccountDiskStore`'s server/internal-user partitioning; do not rename a saved journal to match a new subject. Before game provisioning supplies an internal user ID, scope pending account requests by environment and verified issuer/subject. Bind each repository/request to its expected issuer/subject and check identity before sending with a refreshed token and before applying responses. Audit editor/activity tasks for responses arriving after logout/account switching and serialize recovery with identity changes. Supabase currently labels manual linking beta; the A1 live-provider spike is an acceptance requirement.
+The implemented F5a boundary replaces the original synchronous development-token-only path with asynchronous scoped session retrieval/refresh. Preserve `AccountDiskStore`'s server/internal-user partitioning; do not rename a saved journal to match a new subject. Before game provisioning supplies an internal user ID, scope pending account requests by environment and verified issuer/subject. Bind each repository/request to its expected issuer/subject and check identity before sending with a refreshed token and before applying responses. Preserve late-response protection and serialize recovery with identity changes. Manual linking must still be proven during deferred live-provider acceptance.
 
-### F5a acceptance gate
+### F5a full-provider acceptance requirements
+
+These requirements remain the reference for full provider completion. Current
+email-path acceptance does not mark deferred SMTP, Google/Apple or linking checks
+as passed, or assert automated checks without an execution record.
 
 1. **Registration and return:** confirmed email/password, Google and native Apple each reach a game account on a real iPhone. Cancelled login and incomplete email confirmation create no game state. Missing profile versus network/auth failures are distinct. Duplicate/concurrent provisioning awards one starter.
 2. **Linking preserves ownership:** create one garden, place/grow a plant, then link another provider from that signed-in account. Sign out and sign in through each linked method: Supabase subject, internal user/garden/plant IDs, progress and starter count match. Exercise both a matching verified email and a differing/Apple relay address. Set up password access on an existing social account without re-registering it.
@@ -163,6 +180,46 @@ Generated-token users have a different issuer/subject from Supabase users. Defau
 ### Deferred deployment work
 
 F5a does not change the game database connection, upload assets or deploy Cloud Run. B10 applies Alembic to Supabase PostgreSQL, verifies connection/SSL/pooler/grant compatibility, closes Data API bypasses and tests backup/restore. Asset delivery adds the remote resolver/download cache and trusted publishing. Cloud Run receives a bounded autoscaling/pool budget and measured cold-start policy. Account deletion across Supabase Auth and game state, including Apple revocation requirements, remains a release gate in B10; full unlink UI and garden-merge support remain outside F5a.
+
+## B7/F7 collection implementation — 23 October 2026
+
+This current decision supersedes ticket/immediate-draw wording in the earlier
+milestone tables: **tokens → unopened packs → plants**. The first slice makes
+both development offers available immediately. Permanent unlocks, milestones,
+pity, duplicate conversion and all friend/social work are deferred. Existing
+B6/F6 acceptance and SMTP/provider follow-ups remain unchanged.
+
+Implemented source: explicit Alembic `0004_collection`, one authoritative token
+balance with append-only collection spending/receipts, immutable pack contracts,
+profile/member retention, versioned offers and controlled publication/retirement,
+strict quantity/price checks, rarity-first secure draws, owner pack inventory,
+unique openings into sprout storage and durable replay. Native source adds a
+simple side menu, Exchange/Catalog/Draws, full catalogue metadata, an asset index,
+account-scoped collection journals, result/history recovery, ordered wallet
+versions shared with visitor rewards and Storage refresh after an award.
+
+Contract and publishing: [backend/COLLECTION_API.md](backend/COLLECTION_API.md).
+Server update/device flow: [frontend/F7_COLLECTION_ACCEPTANCE.md](frontend/F7_COLLECTION_ACCEPTANCE.md).
+Actual automated execution belongs in each `VALIDATION.md`; source/syntax checks
+do not imply Xcode, XCTest, Release-build or physical-device acceptance. Existing
+game databases are not automatically migrated/seeded by implementation or tests.
+
+## F8 final visitor presentation polish — deferred
+
+The current functional B6/F6 experience is accepted. Schedule these visual changes
+in the existing final hardening/polish milestone, after the remaining gameplay:
+
+- Replace the temporary butterfly with the intended visitor render/asset, checking
+  its materials, orientation, scale and flight/wing animation on the iPhone.
+- Add garden-relative flight depth and camera-aware perspective so visitors read
+  as flying through the garden, rather than moving flat across the screen.
+  Preserve reliable tapping and the accessible Welcome action as visuals change.
+- Verify portrait/landscape and orbit/pan/zoom, Reduce Motion and VoiceOver, smooth
+  motion between server responses, and stable framing during sync/invalid
+  placement. Visual changes must preserve server expiry and single-award rewards.
+
+Cosmetic watering, swarm and unboxing effects remain in F8 as already planned.
+These presentation improvements do not block B7/F7 or reopen completed B6/F6 logic.
 
 ## Historical B1–B3 delivery outline
 

@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from forest_api.auth import TokenVerifier
+from forest_api.collection_routes import router as collection_router
 from forest_api.config import Settings
 from forest_api.database import Database
 from forest_api.errors import install_error_handlers
@@ -38,4 +39,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_error_handlers(app)
     app.include_router(router)
     app.include_router(visitor_router)
+    app.include_router(collection_router)
     return app

@@ -1,0 +1,87 @@
+{
+  "packId": "woodland",
+  "version": 2,
+  "isFixture": true,
+  "definition": {
+    "schemaVersion": 1,
+    "displayName": "Woodland Pack",
+    "description": "One oak sprout. Development prices and odds are provisional.",
+    "rarities": [
+      {
+        "rarity": "common",
+        "weight": 75,
+        "outcomes": [
+          {
+            "speciesId": "oak",
+            "variantId": "standard",
+            "profiles": {
+              "growth": {
+                "id": "dev_oak_growth",
+                "version": 1
+              },
+              "behaviour": {
+                "id": "dev_oak_behaviour",
+                "version": 1
+              },
+              "attraction": {
+                "id": "dev_oak_attraction",
+                "version": 1
+              }
+            }
+          }
+        ]
+      },
+      {
+        "rarity": "rare",
+        "weight": 20,
+        "outcomes": [
+          {
+            "speciesId": "oak",
+            "variantId": "blue",
+            "profiles": {
+              "growth": {
+                "id": "dev_oak_growth",
+                "version": 1
+              },
+              "behaviour": {
+                "id": "dev_oak_behaviour",
+                "version": 1
+              },
+              "attraction": {
+                "id": "dev_oak_attraction",
+                "version": 1
+              }
+            }
+          }
+        ]
+      },
+      {
+        "rarity": "legendary",
+        "weight": 5,
+        "outcomes": [
+          {
+            "speciesId": "oak",
+            "variantId": "vined",
+            "profiles": {
+              "growth": {
+                "id": "dev_oak_growth",
+                "version": 1
+              },
+              "behaviour": {
+                "id": "dev_oak_behaviour",
+                "version": 1
+              },
+              "attraction": {
+                "id": "dev_oak_attraction",
+                "version": 1
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "offerId": "woodland",
+  "offerVersion": 2,
+  "tokenCost": 5
+}

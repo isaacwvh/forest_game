@@ -1,0 +1,382 @@
+{
+  "summary": {
+    "tokenBalance": "14",
+    "economyVersion": 3,
+    "offers": [
+      {
+        "offerId": "blue_oak",
+        "offerVersion": 1,
+        "tokenCost": "8",
+        "pack": {
+          "packId": "blue_oak",
+          "version": 1,
+          "isFixture": true,
+          "schemaVersion": 1,
+          "displayName": "Blue Oak Pack",
+          "description": "One guaranteed blue oak sprout. Development fixture.",
+          "rarities": [
+            {
+              "rarity": "rare",
+              "weight": 20,
+              "outcomes": [
+                {
+                  "speciesId": "oak",
+                  "variantId": "blue",
+                  "profiles": {
+                    "growth": {
+                      "id": "dev_oak_growth",
+                      "version": 1
+                    },
+                    "behaviour": {
+                      "id": "dev_oak_behaviour",
+                      "version": 1
+                    },
+                    "attraction": {
+                      "id": "dev_oak_attraction",
+                      "version": 1
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "totalWeight": 20
+        }
+      },
+      {
+        "offerId": "woodland",
+        "offerVersion": 1,
+        "tokenCost": "5",
+        "pack": {
+          "packId": "woodland",
+          "version": 1,
+          "isFixture": true,
+          "schemaVersion": 1,
+          "displayName": "Woodland Pack",
+          "description": "One oak sprout. Development prices and odds are provisional.",
+          "rarities": [
+            {
+              "rarity": "common",
+              "weight": 75,
+              "outcomes": [
+                {
+                  "speciesId": "oak",
+                  "variantId": "standard",
+                  "profiles": {
+                    "growth": {
+                      "id": "dev_oak_growth",
+                      "version": 1
+                    },
+                    "behaviour": {
+                      "id": "dev_oak_behaviour",
+                      "version": 1
+                    },
+                    "attraction": {
+                      "id": "dev_oak_attraction",
+                      "version": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "rarity": "rare",
+              "weight": 20,
+              "outcomes": [
+                {
+                  "speciesId": "oak",
+                  "variantId": "blue",
+                  "profiles": {
+                    "growth": {
+                      "id": "dev_oak_growth",
+                      "version": 1
+                    },
+                    "behaviour": {
+                      "id": "dev_oak_behaviour",
+                      "version": 1
+                    },
+                    "attraction": {
+                      "id": "dev_oak_attraction",
+                      "version": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "rarity": "legendary",
+              "weight": 5,
+              "outcomes": [
+                {
+                  "speciesId": "oak",
+                  "variantId": "vined",
+                  "profiles": {
+                    "growth": {
+                      "id": "dev_oak_growth",
+                      "version": 1
+                    },
+                    "behaviour": {
+                      "id": "dev_oak_behaviour",
+                      "version": 1
+                    },
+                    "attraction": {
+                      "id": "dev_oak_attraction",
+                      "version": 1
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "totalWeight": 100
+        }
+      }
+    ]
+  },
+  "exchange": {
+    "requestId": "0bf097cc-1944-40b5-a975-2fe99a2506de",
+    "exchangeId": "b04e1b87-9ea7-445a-9b51-909b1d0b70e9",
+    "offerId": "woodland",
+    "offerVersion": 1,
+    "quantity": 2,
+    "tokensSpent": "10",
+    "packs": [
+      {
+        "ownedPackId": "f235a601-e80d-4527-a355-6519b8ea17c0",
+        "packId": "woodland",
+        "version": 1,
+        "acquiredAt": "2026-10-23T04:54:30+00:00"
+      },
+      {
+        "ownedPackId": "b7702f85-094e-407c-89c7-a6a79170e078",
+        "packId": "woodland",
+        "version": 1,
+        "acquiredAt": "2026-10-23T04:54:30+00:00"
+      }
+    ],
+    "tokenBalance": "4",
+    "economyVersion": 4
+  },
+  "opening": {
+    "requestId": "bff875e5-cdb6-4c6c-a73f-53b571952d47",
+    "openingId": "5cd0a093-03d4-449b-8bc2-034013a5ab80",
+    "ownedPackId": "f235a601-e80d-4527-a355-6519b8ea17c0",
+    "packId": "woodland",
+    "packVersion": 1,
+    "rarity": "common",
+    "openedAt": "2026-10-23T04:54:30+00:00",
+    "plant": {
+      "plantId": "ef6abfb8-3910-4934-8bdc-65e281e8b59b",
+      "speciesId": "oak",
+      "variantId": "standard",
+      "pinnedProfiles": {
+        "growth": {
+          "id": "dev_oak_growth",
+          "version": 1
+        },
+        "behaviour": {
+          "id": "dev_oak_behaviour",
+          "version": 1
+        },
+        "attraction": {
+          "id": "dev_oak_attraction",
+          "version": 1
+        }
+      },
+      "growthMicroUnits": "0",
+      "growthStage": "sprout",
+      "baseAttractionMicroUnits": "2000000",
+      "contributesAttraction": false,
+      "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+      "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+      "placement": null,
+      "growthProgress": {
+        "stageStartMicroUnits": "0",
+        "nextStageMicroUnits": "100000000",
+        "maximumGrowthMicroUnits": "1000000000"
+      }
+    },
+    "tokenBalance": "4",
+    "economyVersion": 5
+  },
+  "packs": {
+    "packs": [
+      {
+        "ownedPackId": "b7702f85-094e-407c-89c7-a6a79170e078",
+        "packId": "woodland",
+        "version": 1,
+        "acquiredAt": "2026-10-23T12:54:30+08:00"
+      }
+    ],
+    "nextCursor": null
+  },
+  "catalogue": {
+    "catalogVersion": "development-oak-v1",
+    "isFixture": true,
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "coordinateDecimalPlaces": 3,
+    "rotationDecimalPlaces": 2,
+    "species": [
+      {
+        "speciesId": "oak",
+        "displayName": "Oak",
+        "description": "Development fixture; balance unapproved.",
+        "clearanceRadius": 0.9,
+        "isFixture": true,
+        "defaultProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "variants": [
+          {
+            "variantId": "blue",
+            "displayName": "Blue",
+            "description": "Development fixture",
+            "rarity": "rare",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-blue.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-blue.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-blue.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-blue.png"
+              }
+            }
+          },
+          {
+            "variantId": "standard",
+            "displayName": "Standard",
+            "description": "Development fixture",
+            "rarity": "common",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-standard.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-standard.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-standard.png"
+              }
+            }
+          },
+          {
+            "variantId": "vined",
+            "displayName": "Vined",
+            "description": "Development fixture",
+            "rarity": "legendary",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-vined.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-vined.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-vined.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-vined.png"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "profiles": {
+      "growth": [
+        {
+          "id": "dev_oak_growth",
+          "version": 1,
+          "thresholdsMicroUnits": {
+            "sprout": "0",
+            "seedling": "100000000",
+            "young": "400000000",
+            "adult": "1000000000"
+          },
+          "maximumGrowthMicroUnits": "1000000000"
+        }
+      ],
+      "behaviour": [
+        {
+          "id": "dev_oak_behaviour",
+          "version": 1,
+          "schemaVersion": 1,
+          "metricMultipliers": {
+            "steps": 1.0
+          },
+          "conditionalModifiers": [],
+          "gardenEffects": []
+        }
+      ],
+      "attraction": [
+        {
+          "id": "dev_oak_attraction",
+          "version": 1,
+          "stageAttractionMicroUnits": {
+            "sprout": "2000000",
+            "seedling": "5000000",
+            "young": "12000000",
+            "adult": "20000000"
+          },
+          "gameplayTags": [
+            "tree",
+            "woodland"
+          ]
+        }
+      ]
+    }
+  }
+}

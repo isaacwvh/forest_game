@@ -35,7 +35,9 @@ def main():
             require(source.relative_to(ROOT).as_posix() in project_text, f"Source missing from project: {source}")
     catalog = {}
     models = 0
-    for species_id in ["oak", "moonwillow"]:
+    asset_ids = json.loads((ROOT / "MovementForest/Resources/Fixtures/asset-index.json").read_text())
+    require(len(asset_ids) == len(set(asset_ids)) and asset_ids, "Invalid asset index")
+    for species_id in asset_ids:
         package = REPO / "assets" / species_id / "v1"
         manifest = json.loads((package / f"{species_id}.json").read_text(encoding="utf-8"))
         require(manifest["speciesId"] == species_id, "Species identity mismatch")
@@ -92,6 +94,23 @@ def main():
                 prefix = f"assets/{species['speciesId']}/v1/"
                 require(references["modelKey"] == prefix + asset["file"], "API model key differs from bundle")
                 require(references["thumbnailKey"] == prefix + asset["thumbnail"], "API thumbnail key differs from bundle")
+    collection = json.loads((ROOT / "MovementForest/Resources/Fixtures/collection-contract.json").read_text(encoding="utf-8"))
+    bought, opened = collection["exchange"], collection["opening"]
+    require(len(bought["packs"]) == bought["quantity"] == 2, "Collection pack quantity mismatch")
+    require(int(collection["summary"]["tokenBalance"]) - int(bought["tokensSpent"]) == int(bought["tokenBalance"]), "Collection exchange accounting mismatch")
+    require(opened["tokenBalance"] == bought["tokenBalance"] and opened["economyVersion"] > bought["economyVersion"], "Opening wallet mismatch")
+    require(opened["ownedPackId"] in {p["ownedPackId"] for p in bought["packs"]}, "Opening source pack mismatch")
+    require(opened["ownedPackId"] not in {p["ownedPackId"] for p in collection["packs"]["packs"]}, "Opened pack is still unopened")
+    award = opened["plant"]
+    require(award["growthStage"] == "sprout" and award["growthMicroUnits"] == "0" and award["placement"] is None, "Collection must award a stored sprout")
+    for offer in collection["summary"]["offers"]:
+        pack = offer["pack"]
+        require(pack["isFixture"] and pack["totalWeight"] == sum(p["weight"] for p in pack["rarities"]), "Collection probability total mismatch")
+        require(all(p["outcomes"] or p["weight"] == 0 for p in pack["rarities"]), "Empty positive-weight rarity")
+    variants = {v["variantId"]: v for s in collection["catalogue"]["species"] if s["speciesId"] == award["speciesId"] for v in s["variants"]}
+    variant = variants[award["variantId"]]
+    asset = catalog[(award["speciesId"], variant["assetCatalogVersion"], "sprout", award["variantId"])]
+    require(award["thumbnailKey"] == f"assets/{award['speciesId']}/v1/" + asset["thumbnail"], "Collection award asset mismatch")
     config = ROOT / "MovementForest/Configuration"
     info = plistlib.loads((config / "Info.plist").read_bytes())
     entitlements = plistlib.loads((config / "MovementForest.entitlements").read_bytes())
@@ -116,6 +135,7 @@ def main():
             require("print(" not in text and "NSLog(" not in text, f"Health logging found: {source}")
     print(f"PASS: {models} USDZs/checksums/archives, {models} alpha PNGs, 15 fixture plants, plists, shared scheme, {len(sources)} Swift source references.")
     print("PASS: synthetic B3 editor contract, owned-copy identity, bundled API asset keys and shared geometry resource.")
+    print("PASS: real synthetic collection exchange/opening accounting, pack consumption, probabilities and bundled award thumbnail.")
     print("Swift compilation, native UI, imported axes, animation, and real HealthKit remain Mac/iPhone checks.")
 
 

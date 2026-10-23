@@ -47,6 +47,7 @@ final class GardenConnection: ObservableObject {
     @Published private(set) var editor: GardenEditorStore?
     @Published private(set) var activitySync: ActivitySyncCoordinator?
     @Published private(set) var visitors: VisitorCoordinator?
+    @Published private(set) var collection: CollectionCoordinator?
     @Published private(set) var accountRequired = false
     @Published private(set) var connecting = false
     @Published private(set) var status: String?
@@ -60,6 +61,7 @@ final class GardenConnection: ObservableObject {
     private var editorUpdates: AnyCancellable?
     private var syncUpdates: AnyCancellable?
     private var visitorUpdates: AnyCancellable?
+    private var collectionUpdates: AnyCancellable?
     private var authUpdates: AnyCancellable?
     private var managedTokens: ScopedAuthTokenProvider?
     private var managedProfileVerified = false
@@ -186,6 +188,7 @@ final class GardenConnection: ObservableObject {
     }
 
     private func detachManaged() {
+        collection?.deactivate(); collection = nil; collectionUpdates = nil
         visitors?.deactivate(); visitors = nil; visitorUpdates = nil
         managedGeneration = UUID(); managedTokens?.invalidate(); managedTokens = nil
         managedProfileVerified = false
@@ -260,6 +263,13 @@ final class GardenConnection: ObservableObject {
     }
 
     private func installActivity(client: APIClient, store: GardenEditorStore, visitorsEnabled: Bool = true) {
+        collection?.deactivate(); collection = nil; collectionUpdates = nil
+        if visitorsEnabled {
+            let collection = CollectionCoordinator(userID: store.profile.userId, service: APICollectionRepository(client: client))
+            self.collection = collection
+            collectionUpdates = collection.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+            collection.onPlantAwarded = { [weak store] in await store?.refresh() }
+        }
         editorUpdates = store.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
         visitors?.deactivate(); visitors = nil; visitorUpdates = nil
         if visitorsEnabled {
@@ -267,6 +277,10 @@ final class GardenConnection: ObservableObject {
                 let visitor = VisitorCoordinator(userID: store.profile.userId,
                     installationID: try InstallationIdentity.load(disk: disk), service: APIVisitorRepository(client: client))
                 visitors = visitor
+                visitor.onWallet = { [weak collection = self.collection] balance, version in
+                    collection?.applyWallet(balance, version: version)
+                }
+                collection?.onWallet = { [weak visitor] balance, version in visitor?.applyWallet(balance, version: version) }
                 visitorUpdates = visitor.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
                 visitor.start()
             } catch { status = "Visitors paused: the installation identity could not be read." }
@@ -369,6 +383,7 @@ final class GardenConnection: ObservableObject {
         guard authentication == nil else { return }
         guard !busy else { return }
         do {
+            collection?.deactivate(); collection = nil; collectionUpdates = nil
             visitors?.deactivate(); visitors = nil; visitorUpdates = nil
             try DevelopmentCredential.remove()
             activitySync?.deactivate(); activitySync = nil

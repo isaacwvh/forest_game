@@ -195,7 +195,7 @@ RealityKit rendering or HealthKit device aggregation.
   real project credentials, Xcode/XCTest and physical provider/Health acceptance
   remain pending. Email/password can be tested before setting up Google/Apple.
 - **F6:** visitor interaction backed by B6 accounting.
-- **F7:** collection economy and social screens backed by confirmed API results.
+- **F7:** Exchange/Catalog/Draws source implemented with durable token-to-pack exchange and server-confirmed openings. Unlocks/milestones and social screens are deferred. Use [F7_COLLECTION_ACCEPTANCE.md](F7_COLLECTION_ACCEPTANCE.md) for server upgrade and device testing.
 
 Background Health delivery, CDN downloads/cache eviction, reward celebrations,
 full storage editing and server writes are deliberately outside F1–F3. Device

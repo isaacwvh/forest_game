@@ -20,7 +20,7 @@ def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
             with engine.connect() as connection:
                 assert set(Base.metadata.tables) <= set(inspect(connection).get_table_names())
                 assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-                    "0003_visitors"
+                    "0004_collection"
                 )
             engine.dispose()
             command.downgrade(configuration, "base")
@@ -124,6 +124,82 @@ def test_liveness_and_schema_readiness_before_and_after_migration(database_facto
             with migration_url(url):
                 command.upgrade(migration_config(), "head")
             assert client.get("/health/ready").json() == {"status": "ready"}
+
+
+def test_b7_upgrade_preserves_b6_balances_and_history(database_factory):
+    from uuid import uuid4
+
+    from forest_api.auth import DEV_ISSUER, Identity
+    from forest_api.database import Database
+    from forest_api.schemas import RegisterAccount
+    from forest_api.seed import seed_development_catalogue
+    from forest_api.services import register_account
+
+    with database_factory() as url, migration_url(url):
+        configuration = migration_config()
+        command.upgrade(configuration, "0003_visitors")
+        settings = Settings(
+            _env_file=None,
+            environment="test",
+            database_url=url,
+            auth_mode="development",
+            dev_auth_secret=TEST_SECRET,
+        )
+        database = Database(settings)
+        try:
+            with database.sessions() as session:
+                seed_development_catalogue(session, settings)
+            with database.sessions() as session:
+                account = register_account(
+                    session,
+                    settings,
+                    Identity(DEV_ISSUER, "b7_existing"),
+                    RegisterAccount(
+                        request_id=uuid4(),
+                        username="b7_existing",
+                        display_name="Existing",
+                        game_timezone="Asia/Singapore",
+                    ),
+                )
+            with database.engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "INSERT INTO visitor_wallets "
+                        "(owner_id, tokens, hosted_active, hosted_offline) "
+                        "VALUES (:owner, 37, 12, 25)"
+                    ),
+                    {"owner": account.profile.user_id},
+                )
+            tables = (
+                "users",
+                "gardens",
+                "owned_plants",
+                "api_requests",
+                "visitor_reward_events",
+                "visitor_wallet_entries",
+            )
+            with database.engine.connect() as connection:
+                before = {
+                    table: connection.execute(text(f"SELECT to_jsonb(t) FROM {table} t")).all()
+                    for table in tables
+                }
+            command.upgrade(configuration, "head")
+            with database.engine.connect() as connection:
+                after = {
+                    table: connection.execute(text(f"SELECT to_jsonb(t) FROM {table} t")).all()
+                    for table in tables
+                }
+                assert before == after
+                assert connection.execute(
+                    text(
+                        "SELECT tokens, hosted_active, hosted_offline, economy_version "
+                        "FROM visitor_wallets"
+                    )
+                ).one() == (37, 12, 25, 0)
+                assert connection.scalar(text("SELECT count(*) FROM owned_packs")) == 0
+                assert connection.scalar(text("SELECT count(*) FROM collection_events")) == 0
+        finally:
+            database.engine.dispose()
 
 
 @pytest.mark.parametrize(

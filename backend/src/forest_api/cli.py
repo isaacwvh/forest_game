@@ -13,6 +13,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Movement Forest development tools")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("seed-dev", help="Seed explicitly unapproved local/test catalogue")
+    collection_publish = commands.add_parser(
+        "publish-pack", help="Validate and publish an immutable pack/offer JSON file"
+    )
+    collection_publish.add_argument("file", type=Path)
+    retire = commands.add_parser("retire-offer", help="Stop sales; preserve already acquired packs")
+    retire.add_argument("offer_id")
+    retire.add_argument("--version", required=True, type=int)
     token = commands.add_parser("dev-token", help="Issue a local/test-only 30-minute token")
     token.add_argument("subject")
     publish = commands.add_parser(
@@ -30,7 +37,24 @@ def main() -> None:
     database = Database(settings)
     try:
         with database.sessions() as session:
-            if args.command == "publish-visitor-rules":
+            if args.command == "retire-offer":
+                from forest_api.collection import retire_offer
+
+                retire_offer(session, settings, args.offer_id, args.version)
+                print("Offer retired; existing owned packs remain openable.")
+            elif args.command == "publish-pack":
+                from forest_api.collection import publish as publish_pack
+                from forest_api.collection_schemas import PublishPack
+
+                publish_pack(
+                    session,
+                    settings,
+                    PublishPack.model_validate_json(args.file.read_text(encoding="utf-8")),
+                )
+                print(
+                    "Pack/offer version published; existing owned packs retain their definitions."
+                )
+            elif args.command == "publish-visitor-rules":
                 from forest_api.visitor_schemas import VisitorRuleDefinition
                 from forest_api.visitors import publish_rules
 
@@ -46,6 +70,9 @@ def main() -> None:
                 print("Future visitor rule version published; previous earnings are unchanged.")
             else:
                 seed_development_catalogue(session, settings)
+                from forest_api.collection_seed import seed_collection
+
+                seed_collection(session, settings)
                 print("Development catalogue ready; all balance values are fixtures.")
     finally:
         database.engine.dispose()

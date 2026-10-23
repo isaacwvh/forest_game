@@ -71,6 +71,7 @@ class VisitorSummary(DTO):
     offline_visits_per_hour: str
     seconds_until_full: int | None
     token_balance: str
+    economy_version: int = 0
     hosted_active: str
     hosted_offline: str
     hosted_total: str

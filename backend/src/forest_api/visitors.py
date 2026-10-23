@@ -135,9 +135,10 @@ def state_for(session, settings, garden, boundary):
             version=0,
         )
         session.add(state)
-        session.add(
-            VisitorWallet(owner_id=garden.owner_id, tokens=0, hosted_active=0, hosted_offline=0)
-        )
+        if session.get(VisitorWallet, garden.owner_id) is None:
+            session.add(
+                VisitorWallet(owner_id=garden.owner_id, tokens=0, hosted_active=0, hosted_offline=0)
+            )
         session.flush()
     return state
 
@@ -417,6 +418,7 @@ def summary(session, garden, state, boundary):
         offline_visits_per_hour=str(float(rate * 3600)),
         seconds_until_full=time_full,
         token_balance=str(wallet.tokens),
+        economy_version=wallet.economy_version,
         hosted_active=str(wallet.hosted_active),
         hosted_offline=str(wallet.hosted_offline),
         hosted_total=str(wallet.hosted_active + wallet.hosted_offline),
@@ -572,6 +574,7 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
             event_id = uuid4()
             wallet = session.get(VisitorWallet, user.id)
             wallet.tokens = checked(wallet.tokens + tokens)
+            wallet.economy_version = checked(wallet.economy_version + 1)
             kind = "active_welcome" if operation == "visitor_welcome" else "offline_claim"
             wallet.hosted_active = checked(
                 wallet.hosted_active + (visits if kind == "active_welcome" else 0)

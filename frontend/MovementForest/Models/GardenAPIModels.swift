@@ -130,6 +130,9 @@ struct APIVariant: Codable, Equatable {
     let displayName: String
     let assetCatalogVersion: String
     let stages: [String: APIStageAsset]
+    var description: String? = nil
+    var rarity: String? = nil
+    var profileOverrides: [String: APIProfileReference?]? = nil
 }
 
 struct APISpecies: Codable, Equatable {
@@ -137,6 +140,8 @@ struct APISpecies: Codable, Equatable {
     let displayName: String
     let clearanceRadius: Decimal
     let variants: [APIVariant]
+    var description: String? = nil
+    var defaultProfiles: APIPinnedProfiles? = nil
 }
 
 struct APICatalogue: Codable, Equatable {
@@ -147,6 +152,7 @@ struct APICatalogue: Codable, Equatable {
     let coordinateDecimalPlaces: Int
     let rotationDecimalPlaces: Int
     let species: [APISpecies]
+    var profiles: [String: [APICatalogueProfile]]? = nil
 
     func variant(species id: String, variant: String) -> APIVariant? {
         species.first { $0.speciesId == id }?.variants.first { $0.variantId == variant }
@@ -161,6 +167,16 @@ struct APICatalogue: Codable, Equatable {
         guard radius > 0 else { throw ForestError.invalidData("The catalogue contains an invalid plant radius.") }
         return radius
     }
+}
+
+struct APICatalogueProfile: Codable, Equatable {
+    let id: String
+    let version: Int
+    var thresholdsMicroUnits: [String: String]? = nil
+    var maximumGrowthMicroUnits: String? = nil
+    var metricMultipliers: [String: Decimal]? = nil
+    var stageAttractionMicroUnits: [String: String]? = nil
+    var gameplayTags: [String]? = nil
 }
 
 enum GardenEditKind: String, Codable { case plant, move, rotate, store }

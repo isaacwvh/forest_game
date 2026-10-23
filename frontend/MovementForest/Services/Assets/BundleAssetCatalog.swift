@@ -16,7 +16,13 @@ struct BundleAssetCatalog: AssetCatalogProviding {
 
     init(resourceRoot: URL) throws {
         self.resourceRoot = resourceRoot
-        species = try ["oak", "moonwillow"].map { id in
+        let index = resourceRoot.appendingPathComponent("Fixtures/asset-index.json")
+        let identifiers = try JSONDecoder().decode([String].self, from: Data(contentsOf: index))
+        guard !identifiers.isEmpty, Set(identifiers).count == identifiers.count,
+              identifiers.allSatisfy({ $0.range(of: "^[a-z][a-z0-9_-]*$", options: .regularExpression) != nil }) else {
+            throw ForestError.invalidData("The bundled asset index is invalid.")
+        }
+        species = try identifiers.map { id in
             let url = resourceRoot.appendingPathComponent("\(id)/v1/\(id).json")
             guard FileManager.default.fileExists(atPath: url.path) else { throw ForestError.missingResource(url.lastPathComponent) }
             return try JSONDecoder().decode(SpeciesManifest.self, from: Data(contentsOf: url)).validated()

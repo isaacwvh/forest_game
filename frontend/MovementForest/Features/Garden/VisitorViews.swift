@@ -104,12 +104,12 @@ struct VisitorStatusPanel: View {
             if let value = store.summary {
                 ViewThatFits(in: .horizontal) {
                     HStack {
-                        Label("\(value.tokenBalance) tokens", systemImage: "sparkles")
+                        Label("\(store.tokenBalance) tokens", systemImage: "sparkles")
                         Spacer()
                         Text("Stored \(value.claimableVisits)/\(value.capacity)")
                     }
                     VStack(alignment: .leading) {
-                        Label("\(value.tokenBalance) visitor tokens", systemImage: "sparkles")
+                        Label("\(store.tokenBalance) visitor tokens", systemImage: "sparkles")
                         Text("Stored visits: \(value.claimableVisits) · Capacity \(value.capacity)")
                     }
                 }.font(.subheadline).monospacedDigit()

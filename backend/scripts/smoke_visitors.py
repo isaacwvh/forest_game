@@ -199,6 +199,35 @@ def main():
                 assert request(welcome_path, welcome_body) == welcome
                 assert request("/v1/me/stored-visits/claim", claim_body) == claim
                 assert request("/v1/me/visitors")["claimableVisits"] == "1"
+                # Complete the collection loop using actually earned visitor tokens.
+                advance(2400)
+                earned = request("/v1/me/stored-visits/claim", {"requestId": str(uuid4())})
+                assert int(earned["summary"]["tokenBalance"]) >= 10
+                shop = request("/v1/me/collection")
+                exchange_body = {
+                    "requestId": str(uuid4()),
+                    "offerId": "woodland",
+                    "offerVersion": 1,
+                    "quantity": 2,
+                }
+                exchanged = request("/v1/me/exchanges", exchange_body)
+                assert int(exchanged["tokenBalance"]) == int(shop["tokenBalance"]) - 10
+                assert request("/v1/me/exchanges", exchange_body) == exchanged
+                owned_pack = exchanged["packs"][0]["ownedPackId"]
+                opening_path = f"/v1/me/packs/{owned_pack}/open"
+                opening_body = {"requestId": str(uuid4())}
+                opening = request(opening_path, opening_body)
+                assert opening["plant"]["growthMicroUnits"] == "0"
+                assert opening["plant"]["placement"] is None
+                assert request(opening_path, {"requestId": str(uuid4())}) == opening
+                assert opening["plant"]["plantId"] in [
+                    p["plantId"] for p in request("/v1/me/inventory")["plants"]
+                ]
+                server.terminate()
+                server.wait(timeout=10)
+                server = start_server()
+                assert request(opening_path, opening_body) == opening
+                assert request("/v1/me/exchanges", exchange_body) == exchanged
                 if args.export_frontend_contract:
                     target = (
                         root / "frontend/MovementForest/Resources/Fixtures/visitor-contract.json"
@@ -216,9 +245,26 @@ def main():
                         )
                         + "\n"
                     )
+                    collection_target = (
+                        root / "frontend/MovementForest/Resources/Fixtures/collection-contract.json"
+                    )
+                    collection_target.write_text(
+                        json.dumps(
+                            {
+                                "summary": shop,
+                                "exchange": exchanged,
+                                "opening": opening,
+                                "packs": request("/v1/me/packs"),
+                                "catalogue": request("/v1/catalog"),
+                            },
+                            indent=2,
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
                 print(
                     "PASS: visitor HTTP activation, session/heartbeat, welcome, end, "
-                    "stored fraction, claim and restart replay."
+                    "stored fraction, claim, token exchange, pack opening and restart replay."
                 )
     finally:
         if server is not None:

@@ -3,6 +3,23 @@ import XCTest
 final class ForestUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    func testCollectionMenuRoutesAndReturnsToGarden() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health"]
+        app.launch()
+        for destination in ["Exchange", "Catalog", "Draws"] {
+            let menu = app.buttons["collection.menu"].firstMatch
+            XCTAssertTrue(menu.waitForExistence(timeout: 10))
+            menu.tap()
+            let row = app.buttons["menu.\(destination)"]
+            XCTAssertTrue(row.waitForExistence(timeout: 5))
+            row.tap()
+            XCTAssertTrue(app.navigationBars[destination].waitForExistence(timeout: 5))
+        }
+        app.buttons["Garden"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["garden.plants"].waitForExistence(timeout: 10))
+    }
+
     func testDevelopmentConnectionUsesExplicitURLAndSecureTokenEntry() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]

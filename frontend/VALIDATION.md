@@ -236,3 +236,39 @@ delays exist only in test fakes.
 Run `bash frontend/scripts/test-mac.sh` on the Mac, then the smoothness section in
 `F6_VISITOR_ACCEPTANCE.md` on the existing iPhone/account over Tailscale. Backend,
 migrations, account data and ignored local configuration were not changed.
+
+
+## F7 collection source and Windows verification — 23 October 2026
+
+Added Exchange/Catalog/Draws through a simple side menu. Source includes durable,
+account/server-scoped collection requests and confirmed result recovery; exact
+retry bytes/UUIDs; monotonic wallet versions shared with B6; Storage refresh;
+profile/rarity/catalogue metadata; and an indexed bundled-asset loader. All test
+offers are available; unlock/milestone rewards and social work are deferred.
+
+Portable validation passed: 20 USDZ checksum/archive checks, 20 alpha PNGs,
+15 sample-garden plants, generated project/source/resource inclusion, plists,
+shared scheme, B3 fixture/geometry checks, and genuine synthetic HTTP collection
+accounting/pack-consumption/probability/award-thumbnail checks. All **50 Swift
+files** parsed without syntax errors; this does not typecheck Apple SDK APIs.
+
+Backend full regression run passed 335 tests; the final 61-test collection/
+migration run and real activity/visitor/collection HTTP walkthroughs passed.
+The latter restarts Uvicorn before replaying exchange/opening receipts. Exported
+collection-contract.json contains synthetic earned tokens, not injected personal
+account balance data. Historical visitor fixture values remain unchanged in
+meaning while adding the new economyVersion field.
+
+Added eight native collection unit tests for real wire/stat decoding, lost
+response/relaunch, persistence failure, terminal versus recoverable rejection,
+late detached responses, wallet ordering/callbacks and journal scope/tampering.
+Added one UI test for collection-menu routes and return to Garden. Existing
+F6 visitor lifecycle and camera preservation remain regression requirements.
+
+Not executed here: Xcode Debug XCTest/UI tests, Apple SDK compilation, Release
+simulator build and physical iPhone visual/accessibility/Health/Tailscale flow.
+Run bash frontend/scripts/test-mac.sh on the Mac and follow
+F7_COLLECTION_ACCEPTANCE.md using the existing installation/account. The local
+Docker engine also returned HTTP 500, so backend image validation is pending.
+No existing game database, auth settings, local signing/configuration or account
+was changed by these checks.

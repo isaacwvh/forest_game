@@ -261,3 +261,42 @@ iOS source/native tests/provider flags are implemented; Xcode/native execution,
 hosted project/SMTP and real iPhone/provider acceptance remain pending. Follow
 `frontend/F5A_AUTH_ACCEPTANCE.md`. Actual `.env`, development game state and cloud
 resources were not modified or provisioned.
+
+
+## B7 collection exchange/draws — 23 October 2026
+
+Executed the complete PostgreSQL regression suite: **335 passed** in 307.51s.
+Final focused collection/migration run: **61 passed** in 72.67s, including the
+additional unpublished-asset editing and unsafe-asset publication checks added
+during final review. Migration upgrade/model parity/downgrade/reupgrade and
+preservation of populated B6 account balances/counters/history pass.
+
+The final focused run also passed both real Uvicorn HTTP walkthroughs: existing
+activity/growth/storage and visitor activation/session/welcome/claims followed
+by actually earned tokens → exchange → opening → owned sprout Storage. Server
+restarts preserve both exchange and opening receipts. Opt-in export produced
+synthetic collection/visitor fixtures for native tests; no personal data.
+
+Verified integer rarity boundaries and unchanged tier weights under membership/
+order edits, profile pinning across configuration changes, strict inputs and
+reference/asset checks, no overspending or duplicate opening under concurrency,
+rollback, owner isolation, durable receipts, retired offers, pagination and
+mixed visitor-earning/collection-spending ledger reconciliation. No ticket,
+unlock/milestone, social or wider activity implementation is included.
+
+Ruff lint/format, dependency consistency, portable frontend resource/project/
+contract checks, Swift parsing and diff whitespace checks pass. Development
+pacing simulation passes and now reports first 5-token pack/open estimates:
+starter ~8.8 active minutes at assumed 50% capture, or ~20 inactive minutes plus
+claiming. These are provisional fixture estimates, not measured device results.
+
+Docker Desktop's Linux engine returned HTTP 500 to `docker info`, so a new image
+build/run could not be executed. Actual Python/HTTP/database checks above passed;
+no remote CI run, Mac/XCTest/Release build or iPhone acceptance is claimed.
+
+All database validation used random disposable forest_test_* databases on the
+dedicated loopback test cluster, which was stopped after the runs. Existing game
+DB/account state, auth configuration, .env and running game services were not
+migrated, seeded or reset. Use COLLECTION_API.md and the F7 acceptance guide for
+the explicit existing-server upgrade. Existing IMPLEMENTATION_PLAN edits were
+retained while adding the current collection decision/implementation record.

@@ -48,22 +48,68 @@ struct RootView: View {
     @Environment(\.scenePhase) private var phase
     @State private var selectedTab = 0
     @State private var settingsPresented = false
+    @State private var menuPresented = false
+    @State private var collectionDestination: CollectionDestination?
 
     var body: some View {
         Group {
             if let catalog = container.catalog {
+                ZStack(alignment: .leading) {
                 TabView(selection: $selectedTab) {
                     NavigationStack {
                         GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
-                                         active: selectedTab == 0 && !settingsPresented)
-                            .toolbar { settingsButton }
+                                         active: selectedTab == 0 && !settingsPresented && !menuPresented && collectionDestination == nil)
+                            .toolbar { menuButton; settingsButton }
                     }
                     .tabItem { Label("Garden", systemImage: "leaf") }.tag(0)
                     NavigationStack {
                         ConnectedActivityScreen(connection: container.connection, store: container.activity)
-                            .toolbar { settingsButton }
+                            .toolbar { menuButton; settingsButton }
                     }
                     .tabItem { Label("Activity", systemImage: "figure.walk") }.tag(1)
+                }
+                .opacity(collectionDestination == nil ? 1 : 0)
+                .allowsHitTesting(collectionDestination == nil && !menuPresented)
+                .accessibilityHidden(collectionDestination != nil || menuPresented)
+                if let destination = collectionDestination {
+                    NavigationStack {
+                        CollectionHostScreen(connection: container.connection, destination: destination, assets: catalog)
+                            .toolbar {
+                                menuButton
+                                ToolbarItem(placement: .navigationBarTrailing) {
+                                    Button("Garden") { collectionDestination = nil; selectedTab = 0 }
+                                }
+                            }
+                    }.id(destination)
+                        .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
+                }
+                if menuPresented {
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            Button { menuPresented = false } label: { Color.black.opacity(0.3).ignoresSafeArea() }
+                                .accessibilityLabel("Close collection menu")
+                            VStack(alignment: .leading, spacing: 0) {
+                                HStack {
+                                    Text("Your forest").font(.title2.bold())
+                                    Spacer()
+                                    Button { menuPresented = false } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                                        .accessibilityLabel("Close menu")
+                                }.padding()
+                                List(CollectionDestination.allCases) { destination in
+                                    Button {
+                                        collectionDestination = destination; menuPresented = false
+                                    } label: { Label(destination.rawValue, systemImage: destination.symbol).padding(.vertical, 8) }
+                                        .accessibilityIdentifier("menu.\(destination.id)")
+                                }.listStyle(.plain)
+                                Button("Return to Garden") {
+                                    collectionDestination = nil; selectedTab = 0; menuPresented = false
+                                }.padding()
+                            }
+                            .frame(width: min(300, geometry.size.width * 0.85))
+                            .background(Color(uiColor: .systemBackground))
+                        }
+                    }.accessibilityElement(children: .contain)
+                }
                 }
                 .sheet(isPresented: $settingsPresented) {
                     NavigationStack {
@@ -96,6 +142,13 @@ struct RootView: View {
         ToolbarItem(placement: .navigationBarTrailing) {
             Button { settingsPresented = true } label: { Image(systemName: "gearshape").frame(width: 44, height: 44) }
                 .accessibilityLabel("Settings")
+        }
+    }
+
+    private var menuButton: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button { menuPresented = true } label: { Image(systemName: "line.3.horizontal").frame(width: 44, height: 44) }
+                .accessibilityLabel("Open collection menu").accessibilityIdentifier("collection.menu")
         }
     }
 }

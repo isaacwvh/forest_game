@@ -1,16 +1,16 @@
 {
   "initial": {
-    "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+    "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
     "serverTime": "2026-10-23T04:00:00Z",
     "version": 1,
-    "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+    "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
     "ruleVersion": "development-visitors-v1",
     "isFixture": true,
     "totalAttractionMicroUnits": "2000000",
     "sources": [
       {
         "stage": "sprout",
-        "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+        "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
         "profile": {
           "id": "dev_oak_attraction",
           "version": 1
@@ -24,6 +24,7 @@
     "offlineVisitsPerHour": "15.0",
     "secondsUntilFull": 7200,
     "tokenBalance": "0",
+    "economyVersion": 0,
     "hostedActive": "0",
     "hostedOffline": "0",
     "hostedTotal": "0",
@@ -32,17 +33,17 @@
     "opportunities": []
   },
   "active": {
-    "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+    "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
     "serverTime": "2026-10-23T04:00:30Z",
     "version": 8,
-    "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+    "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
     "ruleVersion": "development-visitors-v1",
     "isFixture": true,
     "totalAttractionMicroUnits": "2000000",
     "sources": [
       {
         "stage": "sprout",
-        "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+        "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
         "profile": {
           "id": "dev_oak_attraction",
           "version": 1
@@ -56,19 +57,20 @@
     "offlineVisitsPerHour": "15.0",
     "secondsUntilFull": null,
     "tokenBalance": "0",
+    "economyVersion": 0,
     "hostedActive": "0",
     "hostedOffline": "0",
     "hostedTotal": "0",
     "heartbeatSeconds": 10,
     "session": {
-      "sessionId": "a76a4847-d71e-4bf6-bf8c-8f58a3f62516",
-      "installationId": "ebafb7f4-ecd7-48fc-b833-1141543ceb18",
+      "sessionId": "ec960d6a-d4ef-4c7f-a6f9-f6b9440e4079",
+      "installationId": "b874d8b5-51db-44f1-b6a1-6782fa7a7ebe",
       "leaseExpiresAt": "2026-10-23T04:01:15Z"
     },
     "opportunities": [
       {
-        "opportunityId": "38f355a3-feac-497b-ba54-eb762e30e3d0",
-        "sessionId": "a76a4847-d71e-4bf6-bf8c-8f58a3f62516",
+        "opportunityId": "8b5dc3d8-dc78-492d-a180-553615643a38",
+        "sessionId": "ec960d6a-d4ef-4c7f-a6f9-f6b9440e4079",
         "issuedAt": "2026-10-23T12:00:30+08:00",
         "expiresAt": "2026-10-23T12:00:50+08:00",
         "visualKey": "forest-butterfly-v1",
@@ -77,22 +79,22 @@
     ]
   },
   "welcome": {
-    "requestId": "5e918ae9-049c-46e9-963c-75bc3d2177f7",
-    "eventId": "6bfed860-b2e1-4b88-ba11-edb13405edaa",
+    "requestId": "990c3fc6-b9e7-488b-abf1-3fc908db1bf9",
+    "eventId": "649d4b64-ff42-4929-8669-21014fd7cd1a",
     "visits": "1",
     "tokens": "1",
     "summary": {
-      "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+      "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
       "serverTime": "2026-10-23T04:00:30Z",
       "version": 9,
-      "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+      "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
       "ruleVersion": "development-visitors-v1",
       "isFixture": true,
       "totalAttractionMicroUnits": "2000000",
       "sources": [
         {
           "stage": "sprout",
-          "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+          "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
           "profile": {
             "id": "dev_oak_attraction",
             "version": 1
@@ -106,30 +108,31 @@
       "offlineVisitsPerHour": "15.0",
       "secondsUntilFull": null,
       "tokenBalance": "1",
+      "economyVersion": 1,
       "hostedActive": "1",
       "hostedOffline": "0",
       "hostedTotal": "1",
       "heartbeatSeconds": 10,
       "session": {
-        "sessionId": "a76a4847-d71e-4bf6-bf8c-8f58a3f62516",
-        "installationId": "ebafb7f4-ecd7-48fc-b833-1141543ceb18",
+        "sessionId": "ec960d6a-d4ef-4c7f-a6f9-f6b9440e4079",
+        "installationId": "b874d8b5-51db-44f1-b6a1-6782fa7a7ebe",
         "leaseExpiresAt": "2026-10-23T12:01:15+08:00"
       },
       "opportunities": []
     }
   },
   "stored": {
-    "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+    "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
     "serverTime": "2026-10-23T04:10:30Z",
     "version": 11,
-    "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+    "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
     "ruleVersion": "development-visitors-v1",
     "isFixture": true,
     "totalAttractionMicroUnits": "2000000",
     "sources": [
       {
         "stage": "sprout",
-        "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+        "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
         "profile": {
           "id": "dev_oak_attraction",
           "version": 1
@@ -143,6 +146,7 @@
     "offlineVisitsPerHour": "15.0",
     "secondsUntilFull": 6600,
     "tokenBalance": "1",
+    "economyVersion": 1,
     "hostedActive": "1",
     "hostedOffline": "0",
     "hostedTotal": "1",
@@ -151,22 +155,22 @@
     "opportunities": []
   },
   "claim": {
-    "requestId": "6a0f9e46-420e-4b95-a235-cead77d07494",
-    "eventId": "07caeef8-91f5-4d8b-8fda-e0f544d538ef",
+    "requestId": "6f236b09-ed91-4a08-85cc-c4d6b1b4edf5",
+    "eventId": "452a9536-5aaf-48ae-b02f-41b103ae3e1c",
     "visits": "2",
     "tokens": "2",
     "summary": {
-      "gardenId": "d72a002d-ec65-439d-a537-6d7ccd100df1",
+      "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
       "serverTime": "2026-10-23T04:10:30Z",
       "version": 12,
-      "contextId": "80953b4f-595a-467a-bbf9-54a6b3666b1d",
+      "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
       "ruleVersion": "development-visitors-v1",
       "isFixture": true,
       "totalAttractionMicroUnits": "2000000",
       "sources": [
         {
           "stage": "sprout",
-          "plantId": "acdf874f-0327-4f62-8b67-3221258d9673",
+          "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
           "profile": {
             "id": "dev_oak_attraction",
             "version": 1
@@ -180,6 +184,7 @@
       "offlineVisitsPerHour": "15.0",
       "secondsUntilFull": 7080,
       "tokenBalance": "3",
+      "economyVersion": 2,
       "hostedActive": "1",
       "hostedOffline": "2",
       "hostedTotal": "3",

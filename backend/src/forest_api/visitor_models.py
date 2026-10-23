@@ -140,9 +140,11 @@ class VisitorWallet(Base):
         CheckConstraint(
             "tokens >= 0 AND hosted_active >= 0 AND hosted_offline >= 0", name="amounts"
         ),
+        CheckConstraint("economy_version >= 0", name="economy_version"),
     )
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
     tokens: Mapped[int] = mapped_column(BigInteger, default=0)
+    economy_version: Mapped[int] = mapped_column(BigInteger, server_default="0")
     hosted_active: Mapped[int] = mapped_column(BigInteger, default=0)
     hosted_offline: Mapped[int] = mapped_column(BigInteger, default=0)
 

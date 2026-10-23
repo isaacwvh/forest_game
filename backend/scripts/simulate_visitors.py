@@ -66,6 +66,17 @@ def main():
             f"welcomed at 50% capture={result['activeWelcomesPerHour']:.2f}/h, "
             f"offline={result['offlineVisitsPerHour']:.2f}/h, capacity={result['capacity']}"
         )
+        if placed:
+            # Fixture Woodland costs five tokens; each welcome/claimed visit pays
+            # one. Acquisition/opening add no time gate. This assumes 50% capture,
+            # not continuous successful tapping or measured human behaviour.
+            active_minutes = 5 / result["activeWelcomesPerHour"] * 60
+            offline_minutes = 5 / result["offlineVisitsPerHour"] * 60
+            assert result["capacity"] >= 5
+            print(
+                f"  first 5-token pack/open: active ~{active_minutes:.1f} min at 50% capture; "
+                f"inactive ~{offline_minutes:.1f} min plus a stored-visit claim"
+            )
     print(
         "PASS: fixture pacing at assumed 50% capture. "
         "Device capture rates remain an acceptance check."
