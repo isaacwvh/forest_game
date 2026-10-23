@@ -138,12 +138,14 @@ class Species(Base):
     __tablename__ = "plant_species"
     __table_args__ = (
         *profile_foreign_keys(),
+        CheckConstraint("rarity ~ '^[a-z][a-z0-9_]{0,31}$'", name="rarity"),
         CheckConstraint(
             "clearance_radius > 0 AND clearance_radius <> 'NaN'::numeric", name="clearance_radius"
         ),
     )
     id: Mapped[str] = mapped_column(String(100), primary_key=True)
     display_name: Mapped[str] = mapped_column(String(100))
+    rarity: Mapped[str] = mapped_column(String(32), server_default="development_unbalanced")
     description: Mapped[str] = mapped_column(Text)
     clearance_radius: Mapped[Decimal] = mapped_column(Numeric(9, 3))
     growth_profile_id: Mapped[str] = mapped_column(String(100))
@@ -173,6 +175,7 @@ class Variant(Base):
     variant_id: Mapped[str] = mapped_column(String(100), primary_key=True)
     display_name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(Text)
+    # Historical schema-1 packs use this field. New packs use Species.rarity.
     rarity: Mapped[str] = mapped_column(String(32))
     enabled: Mapped[bool] = mapped_column(Boolean)
     asset_catalog_key: Mapped[str] = mapped_column(Text)

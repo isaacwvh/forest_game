@@ -8,8 +8,8 @@ private struct CollectionContract: Decodable {
     let opening: APICollectionReceipt
     let packs: APIPackPage
     let catalogue: APICatalogue
-    static func load() throws -> Self {
-        let url = try XCTUnwrap(Bundle.main.url(forResource: "collection-contract", withExtension: "json", subdirectory: "Fixtures"))
+    static func load(_ name: String = "collection-contract") throws -> Self {
+        let url = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "json", subdirectory: "Fixtures"))
         return try ActivityWire.decoder().decode(Self.self, from: Data(contentsOf: url))
     }
 }
@@ -70,7 +70,40 @@ final class CollectionTests: XCTestCase {
         XCTAssertNotNil(contract.catalogue.profiles?["behaviour"]?.first?.metricMultipliers?["steps"])
         let pack = try XCTUnwrap(contract.summary.offers.first { $0.offerId == "woodland" }?.pack)
         XCTAssertEqual(pack.rarities.reduce(0) { $0 + $1.weight }, pack.totalWeight)
-        XCTAssertEqual(pack.rarities.first { $0.rarity == "rare" }?.weight, 20)
+        XCTAssertEqual(pack.schemaVersion, 2)
+        XCTAssertEqual(pack.rarities.first { $0.rarity == "common" }?.weight, 100)
+        XCTAssertEqual(contract.catalogue.species.count, 2)
+        let oak = try XCTUnwrap(pack.speciesOdds.first { $0.speciesId == "oak" })
+        let moon = try XCTUnwrap(pack.speciesOdds.first { $0.speciesId == "moonwillow" })
+        XCTAssertEqual(oak.withinRarity, 0.5)
+        XCTAssertEqual(moon.withinRarity, 0.5)
+        XCTAssertEqual(oak.variants.first { $0.variantId == "blue" }?.conditional, 0.2)
+        XCTAssertEqual(oak.variants.first { $0.variantId == "blue" }?.overall, 0.1)
+        XCTAssertEqual(moon.variants.first { $0.variantId == "golden" }?.overall, 0.05)
+    }
+
+    func testLegacyPackProbabilitiesRemainReadable() throws {
+        let legacy = try CollectionContract.load("collection-contract-v1")
+        let pack = try XCTUnwrap(legacy.summary.offers.first { $0.offerId == "woodland" }?.pack)
+        XCTAssertEqual(pack.schemaVersion, 1)
+        XCTAssertEqual(pack.speciesOdds.first { $0.rarity == "rare" }?.overall, 0.2)
+        XCTAssertEqual(pack.speciesOdds.first { $0.rarity == "common" }?.variants.first?.conditional, 1)
+    }
+
+    func testVariantCountCannotInflateDisplayedSpeciesOdds() throws {
+        let contract = try CollectionContract.load()
+        let pack = try XCTUnwrap(contract.summary.offers.first { $0.offerId == "woodland" }?.pack)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: ActivityWire.encoder().encode(pack)) as? [String: Any])
+        var rarities = try XCTUnwrap(object["rarities"] as? [[String: Any]])
+        var species = try XCTUnwrap(rarities[0]["species"] as? [[String: Any]])
+        let index = try XCTUnwrap(species.firstIndex { $0["speciesId"] as? String == "oak" })
+        var variants = try XCTUnwrap(species[index]["variants"] as? [[String: Any]])
+        var extra = variants[0]; extra["variantId"] = "extra"; extra["weight"] = 40
+        variants.append(extra); species[index]["variants"] = variants
+        rarities[0]["species"] = species; object["rarities"] = rarities
+        let revised = try ActivityWire.decoder().decode(APIPackDefinition.self, from: JSONSerialization.data(withJSONObject: object))
+        XCTAssertEqual(revised.speciesOdds.first { $0.speciesId == "oak" }?.overall, 0.5)
+        XCTAssertEqual(revised.speciesOdds.first { $0.speciesId == "moonwillow" }?.overall, 0.5)
     }
 
     func testLostExchangeResponseRelaunchReplaysExactBytesAndUUID() async throws {

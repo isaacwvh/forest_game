@@ -1,16 +1,16 @@
 {
   "initial": {
-    "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
+    "gardenId": "5e722480-2af5-48b5-af63-1942fbf2cb3a",
     "serverTime": "2026-10-23T04:00:00Z",
     "version": 1,
-    "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
+    "contextId": "6538be72-125b-4996-afb3-5d56410ed5ec",
     "ruleVersion": "development-visitors-v1",
     "isFixture": true,
     "totalAttractionMicroUnits": "2000000",
     "sources": [
       {
         "stage": "sprout",
-        "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
+        "plantId": "4eb52bfd-5e37-4af6-a5ed-b6eaeb17fe76",
         "profile": {
           "id": "dev_oak_attraction",
           "version": 1
@@ -33,17 +33,17 @@
     "opportunities": []
   },
   "active": {
-    "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
+    "gardenId": "5e722480-2af5-48b5-af63-1942fbf2cb3a",
     "serverTime": "2026-10-23T04:00:30Z",
     "version": 8,
-    "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
+    "contextId": "6538be72-125b-4996-afb3-5d56410ed5ec",
     "ruleVersion": "development-visitors-v1",
     "isFixture": true,
     "totalAttractionMicroUnits": "2000000",
     "sources": [
       {
         "stage": "sprout",
-        "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
+        "plantId": "4eb52bfd-5e37-4af6-a5ed-b6eaeb17fe76",
         "profile": {
           "id": "dev_oak_attraction",
           "version": 1
@@ -63,14 +63,14 @@
     "hostedTotal": "0",
     "heartbeatSeconds": 10,
     "session": {
-      "sessionId": "ec960d6a-d4ef-4c7f-a6f9-f6b9440e4079",
-      "installationId": "b874d8b5-51db-44f1-b6a1-6782fa7a7ebe",
+      "sessionId": "3b8c719d-2b23-456d-9392-fa806e4bc499",
+      "installationId": "daa79afe-4e76-411d-9428-edbefb4ff93d",
       "leaseExpiresAt": "2026-10-23T04:01:15Z"
     },
     "opportunities": [
       {
-        "opportunityId": "8b5dc3d8-dc78-492d-a180-553615643a38",
-        "sessionId": "ec960d6a-d4ef-4c7f-a6f9-f6b9440e4079",
+        "opportunityId": "b943cb64-b0a1-425f-a626-a1c2e63a4766",
+        "sessionId": "3b8c719d-2b23-456d-9392-fa806e4bc499",
         "issuedAt": "2026-10-23T12:00:30+08:00",
         "expiresAt": "2026-10-23T12:00:50+08:00",
         "visualKey": "forest-butterfly-v1",
@@ -79,22 +79,22 @@
     ]
   },
   "welcome": {
-    "requestId": "990c3fc6-b9e7-488b-abf1-3fc908db1bf9",
-    "eventId": "649d4b64-ff42-4929-8669-21014fd7cd1a",
+    "requestId": "5330b7c4-2f60-42d9-ba52-a1cc98ebdf74",
+    "eventId": "43107c73-7254-45c4-8137-591385dac60f",
     "visits": "1",
     "tokens": "1",
     "summary": {
-      "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
+      "gardenId": "5e722480-2af5-48b5-af63-1942fbf2cb3a",
       "serverTime": "2026-10-23T04:00:30Z",
       "version": 9,
-      "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
+      "contextId": "6538be72-125b-4996-afb3-5d56410ed5ec",
       "ruleVersion": "development-visitors-v1",
       "isFixture": true,
       "totalAttractionMicroUnits": "2000000",
       "sources": [
         {
           "stage": "sprout",
-          "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
+          "plantId": "4eb52bfd-5e37-4af6-a5ed-b6eaeb17fe76",
           "profile": {
             "id": "dev_oak_attraction",
             "version": 1
@@ -114,25 +114,25 @@
       "hostedTotal": "1",
       "heartbeatSeconds": 10,
       "session": {
-        "sessionId": "ec960d6a-d4ef-4c7f-a6f9-f6b9440e4079",
-        "installationId": "b874d8b5-51db-44f1-b6a1-6782fa7a7ebe",
+        "sessionId": "3b8c719d-2b23-456d-9392-fa806e4bc499",
+        "installationId": "daa79afe-4e76-411d-9428-edbefb4ff93d",
         "leaseExpiresAt": "2026-10-23T12:01:15+08:00"
       },
       "opportunities": []
     }
   },
   "stored": {
-    "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
+    "gardenId": "5e722480-2af5-48b5-af63-1942fbf2cb3a",
     "serverTime": "2026-10-23T04:10:30Z",
     "version": 11,
-    "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
+    "contextId": "6538be72-125b-4996-afb3-5d56410ed5ec",
     "ruleVersion": "development-visitors-v1",
     "isFixture": true,
     "totalAttractionMicroUnits": "2000000",
     "sources": [
       {
         "stage": "sprout",
-        "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
+        "plantId": "4eb52bfd-5e37-4af6-a5ed-b6eaeb17fe76",
         "profile": {
           "id": "dev_oak_attraction",
           "version": 1
@@ -155,22 +155,22 @@
     "opportunities": []
   },
   "claim": {
-    "requestId": "6f236b09-ed91-4a08-85cc-c4d6b1b4edf5",
-    "eventId": "452a9536-5aaf-48ae-b02f-41b103ae3e1c",
+    "requestId": "2aac0905-29c7-4c88-9684-9a49222ffee0",
+    "eventId": "22aef499-3886-45cd-8d9f-46c06b03e0a5",
     "visits": "2",
     "tokens": "2",
     "summary": {
-      "gardenId": "41e36131-768f-4f88-adbf-398711dcb22f",
+      "gardenId": "5e722480-2af5-48b5-af63-1942fbf2cb3a",
       "serverTime": "2026-10-23T04:10:30Z",
       "version": 12,
-      "contextId": "235efee3-f78d-41c5-a164-a546eaaaccdd",
+      "contextId": "6538be72-125b-4996-afb3-5d56410ed5ec",
       "ruleVersion": "development-visitors-v1",
       "isFixture": true,
       "totalAttractionMicroUnits": "2000000",
       "sources": [
         {
           "stage": "sprout",
-          "plantId": "c3a36b81-e048-4d96-a570-ac23cdd87974",
+          "plantId": "4eb52bfd-5e37-4af6-a5ed-b6eaeb17fe76",
           "profile": {
             "id": "dev_oak_attraction",
             "version": 1

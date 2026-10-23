@@ -1,87 +1,121 @@
 {
   "packId": "woodland",
-  "version": 2,
+  "version": 3,
   "isFixture": true,
   "definition": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "displayName": "Woodland Pack",
-    "description": "One oak sprout. Development prices and odds are provisional.",
+    "description": "One sprout: Oak or Moonwillow equally, then a weighted variant. Provisional development odds.",
     "rarities": [
       {
         "rarity": "common",
-        "weight": 75,
-        "outcomes": [
+        "weight": 100,
+        "species": [
           {
             "speciesId": "oak",
-            "variantId": "standard",
-            "profiles": {
-              "growth": {
-                "id": "dev_oak_growth",
-                "version": 1
+            "variants": [
+              {
+                "variantId": "standard",
+                "weight": 75,
+                "profiles": {
+                  "growth": {
+                    "id": "dev_oak_growth",
+                    "version": 1
+                  },
+                  "behaviour": {
+                    "id": "dev_oak_behaviour",
+                    "version": 1
+                  },
+                  "attraction": {
+                    "id": "dev_oak_attraction",
+                    "version": 1
+                  }
+                }
               },
-              "behaviour": {
-                "id": "dev_oak_behaviour",
-                "version": 1
+              {
+                "variantId": "blue",
+                "weight": 20,
+                "profiles": {
+                  "growth": {
+                    "id": "dev_oak_growth",
+                    "version": 1
+                  },
+                  "behaviour": {
+                    "id": "dev_oak_behaviour",
+                    "version": 1
+                  },
+                  "attraction": {
+                    "id": "dev_oak_attraction",
+                    "version": 1
+                  }
+                }
               },
-              "attraction": {
-                "id": "dev_oak_attraction",
-                "version": 1
+              {
+                "variantId": "vined",
+                "weight": 5,
+                "profiles": {
+                  "growth": {
+                    "id": "dev_oak_growth",
+                    "version": 1
+                  },
+                  "behaviour": {
+                    "id": "dev_oak_behaviour",
+                    "version": 1
+                  },
+                  "attraction": {
+                    "id": "dev_oak_attraction",
+                    "version": 1
+                  }
+                }
               }
-            }
-          }
-        ]
-      },
-      {
-        "rarity": "rare",
-        "weight": 20,
-        "outcomes": [
+            ]
+          },
           {
-            "speciesId": "oak",
-            "variantId": "blue",
-            "profiles": {
-              "growth": {
-                "id": "dev_oak_growth",
-                "version": 1
+            "speciesId": "moonwillow",
+            "variants": [
+              {
+                "variantId": "standard",
+                "weight": 90,
+                "profiles": {
+                  "growth": {
+                    "id": "dev_moonwillow_growth",
+                    "version": 1
+                  },
+                  "behaviour": {
+                    "id": "dev_moonwillow_behaviour",
+                    "version": 1
+                  },
+                  "attraction": {
+                    "id": "dev_moonwillow_attraction",
+                    "version": 1
+                  }
+                }
               },
-              "behaviour": {
-                "id": "dev_oak_behaviour",
-                "version": 1
-              },
-              "attraction": {
-                "id": "dev_oak_attraction",
-                "version": 1
+              {
+                "variantId": "golden",
+                "weight": 10,
+                "profiles": {
+                  "growth": {
+                    "id": "dev_moonwillow_growth",
+                    "version": 1
+                  },
+                  "behaviour": {
+                    "id": "dev_moonwillow_behaviour",
+                    "version": 1
+                  },
+                  "attraction": {
+                    "id": "dev_moonwillow_attraction",
+                    "version": 1
+                  }
+                }
               }
-            }
-          }
-        ]
-      },
-      {
-        "rarity": "legendary",
-        "weight": 5,
-        "outcomes": [
-          {
-            "speciesId": "oak",
-            "variantId": "vined",
-            "profiles": {
-              "growth": {
-                "id": "dev_oak_growth",
-                "version": 1
-              },
-              "behaviour": {
-                "id": "dev_oak_behaviour",
-                "version": 1
-              },
-              "attraction": {
-                "id": "dev_oak_attraction",
-                "version": 1
-              }
-            }
+            ]
           }
         ]
       }
     ]
   },
   "offerId": "woodland",
-  "offerVersion": 2,
+  "offerVersion": 3,
   "tokenCost": 5
 }

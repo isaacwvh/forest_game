@@ -20,7 +20,7 @@ def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
             with engine.connect() as connection:
                 assert set(Base.metadata.tables) <= set(inspect(connection).get_table_names())
                 assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-                    "0004_collection"
+                    "0005_species_draws"
                 )
             engine.dispose()
             command.downgrade(configuration, "base")
@@ -42,7 +42,7 @@ def test_b6_upgrade_preserves_existing_partially_grown_account(database_factory,
 
     with database_factory() as url, migration_url(url):
         configuration = migration_config()
-        command.upgrade(configuration, "0002_b4_b5")
+        command.upgrade(configuration, "head")
         settings = Settings(
             _env_file=None,
             environment="test",
@@ -83,6 +83,8 @@ def test_b6_upgrade_preserves_existing_partially_grown_account(database_factory,
                         rotation_degrees=123,
                     )
                 )
+            # Bootstrap records with current models, then recreate the legacy schema.
+            command.downgrade(configuration, "0002_b4_b5")
             with database.engine.connect() as connection:
                 before = {
                     table: connection.execute(text(f"SELECT to_jsonb(t) FROM {table} t")).all()
@@ -137,7 +139,7 @@ def test_b7_upgrade_preserves_b6_balances_and_history(database_factory):
 
     with database_factory() as url, migration_url(url):
         configuration = migration_config()
-        command.upgrade(configuration, "0003_visitors")
+        command.upgrade(configuration, "head")
         settings = Settings(
             _env_file=None,
             environment="test",
@@ -161,6 +163,7 @@ def test_b7_upgrade_preserves_b6_balances_and_history(database_factory):
                         game_timezone="Asia/Singapore",
                     ),
                 )
+            command.downgrade(configuration, "0003_visitors")
             with database.engine.begin() as connection:
                 connection.execute(
                     text(
@@ -198,6 +201,117 @@ def test_b7_upgrade_preserves_b6_balances_and_history(database_factory):
                 ).one() == (37, 12, 25, 0)
                 assert connection.scalar(text("SELECT count(*) FROM owned_packs")) == 0
                 assert connection.scalar(text("SELECT count(*) FROM collection_events")) == 0
+        finally:
+            database.engine.dispose()
+
+
+def test_species_rarity_migration_preserves_b7_packs_and_receipts(database_factory):
+    from datetime import UTC, datetime
+    from uuid import uuid4
+
+    from forest_api import collection, services
+    from forest_api.auth import DEV_ISSUER, Identity
+    from forest_api.collection_schemas import ExchangeRequest, OpenPackRequest
+    from forest_api.collection_seed import seed_legacy_collection
+    from forest_api.database import Database
+    from forest_api.schemas import RegisterAccount
+    from forest_api.seed import seed_development_catalogue
+    from forest_api.visitor_models import VisitorWallet
+
+    with database_factory() as url, migration_url(url):
+        configuration = migration_config()
+        command.upgrade(configuration, "head")
+        settings = Settings(
+            _env_file=None,
+            environment="test",
+            database_url=url,
+            auth_mode="development",
+            dev_auth_secret=TEST_SECRET,
+        )
+        database = Database(settings)
+        identity = Identity(DEV_ISSUER, "b7_pack_owner")
+        try:
+            with database.sessions() as session:
+                seed_development_catalogue(session, settings)
+                seed_legacy_collection(session, settings)
+                account = services.register_account(
+                    session,
+                    settings,
+                    identity,
+                    RegisterAccount(
+                        request_id=uuid4(),
+                        username="b7_pack_owner",
+                        display_name="Existing packs",
+                        game_timezone="Asia/Singapore",
+                    ),
+                )
+            with database.sessions.begin() as session:
+                session.add(
+                    VisitorWallet(
+                        owner_id=account.profile.user_id,
+                        tokens=20,
+                        hosted_active=0,
+                        hosted_offline=0,
+                    )
+                )
+            with database.sessions() as session:
+                bought = collection.mutate(
+                    session,
+                    settings,
+                    identity,
+                    ExchangeRequest(
+                        request_id=uuid4(), offer_id="woodland", offer_version=1, quantity=2
+                    ),
+                    lambda: datetime.now(UTC),
+                )
+            from uuid import UUID
+
+            body = OpenPackRequest(request_id=uuid4())
+            pack = UUID(bought["packs"][0]["ownedPackId"])
+            with database.sessions() as session:
+                receipt = collection.mutate(
+                    session, settings, identity, body, lambda: datetime.now(UTC), pack_id=pack
+                )
+            command.downgrade(configuration, "0004_collection")
+            tables = (
+                "users",
+                "gardens",
+                "owned_plants",
+                "owned_packs",
+                "pack_definitions",
+                "pack_members",
+                "pack_openings",
+                "collection_events",
+                "api_requests",
+                "visitor_wallets",
+            )
+            with database.engine.connect() as connection:
+                before = {
+                    t: connection.execute(
+                        text(f"SELECT to_jsonb(t) FROM {t} t ORDER BY to_jsonb(t)::text")
+                    ).all()
+                    for t in tables
+                }
+            command.upgrade(configuration, "head")
+            with database.engine.connect() as connection:
+                after = {
+                    t: connection.execute(
+                        text(f"SELECT to_jsonb(t) FROM {t} t ORDER BY to_jsonb(t)::text")
+                    ).all()
+                    for t in tables
+                }
+                assert before == after
+                assert (
+                    connection.scalar(text("SELECT rarity FROM plant_species WHERE id = 'oak'"))
+                    == "development_unbalanced"
+                )
+            with database.sessions() as session:
+                assert (
+                    collection.mutate(
+                        session, settings, identity, body, lambda: datetime.now(UTC), pack_id=pack
+                    )
+                    == receipt
+                )
         finally:
             database.engine.dispose()
 

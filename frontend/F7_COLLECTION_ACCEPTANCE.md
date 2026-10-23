@@ -28,7 +28,7 @@ docker compose up -d --wait --wait-timeout 90 api
 Invoke-RestMethod http://127.0.0.1:8000/health/ready
 ```
 
-Expected schema head: `0004_collection`, readiness `ready`. Existing balances,
+Expected schema head: `0005_species_draws`, readiness `ready`. Existing balances,
 hosted counts, plants and placements are preserved. Never overwrite `.env` or
 remove the database volume. For a host Uvicorn setup, stop that server, run
 `alembic upgrade head` and `forest seed-dev` through the existing virtualenv from
@@ -46,26 +46,33 @@ root: Debug XCTest/UI tests and Release simulator build must pass. Then build
 and run on the existing iPhone installation. Windows parsing does not substitute
 for Apple SDK typechecking or these native runs.
 
-## Main flow
+## Main flow: species-first draws and grouped catalogue
 
-1. Sign in with the working email account. Check the existing garden and tokens.
-2. Open the leading menu. Confirm **Exchange**, **Catalog**, **Draws**.
-3. Open Catalog and inspect oak variants. Check descriptions, rarity, all four
-   stages, cumulative growth, attraction, clearance radius and step multiplier.
-   Search and filter by rarity; back navigation must work.
-4. Earn at least **5 tokens** by welcoming visitors or collecting stored visits.
-   Opening the menu or a collection screen pauses active garden visitors.
-5. Open Exchange → Woodland Pack → Contents and probabilities. Fixture odds are
-   standard 75%, blue 20%, vined 5%; price is 5 tokens per pack.
-6. Exchange quantity 1. Exactly 5 tokens are deducted. A pack appears in Draws;
-   no new plant appears until opening. Insufficient quantities are disabled.
-7. Close/reopen the app before opening. The unopened pack must still be there.
-8. Open Draws → Open pack. One pack disappears and one sprout appears in the
-   confirmed result/history. Opening spends no additional tokens.
-9. Return to Garden → Storage. Find the new zero-growth sprout, place it and
-   confirm it has its own identity. Repeat with Blue Oak (8 tokens) for a
-   guaranteed duplicate; existing copies retain their progress.
-10. Reopen again. Balances, pack inventory, plant inventory and history persist.
+Install the matching new iOS build before testing the new offers; the earlier
+build only decodes schema-1 definitions. Existing owned schema-1 packs are still
+supported by the new build. Keep the same account and installation.
+
+1. Open Catalog. Expect exactly two species rows: Oak (three variants) and
+   Moonwillow (two). Search “golden”: Moonwillow appears once. Both have Common
+   fixture rarity. No stage-discovery masking is included in this update.
+2. Open a species. Switch variants inside its detail, inspect all four stage
+   images/stats and expand its pack-specific probabilities. There must be no
+   separate top-level rows for Blue/Vined/Golden.
+3. Earn at least 5 tokens. Exchange → Woodland Pack v2 → Contents: Common 100%;
+   Oak 50%, Moonwillow 50%. Oak conditional variants: Standard 75%, Blue 20%,
+   Vined 5%. Moonwillow: Standard 90%, Golden 10%. Overall odds are Oak Standard
+   37.5%, Blue 10%, Vined 2.5%, Moonwillow Standard 45%, Golden 5%.
+4. Exchange for one Woodland v2, then immediately open it in Draws. No restart
+   is required. Expect one new zero-growth sprout and exactly one 5-token debit.
+   Small samples need not produce an exact 50/50 split.
+5. Earn 8 tokens and exchange for Moonwillow Pack. Opening must award Moonwillow
+   (Standard or Golden). Return to Garden → Storage, place it away from the starter,
+   sync new eligible steps and verify its independent growth/attraction updates.
+   The provisional Moonwillow clearance radius is 1.100 garden units.
+6. If you retained an unopened Woodland v1 or Blue Oak pack, inspect/open it.
+   The legacy label and old odds remain, and prior results/plant IDs are unchanged.
+7. Restart the app as an optional persistence test. Balances, packs, species
+   catalogue, storage and opening history must persist; replay never rerolls.
 
 ## Recovery and regressions
 
@@ -85,8 +92,8 @@ for Apple SDK typechecking or these native runs.
   required to receive a reward.
 
 For pool updates, use a disposable test account/configuration with the trusted
-publisher described in `backend/COLLECTION_API.md`. Acquire v1, publish v2 with a
-changed plant list but the same rarity weights, then acquire v2. Both pack
+publisher described in `backend/COLLECTION_API.md`. Acquire the current version, publish the next version with a
+changed species/variant list but the same rarity weights, then acquire the new version. Both pack
 versions must show/open their own contents. An empty positive-weight rarity must
 fail publication without changing current offers. Do not modify live fixture
 data merely to force an outcome on an existing personal account.

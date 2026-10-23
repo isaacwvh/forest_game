@@ -142,6 +142,7 @@ struct APISpecies: Codable, Equatable {
     let variants: [APIVariant]
     var description: String? = nil
     var defaultProfiles: APIPinnedProfiles? = nil
+    var rarity: String? = nil
 }
 
 struct APICatalogue: Codable, Equatable {

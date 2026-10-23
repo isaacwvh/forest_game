@@ -1,6 +1,6 @@
 # Movement Forest implementation plan
 
-Revised 23 October 2026 against `forest_game_v1_spec.md`, version 0.13.
+Revised 23 October 2026 against `forest_game_v1_spec.md`, version 0.14.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
 **Current checkpoint — 23 October 2026:** the user accepts work through **B6/F6**,
@@ -204,7 +204,30 @@ Actual automated execution belongs in each `VALIDATION.md`; source/syntax checks
 do not imply Xcode, XCTest, Release-build or physical-device acceptance. Existing
 game databases are not automatically migrated/seeded by implementation or tests.
 
-## F8 final visitor presentation polish — deferred
+### Species-first draws and grouped catalogue — current update
+
+The initial pack purchase/opening behaviour was confirmed by the user. The next
+source update uses rarity → uniformly selected species → weighted variant.
+Species own rarity; each published schema-2 contract freezes its species list,
+variant weights and resolved profile references. Adding variants cannot inflate
+species chance. Schema-1 packs/results remain unchanged and open through their
+original sampler. Alembic `0005_species_draws` adds species rarity without changing
+owned plants, balances, packs or receipts.
+
+The development catalogue now includes Common Oak (three variants) and Common
+Moonwillow (two variants). Woodland v2 costs five fixture tokens and picks species
+50/50; Oak variants are 75/20/5 and Moonwillow variants 90/10. A separate eight-token
+Moonwillow pack tests guaranteed species award, placement and growth. All values
+are unapproved fixtures. Superseded offers stop selling, while acquired packs keep
+their versions. Seeding is explicit and repeat-safe, not an application startup task.
+
+F7 includes one catalogue entry per species, a variant selector inside its detail,
+species rarity and pack-specific conditional/overall variant odds. New Swift models
+read schema 1 and 2. Hidden-stage discovery is deferred to the polishing scope
+below. See backend/frontend VALIDATION.md for actual execution; source/parsing does
+not imply native Xcode/Release or device acceptance of this update.
+
+## F8 presentation and catalogue polish — deferred
 
 The current functional B6/F6 experience is accepted. Schedule these visual changes
 in the existing final hardening/polish milestone, after the remaining gameplay:
@@ -217,6 +240,16 @@ in the existing final hardening/polish milestone, after the remaining gameplay:
 - Verify portrait/landscape and orbit/pan/zoom, Reduce Motion and VoiceOver, smooth
   motion between server responses, and stable framing during sync/invalid
   placement. Visual changes must preserve server expiry and single-award rewards.
+
+**Catalogue stage discovery — deferred polish:** keep one entry per species.
+Conceal undiscovered growth-stage artwork with a silhouette/question mark and
+accessible “Not discovered” text. Discovery should be permanent per account and
+species when any owned variant reaches that stage, including intermediate stages
+crossed in one credit. Backfill existing accounts from pinned owned-copy progress;
+never relock discovery after storing a plant. Add authoritative discovery state,
+transactional updates and account-scoped frontend presentation in that future
+increment. It is separate from pack access/milestone rewards. This update keeps
+all stage previews visible and adds no discovery schema/endpoints.
 
 Cosmetic watering, swarm and unboxing effects remain in F8 as already planned.
 These presentation improvements do not block B7/F7 or reopen completed B6/F6 logic.

@@ -102,7 +102,10 @@ def seed_development_catalogue(session: Session, settings: Settings) -> None:
         seed_calculation_config(session)
         existing = session.get(GameCatalogue, 1)
         if existing is not None:
-            if existing.version == FIXTURE_VERSION and existing.is_fixture:
+            if (
+                existing.version in {FIXTURE_VERSION, "development-woodland-v2"}
+                and existing.is_fixture
+            ):
                 return
             raise ValueError("Refusing to replace an existing catalogue")
         if session.scalar(select(Species.id).limit(1)) is not None:

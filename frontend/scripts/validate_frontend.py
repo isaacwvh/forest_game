@@ -106,7 +106,15 @@ def main():
     for offer in collection["summary"]["offers"]:
         pack = offer["pack"]
         require(pack["isFixture"] and pack["totalWeight"] == sum(p["weight"] for p in pack["rarities"]), "Collection probability total mismatch")
-        require(all(p["outcomes"] or p["weight"] == 0 for p in pack["rarities"]), "Empty positive-weight rarity")
+        field = "species" if pack["schemaVersion"] == 2 else "outcomes"
+        require(all(p[field] or p["weight"] == 0 for p in pack["rarities"]), "Empty positive-weight rarity")
+        if pack["schemaVersion"] == 2:
+            members = [s for pool in pack["rarities"] for s in pool["species"]]
+            require(len(members) == len({s["speciesId"] for s in members}), "Duplicate weighted species")
+            require(all(sum(v["weight"] for v in s["variants"]) > 0 for s in members), "Empty variant distribution")
+    woodland = next(offer["pack"] for offer in collection["summary"]["offers"] if offer["offerId"] == "woodland")
+    require(woodland["schemaVersion"] == 2 and len(woodland["rarities"][0]["species"]) == 2, "Expected equal Oak/Moonwillow test pool")
+    require({s["speciesId"] for s in collection["catalogue"]["species"]} == {"oak", "moonwillow"}, "Species catalogue fixture mismatch")
     variants = {v["variantId"]: v for s in collection["catalogue"]["species"] if s["speciesId"] == award["speciesId"] for v in s["variants"]}
     variant = variants[award["variantId"]]
     asset = catalog[(award["speciesId"], variant["assetCatalogVersion"], "sprout", award["variantId"])]

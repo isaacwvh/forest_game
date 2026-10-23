@@ -18,6 +18,7 @@ import urllib.request
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from alembic import command
 from alembic.config import Config
@@ -146,7 +147,7 @@ def main():
                     {
                         "requestId": str(uuid4()),
                         "expectedLayoutVersion": 0,
-                        "catalogVersion": "development-oak-v1",
+                        "catalogVersion": request("/v1/catalog")["catalogVersion"],
                         "actions": [
                             {
                                 "action": "plant",
@@ -207,7 +208,7 @@ def main():
                 exchange_body = {
                     "requestId": str(uuid4()),
                     "offerId": "woodland",
-                    "offerVersion": 1,
+                    "offerVersion": 2,
                     "quantity": 2,
                 }
                 exchanged = request("/v1/me/exchanges", exchange_body)
@@ -228,6 +229,76 @@ def main():
                 server = start_server()
                 assert request(opening_path, opening_body) == opening
                 assert request("/v1/me/exchanges", exchange_body) == exchanged
+                # Use a guaranteed-species offer to exercise Moonwillow's assets,
+                # storage, placement and growth without forcing a random result.
+                advance(2400)
+                request("/v1/me/stored-visits/claim", {"requestId": str(uuid4())})
+                moon_purchase = request(
+                    "/v1/me/exchanges",
+                    {
+                        "requestId": str(uuid4()),
+                        "offerId": "moonwillow",
+                        "offerVersion": 1,
+                        "quantity": 1,
+                    },
+                )
+                moon_path = f"/v1/me/packs/{moon_purchase['packs'][0]['ownedPackId']}/open"
+                moon = request(moon_path, {"requestId": str(uuid4())})
+                assert moon["plant"]["speciesId"] == "moonwillow"
+                assert moon["plant"]["placement"] is None
+                enrolled = request(
+                    "/v1/activity/enrolments",
+                    {
+                        "requestId": str(uuid4()),
+                        "installationId": installation,
+                        "observedAt": instant.isoformat(),
+                        "steps": 0,
+                    },
+                )
+                garden = request("/v1/me/garden")
+                request(
+                    "/v1/me/garden/edits",
+                    {
+                        "requestId": str(uuid4()),
+                        "expectedLayoutVersion": garden["layoutVersion"],
+                        "catalogVersion": garden["catalogVersion"],
+                        "actions": [
+                            {
+                                "action": "plant",
+                                "plantId": moon["plant"]["plantId"],
+                                "x": 6,
+                                "y": 6,
+                                "rotationDegrees": 0,
+                            }
+                        ],
+                    },
+                )
+                advance(10)
+                grown = request(
+                    "/v1/activity/sync",
+                    {
+                        "requestId": str(uuid4()),
+                        "installationId": installation,
+                        "deviceId": enrolled["device"]["deviceId"],
+                        "observedAt": instant.isoformat(),
+                        "days": [
+                            {
+                                "gameDate": instant.astimezone(ZoneInfo("Asia/Singapore"))
+                                .date()
+                                .isoformat(),
+                                "steps": 10000,
+                            }
+                        ],
+                    },
+                )
+                assert (
+                    next(
+                        p
+                        for p in grown["garden"]["plants"]
+                        if p["plantId"] == moon["plant"]["plantId"]
+                    )["growthStage"]
+                    == "seedling"
+                )
                 if args.export_frontend_contract:
                     target = (
                         root / "frontend/MovementForest/Resources/Fixtures/visitor-contract.json"
@@ -256,6 +327,7 @@ def main():
                                 "opening": opening,
                                 "packs": request("/v1/me/packs"),
                                 "catalogue": request("/v1/catalog"),
+                                "moonwillowOpening": moon,
                             },
                             indent=2,
                         )

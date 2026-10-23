@@ -24,22 +24,10 @@ from forest_api.collection_schemas import (
     PackContract,
     PublishPack,
 )
-from forest_api.collection_seed import seed_collection
+from forest_api.collection_seed import seed_legacy_collection as seed_collection
 from forest_api.errors import ApiError
 from forest_api.models import ApiRequest, GrowthProfile, OwnedPlant, Variant
 from forest_api.visitor_models import VisitorWallet, VisitorWalletEntry
-
-
-@pytest.fixture
-def economy(app, client, register, headers):
-    account = register()
-    owner = UUID(account["profile"]["userId"])
-    with app.state.database.sessions() as session:
-        seed_collection(session, app.state.settings)
-    # Synthetic initial funds are deliberately local to tests, never a runtime API.
-    with app.state.database.sessions.begin() as session:
-        session.add(VisitorWallet(owner_id=owner, tokens=100, hosted_active=0, hosted_offline=0))
-    return {"owner": owner, "headers": headers(), "client": client, "app": app}
 
 
 def exchange(economy, **changes):
@@ -603,6 +591,6 @@ def test_export_native_contract(economy):
         }
         path = (
             Path(__file__).resolve().parents[2]
-            / "frontend/MovementForest/Resources/Fixtures/collection-contract.json"
+            / "frontend/MovementForest/Resources/Fixtures/collection-contract-v1.json"
         )
         path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")

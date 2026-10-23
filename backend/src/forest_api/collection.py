@@ -15,7 +15,7 @@ from forest_api.collection_models import (
     PackMember,
     PackOpening,
 )
-from forest_api.collection_schemas import PackContract
+from forest_api.collection_schemas import PackOutcome, outcomes, parse_pack
 from forest_api.errors import ApiError
 from forest_api.models import ApiRequest, OwnedPlant, PlantStage, Species, Variant
 from forest_api.schemas import STAGES
@@ -49,12 +49,12 @@ def pack_contract(session, settings, pack_id, version):
     row = session.get(PackDefinition, (pack_id, version))
     if row is None or (row.is_fixture and settings.environment not in {"local", "test"}):
         raise ApiError(503, "pack_unavailable", "This pack definition is unavailable")
-    return row, PackContract.model_validate(row.definition)
+    return row, parse_pack(row.definition)
 
 
 def validate_dependencies(session, definition, *, publishing=False, fixture=False):
     for pool in definition.rarities:
-        for outcome in pool.outcomes:
+        for outcome in outcomes(pool):
             species = session.get(Species, outcome.species_id)
             variant = session.get(Variant, (outcome.species_id, outcome.variant_id))
             if species is None or variant is None:
@@ -63,7 +63,8 @@ def validate_dependencies(session, definition, *, publishing=False, fixture=Fals
                 raise ApiError(409, "invalid_pack", "New packs require available plants")
             if publishing and species.is_fixture and not fixture:
                 raise ApiError(409, "invalid_pack", "Fixture plants require a fixture pack")
-            if publishing and variant.rarity != pool.rarity:
+            expected_rarity = species.rarity if definition.schema_version == 2 else variant.rarity
+            if publishing and expected_rarity != pool.rarity:
                 raise ApiError(409, "invalid_pack", "Outcome rarity disagrees with the catalogue")
             for kind, model in services.PROFILE_MODELS.items():
                 ref = getattr(outcome.profiles, kind)
@@ -127,7 +128,7 @@ def publish_in_transaction(session, settings, body):
         )
         session.flush()
         for pool in body.definition.rarities:
-            for outcome in pool.outcomes:
+            for outcome in outcomes(pool):
                 pinned = {}
                 for kind in services.PROFILE_MODELS:
                     ref = getattr(outcome.profiles, kind)
@@ -163,8 +164,22 @@ def choose(definition, randbelow=secrets.randbelow):
     roll = randbelow(sum(pool.weight for pool in pools))
     for pool in pools:
         if roll < pool.weight:
-            outcomes = sorted(pool.outcomes, key=lambda row: (row.species_id, row.variant_id))
-            return pool.rarity, outcomes[randbelow(len(outcomes))]
+            if definition.schema_version == 1:
+                legacy = sorted(pool.outcomes, key=lambda row: (row.species_id, row.variant_id))
+                return pool.rarity, legacy[randbelow(len(legacy))]
+            species = sorted(pool.species, key=lambda row: row.species_id)
+            selected = species[randbelow(len(species))]
+            variants = sorted(selected.variants, key=lambda row: row.variant_id)
+            variant_roll = randbelow(sum(v.weight for v in variants))
+            for variant in variants:
+                if variant_roll < variant.weight:
+                    return pool.rarity, PackOutcome(
+                        species_id=selected.species_id,
+                        variant_id=variant.variant_id,
+                        profiles=variant.profiles,
+                    )
+                variant_roll -= variant.weight
+            raise RuntimeError("Random source returned an out-of-range variant value")
         roll -= pool.weight
     raise RuntimeError("Random source returned an out-of-range value")
 

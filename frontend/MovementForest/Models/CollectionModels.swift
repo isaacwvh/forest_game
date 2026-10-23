@@ -10,8 +10,38 @@ struct APIPackOutcome: Codable, Equatable, Identifiable {
 struct APIRarityPool: Codable, Equatable, Identifiable {
     let rarity: String
     let weight: Int
-    let outcomes: [APIPackOutcome]
+    var outcomes: [APIPackOutcome]? = nil
+    var species: [APIPackSpecies]? = nil
     var id: String { rarity }
+}
+
+struct APIPackVariant: Codable, Equatable, Identifiable {
+    let variantId: String
+    let weight: Int
+    let profiles: APIPinnedProfiles
+    var id: String { variantId }
+}
+
+struct APIPackSpecies: Codable, Equatable, Identifiable {
+    let speciesId: String
+    let variants: [APIPackVariant]
+    var id: String { speciesId }
+}
+
+struct VariantDrawOdds: Identifiable {
+    let variantId: String
+    let conditional: Double
+    let overall: Double
+    var id: String { variantId }
+}
+
+struct SpeciesDrawOdds: Identifiable {
+    let speciesId: String
+    let rarity: String
+    let withinRarity: Double
+    let overall: Double
+    let variants: [VariantDrawOdds]
+    var id: String { rarity + "/" + speciesId }
 }
 
 struct APIPackDefinition: Codable, Equatable, Identifiable {
@@ -22,11 +52,49 @@ struct APIPackDefinition: Codable, Equatable, Identifiable {
     let description: String
     let rarities: [APIRarityPool]
     let totalWeight: Int
+    var schemaVersion: Int? = nil // Cached/legacy definitions predate explicit native decoding.
     var id: String { "\(packId)/\(version)" }
     func probability(_ pool: APIRarityPool, perPlant: Bool = false) -> String {
-        guard totalWeight > 0, !perPlant || !pool.outcomes.isEmpty else { return "Unavailable" }
-        let denominator = Double(totalWeight) * (perPlant ? Double(pool.outcomes.count) : 1)
+        let count = pool.outcomes?.count ?? 0
+        guard totalWeight > 0, !perPlant || count > 0 else { return "Unavailable" }
+        let denominator = Double(totalWeight) * (perPlant ? Double(count) : 1)
         return (Double(pool.weight) / denominator).formatted(.percent.precision(.fractionLength(0...4)))
+    }
+
+    var speciesOdds: [SpeciesDrawOdds] {
+        guard totalWeight > 0 else { return [] }
+        return rarities.flatMap { pool -> [SpeciesDrawOdds] in
+            let rarityChance = Double(pool.weight) / Double(totalWeight)
+            if schemaVersion == 2 {
+                let species = pool.species ?? []
+                guard !species.isEmpty else { return [] }
+                return species.map { plant in
+                    let total = plant.variants.reduce(0) { $0 + $1.weight }
+                    let chance = 1 / Double(species.count)
+                    return SpeciesDrawOdds(speciesId: plant.speciesId, rarity: pool.rarity,
+                        withinRarity: chance, overall: rarityChance * chance,
+                        variants: plant.variants.map { variant in
+                            let conditional = total > 0 ? Double(variant.weight) / Double(total) : 0
+                            return VariantDrawOdds(variantId: variant.variantId, conditional: conditional,
+                                                   overall: rarityChance * chance * conditional)
+                        })
+                }
+            }
+            guard schemaVersion == nil || schemaVersion == 1 else { return [] }
+            let outcomes = pool.outcomes ?? []
+            let groups = Dictionary(grouping: outcomes, by: \.speciesId)
+            guard !outcomes.isEmpty else { return [] }
+            return groups.keys.sorted().map { speciesId in
+                let variants = groups[speciesId] ?? []
+                let chance = Double(variants.count) / Double(outcomes.count)
+                return SpeciesDrawOdds(speciesId: speciesId, rarity: pool.rarity,
+                    withinRarity: chance, overall: rarityChance * chance,
+                    variants: variants.map { variant in
+                        VariantDrawOdds(variantId: variant.variantId, conditional: 1 / Double(variants.count),
+                                        overall: rarityChance / Double(outcomes.count))
+                    })
+            }
+        }
     }
 }
 

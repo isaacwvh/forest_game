@@ -128,3 +128,20 @@ def register(client, headers):
         return response.json()
 
     return account
+
+
+@pytest.fixture
+def economy(app, client, register, headers):
+    from uuid import UUID
+
+    from forest_api.collection_seed import seed_legacy_collection
+    from forest_api.visitor_models import VisitorWallet
+
+    account = register()
+    owner = UUID(account["profile"]["userId"])
+    with app.state.database.sessions() as session:
+        seed_legacy_collection(session, app.state.settings)
+    # Synthetic initial funds are deliberately local to tests, never a runtime API.
+    with app.state.database.sessions.begin() as session:
+        session.add(VisitorWallet(owner_id=owner, tokens=100, hosted_active=0, hosted_offline=0))
+    return {"owner": owner, "headers": headers(), "client": client, "app": app}

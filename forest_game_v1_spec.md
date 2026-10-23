@@ -1,7 +1,7 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.13\
+Document version: 0.14\
 Date: 23 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
@@ -24,6 +24,15 @@ All test offers are immediately accessible; permanent unlocks and milestone
 rewards are deferred along with social work. See [COLLECTION_API.md](backend/COLLECTION_API.md)
 and [F7 acceptance](frontend/F7_COLLECTION_ACCEPTANCE.md) for the implemented
 contract. Native execution/device acceptance remains a separate gate.
+
+**Species/variant draw correction:** rarity belongs to a species. New packs
+select rarity → species equally within that rarity → a weighted variant of that
+species. Schema-2 packs freeze all three levels; adding variants cannot increase
+a species' selection chance. Schema-1 packs and receipts retain their historical
+flat-outcome rules. Catalogue navigation is one entry per species, with variants
+and pack-specific odds inside its detail. Moonwillow is registered as fixture
+game content alongside Oak. Hidden-stage discovery is deferred under F8 polishing
+in IMPLEMENTATION_PLAN.md; it is not part of this update.
 
 The editable plant/game planning workbook is [Plant_Game_Data.xlsx](outputs/plant-planning/Plant_Game_Data.xlsx). It starts with oak only. Agreed design rules, provisional defaults, illustrative balance examples and undecided values are labelled separately. Editing the workbook does not automatically publish game configuration or change runtime assets.
 
@@ -212,9 +221,10 @@ and awards one independently owned zero-growth sprout into storage. No seed-tick
 currency is used. Spending never reduces growth or lifetime hosted progress.
 
 Published pack versions separate fixed rarity weights from explicit per-rarity
-species/variant membership. Choose rarity first, then uniformly choose an outcome
-within that rarity. Adding/removing outcomes does not alter rarity probabilities;
-individual outcome probabilities change within their tier. Reject empty
+species membership and conditional variant weights. Choose rarity first, then
+a species uniformly, then one weighted variant of that species. Adding/removing species does not alter rarity probabilities. Adding/removing
+variants does not alter species probabilities. Conditional variant odds change
+within the selected species. Reject empty
 positive-weight tiers rather than redistributing odds. Acquire a specific pack
 version; later edits publish another version and cannot reprice or reroll old packs.
 Pin each outcome's profile versions in the contract and on the awarded copy.
@@ -675,8 +685,8 @@ Blocking overrides friendship and visibility. Remove/disable conflicting request
 | Table | Key fields and constraints |
 | --- | --- |
 | `gardens` | `id uuid PK`, `owner_id FK UNIQUE`, `width numeric(9,3) CHECK > 0`, `depth numeric(9,3) CHECK > 0` in garden units, `visibility text`, `layout_version bigint`, `state_version bigint`, timestamps; width/depth describe ground extent, not elevation or cell counts |
-| `plant_species` | `id text PK`, name/description, `clearance_radius numeric(9,3) CHECK > 0` in garden units, default growth/behaviour/attraction profile references and versions, enabled flag, optional descriptive `properties jsonb`; one shared circular radius for all stages/variants; no owner or individual progress |
-| `plant_variants` | `(species_id, variant_id) PK`, display name/description, rarity, optional growth/behaviour/attraction profile overrides, enabled flag, immutable asset-catalogue reference; standard/blue/vined are oak's current visual variants. Overrides resolve before pinning on award; rarity is shared variant configuration, not rolled per-copy stats |
+| `plant_species` | `id text PK`, name/description, species rarity, `clearance_radius numeric(9,3) CHECK > 0` in garden units, default growth/behaviour/attraction profile references and versions, enabled flag, optional descriptive `properties jsonb`; one shared circular radius for all stages/variants; no owner or individual progress |
+| `plant_variants` | `(species_id, variant_id) PK`, display name/description, legacy rarity metadata (new packs use species rarity), optional growth/behaviour/attraction profile overrides, enabled flag, immutable asset-catalogue reference; standard/blue/vined are oak's current visual variants. Overrides resolve before pinning on award; rarity is shared variant configuration, not rolled per-copy stats |
 | `growth_profiles` | `(id, version) PK`, `thresholds jsonb`, maximum growth; immutable once used |
 | `attraction_profiles` | `(id, version) PK`, immutable nonnegative `stageAttractionMicroUnits` for all four stages, strictly increasing for the V1 growth incentive, optional pinned gameplay tags for visitor targeting; no user state or currency |
 | `growth_rule_profiles` | `(id, version) PK`, validated immutable `metricMultipliers` (exact workout type → `workout_minutes.*` → 0; other omitted metrics = 0), `conditionalModifiers` and `gardenEffects` JSONB; effects declare `system` growth/visitors, supported scope, recipient/filter, conditions/activation and stacking metadata. Growth activity scope requires a canonical metric; growth water and visitor scopes forbid one. Schema version and activation metadata; an empty effects array means no emitted skills |

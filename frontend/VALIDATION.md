@@ -272,3 +272,31 @@ F7_COLLECTION_ACCEPTANCE.md using the existing installation/account. The local
 Docker engine also returned HTTP 500, so backend image validation is pending.
 No existing game database, auth settings, local signing/configuration or account
 was changed by these checks.
+
+
+## Species catalogue and hierarchical draws — 23 October 2026
+
+Catalogue source now lists each species once, with its rarity and a variant
+selector plus pack/version-specific conditional and overall probabilities inside
+species detail. Schema-1 and schema-2 pack odds decode/render through their own
+probability rules. Moonwillow was already bundled; backend fixture registration
+now makes its Standard/Golden art, stats, placement and growth usable. Stage
+artwork remains visible. Account-scoped hidden-stage discovery is recorded under
+F8 polishing in IMPLEMENTATION_PLAN.md and is not implemented here.
+
+Passed Windows checks: 20 USDZs/checksums/archives, 20 alpha PNGs, 15 sample plants,
+project/source/resources/plists/scheme, geometry/legacy contract and current
+synthetic HTTP exchange/pack-consumption/probability/award-thumbnail validation.
+All **50 Swift files** parse without syntax errors. Added native regression cases
+for actual schema-2 species/variant odds, retained schema-1 odds, and unchanged
+50/50 species odds after adding another variant. Current collection fixtures
+come from the real HTTP visitor→exchange→draw and Moonwillow→place→grow walkthrough.
+Backend full suite passed 364 tests; final focused run passed 89 tests.
+
+The user's acceptance of the initial B7 pack behaviour remains recorded separately
+from this new source update. Xcode/Apple SDK compilation, native XCTest/UI runs,
+Release simulator build and updated iPhone visual/functional acceptance remain
+pending. Run bash frontend/scripts/test-mac.sh, then the revised
+F7_COLLECTION_ACCEPTANCE.md flow using the same account and installation. New
+schema-2 offers require this updated client; it continues to support older packs.
+Existing local signing, bundle ID, .env, game DB and accounts were not changed.

@@ -42,3 +42,10 @@ native validation. No HTML/CSS detector or browser screenshot substitutes for it
 - Wallet presentation accepts newer server economy versions only. A durable
   opening result never depends on a reveal animation. Add artwork via the bundled
   asset index; remote asset delivery remains a later milestone.
+
+- Catalogue navigation is one row per species. Variants live in a selector inside
+  species detail, alongside current-pack conditional and overall draw odds. Rarity
+  belongs to the species; legacy variant rarity is not used for new catalogue UI.
+- Pack contents distinguish schema-2 rarity → equal species → weighted variant
+  from legacy flat outcomes. Stage artwork remains visible; silhouettes and
+  permanent account-scoped discovery are deferred polish in IMPLEMENTATION_PLAN.

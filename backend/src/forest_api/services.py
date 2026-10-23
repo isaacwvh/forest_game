@@ -478,6 +478,7 @@ def read_catalogue(session: Session, settings: Settings) -> CatalogueDTO:
                 SpeciesDTO(
                     species_id=species.id,
                     display_name=species.display_name,
+                    rarity=species.rarity,
                     description=species.description,
                     clearance_radius=species.clearance_radius,
                     is_fixture=species.is_fixture,

@@ -219,7 +219,7 @@ class VariantDTO(DTO):
     variant_id: str
     display_name: str
     description: str
-    rarity: str
+    rarity: str  # Legacy metadata; catalogue grouping/new draws use species rarity.
     asset_catalog_key: str
     asset_catalog_version: str
     profile_overrides: dict[str, ProfileRef | None]
@@ -229,6 +229,7 @@ class VariantDTO(DTO):
 class SpeciesDTO(DTO):
     species_id: str
     display_name: str
+    rarity: str = "development_unbalanced"
     description: str
     clearance_radius: GroundNumber
     is_fixture: bool

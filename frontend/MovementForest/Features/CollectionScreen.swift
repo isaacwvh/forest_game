@@ -32,9 +32,7 @@ struct CollectionScreen: View {
     let assets: any AssetCatalogProviding
     @State private var search = ""
     @State private var rarity = "All"
-    private var catalogueRows: [CatalogRow] {
-        (store.catalogue?.species ?? []).flatMap { species in species.variants.map { CatalogRow(species: species, variant: $0) } }
-    }
+    private var catalogueSpecies: [APISpecies] { store.catalogue?.species ?? [] }
     var body: some View {
         Group {
             if destination == .catalog { content.searchable(text: $search, prompt: "Find a plant") }
@@ -103,25 +101,28 @@ struct CollectionScreen: View {
                 Section("All plants") {
                     Picker("Rarity", selection: $rarity) {
                         Text("All").tag("All")
-                        ForEach(Array(Set(catalogueRows.compactMap { $0.variant.rarity })).sorted(), id: \.self) { Text($0.capitalized).tag($0) }
+                        ForEach(Array(Set(catalogueSpecies.compactMap(\.rarity))).sorted(), id: \.self) { Text($0.capitalized).tag($0) }
                     }
-                    ForEach(catalogueRows.filter { row in
-                        (rarity == "All" || row.variant.rarity == rarity) &&
-                        (search.isEmpty || "\(row.species.displayName) \(row.variant.displayName)".localizedCaseInsensitiveContains(search))
-                    }) { row in
+                    ForEach(catalogueSpecies.filter { species in
+                        (rarity == "All" || species.rarity == rarity) &&
+                        (search.isEmpty || (species.displayName + " " + species.variants.map(\.displayName).joined(separator: " ")).localizedCaseInsensitiveContains(search))
+                    }, id: \.speciesId) { species in
                         NavigationLink {
-                            CatalogDetailScreen(row: row, catalogue: store.catalogue, assets: assets)
+                            CatalogSpeciesScreen(species: species, catalogue: store.catalogue, offers: store.offers, assets: assets)
                         } label: {
                             HStack {
-                                CatalogThumbnail(row: row, stage: .sprout, assets: assets)
+                                if let variant = species.variants.first(where: { $0.variantId == "standard" }) ?? species.variants.first {
+                                    CatalogThumbnail(row: CatalogRow(species: species, variant: variant), stage: .sprout, assets: assets)
+                                }
                                 VStack(alignment: .leading) {
-                                    Text(row.species.displayName + " · " + row.variant.displayName)
-                                    Text(row.variant.rarity?.capitalized ?? "Rarity unavailable").font(.caption).foregroundStyle(.secondary)
+                                    Text(species.displayName)
+                                    Text("\(species.rarity?.capitalized ?? "Rarity unavailable") · \(species.variants.count) variants")
+                                        .font(.caption).foregroundStyle(.secondary)
                                 }
                             }
-                        }
+                        }.accessibilityIdentifier("catalog.species.\(species.speciesId)")
                     }
-                    if catalogueRows.isEmpty && !store.busy { Text("Refresh to load the plant catalogue.") }
+                    if catalogueSpecies.isEmpty && !store.busy { Text("Refresh to load the plant catalogue.") }
                 }
             }
         }
@@ -158,18 +159,32 @@ struct PackContentsScreen: View {
     var body: some View {
         List {
             Text(pack.description)
-            Text("One plant per pack. Rarity is selected first, then one listed plant uniformly within that rarity.")
+            Text(pack.schemaVersion == 2 ? "Choose rarity, then a species equally within that rarity, then its weighted variant." :
+                 "Legacy pack: choose rarity, then one listed species/variant outcome equally.")
             ForEach(pack.rarities) { pool in
                 Section("\(pool.rarity.capitalized) · \(pack.probability(pool))") {
-                    ForEach(pool.outcomes) { outcome in
-                        LabeledContent("\(outcome.speciesId.capitalized) · \(outcome.variantId.capitalized)",
-                                       value: pack.probability(pool, perPlant: true))
-                    }
+                    ForEach(pack.speciesOdds.filter { $0.rarity == pool.rarity }) { odds in SpeciesOddsView(odds: odds) }
                 }
             }
             Text("Pack version \(pack.version). This pack keeps these contents after future updates.")
                 .font(.caption).foregroundStyle(.secondary)
         }.navigationTitle(pack.displayName)
+    }
+}
+
+struct SpeciesOddsView: View {
+    let odds: SpeciesDrawOdds
+    private func percent(_ value: Double) -> String { value.formatted(.percent.precision(.fractionLength(0...4))) }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(odds.speciesId.capitalized).font(.headline)
+            Text("Species: \(percent(odds.withinRarity)) within \(odds.rarity.capitalized) · \(percent(odds.overall)) overall")
+                .font(.callout)
+            ForEach(odds.variants) { variant in
+                Text("\(variant.variantId.capitalized): \(percent(variant.conditional)) after this species · \(percent(variant.overall)) overall")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }.padding(.vertical, 4)
     }
 }
 
@@ -190,10 +205,27 @@ private struct CatalogThumbnail: View {
     var body: some View { PlantThumbnail(plant: row.plant(stage), catalog: assets).frame(width: 48, height: 56) }
 }
 
+private struct CatalogSpeciesScreen: View {
+    let species: APISpecies
+    let catalogue: APICatalogue?
+    let offers: [APIExchangeOffer]
+    let assets: any AssetCatalogProviding
+    @State private var variantID = "standard"
+    var body: some View {
+        if let variant = species.variants.first(where: { $0.variantId == variantID }) ?? species.variants.first {
+            CatalogDetailScreen(row: CatalogRow(species: species, variant: variant), catalogue: catalogue,
+                                offers: offers, assets: assets, variantID: $variantID)
+                .navigationTitle(species.displayName)
+        } else { Text("No variants available.") }
+    }
+}
+
 private struct CatalogDetailScreen: View {
     let row: CatalogRow
     let catalogue: APICatalogue?
+    let offers: [APIExchangeOffer]
     let assets: any AssetCatalogProviding
+    @Binding var variantID: String
     private func profile(_ kind: String) -> APICatalogueProfile? {
         let fallback: APIProfileReference?
         switch kind {
@@ -215,8 +247,20 @@ private struct CatalogDetailScreen: View {
             Section {
                 Text(row.species.description ?? "")
                 Text(row.variant.description ?? "")
-                LabeledContent("Rarity", value: row.variant.rarity?.capitalized ?? "Unavailable")
+                LabeledContent("Rarity", value: row.species.rarity?.capitalized ?? "Unavailable")
                 LabeledContent("Clearance radius", value: "\(row.species.clearanceRadius.formatted()) garden units")
+                Picker("Variant", selection: $variantID) {
+                    ForEach(row.species.variants, id: \.variantId) { Text($0.displayName).tag($0.variantId) }
+                }
+            }
+            Section("Draw probabilities by pack") {
+                ForEach(offers.filter { $0.pack.speciesOdds.contains { $0.speciesId == row.species.speciesId } }) { offer in
+                    DisclosureGroup("\(offer.pack.displayName) · version \(offer.pack.version)") {
+                        ForEach(offer.pack.speciesOdds.filter { $0.speciesId == row.species.speciesId }) { odds in SpeciesOddsView(odds: odds) }
+                    }
+                }
+                Text("Current exchange packs. Older packs keep their own probabilities, shown in Draws.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("Growth and attraction by stage") {
                 ForEach(GrowthStage.allCases, id: \.self) { stage in
@@ -238,7 +282,7 @@ private struct CatalogDetailScreen: View {
                 Text("Growth uses the listed activity multipliers. Unlisted activities contribute no growth.")
                     .font(.caption).foregroundStyle(.secondary)
             }
-        }.navigationTitle(row.species.displayName + " · " + row.variant.displayName)
+        }
     }
 }
 

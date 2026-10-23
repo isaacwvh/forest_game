@@ -8,18 +8,19 @@ ownership/use semantics. Every pack awards one sprout to Storage.
 
 ## Setup
 
-Apply Alembic `0004_collection` explicitly before starting the updated API. Run
+Apply Alembic `0005_species_draws` explicitly before starting the updated API. Run
 `forest seed-dev` in the existing local/test environment to publish two fixture
 offers without changing balances, growth, placements, enrolment or accounts:
 
 | Offer | Token cost | Contents |
 | --- | --- | --- |
-| Woodland | 5 | Common standard oak 75%; Rare blue oak 20%; Legendary vined oak 5% |
-| Blue Oak | 8 | Blue oak 100% |
+| Woodland v2 | 5 | Common 100%; Oak/Moonwillow 50/50; then Oak 75/20/5 or Moonwillow 90/10 variants |
+| Moonwillow | 8 | Common Moonwillow 100%; Standard 90%, Golden 10% |
 
-These values are **unapproved development balance**. The seeder labels oak
-variants with the corresponding provisional rarity and retains existing profile
-values. Repeating it never grants funds/packs, resets owned copies or reactivates
+These values are **unapproved development balance**. Both species are Common.
+Oak retains its existing profiles; Moonwillow has dedicated neutral profiles and
+a provisional 1.100-garden-unit clearance radius. The legacy variant-rarity field
+is retained for schema-1 publication/history and is not used by schema 2. Repeating it never grants funds/packs, resets owned copies or reactivates
 a retired offer. Assets remain bundled; new artwork needs an iOS asset release.
 
 ## HTTP routes
@@ -85,14 +86,19 @@ resolved immutable growth/behaviour/attraction profile references.
 
 1. Edit explicit outcome membership and increment the pack version.
 2. Keep rarity weights unchanged to preserve rarity rates. Within each rarity,
-   outcomes have equal probability: `rarity weight / total / outcome count`.
+   species have equal probability, then variant weights apply:
+   `P(variant) = rarityWeight / rarityTotal / speciesCount × variantWeight / variantTotal`.
 3. Increment the offer version to sell the revised pack or change its price.
 4. Publish once. Existing packs retain their previous version and definitions.
-5. To stop sales, use `forest retire-offer woodland --version 1`. Old packs stay
+5. To stop current sales, use `forest retire-offer woodland --version 2`. Old packs stay
    openable. Retiring removes the offer from the shop, not the catalogue plant.
 
-The sampler uses `secrets.randbelow`: rarity first, then one outcome in a stable
-sorted pool. Membership never changes rarity weight. No live enabled-plant query
+New definitions use `schemaVersion: 2`: each rarity contains `species`, each
+with `speciesId` and weighted `variants` containing `variantId`, `weight` and
+pinned `profiles`. Species cannot carry weights or occur twice across tiers.
+The sampler uses `secrets.randbelow`: rarity first, a species uniformly, then a
+weighted variant in stable sorted order. Schema 1 retains its original flat
+outcomes sampler; existing JSON contracts/receipts are never rewritten. Membership never changes rarity weight. No live enabled-plant query
 defines an acquired pack. Empty tiers cannot silently redistribute probability.
 Publication is immutable; changing catalogue defaults does not alter old pack
 profiles. Relational member references retain variants/profiles, and database
@@ -119,3 +125,20 @@ Migration checks cover existing B6 state and full downgrade/reupgrade parity.
 opening loop and restarts Uvicorn before replaying receipts. Its export flag
 produces synthetic native fixtures. Mac tests and iPhone acceptance are separate
 from Windows syntax/resource checks; use `frontend/F7_COLLECTION_ACCEPTANCE.md`.
+
+
+## Grouped catalogue and rollout
+
+GET /v1/catalog now exposes `rarity` on species. Variants retain deprecated legacy
+rarity metadata for compatibility. The native catalogue uses one species row,
+variant inspection within it, and current-offer probabilities labelled by pack
+version. Old owned-pack probabilities remain available in Draws. All stage art
+is visible; permanent per-account stage discovery is future polishing work.
+
+Run the migration before seeding. Install the matching updated iOS build before
+testing newly published schema-2 offers; the earlier iOS build only understands
+schema 1. The new build reads both. `forest seed-dev` publishes Woodland v2 and
+retires Woodland v1/Blue Oak sales without migrating acquired packs or changing
+existing owned-copy progress/currency. A repeat call never reactivates retired
+offers. The catalogue version changes to development-woodland-v2 so old cached
+placement rules are refreshed. No live game database is changed by automated tests.

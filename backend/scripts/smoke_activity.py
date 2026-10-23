@@ -136,7 +136,7 @@ def main():
                 {
                     "requestId": str(uuid4()),
                     "expectedLayoutVersion": 0,
-                    "catalogVersion": "development-oak-v1",
+                    "catalogVersion": request("/v1/catalog")["catalogVersion"],
                     "actions": [
                         {
                             "action": "plant",
@@ -195,7 +195,7 @@ def main():
                 {
                     "requestId": str(uuid4()),
                     "expectedLayoutVersion": 1,
-                    "catalogVersion": "development-oak-v1",
+                    "catalogVersion": request("/v1/catalog")["catalogVersion"],
                     "actions": [{"action": "store", "plantId": account["starterPlantId"]}],
                 },
             )

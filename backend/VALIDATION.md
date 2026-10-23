@@ -300,3 +300,39 @@ DB/account state, auth configuration, .env and running game services were not
 migrated, seeded or reset. Use COLLECTION_API.md and the F7 acceptance guide for
 the explicit existing-server upgrade. Existing IMPLEMENTATION_PLAN edits were
 retained while adding the current collection decision/implementation record.
+
+
+## Species-first draws / Moonwillow — 23 October 2026
+
+Executed full PostgreSQL regression suite: **364 passed** in 307.68s. Final
+focused schema-1/schema-2 collection, Moonwillow and migration run: **89 passed**
+in 71.63s, including the additional variant-profile override regression added
+during final review. Fixture/runtime data uses strict schema-2 validation,
+secure rarity → uniform species → weighted variant selection, and species rarity
+from Alembic `0005_species_draws`. Legacy schema-1 sampling/contracts/receipts stay
+unchanged. Migration parity/downgrade/reupgrade and preservation of B6/B7 accounts,
+plants, unopened packs, old openings, balances and receipt JSON pass.
+
+Verified exact three-level boundaries, invariant species odds under variant
+additions/reordering, invariant rarity odds, empty/duplicate/invalid distribution
+rejection, species-rarity publication validation, one sampling event under four
+concurrent openings, profile override resolution/pinning, repeat-safe seeding and
+retirement, and actual Moonwillow draw → Storage → placement → step growth.
+Older migration tests bootstrap current-model records then downgrade to the old
+schema before snapshotting/upgrading, so current ORM columns are never queried
+against an older schema. A separate 0004→0005 check preserves actual pack state.
+
+Real Uvicorn HTTP activity and visitor/collection walkthroughs passed. The latter
+uses earned tokens for Woodland v2, restarts before receipt replay, acquires a
+Moonwillow pack without forcing random outcomes, places its sprout and grows it
+to seedling via activity sync. Exported current collection/visitor fixtures are
+synthetic. The prior collection contract is retained separately for legacy native
+decoding/odds tests. No personal Health data is exported.
+
+Ruff lint/format, dependency consistency, diff whitespace and portable frontend
+resource/contract/project/Swift parsing checks pass. Docker Desktop still returns
+HTTP 500 from its Linux-engine info endpoint; image build/run is not verified.
+No remote CI, Xcode/XCTest, Release build or new iPhone acceptance is claimed.
+Only random disposable forest_test_* databases were created/dropped; the dedicated
+loopback validation cluster was stopped. Existing game DB, game API services,
+accounts, .env/auth/signing configuration and production balance were untouched.
