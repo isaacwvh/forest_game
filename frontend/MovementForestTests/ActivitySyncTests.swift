@@ -167,7 +167,41 @@ final class ActivitySyncTests: XCTestCase {
         XCTAssertTrue(String(decoding: whole, as: UTF8.self).contains("\"steps\":123"))
         XCTAssertEqual(try ActivityWire.steps(123), 123)
         XCTAssertNil(try ActivityWire.steps(nil))
-        for value in [Double.nan, .infinity, -1, 1.5, 1_000_000_001] { XCTAssertThrowsError(try ActivityWire.steps(value)) }
+        for value in [Double.nan, .infinity, -.infinity, -1, -0.1, 1_000_000_001,
+                      1_000_000_000.1, Double.greatestFiniteMagnitude] {
+            XCTAssertThrowsError(try ActivityWire.steps(value))
+        }
+    }
+
+    func testFractionalHealthTotalsUseWholeCumulativeSteps() throws {
+        let cases: [(Double, Int64)] = [
+            (0, 0), (0.9, 0), (1.5, 1), (123.999999999, 123),
+            (3000.75, 3000), (999_999_999.9, 999_999_999), (1_000_000_000, 1_000_000_000)
+        ]
+        for (healthTotal, expected) in cases {
+            XCTAssertEqual(try ActivityWire.steps(healthTotal), expected)
+        }
+        let reads: [Double] = [1000.2, 1000.9, 1001.1]
+        XCTAssertEqual(try reads.map { try XCTUnwrap(ActivityWire.steps($0)) }, [1000, 1000, 1001])
+    }
+
+    func testFractionalObservationEnrolsAndSyncsAsWholeCounts() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        service.setDevice(nil)
+        let editor = try editor(service), health = health(service.fixture)
+        let provider = try XCTUnwrap(health.provider as? SyncHealthProvider)
+        provider.amount = 3000.75
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        let enrolment = try ActivityWire.decoder().decode(ActivityEnrolmentRequest.self, from: XCTUnwrap(service.enrolBodies.first))
+        XCTAssertEqual(enrolment.steps, 3000)
+        XCTAssertTrue(service.syncBodies.isEmpty)
+        provider.amount = 3001.9
+        _ = await sync.synchronize()
+        let upload = try ActivityWire.decoder().decode(ActivitySyncRequest.self, from: XCTUnwrap(service.syncBodies.first))
+        XCTAssertTrue(upload.days.allSatisfy { $0.steps == 3001 })
+        XCTAssertEqual(sync.pendingCount, 0)
     }
 
     func testNoUploadOrHealthReadBeforeSeparateOptIn() async throws {
@@ -220,6 +254,31 @@ final class ActivitySyncTests: XCTestCase {
         XCTAssertEqual(service.syncBodies[0], service.syncBodies[1])
         XCTAssertEqual(restored.pendingCount, 0)
         XCTAssertEqual(restoredEditor.confirmed?.plants.first?.growthMicroUnits, "10000000")
+    }
+
+    func testFractionalReadDoesNotRewriteSavedRetryBytes() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let first = try editor(service), health = health(service.fixture)
+        let provider = try XCTUnwrap(health.provider as? SyncHealthProvider)
+        provider.amount = 3000.75
+        await first.start(); service.loseNextResponse = true
+        let sync = coordinator(service, editor: first, health: health, journal: journal)
+        await sync.setEnabled(true)
+        XCTAssertEqual(sync.pendingCount, 1)
+        let original = try XCTUnwrap(service.syncBodies.first)
+        let queued = try XCTUnwrap(journal.value?.operations.first)
+        XCTAssertEqual(queued.body, original)
+        let request = try ActivityWire.decoder().decode(ActivitySyncRequest.self, from: original)
+        XCTAssertTrue(request.days.allSatisfy { $0.steps == 3000 })
+        provider.amount = 3001.9
+        let restoredEditor = try editor(service); await restoredEditor.start()
+        let restored = coordinator(service, editor: restoredEditor, health: health, journal: journal)
+        _ = await restored.synchronize()
+        XCTAssertGreaterThanOrEqual(service.syncBodies.count, 3)
+        XCTAssertEqual(service.syncBodies[1], original)
+        let latest = try XCTUnwrap(service.syncBodies.last)
+        XCTAssertEqual(try ActivityWire.decoder().decode(ActivitySyncRequest.self, from: latest).days.last?.steps, 3001)
+        XCTAssertEqual(restored.pendingCount, 0)
     }
 
     func testFailedJournalWritePreventsTransmission() async throws {

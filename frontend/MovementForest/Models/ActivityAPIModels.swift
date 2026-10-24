@@ -37,10 +37,14 @@ enum ActivityWire {
     }
     static func steps(_ value: Double?) throws -> Int64? {
         guard let value = value else { return nil }
-        guard value.isFinite, value >= 0, value <= 1_000_000_000, value.rounded(.towardZero) == value else {
-            throw ForestError.invalidData("Health returned a step quantity that cannot be uploaded as a whole count. Try reading again.")
+        guard value.isFinite, value >= 0, value <= 1_000_000_000 else {
+            throw ForestError.invalidData("Health returned an invalid step total outside the supported range. Try reading again.")
         }
-        return Int64(value)
+        // HealthKit count quantities are Doubles, including aggregated daily totals.
+        // Floor the cumulative total once, never individual samples or deltas. A
+        // later read recovers a whole step when the cumulative total crosses it;
+        // existing server watermarks handle repeats and downward corrections.
+        return Int64(value.rounded(.down))
     }
 }
 

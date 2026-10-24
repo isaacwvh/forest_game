@@ -35,8 +35,14 @@ Mutation bodies are bounded to 64 KiB. Duplicate JSON fields, nonfinite numbers,
 unsupported fields/metrics, duplicate dates and invalid numeric types fail.
 Steps must be whole JSON integers from 0 to 1,000,000,000; booleans, strings,
 fractions and explicit floating-point numeric tokens are rejected. This technical
-input bound is separate from the versioned reward cap. Client HealthKit reads
-must canonicalise whole step quantities explicitly rather than silently round.
+input bound is separate from the versioned reward cap. HealthKit count quantities
+are Doubles and a daily aggregate may have a fractional part. The iOS adapter
+validates the raw daily total as finite, nonnegative and within that bound, then
+explicitly floors the cumulative total once before integer JSON encoding. For
+example, 3,000.75 uploads as 3,000; a later 3,001.9 uploads as 3,001. Never round
+individual samples or upload deltas. Use the same rule for enrolment and sync;
+null remains unavailable. Saved request bodies/UUIDs are never rewritten when
+this client conversion policy changes. Server integer validation is unchanged.
 Filter HealthKit report dates before the server's `baselineDate` out of new
 uploads; they cannot be credited and would reject the complete batch.
 

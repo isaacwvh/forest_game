@@ -377,3 +377,20 @@ Xcode/Apple SDK compilation, XCTest/UI execution, Release simulator build or
 physical-iPhone acceptance. These are pending checks, not reported passes.
 Personal marginal boosts, wider metric/workout uploads and deferred mechanics
 are not implemented or claimed validated by this first B8 increment.
+
+### Existing Docker database upgrade / personal grant follow-up — 24 October 2026
+
+With Docker available again, inspected the unhealthy API without restarting the
+engine. The migration image contained head 0005 while the API contained head
+0006; the database remained at 0005. Plain Compose build had excluded the
+tools-profile migration service. Rebuilt migrate explicitly and corrected both
+upgrade guides to build api and migrate (or run migrate with --build).
+
+At the user's subsequent request, ran the rebuilt migration to
+0006_garden_skills, published Sleeping Dew/new development offers, and waited
+for Compose API/database health checks. Both are healthy and HTTP readiness
+returns ready. Granted one adult Standard Moonwillow with behaviour v2 into
+storage using the repeat-safe CLI; SQL confirmed the stored copy and mature
+growth of 1,000,000,000 micro-units. The verified game username is isaac_auth_test
+(display name Isaac Test), correcting the earlier transposed username advice.
+No Docker engine restart, data reset, volume deletion or auth changes occurred.

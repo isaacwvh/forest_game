@@ -266,6 +266,9 @@ Record Xcode, macOS and iOS versions, date, and pass/fail evidence here or in
 - [ ] Existing-account login, new account/starter, token replacement.
 - [ ] Consent off means no step upload; opt-in baseline awards zero history.
 - [ ] Real steps grow planted copies; repeat totals grant nothing extra.
+- [ ] Fractional HealthKit daily totals upload as floored whole cumulative steps
+      for both baseline and sync. Repeated reads within the same whole-step
+      interval add no reward; queued request bytes survive interruption unchanged.
 - [ ] Stage advance preserves transform and camera; attraction matches API.
 - [ ] Store/replant preserves identity/progress and storage stops growth.
 - [ ] Cached cold offline viewing, interrupted request and relaunch recovery.

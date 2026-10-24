@@ -63,7 +63,7 @@ versions remain pinned independently of credit-time skill policy.
 From the backend directory, with the existing game database available:
 
 ```powershell
-docker compose build
+docker compose build api migrate
 docker compose run --rm migrate
 docker compose run --rm api forest seed-skills-dev
 docker compose run --rm api forest grant-adult-moonwillow YOUR_GAME_USERNAME --dry-run
@@ -75,6 +75,14 @@ Use `forest seed-dev` first only if the development collection has never been
 seeded. `seed-skills-dev` is explicit and repeat-safe; it publishes Woodland v3
 and Moonwillow v2 without re-enabling retired offers on reruns. Existing packs
 keep their contracts; new packs pin `dev_moonwillow_behaviour` v2.
+
+Build both services explicitly: `migrate` belongs to the `tools` profile and uses
+an independent image. Plain `docker compose build` can rebuild only `api`, leaving
+an older migration image whose `alembic upgrade head` silently stops at its old
+head. Recovery: `docker compose run --rm --build migrate`, then repeat the skill
+seed and API startup commands. The database should report `0006_garden_skills`.
+In PowerShell, check `$LASTEXITCODE` after each command and stop on an error before
+continuing to seed or API startup. This recovery requires no database reset.
 
 Host-based equivalents, using the configured existing database:
 

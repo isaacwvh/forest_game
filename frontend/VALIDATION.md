@@ -328,3 +328,21 @@ resource check is presented as native compilation evidence. Docker/personal game
 state was left unchanged at the user's request; apply SKILLS_API.md's upgrade
 and named-account grant before the device flow. Existing local signing/auth and
 other uncommitted asset/spec work were preserved.
+
+## Fractional HealthKit step totals — 24 October 2026
+
+The local ActivityWire conversion previously required a Double to equal its
+whole-number truncation exactly. A fractional daily aggregate therefore failed
+before a new enrolment/sync request could be queued, even when the displayed
+Health total looked like a whole count. Apple documents HKUnit count quantities
+as Double values. The client now validates finite/nonnegative/bounded input,
+then floors the cumulative daily total once before Int64 encoding. Nil stays
+unavailable and invalid/over-bound values still fail. Existing journals, saved
+request bytes/UUIDs, device baselines and server integer validation are unchanged.
+
+Added native regressions for fractional/boundary conversion, enrolment/sync and
+lost-response/relaunch recovery with a newer fractional observation. Portable
+resource/contract checks, all 50 Swift syntax parses and diff whitespace passed.
+These tests require XCTest on a Mac; no Apple SDK compilation or native execution
+is claimed on this Windows host. Device acceptance: install the updated app over
+the existing installation and use Sync now; do not delete the app or saved queue.

@@ -25,7 +25,7 @@ From `backend/` in PowerShell, with Docker Desktop's Linux engine running:
 Copy-Item .env.example .env
 # Edit .env: replace FOREST_DEV_AUTH_SECRET with a random secret (at least 32 chars).
 docker compose up -d db
-docker compose build
+docker compose build api migrate
 docker compose run --rm migrate
 docker compose run --rm api forest seed-dev
 docker compose up -d --wait --wait-timeout 90 api
@@ -33,6 +33,10 @@ Invoke-RestMethod http://127.0.0.1:8000/health/ready
 ```
 
 Migrations are an explicit controlled command, not an API-startup side effect.
+The `migrate` service is in the `tools` profile and has its own image: always
+name it in the build command above. Plain `docker compose build` can leave an
+older migration image in place. To rebuild and run just the migration service,
+use `docker compose run --rm --build migrate`.
 Do not run migrations independently from every API replica. The named database
 volume persists between restarts. `docker compose down` stops the services without
 deleting its volume. Development ports bind to loopback only.

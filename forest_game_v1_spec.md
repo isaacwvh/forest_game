@@ -1,7 +1,7 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.18\
+Document version: 0.19\
 Date: 24 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
@@ -398,6 +398,8 @@ Use HealthKit statistics queries for all four scoped daily quantity totals. Use 
 ### 5.3 V1 accounting proposal
 
 Use daily activity buckets under a chosen game timezone and a server-maintained rewarded-progress watermark. Report cumulative totals for a bucket, not instructions to add steps.
+
+**HealthKit step normalisation:** HealthKit count quantities use `Double`; do not require an already integral daily aggregate. Before constructing a new enrolment/sync request, validate each raw daily step total as finite, nonnegative and no greater than 1,000,000,000, then floor the complete cumulative daily total to a whole integer. Never round each underlying sample or each newly calculated delta. A later cumulative read recovers the next whole step when its boundary is crossed. Missing data remains null, not zero. The backend retains its strict integer wire contract and credited watermarks; existing queued request bytes/UUIDs and confirmed rewards are unchanged. One fractional recent-day bucket must not block the upload merely because it has a fractional part. The Activity display may round for readability independently of this conservative upload normalisation.
 
 HealthKit stores timestamped samples rather than clearing a daily counter at midnight. A new date starts a new query/accounting bucket; previous days remain available for reconciliation. Use calendar day boundaries in the chosen game timezone, including daylight-saving transitions, rather than assuming every day lasts 24 hours. Workouts are session records, not resettable daily counters; define and version how eligible duration crossing midnight is attributed before release.
 

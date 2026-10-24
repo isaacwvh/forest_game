@@ -1,6 +1,6 @@
 # Movement Forest implementation plan
 
-Revised 24 October 2026 against `forest_game_v1_spec.md`, version 0.18.
+Revised 24 October 2026 against `forest_game_v1_spec.md`, version 0.19.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
 The first B8 skill/cap increment is now source-implemented below, including
