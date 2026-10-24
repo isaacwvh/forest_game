@@ -293,6 +293,13 @@ class EconomyConfig(Base):
     rules: Mapped[dict] = mapped_column(JSONB)
 
 
+class SkillPolicy(Base):
+    __tablename__ = "skill_policies"
+    __table_args__ = (CheckConstraint("jsonb_typeof(rules) = 'object'", name="rules_object"),)
+    version: Mapped[str] = mapped_column(String(100), primary_key=True)
+    rules: Mapped[dict] = mapped_column(JSONB)
+
+
 class ActivityDevice(Base):
     __tablename__ = "activity_devices"
     __table_args__ = (

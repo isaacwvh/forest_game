@@ -336,3 +336,44 @@ No remote CI, Xcode/XCTest, Release build or new iPhone acceptance is claimed.
 Only random disposable forest_test_* databases were created/dropped; the dedicated
 loopback validation cluster was stopped. Existing game DB, game API services,
 accounts, .env/auth/signing configuration and production balance were untouched.
+
+## Sleeping Dew / B8 skill and cap increment — 24 October 2026
+
+Final full PostgreSQL regression suite: **399 passed in 274.28s**. The focused
+skill/placement/migration run passed **101 tests** before the final full run.
+The initial full run exposed a delayed-present test double missing the new
+boundary keyword; the wrapper was corrected and the final full run is green.
+
+Verified adult/storage activation, shared Standard/Golden groups, deterministic
+strongest selection, recipient filtering, capped copy counts, exact fractional
+carry, +150% activity/water caps and ×6.25 composition, percentage/flat attraction
+and capacity limits, maturity clamping, source activation after the entire upload,
+actual bonus provenance, source-store/sync races in both orders, concurrent
+repeat-safe grants and preservation of legacy pack/profile versions. Database
+INSERT checks reject unsupported components; profile/policy immutability and
+Alembic model parity/downgrade/reupgrade/preservation checks pass.
+
+Real Uvicorn HTTP walkthroughs passed:
+
+- New skills walkthrough: stored adult grant, confirmed placement/activation,
+  exactly 10.4 water for neutral Oak's 1,000 eligible steps, confirmed recap,
+  server restart/receipt replay, source storage and subsequent neutral growth.
+- Existing activity/growth/storage walkthrough.
+- Existing visitors → earned tokens → exchange → pack opening and restart replay.
+
+Exported skills-contract.json contains only synthetic disposable-account data.
+Ruff check, Ruff format check (68 Python files), pip check, diff whitespace,
+portable native resources/contracts and all 50 Swift syntax parses pass.
+
+All database tests used randomly named forest_test_* databases on a dedicated
+loopback PostgreSQL validation cluster. The configured personal database on
+127.0.0.1:5432 was unavailable; Docker reported an engine error. At the user's
+explicit request Docker was not restarted and no personal grant, migration,
+seed, account/auth/signing or environment edit was performed. The tested,
+repeat-safe named-account grant/upgrade commands are in SKILLS_API.md.
+
+Not executed on this Windows host: Docker image build/run, remote CI,
+Xcode/Apple SDK compilation, XCTest/UI execution, Release simulator build or
+physical-iPhone acceptance. These are pending checks, not reported passes.
+Personal marginal boosts, wider metric/workout uploads and deferred mechanics
+are not implemented or claimed validated by this first B8 increment.

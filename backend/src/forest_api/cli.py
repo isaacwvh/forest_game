@@ -13,6 +13,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Movement Forest development tools")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("seed-dev", help="Seed explicitly unapproved local/test catalogue")
+    commands.add_parser("seed-skills-dev", help="Publish Sleeping Dew and new development packs")
+    grant = commands.add_parser(
+        "grant-adult-moonwillow", help="Grant one mature test copy into storage"
+    )
+    grant.add_argument("username")
+    grant.add_argument("--dry-run", action="store_true")
     collection_publish = commands.add_parser(
         "publish-pack", help="Validate and publish an immutable pack/offer JSON file"
     )
@@ -37,7 +43,22 @@ def main() -> None:
     database = Database(settings)
     try:
         with database.sessions() as session:
-            if args.command == "retire-offer":
+            if args.command == "seed-skills-dev":
+                from forest_api.skill_seed import seed_skills
+
+                seed_skills(session, settings)
+                print("Sleeping Dew published; legacy plants and packs retain their profiles.")
+            elif args.command == "grant-adult-moonwillow":
+                from forest_api.skill_seed import grant_adult_moonwillow
+
+                print(
+                    json.dumps(
+                        grant_adult_moonwillow(
+                            session, settings, args.username, dry_run=args.dry_run
+                        )
+                    )
+                )
+            elif args.command == "retire-offer":
                 from forest_api.collection import retire_offer
 
                 retire_offer(session, settings, args.offer_id, args.version)

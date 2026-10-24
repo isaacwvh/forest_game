@@ -32,6 +32,7 @@ def seed_legacy_collection(session, settings):
         if not catalogue.is_fixture or catalogue.version not in {
             "development-oak-v1",
             COLLECTION_FIXTURE_VERSION,
+            "development-skills-v1",
         }:
             raise ValueError("Collection fixture requires the development catalogue")
         if session.get(PackDefinition, ("woodland", 1)) is not None:

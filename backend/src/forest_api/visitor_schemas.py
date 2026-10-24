@@ -9,6 +9,7 @@ from forest_api.schemas import DTO
 
 
 class VisitorRuleDefinition(Definition):
+    skill_policy_version: str = Field(default="b8-caps-v1", min_length=1, max_length=100)
     curve: VisitorCurve
     # Slot grid must remain stable across rule versions.
     slot_seconds: Literal[30] = 30

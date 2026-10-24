@@ -4,7 +4,7 @@ import hashlib
 import json
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text, tuple_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -22,6 +22,7 @@ from forest_api.models import (
     GrowthProfile,
     OwnedPlant,
     PlantStage,
+    SkillPolicy,
     Species,
     User,
     Variant,
@@ -343,6 +344,11 @@ class PlantPresenter:
             ),
             base_attraction_micro_units=str(getattr(attraction_definition.stage_attraction, stage)),
             contributes_attraction=placement is not None,
+            garden_skills=BehaviourDefinition.model_validate(
+                self.profile(
+                    "behaviour", plant.behaviour_profile_id, plant.behaviour_profile_version
+                ).rules
+            ).model_dump(by_alias=True)["gardenEffects"],
             model_key=assets.model_key,
             thumbnail_key=assets.thumbnail_key,
             placement=PlacementDTO(
@@ -383,6 +389,8 @@ def present_garden(
     garden: Garden,
     catalogue: GameCatalogue,
     presenter: PlantPresenter | None = None,
+    *,
+    boundary=None,
 ) -> GardenDTO:
     """Caller holds the garden lock for the entire snapshot/DTO assembly."""
     rows = session.execute(
@@ -392,6 +400,7 @@ def present_garden(
         .order_by(OwnedPlant.id)
     ).all()
     presenter = presenter or PlantPresenter(session)
+    skills = skill_snapshot(session, garden, presenter=presenter, rows=rows, boundary=boundary)
     presented = [presenter.plant(plant, placement) for plant, placement in rows]
     return GardenDTO(
         garden_id=garden.id,
@@ -403,10 +412,82 @@ def present_garden(
         layout_version=garden.layout_version,
         state_version=garden.state_version,
         plants=presented,
-        total_attraction_micro_units=str(
-            sum(int(plant.base_attraction_micro_units) for plant in presented)
-        ),
+        total_attraction_micro_units=str(skills.attraction()),
+        skill_summary=skills.summary(),
     )
+
+
+def skill_snapshot(session, garden, *, presenter=None, rows=None, boundary=None):
+    """Bulk load immutable definitions; callers hold the garden accounting lock."""
+    from forest_api.skill_rules import CAPS_VERSION, SkillCaps
+    from forest_api.skills import PlantFacts, SkillSnapshot
+    from forest_api.visitor_models import VisitorRules
+
+    presenter = presenter or PlantPresenter(session)
+    if rows is None:
+        rows = session.execute(
+            select(OwnedPlant, GardenPlacement)
+            .join(GardenPlacement, GardenPlacement.plant_id == OwnedPlant.id)
+            .where(GardenPlacement.garden_id == garden.id, OwnedPlant.owner_id == garden.owner_id)
+            .order_by(OwnedPlant.id)
+        ).all()
+    for kind, model in PROFILE_MODELS.items():
+        keys = {
+            (getattr(p, f"{kind}_profile_id"), getattr(p, f"{kind}_profile_version"))
+            for p, _ in rows
+        }
+        if keys:
+            for profile in session.scalars(
+                select(model).where(tuple_(model.id, model.version).in_(keys))
+            ):
+                presenter.profiles[(kind, profile.id, profile.version)] = profile
+    rule = session.scalar(
+        select(VisitorRules)
+        .where(
+            VisitorRules.effective_at
+            <= (boundary if boundary is not None else func.clock_timestamp())
+        )
+        .order_by(VisitorRules.effective_at.desc())
+        .limit(1)
+    )
+    version = rule.rules.get("skill_policy_version", CAPS_VERSION) if rule else CAPS_VERSION
+    policy = session.get(SkillPolicy, version)
+    if policy is None:
+        raise ApiError(503, "skill_policy_unavailable", "Skill rules require maintenance")
+    try:
+        caps = SkillCaps.model_validate(policy.rules)
+        facts = []
+        for plant, _ in rows:
+            growth = presenter.profile(
+                "growth", plant.growth_profile_id, plant.growth_profile_version
+            )
+            attraction = presenter.profile(
+                "attraction", plant.attraction_profile_id, plant.attraction_profile_version
+            )
+            stage = stage_for(plant.growth_micro_units, growth.thresholds)
+            behaviour = BehaviourDefinition.model_validate(
+                presenter.profile(
+                    "behaviour", plant.behaviour_profile_id, plant.behaviour_profile_version
+                ).rules
+            )
+            facts.append(
+                PlantFacts(
+                    str(plant.id),
+                    plant.species_id,
+                    plant.variant_id,
+                    stage,
+                    tuple(attraction.gameplay_tags),
+                    attraction.stage_attraction[stage],
+                    plant.behaviour_profile_id,
+                    plant.behaviour_profile_version,
+                    behaviour,
+                )
+            )
+        return SkillSnapshot(tuple(facts), caps, version)
+    except ValueError as exc:
+        raise ApiError(
+            503, "invalid_skill_configuration", "Skill rules require maintenance"
+        ) from exc
 
 
 def read_garden(session: Session, settings: Settings, identity: Identity) -> GardenDTO:

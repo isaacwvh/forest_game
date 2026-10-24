@@ -1,0 +1,911 @@
+{
+  "catalogue": {
+    "catalogVersion": "development-skills-v1",
+    "isFixture": true,
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "coordinateDecimalPlaces": 3,
+    "rotationDecimalPlaces": 2,
+    "species": [
+      {
+        "speciesId": "moonwillow",
+        "displayName": "Moonwillow",
+        "rarity": "common",
+        "description": "Development fixture; balance and clearance radius are provisional.",
+        "clearanceRadius": 1.1,
+        "isFixture": true,
+        "defaultProfiles": {
+          "growth": {
+            "id": "dev_moonwillow_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_moonwillow_behaviour",
+            "version": 2
+          },
+          "attraction": {
+            "id": "dev_moonwillow_attraction",
+            "version": 1
+          }
+        },
+        "variants": [
+          {
+            "variantId": "golden",
+            "displayName": "Golden",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/moonwillow/v1/moonwillow.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/moonwillow/v1/models/moonwillow-adult-golden.usdz",
+                "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-adult-golden.png"
+              },
+              "seedling": {
+                "modelKey": "assets/moonwillow/v1/models/moonwillow-seedling-golden.usdz",
+                "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-seedling-golden.png"
+              },
+              "sprout": {
+                "modelKey": "assets/moonwillow/v1/models/moonwillow-sprout-golden.usdz",
+                "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-sprout-golden.png"
+              },
+              "young": {
+                "modelKey": "assets/moonwillow/v1/models/moonwillow-young-golden.usdz",
+                "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-young-golden.png"
+              }
+            }
+          },
+          {
+            "variantId": "standard",
+            "displayName": "Standard",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/moonwillow/v1/moonwillow.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/moonwillow/v1/models/moonwillow-adult-standard.usdz",
+                "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-adult-standard.png"
+              },
+              "seedling": {
+                "modelKey": "assets/moonwillow/v1/models/moonwillow-seedling-standard.usdz",
+                "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-seedling-standard.png"
+              },
+              "sprout": {
+                "modelKey": "assets/moonwillow/v1/models/moonwillow-sprout-standard.usdz",
+                "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-sprout-standard.png"
+              },
+              "young": {
+                "modelKey": "assets/moonwillow/v1/models/moonwillow-young-standard.usdz",
+                "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-young-standard.png"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "speciesId": "oak",
+        "displayName": "Oak",
+        "rarity": "common",
+        "description": "Development fixture; balance unapproved.",
+        "clearanceRadius": 0.9,
+        "isFixture": true,
+        "defaultProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "variants": [
+          {
+            "variantId": "blue",
+            "displayName": "Blue",
+            "description": "Development fixture",
+            "rarity": "rare",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-blue.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-blue.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-blue.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-blue.png"
+              }
+            }
+          },
+          {
+            "variantId": "standard",
+            "displayName": "Standard",
+            "description": "Development fixture",
+            "rarity": "common",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-standard.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-standard.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-standard.png"
+              }
+            }
+          },
+          {
+            "variantId": "vined",
+            "displayName": "Vined",
+            "description": "Development fixture",
+            "rarity": "legendary",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-vined.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-vined.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-vined.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-vined.png"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "profiles": {
+      "growth": [
+        {
+          "id": "dev_moonwillow_growth",
+          "version": 1,
+          "thresholdsMicroUnits": {
+            "sprout": "0",
+            "seedling": "100000000",
+            "young": "400000000",
+            "adult": "1000000000"
+          },
+          "maximumGrowthMicroUnits": "1000000000"
+        },
+        {
+          "id": "dev_oak_growth",
+          "version": 1,
+          "thresholdsMicroUnits": {
+            "sprout": "0",
+            "seedling": "100000000",
+            "young": "400000000",
+            "adult": "1000000000"
+          },
+          "maximumGrowthMicroUnits": "1000000000"
+        }
+      ],
+      "behaviour": [
+        {
+          "id": "dev_moonwillow_behaviour",
+          "version": 2,
+          "schemaVersion": 2,
+          "metricMultipliers": {
+            "steps": 1.0
+          },
+          "conditionalModifiers": [],
+          "gardenEffects": [
+            {
+              "componentVersion": 1,
+              "id": "sleeping_dew",
+              "name": "Sleeping Dew",
+              "description": "While this fully grown Moonwillow is planted, all garden plants gain 4% more water from activity. Multiple Sleeping Dew skills do not stack.",
+              "system": "growth",
+              "scope": "water",
+              "metric": null,
+              "target": "all_planted_plants",
+              "recipients": null,
+              "minimumStage": "adult",
+              "condition": null,
+              "operation": "percent",
+              "magnitude": {
+                "type": "fixed",
+                "value": "0.04",
+                "selector": null,
+                "maximum": null
+              },
+              "stackingGroup": "moonwillow_sleeping_dew",
+              "stackingRule": "strongest"
+            }
+          ]
+        },
+        {
+          "id": "dev_oak_behaviour",
+          "version": 1,
+          "schemaVersion": 1,
+          "metricMultipliers": {
+            "steps": 1.0
+          },
+          "conditionalModifiers": [],
+          "gardenEffects": []
+        }
+      ],
+      "attraction": [
+        {
+          "id": "dev_moonwillow_attraction",
+          "version": 1,
+          "stageAttractionMicroUnits": {
+            "sprout": "2000000",
+            "seedling": "5000000",
+            "young": "12000000",
+            "adult": "20000000"
+          },
+          "gameplayTags": [
+            "tree",
+            "woodland"
+          ]
+        },
+        {
+          "id": "dev_oak_attraction",
+          "version": 1,
+          "stageAttractionMicroUnits": {
+            "sprout": "2000000",
+            "seedling": "5000000",
+            "young": "12000000",
+            "adult": "20000000"
+          },
+          "gameplayTags": [
+            "tree",
+            "woodland"
+          ]
+        }
+      ]
+    }
+  },
+  "inventory": {
+    "plants": [
+      {
+        "plantId": "d007c340-e415-46e4-8f82-f096f2989405",
+        "speciesId": "moonwillow",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_moonwillow_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_moonwillow_behaviour",
+            "version": 2
+          },
+          "attraction": {
+            "id": "dev_moonwillow_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "1000000000",
+        "growthStage": "adult",
+        "baseAttractionMicroUnits": "20000000",
+        "contributesAttraction": false,
+        "modelKey": "assets/moonwillow/v1/models/moonwillow-adult-standard.usdz",
+        "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-adult-standard.png",
+        "placement": null,
+        "growthProgress": {
+          "stageStartMicroUnits": "1000000000",
+          "nextStageMicroUnits": null,
+          "maximumGrowthMicroUnits": "1000000000"
+        },
+        "gardenSkills": [
+          {
+            "componentVersion": 1,
+            "id": "sleeping_dew",
+            "name": "Sleeping Dew",
+            "description": "While this fully grown Moonwillow is planted, all garden plants gain 4% more water from activity. Multiple Sleeping Dew skills do not stack.",
+            "system": "growth",
+            "scope": "water",
+            "metric": null,
+            "target": "all_planted_plants",
+            "recipients": null,
+            "minimumStage": "adult",
+            "condition": null,
+            "operation": "percent",
+            "magnitude": {
+              "type": "fixed",
+              "value": "0.04",
+              "selector": null,
+              "maximum": null
+            },
+            "stackingGroup": "moonwillow_sleeping_dew",
+            "stackingRule": "strongest"
+          }
+        ]
+      },
+      {
+        "plantId": "fd06968a-241b-47fd-9a2e-b4382588e516",
+        "speciesId": "oak",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "0",
+        "growthStage": "sprout",
+        "baseAttractionMicroUnits": "2000000",
+        "contributesAttraction": false,
+        "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+        "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+        "placement": null,
+        "growthProgress": {
+          "stageStartMicroUnits": "0",
+          "nextStageMicroUnits": "100000000",
+          "maximumGrowthMicroUnits": "1000000000"
+        },
+        "gardenSkills": []
+      }
+    ],
+    "nextCursor": null
+  },
+  "emptyGarden": {
+    "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+    "width": 10.0,
+    "depth": 10.0,
+    "visibility": "friends",
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "catalogVersion": "development-skills-v1",
+    "layoutVersion": 0,
+    "stateVersion": 0,
+    "plants": [],
+    "totalAttractionMicroUnits": "0",
+    "skillSummary": {
+      "policyVersion": "b8-caps-v1",
+      "caps": {
+        "schemaVersion": 1,
+        "activityBonus": "1.5",
+        "waterBonus": "1.5",
+        "plantAttractionBonus": "0.5",
+        "gardenAttractionBonus": "0.5",
+        "totalAttractionBonus": "1",
+        "flatAttractionPoints": "10",
+        "flatAttractionBaseFraction": "0.25",
+        "capacityBonus": "2",
+        "flatCapacity": 10
+      },
+      "activeSkills": [],
+      "growthFactors": []
+    }
+  },
+  "plantedGarden": {
+    "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+    "width": 10.0,
+    "depth": 10.0,
+    "visibility": "friends",
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "catalogVersion": "development-skills-v1",
+    "layoutVersion": 1,
+    "stateVersion": 1,
+    "plants": [
+      {
+        "plantId": "d007c340-e415-46e4-8f82-f096f2989405",
+        "speciesId": "moonwillow",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_moonwillow_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_moonwillow_behaviour",
+            "version": 2
+          },
+          "attraction": {
+            "id": "dev_moonwillow_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "1000000000",
+        "growthStage": "adult",
+        "baseAttractionMicroUnits": "20000000",
+        "contributesAttraction": true,
+        "modelKey": "assets/moonwillow/v1/models/moonwillow-adult-standard.usdz",
+        "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-adult-standard.png",
+        "placement": {
+          "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+          "x": 6.0,
+          "y": 6.0,
+          "rotationDegrees": 0.0
+        },
+        "growthProgress": {
+          "stageStartMicroUnits": "1000000000",
+          "nextStageMicroUnits": null,
+          "maximumGrowthMicroUnits": "1000000000"
+        },
+        "gardenSkills": [
+          {
+            "componentVersion": 1,
+            "id": "sleeping_dew",
+            "name": "Sleeping Dew",
+            "description": "While this fully grown Moonwillow is planted, all garden plants gain 4% more water from activity. Multiple Sleeping Dew skills do not stack.",
+            "system": "growth",
+            "scope": "water",
+            "metric": null,
+            "target": "all_planted_plants",
+            "recipients": null,
+            "minimumStage": "adult",
+            "condition": null,
+            "operation": "percent",
+            "magnitude": {
+              "type": "fixed",
+              "value": "0.04",
+              "selector": null,
+              "maximum": null
+            },
+            "stackingGroup": "moonwillow_sleeping_dew",
+            "stackingRule": "strongest"
+          }
+        ]
+      },
+      {
+        "plantId": "fd06968a-241b-47fd-9a2e-b4382588e516",
+        "speciesId": "oak",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "0",
+        "growthStage": "sprout",
+        "baseAttractionMicroUnits": "2000000",
+        "contributesAttraction": true,
+        "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+        "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+        "placement": {
+          "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+          "x": 2.0,
+          "y": 2.0,
+          "rotationDegrees": 0.0
+        },
+        "growthProgress": {
+          "stageStartMicroUnits": "0",
+          "nextStageMicroUnits": "100000000",
+          "maximumGrowthMicroUnits": "1000000000"
+        },
+        "gardenSkills": []
+      }
+    ],
+    "totalAttractionMicroUnits": "22000000",
+    "skillSummary": {
+      "policyVersion": "b8-caps-v1",
+      "caps": {
+        "schemaVersion": 1,
+        "activityBonus": "1.5",
+        "waterBonus": "1.5",
+        "plantAttractionBonus": "0.5",
+        "gardenAttractionBonus": "0.5",
+        "totalAttractionBonus": "1",
+        "flatAttractionPoints": "10",
+        "flatAttractionBaseFraction": "0.25",
+        "capacityBonus": "2",
+        "flatCapacity": 10
+      },
+      "activeSkills": [
+        {
+          "id": "sleeping_dew",
+          "name": "Sleeping Dew",
+          "description": "While this fully grown Moonwillow is planted, all garden plants gain 4% more water from activity. Multiple Sleeping Dew skills do not stack.",
+          "system": "growth",
+          "scope": "water",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "moonwillow_sleeping_dew",
+          "sourcePlantId": "d007c340-e415-46e4-8f82-f096f2989405",
+          "profileId": "dev_moonwillow_behaviour",
+          "profileVersion": 2,
+          "eligibleSourcePlantIds": [
+            "d007c340-e415-46e4-8f82-f096f2989405"
+          ],
+          "recipientPlantIds": [
+            "d007c340-e415-46e4-8f82-f096f2989405",
+            "fd06968a-241b-47fd-9a2e-b4382588e516"
+          ]
+        }
+      ],
+      "growthFactors": [
+        {
+          "plantId": "d007c340-e415-46e4-8f82-f096f2989405",
+          "waterFactor": "1.04",
+          "waterCapReached": false,
+          "activityCapReached": {},
+          "activityFactors": {}
+        },
+        {
+          "plantId": "fd06968a-241b-47fd-9a2e-b4382588e516",
+          "waterFactor": "1.04",
+          "waterCapReached": false,
+          "activityCapReached": {},
+          "activityFactors": {}
+        }
+      ]
+    }
+  },
+  "syncResult": {
+    "requestId": "850e4095-b141-4397-96b2-008a24d3b06a",
+    "acceptedAt": "2026-10-24T11:02:37.082577+08:00",
+    "device": {
+      "deviceId": "3064e912-13c6-432a-97d7-70b39eaea8b4",
+      "installationId": "66d7fcea-8c1a-4ef5-ae15-b8b65bfab5a6",
+      "enrolledAt": "2026-10-24T11:02:36.949256+08:00",
+      "baselineDate": "2026-10-24",
+      "baselineObservedAt": "2026-10-24T11:02:36.921145+08:00",
+      "baselineSteps": 0,
+      "ready": true
+    },
+    "days": [
+      {
+        "gameDate": "2026-10-24",
+        "available": true,
+        "baselineEstablished": false,
+        "newlyEligibleSteps": 1000,
+        "waterSteps": 1000,
+        "creditedSteps": 1000,
+        "ruleVersion": "development-neutral-v1",
+        "activityCreditId": "aa6dc7d8-2b87-40d2-8fc6-2fb14a57b1de"
+      }
+    ],
+    "garden": {
+      "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+      "width": 10.0,
+      "depth": 10.0,
+      "visibility": "friends",
+      "coordinateUnit": "garden_unit",
+      "gardenUnitMetres": 1.0,
+      "catalogVersion": "development-skills-v1",
+      "layoutVersion": 1,
+      "stateVersion": 2,
+      "plants": [
+        {
+          "plantId": "d007c340-e415-46e4-8f82-f096f2989405",
+          "speciesId": "moonwillow",
+          "variantId": "standard",
+          "pinnedProfiles": {
+            "growth": {
+              "id": "dev_moonwillow_growth",
+              "version": 1
+            },
+            "behaviour": {
+              "id": "dev_moonwillow_behaviour",
+              "version": 2
+            },
+            "attraction": {
+              "id": "dev_moonwillow_attraction",
+              "version": 1
+            }
+          },
+          "growthMicroUnits": "1000000000",
+          "growthStage": "adult",
+          "baseAttractionMicroUnits": "20000000",
+          "contributesAttraction": true,
+          "modelKey": "assets/moonwillow/v1/models/moonwillow-adult-standard.usdz",
+          "thumbnailKey": "assets/moonwillow/v1/ui/moonwillow-adult-standard.png",
+          "placement": {
+            "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+            "x": 6.0,
+            "y": 6.0,
+            "rotationDegrees": 0.0
+          },
+          "growthProgress": {
+            "stageStartMicroUnits": "1000000000",
+            "nextStageMicroUnits": null,
+            "maximumGrowthMicroUnits": "1000000000"
+          },
+          "gardenSkills": [
+            {
+              "componentVersion": 1,
+              "id": "sleeping_dew",
+              "name": "Sleeping Dew",
+              "description": "While this fully grown Moonwillow is planted, all garden plants gain 4% more water from activity. Multiple Sleeping Dew skills do not stack.",
+              "system": "growth",
+              "scope": "water",
+              "metric": null,
+              "target": "all_planted_plants",
+              "recipients": null,
+              "minimumStage": "adult",
+              "condition": null,
+              "operation": "percent",
+              "magnitude": {
+                "type": "fixed",
+                "value": "0.04",
+                "selector": null,
+                "maximum": null
+              },
+              "stackingGroup": "moonwillow_sleeping_dew",
+              "stackingRule": "strongest"
+            }
+          ]
+        },
+        {
+          "plantId": "fd06968a-241b-47fd-9a2e-b4382588e516",
+          "speciesId": "oak",
+          "variantId": "standard",
+          "pinnedProfiles": {
+            "growth": {
+              "id": "dev_oak_growth",
+              "version": 1
+            },
+            "behaviour": {
+              "id": "dev_oak_behaviour",
+              "version": 1
+            },
+            "attraction": {
+              "id": "dev_oak_attraction",
+              "version": 1
+            }
+          },
+          "growthMicroUnits": "10400000",
+          "growthStage": "sprout",
+          "baseAttractionMicroUnits": "2000000",
+          "contributesAttraction": true,
+          "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+          "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+          "placement": {
+            "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+            "x": 2.0,
+            "y": 2.0,
+            "rotationDegrees": 0.0
+          },
+          "growthProgress": {
+            "stageStartMicroUnits": "0",
+            "nextStageMicroUnits": "100000000",
+            "maximumGrowthMicroUnits": "1000000000"
+          },
+          "gardenSkills": []
+        }
+      ],
+      "totalAttractionMicroUnits": "22000000",
+      "skillSummary": {
+        "policyVersion": "b8-caps-v1",
+        "caps": {
+          "schemaVersion": 1,
+          "activityBonus": "1.5",
+          "waterBonus": "1.5",
+          "plantAttractionBonus": "0.5",
+          "gardenAttractionBonus": "0.5",
+          "totalAttractionBonus": "1",
+          "flatAttractionPoints": "10",
+          "flatAttractionBaseFraction": "0.25",
+          "capacityBonus": "2",
+          "flatCapacity": 10
+        },
+        "activeSkills": [
+          {
+            "id": "sleeping_dew",
+            "name": "Sleeping Dew",
+            "description": "While this fully grown Moonwillow is planted, all garden plants gain 4% more water from activity. Multiple Sleeping Dew skills do not stack.",
+            "system": "growth",
+            "scope": "water",
+            "metric": null,
+            "operation": "percent",
+            "magnitude": "0.04",
+            "stackingGroup": "moonwillow_sleeping_dew",
+            "sourcePlantId": "d007c340-e415-46e4-8f82-f096f2989405",
+            "profileId": "dev_moonwillow_behaviour",
+            "profileVersion": 2,
+            "eligibleSourcePlantIds": [
+              "d007c340-e415-46e4-8f82-f096f2989405"
+            ],
+            "recipientPlantIds": [
+              "d007c340-e415-46e4-8f82-f096f2989405",
+              "fd06968a-241b-47fd-9a2e-b4382588e516"
+            ]
+          }
+        ],
+        "growthFactors": [
+          {
+            "plantId": "d007c340-e415-46e4-8f82-f096f2989405",
+            "waterFactor": "1.04",
+            "waterCapReached": false,
+            "activityCapReached": {},
+            "activityFactors": {}
+          },
+          {
+            "plantId": "fd06968a-241b-47fd-9a2e-b4382588e516",
+            "waterFactor": "1.04",
+            "waterCapReached": false,
+            "activityCapReached": {},
+            "activityFactors": {}
+          }
+        ]
+      }
+    },
+    "activitySteps": "1000",
+    "firstMaturityCount": 0,
+    "recapId": "77ddbd15-6b31-44b2-b149-33ef7d4a16c3"
+  },
+  "storedGarden": {
+    "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+    "width": 10.0,
+    "depth": 10.0,
+    "visibility": "friends",
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "catalogVersion": "development-skills-v1",
+    "layoutVersion": 2,
+    "stateVersion": 3,
+    "plants": [
+      {
+        "plantId": "fd06968a-241b-47fd-9a2e-b4382588e516",
+        "speciesId": "oak",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "10400000",
+        "growthStage": "sprout",
+        "baseAttractionMicroUnits": "2000000",
+        "contributesAttraction": true,
+        "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+        "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+        "placement": {
+          "gardenId": "8c01f6be-5ce5-4bb8-b3f4-bb808cc6d673",
+          "x": 2.0,
+          "y": 2.0,
+          "rotationDegrees": 0.0
+        },
+        "growthProgress": {
+          "stageStartMicroUnits": "0",
+          "nextStageMicroUnits": "100000000",
+          "maximumGrowthMicroUnits": "1000000000"
+        },
+        "gardenSkills": []
+      }
+    ],
+    "totalAttractionMicroUnits": "2000000",
+    "skillSummary": {
+      "policyVersion": "b8-caps-v1",
+      "caps": {
+        "schemaVersion": 1,
+        "activityBonus": "1.5",
+        "waterBonus": "1.5",
+        "plantAttractionBonus": "0.5",
+        "gardenAttractionBonus": "0.5",
+        "totalAttractionBonus": "1",
+        "flatAttractionPoints": "10",
+        "flatAttractionBaseFraction": "0.25",
+        "capacityBonus": "2",
+        "flatCapacity": 10
+      },
+      "activeSkills": [],
+      "growthFactors": [
+        {
+          "plantId": "fd06968a-241b-47fd-9a2e-b4382588e516",
+          "waterFactor": "1",
+          "waterCapReached": false,
+          "activityCapReached": {},
+          "activityFactors": {}
+        }
+      ]
+    }
+  },
+  "recaps": {
+    "recaps": [
+      {
+        "recapId": "77ddbd15-6b31-44b2-b149-33ef7d4a16c3",
+        "createdAt": "2026-10-24T11:02:37.082577+08:00",
+        "payload": {
+          "kind": "activity_growth",
+          "plants": [
+            {
+              "plantId": "fd06968a-241b-47fd-9a2e-b4382588e516",
+              "afterStage": "sprout",
+              "beforeStage": "sprout",
+              "afterGrowthMicroUnits": "10400000",
+              "beforeGrowthMicroUnits": "0",
+              "awardedGrowthMicroUnits": "10400000",
+              "skillBonusGrowthMicroUnits": "400000"
+            }
+          ],
+          "creditIds": [
+            "aa6dc7d8-2b87-40d2-8fc6-2fb14a57b1de"
+          ],
+          "activityDays": [
+            {
+              "gameDate": "2026-10-24",
+              "available": true,
+              "waterSteps": 1000,
+              "ruleVersion": "development-neutral-v1",
+              "creditedSteps": 1000,
+              "activityCreditId": "aa6dc7d8-2b87-40d2-8fc6-2fb14a57b1de",
+              "newlyEligibleSteps": 1000,
+              "baselineEstablished": false
+            }
+          ],
+          "resourceDeltas": {}
+        }
+      }
+    ],
+    "nextCursor": null
+  }
+}

@@ -32,6 +32,12 @@ Evidence is source inspection only. Dark Mode, Dynamic Type, landscape layout,
 VoiceOver, touch interaction, lighting, imported orientation and performance need
 native validation. No HTML/CSS detector or browser screenshot substitutes for it.
 
+- Garden skills use a native inline DisclosureGroup in the existing status panel.
+  Preserve the mounted scene and fixed viewport when expanding it. Show confirmed
+  effective water, source/duplicate explanations and capped-state text; cached
+  summaries are explicitly last confirmed. Pending placement never activates a
+  skill. Owned/catalogue details explain adult activation and stored inactivity.
+
 - A leading collection menu opens Exchange, Catalog and Draws. Preserve the
   mounted garden/camera while browsing; the menu and collection routes pause
   active visitors. Garden/Activity and settings retain their native navigation.

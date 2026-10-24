@@ -17,6 +17,8 @@ from pydantic import (
 )
 from pydantic.alias_generators import to_camel
 
+from forest_api.skill_rules import SkillEffect
+
 STAGES = ("sprout", "seedling", "young", "adult")
 Stage = Literal["sprout", "seedling", "young", "adult"]
 MicroAmount = Annotated[int, Field(strict=True, ge=0, le=9223372036854775807)]
@@ -65,18 +67,45 @@ class AttractionDefinition(DTO):
 
 
 class BehaviourDefinition(DTO):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 1
     metric_multipliers: dict[str, Annotated[float, Field(ge=0, allow_inf_nan=False)]]
-    # Handlers land in B8. Reject configured effects until they can be evaluated.
     conditional_modifiers: list[dict] = Field(default_factory=list, max_length=0)
-    garden_effects: list[dict] = Field(default_factory=list, max_length=0)
+    garden_effects: list[SkillEffect] = Field(default_factory=list, max_length=64)
+
+    @model_validator(mode="before")
+    @classmethod
+    def exact_version(cls, value):
+        if isinstance(value, dict):
+            version = value.get("schemaVersion", value.get("schema_version", 1))
+            if type(version) is not int:
+                raise ValueError("Behaviour versions require integers")
+        return value
+
+    @model_validator(mode="after")
+    def versioned_effects(self):
+        if self.schema_version == 1 and self.garden_effects:
+            raise ValueError("Schema 1 supports neutral effects only")
+        if len({effect.id for effect in self.garden_effects}) != len(self.garden_effects):
+            raise ValueError("Effect IDs must be unique in a profile")
+        units = {}
+        for effect in self.garden_effects:
+            key = effect.system, effect.scope, effect.metric, effect.stacking_group
+            if units.setdefault(key, effect.operation) != effect.operation:
+                raise ValueError("A stacking group cannot mix percentage and flat units")
+        from forest_api.calculations import exact
+
+        for value in self.metric_multipliers.values():
+            exact(value)
+        return self
 
     @field_validator("metric_multipliers")
     @classmethod
     def known_metric_shapes(cls, values: dict) -> dict:
         daily = {"steps", "walking_running_distance_km", "active_energy_kcal", "flights_climbed"}
         if any(
-            key not in daily and not re.fullmatch(r"workout_minutes\.[a-z][a-z_]{0,63}", key)
+            key not in daily
+            and key != "workout_minutes.*"
+            and not re.fullmatch(r"workout_minutes\.[a-z][a-z_]{0,63}", key)
             for key in values
         ):
             raise ValueError("Unknown activity metric")
@@ -189,6 +218,7 @@ class PlantDTO(DTO):
     thumbnail_key: str
     placement: PlacementDTO | None
     growth_progress: GrowthProgressDTO | None = None
+    garden_skills: list[dict] = Field(default_factory=list)
 
 
 class InventoryDTO(DTO):
@@ -208,6 +238,7 @@ class GardenDTO(DTO):
     state_version: int
     plants: list[PlantDTO]
     total_attraction_micro_units: str = "0"
+    skill_summary: dict | None = None
 
 
 class StageAssetDTO(DTO):

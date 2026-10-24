@@ -99,11 +99,18 @@ def seed_development_catalogue(session: Session, settings: Settings) -> None:
         session.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended('forest-dev-seed', 0))")
         )
+        from forest_api.models import SkillPolicy
+        from forest_api.skill_rules import CAPS_V1, CAPS_VERSION
+
+        if session.get(SkillPolicy, CAPS_VERSION) is None:
+            session.add(SkillPolicy(version=CAPS_VERSION, rules=CAPS_V1))
+            session.flush()
         seed_calculation_config(session)
         existing = session.get(GameCatalogue, 1)
         if existing is not None:
             if (
-                existing.version in {FIXTURE_VERSION, "development-woodland-v2"}
+                existing.version
+                in {FIXTURE_VERSION, "development-woodland-v2", "development-skills-v1"}
                 and existing.is_fixture
             ):
                 return

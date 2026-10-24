@@ -1,8 +1,8 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.14\
-Date: 23 October 2026\
+Document version: 0.18\
+Date: 24 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
 
@@ -66,7 +66,7 @@ The core experience is: move → water/grow individual plants → increase garde
 - Active visitors use one shared arrival/flight/tap/departure behaviour. Tapping welcomes a visitor; it does not trap or spend a creature. Offline visits are collected together on return. Capacity skills can extend the time before storage fills; stored value is not lost through absence.
 - Each plant lists its supported metric multipliers; omitted metrics are 0 unless a workout type inherits `workout_minutes.*`; an explicitly configured 1.0 is neutral. Percentage boosts resolve in two layers: per-activity conversion factors, then one combined-water factor. Weather, events and skills declare which layer they affect.
 - Species-specific activity responses are a permanent core requirement: plants can have different step, distance, active-energy, flights-climbed and per-workout-type weights.
-- The behaviour model must support conditional modifiers such as weather. Exact weather sourcing and launch scope remain open.
+- The behaviour model supports conditional modifiers; weather integration and weather-dependent skills are deferred beyond B8. B8 keeps weather neutral.
 - Each species has a fixed circular reserved-clearance footprint, measured in garden units and shared across its stages and variants. Positions are free within the board where clearance fits; footprint size is independent of screen pixels and growth stage.
 - Aim for an attractive garden with approximately 10–15 simultaneously planted plants. This is a composition target, separate from the launch species count and any hard active-plant limit, which remains open.
 - Users can drag plants into the garden, rearrange them and return them to storage.
@@ -154,6 +154,38 @@ Account settings provide linked sign-in methods, **Link Google/Apple**, password
 - A retry must also return the same awarded plant ID, not create another plant.
 - Duplicates are separate owned plants with independent growth and attraction contributions while placed. A new duplicate starts as a sprout even if another copy is adult. No shared species progression or prestige is introduced. Breeding or duplicate conversion is later work unless explicitly added to V1.
 
+**Agreed opening presentation, 23 October 2026 — deferred to F8 polishing:**
+replace the result-text/history-only opening presentation and the earlier
+unspecified result-view/popup proposal with this simple two-tap sequence:
+
+1. Tapping **Open pack** shows an **“Open pack?”** confirmation alert with
+   Cancel/Open. Cancel leaves the owned pack unopened.
+2. After confirmation, an enlarged sealed pack appears in the centre and the
+   rest of the screen dims. Its trading-card-style wrapper is themed to the pack
+   type, such as Woodland. Show “Tap to open” when ready.
+3. The **first tap on the pack** briefly compresses/tugs it and tears off the top
+   strip. The strip moves upward/sideways, rotates slightly and fades away. Light
+   emerges through the opened rim: **grey = Common, blue = Rare, purple = Epic,
+   gold = Legendary**. Keep the sprout concealed and hold this state with
+   “Tap to reveal” until the next tap. Common's pale grey light must remain visible
+   against the dim background.
+4. The **second tap** lifts the awarded sprout out of the opening while the
+   wrapper lowers/fades. The light expands into a halo around the sprout. Show
+   its species, variant and rarity, then hold the result until **Continue**
+   dismisses the overlay and restores the screen. Keep the same sequence across
+   rarities, changing the light colour.
+
+The frontend presents the confirmed server-selected result; the opening receipt's
+rarity determines the light, including historical schema-1 results. Do not infer
+rarity from variant names or artwork: the current Golden Moonwillow fixture is
+Common and uses grey light. The committed sprout is already in Storage; neither
+tap nor Continue grants a reward. Watching or completing the animation is never
+required to retain it. Preserve latest results/history and existing repeat-safe
+recovery; do not automatically replay the full animation on recovered receipts.
+Confirmation cancellation must precede any opening mutation; exact request timing,
+final layout and timings remain for frontend polishing. Confirm the result before
+showing rarity light. See section 12.4 for image assets and frontend/backend scope.
+
 ### 3.5 Friends
 
 - Find a user by exact username or friend code; avoid broad personal-data search.
@@ -167,7 +199,7 @@ Account settings provide linked sign-in methods, **Link Google/Apple**, password
 
 ## 4. Proposed progression model
 
-Exact quantities, rates, probabilities and caps are **open**. Keep them in versioned configuration rather than hard-coded across screens.
+Most quantities, rates and probabilities remain **open**. The initial B8 modifier caps are selected in section 6.6; keep them in immutable versioned configuration rather than hard-coded across screens.
 
 | Concept | Proposed role |
 | --- | --- |
@@ -274,20 +306,25 @@ Map final attraction to a bounded active visitor probability per configured time
 
 Active visitors arrive using a single shared arrival/flight/linger/tap/departure controller. Appearance variants can use data and shared assets rather than bespoke AI classes. The server authorises each opportunity and its reward; a local animation or tap alone cannot create currency. Missed/expired visitors yield no reward and no penalty. Capture/welcome wording and art are open; no mandatory wildlife collection or per-species visitor inventory is introduced.
 
-The attraction function, slot duration, starter floor, gap protection, rates, caps and visitor appearance distribution are **open balance values**. Previous discussion numbers were illustrations, not selected rates. New movement-to-arrival bonuses are deferred; growth increases attraction, and mature planted gardens may continue earning visitors without new movement. No growth, attraction or stored-value decay is introduced.
+The attraction function, slot duration, starter floor, gap protection, production rates and visitor appearance distribution remain **open balance values**. The initial attraction/capacity modifier ceilings are selected in section 6.6; other discussion numbers remain illustrations. New movement-to-arrival bonuses are deferred; growth increases attraction, and mature planted gardens may continue earning visitors without new movement. No growth, attraction or stored-value decay is introduced.
 
 An illustrative curve family for prototyping, not approved balance, is:
 
 ```text
 plant_attraction_i = stage_attraction_i × (1 + resolved_capped_plant_bonus_i)
-A = sum(placed plant_attraction_i) × (1 + resolved_capped_garden_bonus)
+A_base = sum(placed unmodified stage_attraction_i)
+A = min(2 × A_base,
+        sum(placed plant_attraction_i) × (1 + resolved_capped_garden_bonus)
+        + min(resolved_flat_attraction, 10 points, 0.25 × A_base))
 p_active_per_slot = 0 if no plants are placed
                     else max(p_starter, p_max × A / (A + K))
 active_expected_visits_per_time = p_active_per_slot / slot_duration
 offline_rate = min(offline_rate_cap,
                    offline_fraction × active_expected_visits_per_time
                    × (1 + resolved_capped_offline_rate_bonus))
-capacity = min(capacity_max, floor(capacity_base × (1 + resolved_capped_capacity_bonus)))
+capacity = min(capacity_max, 3 × capacity_base,
+               floor(capacity_base × (1 + resolved_capped_capacity_bonus)
+                     + min(resolved_flat_capacity, 10 visits)))
 ```
 
 Require `K > 0`, `0 < p_starter <= p_max <= 1` and valid nonnegative rate/capacity parameters. Gap protection alters opportunity timing and must be included when measuring actual active income while respecting the overall issuance caps. Choose offline_fraction/rate caps against observed successful welcomes, including all supported skills; the formula alone does not guarantee that advantage. Empty gardens also have offline_rate zero. Stored amounts and wallets are not clipped by a newly lowered capacity.
@@ -402,6 +439,8 @@ Each species references immutable growth, behaviour and attraction profiles/vers
 
 Use validated JSONB configuration for the rules, interpreted by supported server-side rule handlers. Do not execute arbitrary code or expressions from configuration. Configuration adds new species and coefficient combinations without a new class per species; a fundamentally new effect still needs implementation and tests.
 
+**Agreed rule architecture:** compose skills from reusable source-activation checks, conditions, recipient selectors, magnitude calculations and effect destinations, plus the existing stacking metadata. Examples include minimum source stage, presence of an adult tree, seedling/fern recipients, and a fixed or capped per-copy percentage. Most new skills combine supported components through configuration; new mechanics add a validated, versioned component handler rather than a class per skill. Unknown components are rejected. Event-triggered or one-use skills additionally need persistent state and atomic, idempotent activation/consumption; configuration alone does not implement them.
+
 Illustrative oak planning profile (plant multipliers are separate from global metric normalisation/base-water rates; unlisted workout types, active energy and flight metrics contribute 0):
 
 ```json
@@ -436,10 +475,12 @@ Replace the earlier single garden-wide growth index with direct per-plant growth
 For each accepted activity credit, within one transaction:
 
 1. Lock the garden accounting state and settle elapsed visitor time under the old attraction snapshot, then snapshot placed plants, their pre-credit stages and pinned profiles under the credit-time policy.
-2. Collect eligible growth-system species, garden-skill and event effects from that same snapshot/context and route each effect to its declared activity or water scope.
+2. Build shared garden facts and evaluate skills emitted by eligible placed sources, alongside species modifiers and event effects. Select recipients and calculate magnitudes from that same snapshot/context. Route the resulting effects to their declared activity or water scope and resolve stacking per recipient.
 3. Convert each eligible metric with its normalisation and plant multiplier, resolving activity bonuses within personal/context bands before summing.
 4. Apply the single resolved combined-water factor, defined overall limits and remaining-maturity clamp, carrying fractional remainders. Use the same snapshot for all recipients so processing order cannot change the outcome.
 5. Save accumulated growth and the growth-credit record for each affected plant. At the server boundary, refresh attraction/visitor-skill eligibility from the new stages for future time only; elapsed visitor rewards and the batch's pre-credit growth effects stay fixed.
+
+Index placed plant IDs by species, pre-credit stage and pinned gameplay tags once per snapshot; reuse counts, presence checks and selector results. Evaluate only rules present in the garden, sharing garden-wide work within each applicable context/band. Bulk-load profiles and keep database/network calls outside rule loops. Cache validated definitions by immutable profile/version; do not merge different pinned versions. Recipient groups may share resolved factors, but each copy retains its own coefficients, growth, maturity clamp and fractional remainder. Rule conditions read frozen base facts, not other effects' outputs, so skills cannot form feedback loops. Persistent garden caches are optional only after profiling and explicit invalidation rules.
 
 Stored plants are not evaluated and do not grow. Moving a plant never recreates it or resets growth. A plant at 240 points stays at 240 in storage, then resumes when replanted. Rearranging it within the garden does not change its growth balance.
 
@@ -453,7 +494,11 @@ HealthKit credits award plant growth and cumulative activity/unlock progress, no
 
 ### 6.4 Weather and contextual modifiers
 
-Weather-dependent behaviour is part of the supported design. Its provider, location policy, time resolution, cost and whether live weather ships in the first release are open. Do not treat missing weather as clear skies; use the defined neutral fallback and show no punitive penalty for unavailable context.
+**Agreed scope, 24 October 2026:** defer weather integration and weather-dependent skills beyond B8. B8 applies no weather-derived bonuses and needs no weather API, location permission, weather ingestion/storage, weather handlers or weather UI. Keep weather neutral; do not treat unavailable weather as clear skies. The design below is for a later increment, not a B8 delivery or acceptance requirement. Provider selection, location policy, time resolution and later delivery scope remain open.
+
+**WeatherKit option and cost:** Apple offers Swift and REST APIs for weather at supplied coordinates. WeatherKit requires the developer's paid [Apple Developer Program membership](https://developer.apple.com/programs/) (currently US$99/year or local equivalent); there is no standalone free tier without membership. Players need no developer membership. The included 500,000 calls/month are shared across the membership's apps and users, not granted per player. Larger monthly allowances cost extra, for example 1 million calls at US$49.99 or 2 million at US$99.99, in addition to annual membership. This is a hosted-service request allowance, separate from on-device HealthKit reads. See [Apple's WeatherKit requirements and pricing](https://developer.apple.com/weatherkit/); checked 24 October 2026, recheck before adoption. WeatherKit remains a candidate, not a selected dependency.
+
+For later scaling, fetch through the backend and share weather by coarse region/time rather than requesting it per player, plant or skill. Without sharing, estimate monthly calls as daily active players × requests per player/day × days. With sharing, estimate distinct refreshed regions × refreshes/day × days; for example, 100 regions refreshed hourly for 30 days gives 72,000 requests. Region size and refresh cadence trade local accuracy/freshness for usage; these are planning options, not final settings. Retain timestamped observations for activity-time matching and follow provider attribution/usage requirements.
 
 Weather is a condition/source of effects, not a mandatory third multiplier layer. A rainy-step conversion bonus declares `scope: "activity"` and `metric: "steps"`; a rainy-day bonus to total plant water declares `scope: "water"`. Skills and in-game events follow the same contract. Evaluate matching conditions first, then include their bonus fractions in the appropriate layer's aggregation, rather than multiplying a separate weather/event factor on top.
 
@@ -472,36 +517,46 @@ Neighbour effects, individual traits and maintenance gates are supported extensi
 
 ### 6.5 Placed-plant garden skills
 
-Plants with explicitly configured garden skills may emit passive effects while placed, including legendary growth skills and attraction/offline-storage skills. Stored sources are inactive. Rarity does not automatically grant an ability. Oak currently has no assigned garden skill. Solar-reed is a design example only, not a new species entry or produced asset. Which real species receive visitor skills remains open.
+Plants with explicitly configured garden skills may emit passive effects while placed and fully grown (adult), including growth skills and attraction/offline-storage skills. Stored or immature sources are inactive. Rarity does not automatically grant an ability. Oak currently has no assigned garden skill. Moonwillow receives Sleeping Dew, defined below. Solar-reed is a design example only, not a new species entry or produced asset. Which real species receive visitor skills remains open.
 
-Example skill: **Sunlit Garden** gives every planted plant, including its source, +10% activity-derived water when the applicable weather is sunny. Its magnitude is illustrative. It does not grant water without eligible activity, produce visitor tokens or multiply tickets. Visitor skills must declare their separate system/scope. Unknown weather yields neutral growth.
+Deferred weather example: **Sunlit Garden** gives every planted plant, including its source, +10% activity-derived water when the applicable weather is sunny. Its magnitude is illustrative; it is not enabled in B8. It does not grant water without eligible activity, produce visitor tokens or multiply tickets. Visitor skills must declare their separate system/scope. Unknown weather yields neutral growth.
 
-Store effects inside the existing immutable behaviour profile, with validated fields such as:
+Store effects inside the existing immutable behaviour profile. The implemented schema-2 Sleeping Dew example is:
 
 ```json
 {
   "gardenEffects": [{
-    "id": "sunlit_garden",
+    "componentVersion": 1,
+    "id": "sleeping_dew",
+    "name": "Sleeping Dew",
+    "description": "While fully grown and planted, all garden plants gain 4% more activity water. Duplicate sources do not stack.",
     "system": "growth",
-    "type": "growth_bonus",
-    "condition": { "weather": "sunny" },
     "target": "all_planted_plants",
+    "minimumStage": "adult",
     "scope": "water",
-    "bonusFraction": 0.10,
-    "stackingGroup": "sunlit_garden",
-    "stackingRule": "strongest",
-    "affectsTickets": false
+    "operation": "percent",
+    "magnitude": { "type": "fixed", "value": "0.04" },
+    "stackingGroup": "moonwillow_sleeping_dew",
+    "stackingRule": "strongest"
   }]
 }
 ```
 
-An optional minimum activation stage must be explicitly configured; sprout versus maturity activation remains undecided. Until it is chosen for a real skill, that skill is not launch-ready. Evaluate activation using pre-credit stages. Reaching the activation stage during a settlement enables it for subsequent credits, never earlier recipients in the same batch.
+**Selected B8 activation:** all emitted garden skills require an adult placed source. Configure `minimumStage: "adult"` explicitly; earlier activation stages are rejected in the initial component schema. Evaluate activation using one pre-credit snapshot for the entire upload, including all reconciled dates. Reaching adult during a settlement enables the skill for subsequent uploads, never recipients later in the same upload. The post-credit garden response shows the newly active skill.
 
-Working growth stacking policy: growth-system skills enter the same two layers as other growth effects, rather than creating a third water multiplier. Within the chosen scope/metric and recipient, use the strongest eligible effect in each shared stacking group, add the resolved fractions from distinct groups and clamp the layer to its configured cap. Caps remain TBD. Example 10% and distinct 5% water-scoped effects yield a combined-water factor of 1.15 when both apply. Multiple copies of the same skill do not add indefinitely. Define tie-breaking deterministically and retain source plant IDs for explanation. Keep an active mature source's skill eligible even when the source itself can gain no more growth. Visitor-system stacking is specified separately in section 6.7.
+**First assigned skill — Sleeping Dew:** stable ID `sleeping_dew`, display name Sleeping Dew, source Moonwillow (Standard and Golden), `system: "growth"`, `scope: "water"`, `target: "all_planted_plants"`, fixed exact magnitude `0.04`, shared stacking group `moonwillow_sleeping_dew`, strongest-per-group stacking. A fully grown placed source grants +4% combined activity-derived water to every planted recipient, including itself; its own maturity maximum still prevents further growth. Duplicate sources and variants do not multiply the aura. There is no weather, night-time, event or consumption condition. Storage emits/receives no effect and no activity means no water. It grants no currency or visitor rate/capacity bonus.
+
+Runtime schema 2 composes `componentVersion`, adult activation, optional placed-count conditions, species/variant/stage/pinned-tag recipient selectors, fixed or capped per-copy magnitudes, an explicit operation (`percent` or supported `flat`), destination and strongest stacking metadata. Unknown components and unsupported destinations fail closed in Python and PostgreSQL. Schema 1 remains neutral. Percentage and flat units cannot share the same system/scope/metric stacking group. Decimal magnitude strings have at most six places. Flat growth/activity grants remain unsupported until persistent daily entitlement handlers exist.
+
+Sleeping Dew is published as behaviour profile `dev_moonwillow_behaviour` version 2. New development Woodland v3 and Moonwillow v2 packs pin it. Old profiles, owned copies, unopened packs and receipts retain their original versions. A repeat-safe development-only grant can place one fully grown Standard Moonwillow directly in a named account's storage, using its pinned terminal threshold, without awarding an earned first-maturity counter or currency.
+
+Working growth stacking policy: growth-system skills enter the same two layers as other growth effects, rather than creating a third water multiplier. Within the chosen scope/metric and recipient, use the strongest eligible effect in each shared stacking group, add the resolved fractions from distinct groups and clamp the layer to its configured cap. Initial layer caps are +150% as specified in section 6.6. Example 10% and distinct 5% water-scoped effects yield a combined-water factor of 1.15 when both apply. Multiple copies of the same skill do not add indefinitely. Define tie-breaking deterministically and retain source plant IDs for explanation. Keep an active mature source's skill eligible even when the source itself can gain no more growth. Visitor-system stacking is specified separately in section 6.7.
+
+Explicit count-based skills calculate one shared magnitude before normal stacking: for example, `min(qualifying placed copies × 0.0175, 0.07)` gives +1.75%, +3.5%, +5.25% or +7% water for one, two, three or four-plus copies. Count using a configured species/variant/tag/stage selector on the frozen snapshot; stored copies never count. Specify counted stages, whether variants share the count, source activation and recipients for each real skill. Repeated sources of the same definition/version reuse this magnitude and shared stacking group; never add the full result once per source. This supports capped copy synergy without changing default duplicate-aura stacking. These numbers are illustrative, not an assigned species skill.
 
 Do not mutate stored base plant multipliers when an aura activates. Resolve an effective modifier for that settlement. Compute garden effects from the bounded garden snapshot, not once per plant with repeated weather/network calls, and never recursively trigger skills from skill-awarded water.
 
-Current working timing combines **credit-time garden membership/skill-source stages** with **activity-time weather**, as in section 6.4. An activity interval spanning different weather needs corresponding time-bucketed input; daily totals alone cannot attribute sunny steps. Placing a legendary before a later sync can therefore affect newly credited older activity. Foreground sync before membership edits reduces this but cannot eliminate delayed uploads. Requiring presence at movement time would need placement/stage history and historical settlement, a larger future design change. Do not claim the simpler policy provides historical presence guarantees.
+Garden membership and skill-source stages use **credit-time snapshots**; when weather is added after B8, combine these with **activity-time weather**, as in section 6.4. An activity interval spanning different weather needs corresponding time-bucketed input; daily totals alone cannot attribute sunny steps. Placing a legendary before a later sync can therefore affect newly credited older activity. Foreground sync before membership edits reduces this but cannot eliminate delayed uploads. Requiring presence at movement time would need placement/stage history and historical settlement, a larger future design change. Do not claim the simpler policy provides historical presence guarantees.
 
 Record applied skill IDs, profile versions, source plants, relevant weather/event snapshots, effective factors and the actual awarded bonus in growth-credit context. Retries reuse the original result; later weather enrichment or skill changes do not rerun past awards. An independently managed ability catalogue can be added later if required; a separate skill table is not necessary for this initial profile-based design.
 
@@ -519,6 +574,8 @@ Record applied skill IDs, profile versions, source plants, relevant weather/even
 #### Effect metadata and routing
 
 Every percentage effect declares `system`, recipient `target`, `scope`, `bonusFraction`, `stackingGroup`, `stackingRule` and supported optional condition/activation rules. This section governs `system: "growth"`: activity scope must declare one canonical `metric`; water scope has no metric selector. A rule intended to affect several selected metrics expands into explicit per-metric effects. Effect identity/profile version and provenance identify its source separately from its calculation scope. Reject undeclared/unknown system-scope combinations; never route an attraction or storage effect through the water resolver.
+
+An all-workout skill expands into effects for each supported workout metric. Cycling can receive both +5% from that skill and +10% from a distinct-group cycling skill: its activity factor is 1.15 before caps, not 1.05×1.10. Same-group effects still select the strongest. These bonuses affect workout-duration water only, not daily steps/distance/energy; exact-type versus wildcard base-multiplier fallback remains separate. Any combined-water bonus applies afterwards through the existing water layer.
 
 For example, an event that adds 20% step conversion can be represented as:
 
@@ -541,11 +598,35 @@ Scope identifies where the effect applies; it is not inferred from the word weat
 
 #### Stacking within and between layers
 
-For each recipient and applicable context/band, resolve the strongest eligible bonus per `(scope, metric if applicable, stackingGroup)`, add the fractions from distinct groups, apply that layer's bonus cap and add 1 to obtain its factor. Water scope has one shared pool of percentage bonuses across weather, events and garden skills. Activity scope has a separate pool for each metric. Caps are configured as bonus fractions; exact per-metric activity caps, combined-water cap and any additional overall reward limit remain open.
+For each recipient and applicable context/band, resolve the strongest eligible bonus per `(scope, metric if applicable, stackingGroup)`, add the fractions from distinct groups, apply that layer's bonus cap and add 1 to obtain its factor. Water scope has one shared pool of percentage bonuses across weather, events and garden skills. Activity scope has a separate pool for each metric. Caps are configured as bonus fractions. Each activity metric and the combined-water layer have a selected +150% cap (maximum factor 2.5); see the complete initial policy below.
+
+Filter recipients before choosing the strongest effect. A +10% seedling-only effect must not suppress a same-group +5% all-plant effect for adults that cannot receive the stronger effect.
 
 Two distinct +10% and +20% activity bonuses resolve to 1.30 before caps, not 1.10×1.20. An activity factor and the combined-water factor deliberately multiply across layers: 10 base water ×1.20 activity ×1.10 water = 13.2 water before any limits. A +10% combined-water effect applied to 10 unboosted water gives 11. With several metrics, sum their independently converted water first and apply the combined-water factor once.
 
 #### Marginal personal boosts and contextual buckets
+
+**Selected initial modifier policy (`b8-caps-v1`, 24 October 2026):**
+
+| Destination | Aggregate percentage bonus limit | Aggregate flat limit / final limit |
+| --- | --- | --- |
+| Each canonical activity metric, including each supported workout type | +150%, factor at most 2.5 | Flat activity quantities are unsupported |
+| Combined activity-derived water | +150%, factor at most 2.5 | Fixed-water grants are deferred |
+| Per-plant attraction | +50%, factor at most 1.5 | Shares the garden flat-attraction budget |
+| Garden attraction | +50%, factor at most 1.5 | All flat attraction totals at most min(10 displayed attraction points, 25% of unmodified garden attraction) |
+| Final attraction | At most +100% over total unmodified placed-stage attraction | All percentage layers and flat additions together cannot exceed 2× that base; empty base stays zero |
+| Stored-visit capacity | +200% | Flat additions total at most +10 visits; final capacity cannot exceed min(absolute configured maximum, 3× base capacity) |
+| Offline production rate | No additional rate skill in this increment | Existing absolute rate limit and active/offline policy remain; flat-rate additions unsupported |
+
+The percentage pools include every supported source in that destination, including garden skills and future personal/event effects. Distinct stacking groups add before caps; they do not each receive an independent cap allowance. Same-group duplicates select the strongest eligible value with deterministic tie-breaking by effect ID, profile ID/version and source UUID. Apply recipient filtering first. Capped copy-count magnitudes are computed once per definition/version before group resolution, never once again per source.
+
+Activity and water deliberately compound across layers: 10 base water ×2.5 activity ×2.5 water = 62.5, an overall maximum ×6.25 before maturity clamping. No additional hidden ×2.5 final-water cap is implied. These ceilings do not alter permanent plant coefficients or the separate cumulative daily quantity limits. Ordinary bonuses cannot activate a zero coefficient or award water without eligible movement.
+
+Flat visitor additions enter after percentage layers so percentages cannot amplify the flat budget. Count all eligible plant-recipient flat attraction additions and garden flat additions in the same aggregate garden budget; then apply the final attraction ceiling. Capacity adds its capped flat amount after its percentage calculation, floors only the final capacity, and applies both the base-relative and absolute limits. With base capacity 30 and absolute maximum 120, the effective limit is 90 visits; a flat skill cannot raise it to 100. Preserve already earned storage when the effective capacity falls.
+
+Each count-based skill must also declare its own magnitude maximum. Configuration cannot bypass aggregate budgets by emitting extra effects or assigning new groups. Persist cap policy/version, requested group magnitudes, resolved factors, actual award and source provenance. UI shows effective aggregate factors, with cap-reached explanations. Initial caps are selected provisional development balance; other conversion rates, thresholds, visitor pacing and production balance remain separately provisional.
+
+Future fixed-water grants would start with a proposed per-plant/game-day budget min(10 water, 10% of eligible neutral activity water), still within the combined-water/maturity ceilings. This proposal is not an enabled mechanic: it requires atomic cumulative daily entitlements so repeated syncing cannot create extra grants. Personal marginal step boosts and wider metric/workout upload handlers remain separately scheduled B8 increments; their effects must enter the existing activity pool rather than a third multiplier. Weather and weather-dependent skills stay deferred.
 
 Personal spike bonuses are activity-scoped band rules, not a fixed percentage applied to the whole day. Split newly eligible metric quantities at personal-band and context boundaries. For each resulting portion, resolve the applicable bonus fractions, including that portion's personal rate, under the same grouping/cap rules. Do not first multiply by a personal factor and then multiply by another activity factor; temporary percentages add within that layer after group resolution.
 
@@ -584,6 +665,8 @@ Visitor effects declare `system: "visitors"` and one supported scope:
 | `offline_capacity` | Owner's garden; percentage bonus to base stored-visit capacity, subject to a configured maximum; final capacity rounds down to a whole visit |
 
 These scopes have no activity `metric`. Plant filters may explicitly target species/variant or pinned gameplay tags. Activation uses the source's settled stage and requires it to be placed. Any synergy needs a supported declarative condition, an evaluation order and a version; accepting arbitrary executable expressions or promising all synergy types is outside V1. Begin with simple attraction/capacity effects; exact offline-rate skill launch scope remains open.
+
+Reuse the components and garden indexes from sections 6.1–6.2 when building visitor contexts, including supported count-based magnitudes. Visitor results still enter only their declared visitor scope and take effect after the old interval is settled; growth context timing does not replace visitor interval accounting.
 
 For each `(system, scope, recipient, stackingGroup)`, choose the strongest eligible effect, add distinct-group bonus fractions, then apply that scope's configured cap. Break ties deterministically and retain source IDs. Duplicate skills in the same group do not stack; an explicit cross-variant shared group prevents variant-based aura multiplication. An effect enters exactly one declared scope. Plant and garden layers deliberately compound only when separately configured; no recursive skill triggers. Base per-copy attraction from duplicates remains additive even when their duplicate auras do not stack.
 
@@ -688,6 +771,7 @@ Blocking overrides friendship and visibility. Remove/disable conflicting request
 | `plant_species` | `id text PK`, name/description, species rarity, `clearance_radius numeric(9,3) CHECK > 0` in garden units, default growth/behaviour/attraction profile references and versions, enabled flag, optional descriptive `properties jsonb`; one shared circular radius for all stages/variants; no owner or individual progress |
 | `plant_variants` | `(species_id, variant_id) PK`, display name/description, legacy rarity metadata (new packs use species rarity), optional growth/behaviour/attraction profile overrides, enabled flag, immutable asset-catalogue reference; standard/blue/vined are oak's current visual variants. Overrides resolve before pinning on award; rarity is shared variant configuration, not rolled per-copy stats |
 | `growth_profiles` | `(id, version) PK`, `thresholds jsonb`, maximum growth; immutable once used |
+| `skill_policies` | Immutable `version text PK`, required validated cap/routing policy JSONB; initial `b8-caps-v1`. Visitor rule versions select a policy; growth credits pin the policy effective at acceptance independently of the day's base-conversion version. Controlled future visitor-rule publication provides a prospective settlement boundary. |
 | `attraction_profiles` | `(id, version) PK`, immutable nonnegative `stageAttractionMicroUnits` for all four stages, strictly increasing for the V1 growth incentive, optional pinned gameplay tags for visitor targeting; no user state or currency |
 | `growth_rule_profiles` | `(id, version) PK`, validated immutable `metricMultipliers` (exact workout type → `workout_minutes.*` → 0; other omitted metrics = 0), `conditionalModifiers` and `gardenEffects` JSONB; effects declare `system` growth/visitors, supported scope, recipient/filter, conditions/activation and stacking metadata. Growth activity scope requires a canonical metric; growth water and visitor scopes forbid one. Schema version and activation metadata; an empty effects array means no emitted skills |
 | `plant_stages` | Species/variant/stage reference, visual model key, PNG thumbnail key and stage display metadata; four stable stage IDs |
@@ -718,7 +802,7 @@ Planning workbook mapping: replace `Footprint (tiles)` with `Clearance radius (g
 | `workout_imports` | `id uuid PK`, `user_id FK`, `healthkit_uuid`, source metadata, nullable `was_user_entered` from `HKMetadataKeyWasUserEntered` (true excludes the entire workout from rewards; null means absent, not verified), original HealthKit type, mapped game type and mapping version, start/end, recorded and eligible duration seconds, distance metres nullable, active energy kcal nullable, optional typed segment references/data, status, bonus credited, duplicate-group reference; unique `(user_id, healthkit_uuid)`; retain segment identities and credited attribution when splitting by type/day, with no second parent-duration award |
 | `activity_credits` | `id uuid PK`, user/garden, source key, eligible input quantities, time interval, input revision, rule/economy versions and optional weather-context reference; unique logical input credit |
 | `plant_growth_credits` | `(plant_id, activity_credit_id) PK`, pinned behaviour version, before/after cumulative growth and stage, quantities/plant coefficients and per-metric/band activity factors, post-activity water subtotal, combined-water factor, input/context/effect/source references, cap/maturity adjustments and actual-awarded growth micro-units, created_at; breakdowns must reconcile to the final award without double-counting cross-layer bonuses |
-| `weather_contexts` | `id uuid PK`, coarse region key, provider, observation interval, normalised condition, retrieval time; shared cached observations, no precise route |
+| `weather_contexts` (deferred beyond B8) | `id uuid PK`, coarse region key, provider, observation interval, normalised condition, retrieval time; shared cached observations, no precise route |
 | `reward_events` | `id uuid PK`, user, garden, reason, source key/revision, economy version, aggregate growth summary, resource delta JSONB, accepted_at; unique logical credit key |
 | `wallet_entries` | `id uuid PK`, user/currency, signed amount, reason, source event/request, timestamp; append-only ledger |
 | `api_requests` | `(user_id, request_id) PK`, operation, payload hash, status, stored response, created_at; idempotency record |
@@ -1009,7 +1093,38 @@ All operations verify idempotency and use the common account/garden/wallet lock 
 
 **Later, not implemented:** login watering/recap animation, stage transition effects, tap/selection responses, drag/placement effects, storage return effects and unboxing presentation. Existing oak models contain wind sway only. Do not add effect files or extra transition renders to each plant package now.
 
-When effects work is resumed, prototype one shared runtime effects controller in the iOS app: a brief leaf/sparkle burst masks the stage-model swap, selection uses a small pulse/ring, dragging shows placement validity, placement settles gently, and storage return/unboxing use shared presentation. Keep the garden anchor separate from temporary visual motion. Reuse a small set of shared sprites/emitters, tint/scale by variant/bounds, preload the target model, avoid replay on retries, limit simultaneous effects and support reduced motion. Exact appearance, timing, platform availability and performance remain to be validated. Quick Look previews embedded USDZ animation, not these app-controlled effects.
+When effects work is resumed, prototype one shared runtime effects controller in the iOS app: a brief leaf/sparkle burst masks the stage-model swap, selection uses a small pulse/ring, dragging shows placement validity, placement settles gently, and storage return uses shared presentation. Pack opening follows the agreed image-layer sequence in section 3.4 and the asset scope below. Keep the garden anchor separate from temporary visual motion. Reuse a small set of shared sprites/emitters, tint/scale by variant/bounds, preload required assets, avoid replay on retries, limit simultaneous effects and support reduced motion. Final appearance, timing, platform availability and performance remain to be validated. Quick Look previews embedded USDZ animation, not these app-controlled effects.
+
+**Pack-opening assets and implementation — agreed, deferred to F8:**
+
+- Supply **three aligned transparent PNG images per pack theme**: the sealed
+  wrapper, an opened body with torn rim/dark opening, and its detached top strip.
+  Reuse the sealed image for pack inventory and the existing awarded
+  species/variant's sprout PNG for the reveal; check sharpness at enlarged size.
+- Keep these UI assets separate from species model/thumbnail packages. No pack
+  USDZ, new sprout model, video or animation sprite sheet is needed. SwiftUI
+  animates scale, position, rotation, opacity and masking of image layers; runtime
+  gradients create the light and halo. No separate light image per rarity is
+  required. Tear/reveal sounds and light haptics are optional.
+- **Provisional estimates:** two images up to 1024×1536 px and a cropped strip
+  around 1024×256 px should total roughly 0.5–2 MB compressed per theme; budget
+  2 MB until measured. At those dimensions, decoded image memory is about 13 MiB
+  before rendering overhead, excluding the reused sprout and other UI. Load only
+  the active theme and needed sprout. Compression/detail and final dimensions
+  determine actual sizes; these are planning estimates, not delivered assets.
+- **Frontend scope:** confirmation, reusable overlay, two-tap presentation states,
+  themed image lookup/loading, receipt-based rarity tint, sprout/result display
+  and dismissal. Prevent repeated taps from skipping transitions or creating
+  extra requests; handle pending/failure/missing artwork and account-scoped
+  recovery. Block background interactions and preserve visitor modal/session
+  lifecycle rules. Support VoiceOver and Reduce Motion, and verify large text,
+  device orientations and minimum-device performance. Suggested animation timings
+  and acceptance checks are recorded in the F8 implementation backlog.
+- **Backend scope:** no gameplay, endpoint or database change is required for
+  this presentation. Reuse the existing opening endpoint, committed receipt and
+  durable retry/history guarantees. Awarding remains independent of animation
+  progress. Detailed frontend logic is deferred to polishing; this decision does
+  not create assets or implement the sequence now.
 
 ### 12.5 Shared visitor controller and assets
 
@@ -1044,7 +1159,7 @@ Supabase Free is acceptable for development and a bounded pilot; Pro's current U
 
 The API should be stateless across instances, with visitor leases, cursors and idempotency in durable shared state rather than process memory. Use database connection pooling with bounded totals across replicas. Keep transactions short and activity uploads batched. Do not upload once per step or every animation frame; heartbeat/poll cadence must respect the visitor rate and device/network budgets.
 
-Each activity credit evaluates the bounded set of planted plants and batches their growth writes. Read gardens from saved progress; do not run weather calls or expensive rule evaluation on garden reads. Cache shared behaviour profiles and weather observations. Profile this before optimising with multiple cumulative indexes. Large inventories and friend lists are paginated.
+Each activity credit evaluates the bounded set of planted plants and batches their growth writes. Read gardens from saved progress; do not run weather calls or expensive rule evaluation on garden reads. Cache shared behaviour profiles; shared weather observations and provider request budgets belong to the later weather increment in section 6.4, outside B8. Profile this before optimising with multiple cumulative indexes. Large inventories and friend lists are paginated.
 
 Settle offline visitor accrual lazily on relevant reads/mutations with server-time arithmetic and immutable interval contexts, not a continuously running simulation per garden. Active opportunities can use bounded HTTP heartbeat/poll responses; a socket, worker per player or per-second scheduled job is not required. Compress covered empty slot ranges and define settlement/opportunity retention without removing durable anti-replay guarantees. Profile missed-time catch-up to keep long absences bounded even across configuration boundaries.
 
@@ -1086,6 +1201,8 @@ Costs to monitor: asset egress, art sizes, authentication users, database capaci
 - Marginal personal-boost bands, baseline floors/warm-up, frozen daily targets, fractional carry and cap boundaries behave consistently across sync chunking.
 - Same-group skills select the strongest within their declared layer/metric, distinct groups add within that layer's cap, stored sources are inactive, and missing weather is neutral. A marginal personal bonus is not multiplied a second time as a separate activity factor.
 - Pre-credit stage snapshots make skill activation order-independent; an adult source can still support other plants.
+- Count/presence/stage/tag selectors use the frozen placed snapshot; capped per-copy bonuses apply once, respect configured variant/stage eligibility and exclude storage. Recipient filtering precedes same-group resolution, including stronger effects that target only a subset of plants.
+- General-workout and exact-type skills add within the matching activity layer when in distinct groups; no duplicate base fallback or daily-metric bonus is introduced. Supported stateful skills activate/consume once at their defined event boundary, not once per recipient or retry.
 - Skill sources/versions and contextual buckets remain fixed for credited rewards; retries and late enrichment cannot rewrite bonuses.
 - Water is credited directly as growth with no second conversion. One credit can cross several stage thresholds, while the final maturity cap prevents over-awards. Water-scoped effects do not change ticket entitlement.
 - Ticket spending does not reduce lifetime unlock progress; first maturity and packet grants occur once.
@@ -1126,7 +1243,7 @@ Provisional targets: smooth interaction on the selected minimum device; fast cac
 5. **Attraction and visitors:** pinned stage-attraction profiles, independent placed-copy aggregation, bounded starter/active curve, server-time contexts and active leases/slots, one shared visitor appearance/controller and idempotent welcomes; slower capped storage and one-interaction claims.
 6. **Typed workouts:** session/segment import, duplicate handling, supported type/category mapping and duration-based additional water with per-plant, per-type multipliers; verify intentional overlap with ordinary activity rewards.
 7. **Collection economy:** token/ticket wallets and ledgers, stable versioned exchange, introductory/permanent visitor milestones, permanent packet access, server-side draws and individually owned sprout storage. No direct activity-to-ticket implementation.
-8. **Boosts and conditional context:** separate growth and visitor resolvers, personal water bands, attraction/capacity skills, caps and versioned stacking; defer complex synergies and optional rate skills until balanced. Implement growth weather buckets if live weather ships, otherwise keep weather neutral.
+8. **Boosts and skills (B8):** separate growth and visitor resolvers, personal water bands, attraction/capacity skills, caps and versioned stacking. Keep weather neutral; weather integration, weather-dependent skills and weather buckets are deferred to a later increment. Defer complex synergies and optional rate skills until balanced.
 9. **Social:** requests, friends, visibility, blocks and read-only, non-rewarding garden visits.
 10. **Resilience:** activity queue, asset cache, background delivery, correction/device-switch flow, visitor session recovery and bounded elapsed-time settlement.
 11. **Release preparation:** Cloud Run deployment, Supabase PostgreSQL migration/Storage publishing, closed-loop economy simulation, starter pacing, active versus offline income, minimum-device visitors, privacy/account deletion, backups and monitoring.
@@ -1147,10 +1264,10 @@ A useful first vertical slice is: sign in → place starter → sync steps/grow 
 - Visitor-token naming and per-welcome/claim reward, stable exchange cost, introductory/permanent milestone thresholds/rewards and starter time to first draw. Daily quest generation and level-scaled targets remain later; no compulsory 200-capture goal or automatic level-based exchange inflation.
 - Personal baseline lookback, minimum valid days, floor, warm-up, refresh cadence and final marginal bonus bands; other-metric boosts are later.
 - Full independent watering per planted plant is the current planning baseline; assess garden/economy balance without silently switching to a shared budget.
-- Exact activity units/coefficients, per-metric activity caps, combined-water cap, any overall reward limit and behaviour-version migration policy. The two percentage-boost layers and additive-within-layer/compound-across-layer structure are agreed.
-- Weather provider, coarse location policy, bucket duration and whether live weather ships initially.
+- Exact activity units/coefficients, future changes to the selected modifier caps, any additional overall reward limit and behaviour-version migration policy. The two percentage-boost layers and additive-within-layer/compound-across-layer structure are agreed.
+- Later weather increment beyond B8: provider selection (WeatherKit is a candidate), membership/request budget, coarse location policy, bucket duration, attribution and delivery scope. B8 keeps weather neutral.
 - Rarity tiers/probabilities, packet costs/contents, permanent unlock milestones, duplicate value and any pity system.
-- Real skill assignments, activation stages and magnitudes for growth activity/water and visitor attraction/capacity scopes; offline-rate skills and complex synergies need separate launch decisions. Solar-reed remains an unassigned example. Growth stays two-layer; visitor effects use their own declared resolver/caps.
+- Further skill assignments and magnitudes beyond adult-only Moonwillow Sleeping Dew (+4% water), for growth activity/water and visitor attraction/capacity scopes; offline-rate skills and complex synergies need separate launch decisions. Solar-reed remains an unassigned example. Growth stays two-layer; visitor effects use their own declared resolver/caps.
 - A separate decaying moisture system, dormancy and complex maintenance are deferred; water currently means activity-driven growth.
 - Confirm late activity credits current membership, or fund historical attribution complexity.
 - Enrolment baseline, timezone changes, backfill window, workout type allowlist/category mapping, pause/rest/transition eligibility, cross-midnight attribution, overlap resolution and duration caps. Validate iPhone-only active-energy availability on the minimum supported OS.
@@ -1165,6 +1282,10 @@ A useful first vertical slice is: sign in → place starter → sync steps/grow 
 
 | Date | Decision / proposal | Status |
 | --- | --- | --- |
+| 2026-10-24 | Select +150% per-activity and combined-water caps (×6.25 across both layers), +50% plant/garden attraction with final ×2 base ceiling, flat attraction min(+10 points, 25% base), +200% capacity with +10 flat budget inside final min(absolute maximum, ×3 base). Assign adult-only Moonwillow Sleeping Dew +4% water with shared non-stacking variants; retain old pinned plants/packs | Approved initial development policy; B8 skill/cap source and native dropdown implemented. Native execution and personal-account provisioning require their own validation/availability evidence. Wider personal/input handlers remain separately scheduled. |
+| 2026-10-24 | Defer weather integration and weather-dependent skills beyond B8; keep weather neutral. Record WeatherKit as a later candidate requiring paid Apple Developer Program membership, with a shared included request allowance and optional paid capacity | Agreed B8 scope exclusion; no weather provider selected or integrated. Later location, observation buckets, caching, attribution and budget need an explicit increment |
+| 2026-10-24 | Compose skills from reusable validated components; evaluate relevant rules against shared frozen garden facts, then resolve effects per recipient. Support explicit capped count-based magnitudes while retaining strongest-per-group stacking; general-workout and exact-type bonuses add in distinct groups | Agreed specification direction; handlers remain pending. Skill assignments, activation stages, numeric balance and stateful mechanics require explicit configuration/implementation |
+| 2026-10-23 | Pack opening uses confirmation → enlarged themed pack/dim background → first tap tears the top and reveals receipt-rarity light (Common grey, Rare blue, Epic purple, Legendary gold) → second tap reveals the sprout with a matching halo → Continue. Use three transparent PNGs per pack theme, existing sprout PNGs and frontend animation; replaces the unspecified result-view/popup proposal | Agreed flow and image-based approach; assets and implementation deferred to F8 polishing. Existing server award/retry contract is sufficient; no backend gameplay/API/schema change required |
 | 2026-10-22 | Select Cloud Run for the existing FastAPI container and Supabase for deployed PostgreSQL, Auth and Storage/CDN; retain local Docker PostgreSQL and authoritative game transactions | Agreed architecture direction; provider/cloud integration not implemented or provisioned |
 | 2026-10-22 | Support email/password, Google and native Apple via Supabase Auth; game username is separate. Linked methods share one Supabase subject and internal game account; no implicit garden merge | Agreed auth specification; implementation pending |
 | 2026-10-22 | Insert F5a real authentication/linking immediately after the implemented F5 steps slice and before integrated F6 visitor/reward work; test hosted Auth with local game DB first | Planned next increment; existing generated-token F5 implementation/acceptance remains historical evidence, not real-provider validation |
@@ -1207,6 +1328,8 @@ A useful first vertical slice is: sign in → place starter → sync steps/grow 
 
 References support platform capabilities, not final product approval. Recheck current documentation during implementation.
 
+- [Apple Developer Program membership](https://developer.apple.com/programs/)
+- [WeatherKit requirements, pricing and attribution (deferred beyond B8)](https://developer.apple.com/weatherkit/)
 - [HealthKit overview](https://developer.apple.com/documentation/healthkit)
 - [Authorising health-data access](https://developer.apple.com/documentation/healthkit/authorizing-access-to-health-data)
 - [HealthKit statistics collection queries](https://developer.apple.com/documentation/healthkit/executing-statistics-collection-queries)

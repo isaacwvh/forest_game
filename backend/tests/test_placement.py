@@ -454,11 +454,11 @@ def test_garden_reader_blocks_layout_writer_until_snapshot_is_complete(
     read_locked, writer_started, writer_done, release_reader = Event(), Event(), Event(), Event()
     original_present = services.present_garden
 
-    def delayed_present(session, garden, catalogue, presenter=None):
+    def delayed_present(session, garden, catalogue, presenter=None, **kwargs):
         if presenter is None:
             read_locked.set()
             assert release_reader.wait(timeout=10)
-        return original_present(session, garden, catalogue, presenter)
+        return original_present(session, garden, catalogue, presenter, **kwargs)
 
     monkeypatch.setattr(services, "present_garden", delayed_present)
 

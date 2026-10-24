@@ -141,6 +141,7 @@ struct APIRewardRecap: Codable, Identifiable {
         let awardedGrowthMicroUnits: String
         let beforeStage: GrowthStage
         let afterStage: GrowthStage
+        var skillBonusGrowthMicroUnits: String? = nil
     }
 }
 

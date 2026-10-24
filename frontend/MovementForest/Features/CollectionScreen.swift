@@ -282,6 +282,18 @@ private struct CatalogDetailScreen: View {
                 Text("Growth uses the listed activity multipliers. Unlisted activities contribute no growth.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            if let skills = profile("behaviour")?.gardenEffects, !skills.isEmpty {
+                Section("Garden skills") {
+                    ForEach(skills) { skill in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(skill.name).font(.headline)
+                            Text(skill.description).font(.callout)
+                            Text("Requires a fully grown plant in the garden")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
         }
     }
 }

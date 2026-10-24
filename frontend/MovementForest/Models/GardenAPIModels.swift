@@ -28,6 +28,7 @@ struct APIOwnedPlant: Codable, Identifiable, Equatable {
     var growthProgress: APIGrowthProgress? = nil
     var baseAttractionMicroUnits: String? = nil
     var contributesAttraction: Bool? = nil
+    var gardenSkills: [APIGardenSkillDefinition]? = nil
 
     func rendered(catalogue: APICatalogue, assets: any AssetCatalogProviding) -> GardenPlant {
         let version = catalogue.variant(species: speciesId, variant: variantId)?.assetCatalogVersion
@@ -56,6 +57,7 @@ struct APIGarden: Codable, Equatable {
     let stateVersion: Int64
     let plants: [APIOwnedPlant]
     var totalAttractionMicroUnits: String? = nil
+    var skillSummary: APISkillSummary? = nil
 
     func rendered(catalogue: APICatalogue, assets: any AssetCatalogProviding) throws -> GardenSnapshot {
         guard coordinateUnit == "garden_unit", catalogue.coordinateUnit == coordinateUnit,
@@ -178,6 +180,90 @@ struct APICatalogueProfile: Codable, Equatable {
     var metricMultipliers: [String: Decimal]? = nil
     var stageAttractionMicroUnits: [String: String]? = nil
     var gameplayTags: [String]? = nil
+    var gardenEffects: [APIGardenSkillDefinition]? = nil
+}
+
+struct APIGardenSkillDefinition: Codable, Equatable, Identifiable {
+    let id: String
+    let name: String
+    let description: String
+    let minimumStage: String
+}
+
+struct APISkillSummary: Codable, Equatable {
+    let policyVersion: String
+    let caps: Caps
+    let activeSkills: [Effect]
+    let growthFactors: [GrowthFactors]
+
+    struct Caps: Codable, Equatable {
+        let activityBonus: String
+        let waterBonus: String
+
+        var description: String {
+            func percent(_ value: String) -> String {
+                guard let amount = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")) else { return "Unavailable" }
+                return (amount * 100).formatted(.number.precision(.fractionLength(0...2))) + "%"
+            }
+            return "Boost cap reached · Activity +\(percent(activityBonus)) · Water +\(percent(waterBonus)) maximum"
+        }
+    }
+
+    struct Effect: Codable, Equatable, Identifiable {
+        var id: String { "\(system).\(scope).\(metric ?? "").\(stackingGroup).\(profileId).\(profileVersion).\(skillId)" }
+        let skillId: String
+        let name: String
+        let description: String
+        let system: String
+        let scope: String
+        let metric: String?
+        let operation: String
+        let magnitude: String
+        let stackingGroup: String
+        let sourcePlantId: UUID
+        let profileId: String
+        let profileVersion: Int
+        let eligibleSourcePlantIds: [UUID]
+        let recipientPlantIds: [UUID]
+
+        enum CodingKeys: String, CodingKey {
+            case skillId = "id"
+            case name, description, system, scope, metric, operation, magnitude, stackingGroup
+            case sourcePlantId, profileId, profileVersion, eligibleSourcePlantIds, recipientPlantIds
+        }
+
+        var bonusText: String {
+            guard let amount = Decimal(string: magnitude, locale: Locale(identifier: "en_US_POSIX")) else { return "Unavailable" }
+            let value = operation == "percent" ? (amount * 100).formatted(.number.precision(.fractionLength(0...2))) + "%" : amount.formatted()
+            let destination: String
+            switch scope {
+            case "water": destination = "water"
+            case "activity": destination = (metric ?? "activity").replacingOccurrences(of: "_", with: " ")
+            case "offline_capacity": destination = "storage"
+            default: destination = "attraction"
+            }
+            return "+\(value) \(destination)"
+        }
+    }
+
+    struct GrowthFactors: Codable, Equatable {
+        let plantId: UUID
+        let waterFactor: String
+        let activityFactors: [String: String]
+        let waterCapReached: Bool
+        let activityCapReached: [String: Bool]
+    }
+
+    var waterHeadline: String? {
+        let factors = Set(growthFactors.map(\.waterFactor))
+        guard factors.count == 1, let value = factors.first,
+              let factor = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")), factor > 1 else { return nil }
+        return "Water +\(((factor - 1) * 100).formatted(.number.precision(.fractionLength(0...2))))%"
+    }
+
+    var capReached: Bool {
+        growthFactors.contains { $0.waterCapReached || $0.activityCapReached.values.contains(true) }
+    }
 }
 
 enum GardenEditKind: String, Codable { case plant, move, rotate, store }

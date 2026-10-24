@@ -16,6 +16,53 @@ private struct EditorContract: Decodable {
     }
 }
 
+private struct SkillsWireContract: Decodable {
+    let catalogue: APICatalogue
+    let inventory: APIInventory
+    let emptyGarden: APIGarden
+    let plantedGarden: APIGarden
+    let storedGarden: APIGarden
+    let syncResult: APIActivitySyncResult
+    let recaps: APIRewardRecaps
+
+    static func load() throws -> Self {
+        let url = try XCTUnwrap(Bundle.main.url(forResource: "skills-contract", withExtension: "json", subdirectory: "Fixtures"))
+        return try ActivityWire.decoder().decode(Self.self, from: Data(contentsOf: url))
+    }
+}
+
+extension GardenEditorTests {
+    func testSleepingDewActualHTTPContractAndCachedRoundTrip() throws {
+        let fixture = try SkillsWireContract.load()
+        XCTAssertEqual(fixture.emptyGarden.skillSummary?.activeSkills.count, 0)
+        XCTAssertEqual(fixture.storedGarden.skillSummary?.activeSkills.count, 0)
+        let summary = try XCTUnwrap(fixture.plantedGarden.skillSummary)
+        XCTAssertEqual(summary.waterHeadline, "Water +4%")
+        XCTAssertFalse(summary.capReached)
+        let skill = try XCTUnwrap(summary.activeSkills.first)
+        XCTAssertEqual(skill.skillId, "sleeping_dew")
+        XCTAssertEqual(skill.name, "Sleeping Dew")
+        XCTAssertEqual(skill.bonusText, "+4% water")
+        XCTAssertEqual(skill.eligibleSourcePlantIds.count, 1)
+        XCTAssertEqual(skill.recipientPlantIds.count, 2)
+        XCTAssertEqual(fixture.inventory.plants.first?.growthStage, .adult)
+        XCTAssertEqual(fixture.inventory.plants.first?.gardenSkills?.first?.name, "Sleeping Dew")
+        XCTAssertEqual(fixture.syncResult.garden.plants.first(where: { $0.speciesId == "oak" })?.growthMicroUnits, "10400000")
+        let rendered = try fixture.plantedGarden.rendered(catalogue: fixture.catalogue, assets: BundleAssetCatalog())
+        XCTAssertEqual(rendered.plants.count, 2)
+        let cached = try JSONDecoder().decode(APIGarden.self, from: JSONEncoder().encode(fixture.plantedGarden))
+        XCTAssertEqual(cached.skillSummary, summary)
+        let recap = try XCTUnwrap(fixture.recaps.recaps.first?.payload.plants.first)
+        XCTAssertEqual(recap.skillBonusGrowthMicroUnits, "400000")
+    }
+
+    func testLegacyGardenDoesNotInventSkillStatus() throws {
+        let fixture = try EditorContract.load()
+        XCTAssertNil(fixture.emptyGarden.skillSummary)
+        XCTAssertNil(fixture.inventory.plants.first?.gardenSkills)
+    }
+}
+
 private final class MemoryEditJournal: PendingEditPersisting {
     var edits: [String: PendingGardenEdit] = [:]
     var failSave = false

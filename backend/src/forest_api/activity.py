@@ -273,8 +273,11 @@ def sync(
             )
             for plant in plants
         }
-        # One pre-credit stage/profile snapshot for the whole upload. B8 effects stay disabled.
+        # One pre-credit stage/profile snapshot for the entire upload.
+        skills = services.skill_snapshot(session, garden, presenter=presenter, boundary=boundary)
+        source_facts = {plant.id: plant for plant in skills.plants}
         day_results, credits = [], []
+        skill_bonus = dict.fromkeys(before, 0)
         accounting_started = False
         for entry in sorted(body.days, key=lambda item: item.game_date):
             established = False
@@ -341,11 +344,15 @@ def sync(
                     behaviour = presenter.profile(
                         "behaviour", plant.behaviour_profile_id, plant.behaviour_profile_version
                     )
-                    # Validate supported schema and reject effects until B8, even for direct SQL.
+                    # All effects read the shared pre-credit snapshot, including later days.
                     prior = plant.growth_micro_units
                     prior_fraction = dict(plant.fractional_state)
                     try:
                         definition = BehaviourDefinition.model_validate(behaviour.rules)
+                        activity_factors, water_factor = skills.growth(
+                            source_facts[str(plant.id)], rules.metrics
+                        )
+                        skill_context = skills.context(source_facts[str(plant.id)], rules.metrics)
                         result = calculate_growth(
                             {"steps": water_steps},
                             rules.metrics,
@@ -353,7 +360,19 @@ def sync(
                             prior,
                             growth.maximum_growth_micro_units,
                             plant.fractional_state,
+                            activity_factors=activity_factors,
+                            water_factor=water_factor,
                         )
+                        neutral = calculate_growth(
+                            {"steps": water_steps},
+                            rules.metrics,
+                            definition.metric_multipliers,
+                            prior,
+                            growth.maximum_growth_micro_units,
+                            prior_fraction,
+                        )
+                        actual_bonus = result.awarded - neutral.awarded
+                        skill_bonus[plant.id] += actual_bonus
                     except ValueError as exc:
                         raise ApiError(
                             503,
@@ -390,9 +409,12 @@ def sync(
                                     rules.metrics["steps"].water_micro_units
                                 ),
                                 "snapshotStage": before[plant.id][2],
-                                "activityFactor": "1",
-                                "waterFactor": "1",
-                                "postActivityWaterMicroUnits": str(result.calculated),
+                                "activityFactor": skill_context["activityFactors"]["steps"],
+                                "waterFactor": skill_context["waterFactor"],
+                                "skills": skill_context,
+                                "postActivityWaterMicroUnits": str(
+                                    result.calculated / water_factor
+                                ),
                                 "calculatedMicroUnits": str(result.calculated),
                                 "beforeFraction": prior_fraction,
                                 "afterFraction": result.fractional_state,
@@ -400,6 +422,7 @@ def sync(
                                 "afterStage": stage,
                                 "maturityClamped": result.maturity_clamped,
                                 "awardedMicroUnits": str(result.awarded),
+                                "skillBonusGrowthMicroUnits": str(actual_bonus),
                             },
                         )
                     )
@@ -436,6 +459,7 @@ def sync(
                 "awardedGrowthMicroUnits": str(plant.growth_micro_units - before[plant.id][0]),
                 "beforeStage": before[plant.id][2],
                 "afterStage": presenter.plant(plant, None).growth_stage,
+                "skillBonusGrowthMicroUnits": str(skill_bonus[plant.id]),
             }
             for plant in plants
             if plant.growth_micro_units > before[plant.id][0]
@@ -478,7 +502,9 @@ def sync(
             accepted_at=boundary,
             device=device_dto(device),
             days=day_results,
-            garden=services.present_garden(session, garden, catalogue, presenter),
+            garden=services.present_garden(
+                session, garden, catalogue, presenter, boundary=boundary
+            ),
             activity_steps=str(progress.activity_steps),
             first_maturity_count=progress.first_maturity_count,
             recap_id=recap_id,

@@ -119,6 +119,16 @@ def main():
     variant = variants[award["variantId"]]
     asset = catalog[(award["speciesId"], variant["assetCatalogVersion"], "sprout", award["variantId"])]
     require(award["thumbnailKey"] == f"assets/{award['speciesId']}/v1/" + asset["thumbnail"], "Collection award asset mismatch")
+    skills = json.loads((ROOT / "MovementForest/Resources/Fixtures/skills-contract.json").read_text(encoding="utf-8"))
+    summary = skills["plantedGarden"]["skillSummary"]
+    require(summary["policyVersion"] == "b8-caps-v1", "Unknown skills fixture policy")
+    require(summary["caps"]["activityBonus"] == summary["caps"]["waterBonus"] == "1.5", "Growth cap fixture mismatch")
+    require(len(summary["activeSkills"]) == 1 and summary["activeSkills"][0]["id"] == "sleeping_dew", "Expected one Sleeping Dew aura")
+    require(all(row["waterFactor"] == "1.04" for row in summary["growthFactors"]), "Sleeping Dew factor mismatch")
+    require(skills["storedGarden"]["skillSummary"]["activeSkills"] == [], "Stored source still emits skills")
+    mature = next(p for p in skills["inventory"]["plants"] if p["speciesId"] == "moonwillow")
+    require(mature["growthStage"] == "adult" and mature["placement"] is None, "Missing stored mature test source")
+    require(next(p for p in skills["syncResult"]["garden"]["plants"] if p["speciesId"] == "oak")["growthMicroUnits"] == "10400000", "Expected confirmed 4% growth")
     config = ROOT / "MovementForest/Configuration"
     info = plistlib.loads((config / "Info.plist").read_bytes())
     entitlements = plistlib.loads((config / "MovementForest.entitlements").read_bytes())
@@ -144,6 +154,7 @@ def main():
     print(f"PASS: {models} USDZs/checksums/archives, {models} alpha PNGs, 15 fixture plants, plists, shared scheme, {len(sources)} Swift source references.")
     print("PASS: synthetic B3 editor contract, owned-copy identity, bundled API asset keys and shared geometry resource.")
     print("PASS: real synthetic collection exchange/opening accounting, pack consumption, probabilities and bundled award thumbnail.")
+    print("PASS: HTTP-derived Sleeping Dew source/activation/storage, +4% growth and versioned cap contract.")
     print("Swift compilation, native UI, imported axes, animation, and real HealthKit remain Mac/iPhone checks.")
 
 

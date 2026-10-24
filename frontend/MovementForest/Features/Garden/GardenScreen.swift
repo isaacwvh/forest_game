@@ -112,6 +112,20 @@ struct PlantDetailScreen: View {
             if isSample {
                 Section { Text("This plant is part of the sample garden. Your own collection and confirmed growth will appear when the garden service is connected.").foregroundStyle(.secondary) }
             }
+            if let skills = owned?.gardenSkills, !skills.isEmpty {
+                Section("Garden skills") {
+                    ForEach(skills) { skill in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(skill.name).font(.headline)
+                            Text(skill.description).font(.callout)
+                            Text(owned?.placement == nil ? "Inactive in storage" :
+                                 plant.growthStage == .adult ? "Fully grown source · Check Active skills for effective bonuses" :
+                                 "Requires a fully grown plant in the garden")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
         }
         .navigationTitle(plant.speciesId.capitalized).navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }

@@ -98,8 +98,12 @@ def create_context(session, settings, garden, boundary):
                 "profile": dto.pinned_profiles.attraction.model_dump(mode="json", by_alias=True),
             }
         )
-    attraction = sum(int(row["attractionMicroUnits"]) for row in sources)
+    skills = services.skill_snapshot(session, garden, presenter=presenter, boundary=boundary)
+    attraction = skills.attraction()
     parameters = visitor_parameters(attraction, len(sources), definition.curve)
+    parameters["capacity"] = skills.capacity(
+        definition.curve.base_capacity, definition.curve.maximum_capacity
+    )
     context = VisitorContext(
         id=uuid4(),
         garden_id=garden.id,
@@ -112,6 +116,7 @@ def create_context(session, settings, garden, boundary):
             "offlineRate": fraction_json(parameters["offline_rate"]),
             "capacity": parameters["capacity"],
             "rules": definition.model_dump(mode="json"),
+            "skills": skills.summary(),
         },
     )
     session.add(context)
@@ -350,6 +355,13 @@ def publish_rules(session, settings, version, definition, effective_at, *, is_fi
         raise ValueError("Use an aware effective timestamp and the stable 30-second grid")
     with session.begin():
         session.scalar(select(GameCatalogue).where(GameCatalogue.id == 1).with_for_update())
+        from forest_api.models import SkillPolicy
+        from forest_api.skill_rules import SkillCaps
+
+        policy = session.get(SkillPolicy, definition.skill_policy_version)
+        if policy is None:
+            raise ValueError("Visitor rules require an existing skill cap policy")
+        SkillCaps.model_validate(policy.rules)
         now = session.scalar(select(func.clock_timestamp()))
         latest = session.scalar(select(func.max(VisitorState.settled_at)))
         if effective_at <= now or latest is not None and effective_at <= latest:

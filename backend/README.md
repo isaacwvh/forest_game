@@ -1,5 +1,11 @@
 # Movement Forest backend — B1–B7 collection slice
 
+The first B8 garden-skill/cap increment is implemented; see
+[SKILLS_API.md](SKILLS_API.md) for the explicit existing-server upgrade, immutable
+cap policy, Sleeping Dew publication, repeat-safe adult Moonwillow storage grant
+and HTTP verification. Wider activity inputs and personal boosts remain separate
+increments. Native acceptance: [B8 skills](../frontend/B8_SKILLS_ACCEPTANCE.md).
+
 Python 3.12, FastAPI, synchronous SQLAlchemy 2, psycopg 3, PostgreSQL 17 and Alembic.
 This foundation implements accounts, catalogue/profile records, owned plants,
 owner-only garden/storage reads, atomic B3 placement edits, exact B4 growth/attraction

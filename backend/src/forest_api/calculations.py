@@ -82,6 +82,8 @@ class CalculationRules(Definition):
         BehaviourDefinition(metric_multipliers=dict.fromkeys(self.metrics, 1))
         if "steps" not in self.metrics:
             raise ValueError("Steps conversion is required")
+        if "workout_minutes.*" in self.metrics:
+            raise ValueError("Workout wildcard is a coefficient fallback, not an input metric")
         return self
 
 
@@ -131,20 +133,37 @@ def calculate_growth(
     growth: int,
     maximum: int,
     fractional_state: dict,
+    *,
+    activity_factors: dict[str, Fraction] | None = None,
+    water_factor: Fraction = Fraction(1),
 ) -> GrowthResult:
     if not 0 <= growth <= maximum <= MAX_INTEGER:
         raise ValueError("Invalid growth bounds")
+    if not 1 <= water_factor <= Fraction(5, 2):
+        raise ValueError("Water factor exceeds supported bounds")
     calculated = Fraction(0)
     for metric, quantity in quantities.items():
         if quantity < 0 or metric not in rates:
             raise ValueError("Invalid metric quantity")
         rate = rates[metric]
+        factor = (activity_factors or {}).get(metric, Fraction(1))
+        if not 1 <= factor <= Fraction(5, 2):
+            raise ValueError("Activity factor exceeds supported bounds")
+        coefficient = coefficients.get(metric)
+        if coefficient is None:
+            coefficient = (
+                coefficients.get("workout_minutes.*", 0)
+                if metric.startswith("workout_minutes.")
+                else 0
+            )
         calculated += (
             Fraction(quantity)
             / exact(rate.normalisation)
             * rate.water_micro_units
-            * exact(coefficients.get(metric, 0))
+            * exact(coefficient)
+            * factor
         )
+    calculated *= water_factor
     total = calculated + read_remainder(fractional_state)
     remaining = maximum - growth
     if total >= remaining:

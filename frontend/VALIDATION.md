@@ -300,3 +300,31 @@ pending. Run bash frontend/scripts/test-mac.sh, then the revised
 F7_COLLECTION_ACCEPTANCE.md flow using the same account and installation. New
 schema-2 offers require this updated client; it continues to support older packs.
 Existing local signing, bundle ID, .env, game DB and accounts were not changed.
+
+## B8 Sleeping Dew skill UI — 24 October 2026
+
+Implemented confirmed/cached Active skills disclosure in the existing fixed
+garden status panel, effective water headline, duplicate/source explanations,
+policy-derived growth cap text, owned/catalogue skill descriptions and saved
+recap bonus. Placement previews never activate a skill; existing account/cache
+and monotonic confirmed-state handling remains the authority for updates.
+
+Passed portable checks: 20 USDZ checksum/archive checks, 20 alpha PNGs, 15 sample
+plants, project/source/resource/plist/scheme inclusion, legacy editor/collection
+contracts and the new HTTP-derived Sleeping Dew activation/storage/+4%/cap
+contract. All 50 Swift source files parse without syntax errors. Added two native
+tests for actual skill-wire decoding/assets/cached round trip/recap and legacy
+missing-summary compatibility; these native tests have not been executed here.
+
+Backend final full PostgreSQL suite passed **399 tests**. New skill, existing
+activity and visitor/collection real HTTP walkthroughs passed. The new synthetic
+skills fixture was exported from the actual disposable HTTP skill walkthrough,
+including replay after server restart; no personal Health/account data is used.
+
+Xcode/Apple SDK typechecking, native XCTest/UI, Release simulator build and real
+iPhone visual/accessibility acceptance remain pending on a Mac/device. Run
+frontend/scripts/test-mac.sh, then B8_SKILLS_ACCEPTANCE.md. No Windows parser or
+resource check is presented as native compilation evidence. Docker/personal game
+state was left unchanged at the user's request; apply SKILLS_API.md's upgrade
+and named-account grant before the device flow. Existing local signing/auth and
+other uncommitted asset/spec work were preserved.

@@ -1,7 +1,12 @@
 # Movement Forest implementation plan
 
-Revised 23 October 2026 against `forest_game_v1_spec.md`, version 0.14.
+Revised 24 October 2026 against `forest_game_v1_spec.md`, version 0.18.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
+
+The first B8 skill/cap increment is now source-implemented below, including
+Sleeping Dew and the native Active skills disclosure. Its selected provisional
+modifier caps supersede earlier open-cap notes. Wider personal/input increments
+remain scheduled separately; this does not mark all of B8 complete.
 
 **Current checkpoint — 23 October 2026:** the user accepts work through **B6/F6**,
 including B6a–B6c, the F5 steps slice and the tested F5a email-authentication path.
@@ -70,6 +75,8 @@ disabled until their provider setup is ready. No project/credentials were create
 
 **B3 implementation:** atomic batch edits, canonical geometry, optimistic layout/catalogue checks, durable retries, consistent reads and disabled future visitor-accounting boundaries are implemented. All 132 backend tests and a real HTTP smoke check passed. No database migration or new production balance values are required. See backend validation for scope limits and the pending Docker image check.
 
+**B8 weather scope — 24 October 2026:** weather integration and weather-dependent skills are deferred to a later increment. B8 keeps weather neutral; no weather API, location permission, weather ingestion/storage, weather handler/UI or weather-specific acceptance work is required. The future design and WeatherKit membership/request-budget notes remain in spec section 6.4; no provider is selected.
+
 ## What changed from the previous plan
 
 The core loop is now:
@@ -97,7 +104,7 @@ Existing B6–B9 become B7–B10 below. Existing F6 becomes F7 and F7 becomes F8
 | **B5. Activity synchronisation — complete steps slice** | `/v1/activity/sync`, enrolment baseline, game-date buckets, observed values versus per-metric credited watermarks, device policy, idempotency, per-plant growth credits, first-maturity/activity counters and recap records. Start with steps; add the wider input handlers incrementally in B8. | Replays, downward corrections, late totals, concurrent syncs and sync-versus-store races neither duplicate nor lose eligible growth. Stored plants remain unchanged. Sync mints no tokens/tickets. Reaching a stage leaves transforms intact. |
 | **B6. Visitors — complete** | Deliver B6a–B6c below. Integrate elapsed-time settlement into B3/B5 before their state changes. Include token wallet/ledger and authoritative lifetime hosted counters. | Active/inactive time never pays twice; slots cannot reroll; welcomes/claims pay once. Storage caps/fractions/reward versions survive reconnects, state changes and concurrent requests. |
 | **B7. Collection economy — source implemented** | Versioned token exchange for owned unopened packs, immutable rarity-first pools, server openings into sprout storage, shared wallet/idempotency and controlled publication/retirement. All test offers available; unlock/milestone progression deferred. | PostgreSQL concurrency/rollback/replay, migration preservation, ledger reconciliation, pool-edit invariance and real HTTP loop pass; see backend validation. |
-| **B8. Additional inputs, boosts and skills** | Daily distance/active energy/flights, typed workout import/deduplication, personal marginal water boosts and the two-layer growth resolver. Separately enable visitor attraction/capacity skills. Use neutral weather or controlled fixtures initially; live weather, offline-rate skills and complex synergies require explicit scope decisions. | Each handler passes independently before combinations. Workout parent/segments and overlapping records cannot duplicate duration; intentional overlap with ordinary daily activity remains. Same-group skills resolve deterministically and stage activation uses the proper snapshot. Capacity removal preserves earned storage. |
+| **B8. Additional inputs, boosts and skills** | Daily distance/active energy/flights, typed workout import/deduplication, personal marginal water boosts and the two-layer growth resolver. Separately enable visitor attraction/capacity skills. Keep weather neutral; weather integration and weather-dependent skills are deferred beyond B8. Offline-rate skills and complex synergies still require explicit scope decisions. | Each included handler passes independently before combinations. Workout parent/segments and overlapping records cannot duplicate duration; intentional overlap with ordinary daily activity remains. Same-group skills resolve deterministically and stage activation uses the proper snapshot. Capacity removal preserves earned storage. Weather integration/conditional-weather tests are outside B8. |
 | **B9. Social** | Friend requests, exact lookup, read-only visits, visibility and blocks. | Access tests pass; friend responses exclude health history, private visitor state and ledgers. Friends cannot redeem another garden's opportunities/storage. |
 | **B10. Staging and release readiness** | Deploy the FastAPI image to Cloud Run; migrate game PostgreSQL to Supabase with controlled Alembic, tested TLS/pooler/driver settings and bounded aggregate connections. Publish immutable shared assets to Supabase Storage/CDN. Add HTTPS, secrets, logs, monitoring, backup/restore and coordinated Supabase/game account deletion. Run economy and long-absence/load checks. | Automated API tests pass on isolated staging. No game-table access bypasses FastAPI. Database migration/restore, asset delivery, cold-start/first-sync latency and resource budgets are verified. Starter-to-first-draw pacing, retention/deletion and device-release checks pass before alpha. Real Auth is already delivered in F5a; full cloud deployment is not its prerequisite. |
 
@@ -127,7 +134,7 @@ B6a–B6c are complete and accepted for the current development slice. Final vis
 | **F5a. Supabase authentication — accepted email slice; provider setup deferred** | Email/password, Google, native Apple; Keychain-backed SDK sessions; asynchronous API token refresh; existing account/starter onboarding; linked-method settings; safe logout/account switching and durable queue recovery. Configure FastAPI JWKS against hosted development Auth while keeping game PostgreSQL local. | Each method signs in on a real iPhone. Linked methods return the same Supabase subject/internal user/garden with one starter. Refresh/reauthentication preserve request UUIDs, watermarks and consent. Different accounts cannot share cached state or queued uploads. Email path accepted; SMTP and Google/Apple setup and dependent live/linking acceptance remain deferred below. |
 | **F6. Visitor interaction — complete** | Attraction explanation; one shared visitor appearance/controller; arrival/flight/linger/tap/departure; server session lifecycle, heartbeat and opportunity expiry; pending/confirmed welcomes; stored capacity/time-to-full and one-interaction claim. | Background/edit/modal/friend-view transitions end or pause active mode correctly. Missed arrivals are not redeemed or converted into stored income. Functional visitor logic is accepted from user testing, including smooth motion and stable framing. Final visitor render and garden-depth presentation are deferred to F8; retain lifecycle, retry, accessibility and performance regression checks. |
 | **F7. Collection UI — source implemented** | Simple Exchange/Catalog/Draws side menu, disclosed prices/odds, owned packs, confirmed results/history and durable account-scoped recovery. Social screens follow B9; unlocks/milestones are deferred. | Portable resource/contract/syntax checks pass. Xcode/Release and physical iPhone acceptance remain pending; use F7_COLLECTION_ACCEPTANCE.md. |
-| **F8. Hardening and polish** | Download/cache limits, durable retries, delayed Health inputs, session recovery, stage transitions, recap receipts, accessibility, long sessions and economy pacing. Final visitor render and garden-relative depth/perspective, plus cosmetic watering/swarm/unboxing effects, follow durable mechanics; see the F8 backlog below. | A small TestFlight alpha completes the full loop over several days. No duplicate rewards on interruptions or reconnects; realistic active earnings and time-to-first-draw meet selected targets. |
+| **F8. Hardening and polish** | Download/cache limits, durable retries, delayed Health inputs, session recovery, stage transitions, recap receipts, accessibility, long sessions and economy pacing. Final visitor render and garden-relative depth/perspective, cosmetic watering/swarm effects and the agreed two-tap pack opening follow durable mechanics; see the F8 backlog below. | A small TestFlight alpha completes the full loop over several days. No duplicate rewards on interruptions or reconnects; realistic active earnings and time-to-first-draw meet selected targets. |
 
 Work through B6/F6 is accepted for the steps/email-authentication slice. Next deliver B7 collection mechanics with F7 exchange/draw UI; F7 social screens follow B9. SMTP and Google/Apple setup and dependent acceptance remain explicit F5a follow-ups before those paths are enabled or relied on in wider testing. Wider Health inputs remain B8. Final visitor art and depth polish remain F8. Native changes continue to require Mac/iPhone validation.
 
@@ -227,7 +234,57 @@ read schema 1 and 2. Hidden-stage discovery is deferred to the polishing scope
 below. See backend/frontend VALIDATION.md for actual execution; source/parsing does
 not imply native Xcode/Release or device acceptance of this update.
 
-## F8 presentation and catalogue polish — deferred
+## B8 skill/cap increment — 24 October 2026
+
+Source implements the first complete garden-skill increment: immutable behaviour
+schema 2; validated reusable adult activation, optional placed-count conditions,
+recipient selectors, fixed/capped-copy magnitudes, deterministic strongest groups;
+separate growth and visitor destinations; exact two-layer percentages; flat
+visitor additions; immutable `b8-caps-v1` policy; old-state visitor settlement;
+one pre-credit source snapshot across the entire upload; credit/recap provenance.
+Alembic `0006_garden_skills` replaces the SQL neutral-only validator and retains
+legacy schemas/data. No startup migration, profile rewrite or account grant.
+
+Selected caps supersede earlier open-cap notes: +150% per activity metric and
+combined water (×6.25 across layers), +50% plant/garden attraction with final ×2
+unmodified-base ceiling, total flat attraction min(+10 points, 25% base), +200%
+capacity with total +10 flat visits inside final min(absolute maximum, ×3 base).
+Flat additions enter after percentage layers and cannot amplify their budgets.
+Rate skills, flat activity quantities and fixed-water grants remain unsupported.
+
+Sleeping Dew is adult placed Moonwillow's +4% combined-water skill, shared across
+Standard/Golden copies and non-stacking. Publish behaviour v2 and new Woodland v3 /
+Moonwillow v2 packs explicitly; old owned copies, unopened packs and receipts keep
+their original profiles. Named-account development grant is repeat-safe, preserves
+identity, awards an adult into storage and does not increment earned maturity.
+
+Native support adds a confirmed/cached Active skills disclosure inside the fixed
+garden status panel, source/duplicate explanations, effective water headline,
+growth cap notice, owned/catalogue skill descriptions and confirmed recap bonus.
+An HTTP-generated synthetic fixture supplies native decoding/cache tests.
+See [backend/SKILLS_API.md](backend/SKILLS_API.md) for upgrade/provisioning and
+[frontend/B8_SKILLS_ACCEPTANCE.md](frontend/B8_SKILLS_ACCEPTANCE.md) for device flow.
+Executed checks and actual personal provisioning status belong in VALIDATION.md;
+source or Windows parsing does not imply Xcode/Release/iPhone execution.
+
+Remaining B8 increments retain explicit scope:
+
+1. Personal step baseline: propose 14 completed-day lookback, at least 7 valid
+   days, floor 3,000 steps; frozen pre-day inputs/target; neutral warm-up; marginal
+   +10% from 1–1.5× baseline, +20% from 1.5–2×, then normal rewards. Values remain
+   fixture proposals. Unavailable data is excluded, true zero is valid; late
+   corrections never rewrite a frozen target. Bands share the activity cap pool.
+2. Wider daily inputs: separate availability, enrolment baselines, watermarks,
+   cumulative quantity caps and canonical units for distance/energy/flights;
+   corresponding explicit HealthKit permissions and durable upload consent.
+3. Typed workouts: raw type/manual-entry tri-state, parent/segment policy,
+   deterministic overlap deduplication, cross-midnight duration and corrections;
+   exact-type → wildcard → zero coefficients; no duplicate untyped contribution.
+4. Assign further visitor skills only after balancing. Implemented attraction /
+   capacity handlers are tested with synthetic profiles; weather, offline-rate
+   skills, stateful/one-use mechanics and complex synergies remain deferred.
+
+## F8 presentation and collection polish — deferred
 
 The current functional B6/F6 experience is accepted. Schedule these visual changes
 in the existing final hardening/polish milestone, after the remaining gameplay:
@@ -250,6 +307,82 @@ never relock discovery after storing a plant. Add authoritative discovery state,
 transactional updates and account-scoped frontend presentation in that future
 increment. It is separate from pack access/milestone rewards. This update keeps
 all stage previews visible and adds no discovery schema/endpoints.
+
+**Exchange and draw flow feedback — potential polish, 23 October 2026:** the user
+confirmed the species-first draw update works well. Review the following frontend
+flows alongside the user's future layout/UI designs; the presentation choices
+below remain candidates for that design pass, except the pack-opening sequence
+agreed separately below. Nothing in this section is implemented by this plan update.
+
+- **Separate pack details from exchanging.** The current Exchange interaction
+  opens pack information and applies the exchange in the same flow, making the
+  intent unclear. Provide distinct ways to inspect a pack and explicitly exchange
+  tokens for it. Viewing details alone should not make a purchase.
+- **Show exchange completion where it happens.** The current “pack added to Draws”
+  notification only becomes visible after returning from pack details. Present
+  success on the active screen, clearly identifying the acquired pack and offering
+  an obvious route to Draws. Decide the final layout/feedback treatment with the
+  supplied designs.
+- **Replace the opening result presentation.** Opening currently returns to the
+  main Draws screen with only result text and a history entry. Implement the
+  agreed two-tap sequence below in place of the earlier unspecified result
+  view/popup proposal. Keep latest results and opening history for durable recovery.
+- **Validate the revised flows during polishing.** Check details-only navigation,
+  explicit purchase/open actions, visible pending/success/failure states and clear
+  continuation after results. Back navigation, repeated taps, interruptions and
+  retries must preserve the existing single-purchase/single-opening guarantees;
+  recovered completed results should remain understandable.
+
+**Pack opening — agreed flow, 23 October 2026; deferred to F8:** use a simple
+trading-card-style wrapper themed to its pack type, such as Woodland. The approved
+interaction is recorded in [spec section 3.4](forest_game_v1_spec.md#34-plant-unboxing-working-api-name-seed-draw).
+
+1. **Confirm:** Open pack shows an “Open pack?” alert with Cancel/Open. Cancel
+   leaves the owned pack unopened.
+2. **Present:** after confirmation, dim the rest of the screen and enlarge the
+   sealed pack in the centre. Show “Tap to open” when ready.
+3. **First tap, tear and light:** briefly compress/tug the wrapper, detach its top
+   strip and move/rotate/fade the strip away. Reveal coloured light from the open
+   rim: Common grey, Rare blue, Epic purple, Legendary gold. Hold the opened pack
+   and glow until the next tap, with “Tap to reveal”.
+4. **Second tap, sprout:** lift the awarded sprout out of the opening while the
+   wrapper lowers/fades. Expand the light into a halo around the sprout and show
+   species, variant and rarity. Hold the result until Continue dismisses the
+   overlay and restores the screen; the sprout is already in Storage.
+
+**Assets and animation:** three aligned transparent PNGs per pack theme: sealed
+pack, opened body with torn rim/dark opening, and detached top strip. Reuse the
+existing species/variant sprout PNG and the sealed pack image for inventory.
+SwiftUI animates image transforms, opacity and masks; shared runtime gradients
+produce the opening light/halo, tinted from the receipt's rarity. No pack USDZ,
+new plant model, prerecorded video or frame-by-frame animation is required.
+Sounds and haptics are optional. Keep wrapper/effect assets separate from plant
+runtime packages, consistent with spec section 12.4.
+
+**Provisional resource/timing budgets, to validate during polishing:** approximately
+0.5–2 MB of compressed PNG files per theme, budgeting 2 MB. Two 1024×1536 images
+plus a closely cropped 1024×256 strip decode to about 13 MiB of image RAM before
+rendering overhead; preload only the active theme and required sprout. These are
+estimates, not measured asset sizes or total application memory. Suggested motion:
+250–350 ms entrance, 350–500 ms tear with an overlapping 250–400 ms light reveal,
+450–650 ms sprout reveal and 200–250 ms exit. Tap-wait states do not auto-advance;
+final timings, layout and request timing remain for frontend polishing.
+
+**Implementation boundary and acceptance:** frontend presentation only; reuse
+the existing opening endpoint, receipt and account-scoped journal. Confirm the
+server result before showing rarity light. Use receipt rarity, including for
+legacy packs, rather than variant names/colours; the current Golden Moonwillow
+fixture is Common and therefore uses grey. The animation never selects, grants
+or re-grants a plant; no backend gameplay, API or database changes are required.
+Prevent repeated taps from skipping transitions or submitting extra openings.
+Preserve recovery after network loss, backgrounding, relaunch and account changes;
+recover a committed result clearly without automatically replaying the full
+sequence. Keep rewards independent of completing/dismissing the animation.
+Handle missing artwork/loading, block background interactions, and preserve
+visitor modal/session lifecycle behaviour. Validate all four rarity colours with
+presentation fixtures, both taps, cancellation, failure/retry/recovery, VoiceOver,
+Reduce Motion, large text, portrait/landscape and minimum-device performance.
+Asset creation and frontend implementation remain deferred; this records the plan.
 
 Cosmetic watering, swarm and unboxing effects remain in F8 as already planned.
 These presentation improvements do not block B7/F7 or reopen completed B6/F6 logic.
@@ -315,8 +448,8 @@ Two local/test users can read their own inventories. One can place, move, rotate
 4. **Visitor state is not only a clock:** choose stable slot origin, partial-slot transition handling, lease/heartbeat policy, issuance/visible limits, expiry and durable gap-protection rules before B6 ships. Replay completed welcomes before applying current expiry checks.
 5. **Storage is not the wallet:** whole visits retain earned payout versions; claims award tokens and hosted progress once. Lowered capacity preserves earned storage; full storage discards overflow without a hidden backlog.
 6. **Economy needs simulation:** agree starter-to-first-draw and realistic active-income targets; test mature/duplicate/small-footprint layouts and all supported skills. A lower theoretical offline rate alone does not prove a better active experience.
-7. **Draft values stay draft:** oak radius, growth thresholds, attraction, prices and caps remain open. Fictional silver-birch examples are contract fixtures, not approved launch content. The workbook's former step-ticket fields are superseded and need authoring updates before runtime configuration export.
+7. **Draft values stay draft:** oak radius, growth thresholds, base attraction and prices remain open; the selected initial B8 modifier caps are recorded above. Fictional silver-birch examples are contract fixtures, not approved launch content. The workbook's former step-ticket fields are superseded and need authoring updates before runtime configuration export.
 8. **Wider Health scope still needs coverage:** completed initial Health diagnostics do not by themselves certify the newly scoped distance, energy, flights and typed-workout cases. Extend and verify them as those features land.
 9. **Maturity and attraction rules stay consistent:** confirm whether the maturity maximum equals the adult threshold. If they differ, define the role of any post-adult growth rather than inventing another stage. Reject unusable profile configurations. All four stage attraction values are nonnegative and strictly increase under the proposed V1 profile contract.
-10. **Optional complexity stays explicit:** live weather needs activity-time buckets; daily totals alone cannot attribute rainy steps. Complex synergies, recurring daily quests, visitor species inventories, bespoke visitor AI and offline-rate skills are not silently included in the minimal loop.
+10. **Optional complexity stays explicit:** weather integration and weather-dependent skills are deferred beyond B8, which keeps weather neutral. A later weather increment needs activity-time buckets; daily totals alone cannot attribute rainy steps. Complex synergies, recurring daily quests, visitor species inventories, bespoke visitor AI and offline-rate skills are not silently included in the minimal loop.
 11. **Stable identity precedes more rewards:** F5a links provider methods within one Supabase user and preserves the internal game user ID. Auth refresh/linking must not regrant starters, reset activity enrolment or move queued Health data to another account. Real-provider acceptance is distinct from the completed generated-token F5 slice.

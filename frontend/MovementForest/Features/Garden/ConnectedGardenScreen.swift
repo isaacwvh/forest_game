@@ -129,6 +129,45 @@ struct ConnectedGardenScreen: View {
             }
             if let activitySync = activitySync { GardenActivityStatus(sync: activitySync) }
             if let visitors = visitors { VisitorStatusPanel(store: visitors) }
+            if let summary = store.confirmed?.skillSummary {
+                DisclosureGroup {
+                    if summary.activeSkills.isEmpty {
+                        Text("No active skills. Place a fully grown plant with a garden skill to activate it.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    ForEach(summary.activeSkills) { skill in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(alignment: .firstTextBaseline) {
+                                Text(skill.name).font(.subheadline).fontWeight(.semibold)
+                                Spacer(minLength: 8)
+                                Text(skill.bonusText).font(.caption).foregroundStyle(.secondary)
+                            }
+                            if let source = store.confirmed?.plants.first(where: { $0.id == skill.sourcePlantId }) {
+                                Text("\(source.speciesId.capitalized) · Fully grown" +
+                                     (skill.eligibleSourcePlantIds.count > 1 ? " · \(skill.eligibleSourcePlantIds.count) sources share this bonus" : ""))
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Text(skill.description).font(.caption).foregroundStyle(.secondary)
+                        }.padding(.vertical, 4).accessibilityElement(children: .combine)
+                    }
+                    if summary.capReached {
+                        Text(summary.caps.description)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    if store.showingCached {
+                        Text("Last confirmed skills · Refresh to check current effects.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                } label: {
+                    HStack {
+                        Text("Active skills · \(summary.activeSkills.count)")
+                        Spacer(minLength: 8)
+                        if let headline = summary.waterHeadline { Text(headline).foregroundStyle(.secondary) }
+                    }.font(.caption).frame(minHeight: 44)
+                }.accessibilityIdentifier("garden.skills")
+            } else {
+                Text("Skill status unavailable · Refresh your garden.").font(.caption).foregroundStyle(.secondary)
+            }
             if let candidate = store.candidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
                     .font(.callout).accessibilityIdentifier("editor.validity")

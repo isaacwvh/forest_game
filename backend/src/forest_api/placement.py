@@ -172,11 +172,11 @@ def edit_garden(
             ],
         )
 
+        # One post-lock server boundary for settlement and the returned skill summary.
+        boundary = clock()
         if final != initial:
             if max(garden.layout_version, garden.state_version) >= 9223372036854775807:
                 raise ApiError(503, "version_exhausted", "Garden version requires maintenance")
-            # Capture server time after all accounting locks; a wait must not move it backwards.
-            boundary = clock()
             accounting.before_change(session, garden, boundary)
             for plant_id in initial.keys() - final.keys():
                 session.delete(placements[plant_id])
@@ -202,7 +202,9 @@ def edit_garden(
         presenter = services.PlantPresenter(session)
         result = GardenEditResult(
             request_id=body.request_id,
-            garden=services.present_garden(session, garden, catalogue, presenter),
+            garden=services.present_garden(
+                session, garden, catalogue, presenter, boundary=boundary
+            ),
             updated_plants=[
                 presenter.plant(
                     plants[action.plant_id],

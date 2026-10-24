@@ -68,6 +68,11 @@ struct ActivitySyncScreen: View {
                             ForEach(recap.payload.plants) { plant in
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("+\(ExactAmount.water(plant.awardedGrowthMicroUnits)) water")
+                                    if let bonus = plant.skillBonusGrowthMicroUnits,
+                                       let amount = ExactAmount.integer(bonus), amount > 0 {
+                                        Text("Includes +\(ExactAmount.water(bonus)) from garden skills")
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
                                     Text(plant.beforeStage == plant.afterStage ? plant.afterStage.title :
                                          "\(plant.beforeStage.title) → \(plant.afterStage.title)")
                                         .font(.caption).foregroundStyle(.secondary)
