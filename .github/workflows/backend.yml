@@ -47,27 +47,32 @@ jobs:
           ruff format --check backend
       - name: PostgreSQL migrations, ownership and concurrency
         run: python -m pytest backend/tests -q 2>&1 | tee backend-tests.log
-      - name: Summarize test failure
+      - name: Activity, skills and scheduled-visitor HTTP walkthroughs
+        run: |
+          {
+            python backend/scripts/smoke_activity.py
+            python backend/scripts/smoke_skills.py
+            python backend/scripts/smoke_launch.py
+          } 2>&1 | tee activity-smoke.log
+      - name: Visitor HTTP walkthrough and pacing model
+        run: |
+          {
+            python backend/scripts/smoke_visitors.py
+            python backend/scripts/simulate_visitors.py
+          } 2>&1 | tee visitor-smoke.log
+      - name: Build application image
+        run: docker build -t movement-forest-api:ci backend
+      - name: Summarize validation failure
         if: failure()
         run: |
           python - <<'PY'
           import os
           from pathlib import Path
-          log = Path("backend-tests.log")
-          if log.exists():
-              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
-                  summary.write("### Backend test failure\n\n```text\n")
-                  summary.write("\n".join(log.read_text(errors="replace").splitlines()[-120:]))
-                  summary.write("\n```\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              for name in ("backend-tests.log", "activity-smoke.log", "visitor-smoke.log"):
+                  log = Path(name)
+                  if log.exists():
+                      summary.write(f"### {name}\n\n```text\n")
+                      summary.write("\n".join(log.read_text(errors="replace").splitlines()[-120:]))
+                      summary.write("\n```\n")
           PY
-      - name: Activity, skills and scheduled-visitor HTTP walkthroughs
-        run: |
-          python backend/scripts/smoke_activity.py
-          python backend/scripts/smoke_skills.py
-          python backend/scripts/smoke_launch.py
-      - name: Visitor HTTP walkthrough and pacing model
-        run: |
-          python backend/scripts/smoke_visitors.py
-          python backend/scripts/simulate_visitors.py
-      - name: Build application image
-        run: docker build -t movement-forest-api:ci backend

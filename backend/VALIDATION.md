@@ -461,9 +461,9 @@ app and the same account/installation.
 
 ## Scheduled visitors and tenfold economy — 25 October 2026
 
-Full PostgreSQL suite: **453 passed in 333.16s**. Final scheduler/conversion
-regression group after lane and rounding guards: **29 passed in 29.52s**.
-The extra rounding-boundary case was added after the full run. All four real
+Final full PostgreSQL suite: **454 passed in 281.26s**, including the final lane
+and rounding-boundary guards. Focused scheduler/conversion group: **29 passed in
+29.52s**. All four real
 Uvicorn HTTP walkthroughs pass, including a new once-only ×10 conversion,
 future-arrival/early-claim guard, first actual welcome and replay after server
 restart. The final microsecond wait clamp is covered by the focused group.
@@ -484,6 +484,8 @@ pass. The retained legacy-fixture pacing simulation passes. Native XCTest cases
 were added for not-before visibility, multiple simultaneous visitors, arbitrary
 visible-target welcomes, protocol negotiation and Reduce Motion lane separation.
 Windows does not establish Apple SDK/XCTest/Release or iPhone acceptance.
+GitHub's [iOS workflow](https://github.com/isaacwvh/forest_game/actions/runs/40204851522)
+reports successful Debug tests and Release simulator build for bd18ab1.
 
 Docker image build/status attempts again returned engine HTTP 500. No live
 0008 migration, currency conversion, rule publication or account reset has been
@@ -491,4 +493,7 @@ performed. The isolated validation cluster was stopped after each run; tests
 created/dropped only random forest_test_* databases. Upgrade and exact selected
 values are in [VISITOR_RESCALE.md](VISITOR_RESCALE.md). GitHub workflows now run
 the skills/new launch HTTP smoke and retain short failure summaries so remote
-native and Linux results can be distinguished from local validation.
+native and Linux results can be distinguished from local validation. The first
+Linux run passed backend regressions and the new HTTP flow but exposed the legacy
+visitor smoke's dependency on an ignored .local-tmp parent directory. It now uses
+the platform temporary directory, allowing a clean checkout to run the walkthrough.

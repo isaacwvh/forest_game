@@ -52,7 +52,7 @@ def main():
     with admin.connect() as connection:
         connection.execute(text(f'CREATE DATABASE "{name}" TEMPLATE template0'))
     try:
-        with tempfile.TemporaryDirectory(dir=root / "backend/.local-tmp") as temporary:
+        with tempfile.TemporaryDirectory(prefix="forest-visitor-http-") as temporary:
             clock_file = Path(temporary) / "clock.txt"
             instant = datetime(2026, 10, 23, 4, tzinfo=UTC)
             clock_file.write_text(instant.isoformat())
