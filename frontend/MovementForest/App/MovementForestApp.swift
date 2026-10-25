@@ -46,6 +46,7 @@ final class AppContainer: ObservableObject {
 @MainActor
 struct RootView: View {
     @ObservedObject var container: AppContainer
+    @ObservedObject private var connection: GardenConnection
     @Environment(\.scenePhase) private var phase
     @State private var selectedTab = 0
     @State private var settingsPresented = false
@@ -54,13 +55,21 @@ struct RootView: View {
     @State private var packOpeningPresented = false
     @StateObject private var entryRecap = AppEntryRecapCoordinator()
 
+    init(container: AppContainer) {
+        self.container = container
+        self.connection = container.connection
+    }
+
     private var entryAllowed: Bool {
         phase == .active && !settingsPresented && !menuPresented && !packOpeningPresented
     }
     private func presentEntryIfReady() {
-        guard entryAllowed, let sync = container.connection.activitySync,
-              let editor = container.connection.editor else { return }
-        entryRecap.begin(sync: sync, editor: editor)
+        guard entryAllowed, let sync = connection.activitySync,
+              let editor = connection.editor else { return }
+        if entryRecap.begin(sync: sync, editor: editor) {
+            selectedTab = 0
+            collectionDestination = nil
+        }
     }
 
     var body: some View {
@@ -144,8 +153,8 @@ struct RootView: View {
                 .sheet(isPresented: $entryRecap.showing, onDismiss: { entryRecap.dismissed() }) {
                     ActivityRecapScreen(recap: entryRecap, catalogue: container.connection.editor?.catalogue, assets: catalog)
                 }
-                .onChange(of: container.connection.activitySync?.id) { _ in presentEntryIfReady() }
-                .onChange(of: container.connection.editor?.profile.userId) { user in
+                .onChange(of: connection.activitySync?.id) { _ in presentEntryIfReady() }
+                .onChange(of: connection.editor?.profile.userId) { user in
                     if user == nil { entryRecap.signOut() }
                 }
                 .onChange(of: entryAllowed) { allowed in if allowed { presentEntryIfReady() } }

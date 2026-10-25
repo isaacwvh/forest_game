@@ -61,8 +61,9 @@ final class AppEntryRecapCoordinator: ObservableObject {
     private var task: Task<Void, Never>?
     private weak var sync: ActivitySyncCoordinator?
 
-    func begin(sync: ActivitySyncCoordinator, editor: GardenEditorStore) {
-        guard gate.enter(account: editor.profile.userId, server: editor.service.serverID) else { return }
+    @discardableResult
+    func begin(sync: ActivitySyncCoordinator, editor: GardenEditorStore) -> Bool {
+        guard gate.enter(account: editor.profile.userId, server: editor.service.serverID) else { return false }
         task?.cancel()
         let token = UUID(); generation = token
         self.sync = sync
@@ -92,6 +93,7 @@ final class AppEntryRecapCoordinator: ObservableObject {
                 "Activity could not be fully refreshed. Showing available confirmed progress. You can retry in Activity."
             self.loading = false
         }
+        return true
     }
 
     func dismissed() {

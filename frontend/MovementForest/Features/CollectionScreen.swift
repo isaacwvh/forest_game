@@ -39,8 +39,10 @@ struct CollectionScreen: View {
     @State private var rarity = "All"
     @State private var confirmingPack: APIOwnedPack?
     @State private var openingPack: APIOwnedPack?
+    @State private var inspectingPack: APIPackDefinition?
     @AccessibilityFocusState private var resultFocused: Bool
     private var catalogueSpecies: [APISpecies] { store.catalogue?.species ?? [] }
+    private var hasPackModal: Bool { confirmingPack != nil || openingPack != nil || inspectingPack != nil }
     var body: some View {
         Group {
             if destination == .catalog { content.searchable(text: $search, prompt: "Find a plant") }
@@ -62,8 +64,15 @@ struct CollectionScreen: View {
         }) { pack in
             PackOpeningScreen(store: store, pack: pack, assets: assets)
         }
-        .onChange(of: openingPack?.id) { openingChanged?($0 != nil) }
-        .onChange(of: confirmingPack?.id) { openingChanged?($0 != nil || openingPack != nil) }
+        .sheet(item: $inspectingPack) { definition in
+            NavigationStack {
+                PackContentsScreen(pack: definition)
+                    .toolbar { ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { inspectingPack = nil }
+                    } }
+            }
+        }
+        .onChange(of: hasPackModal) { openingChanged?($0) }
         .onDisappear { openingChanged?(false) }
     }
     private var content: some View {
@@ -125,9 +134,12 @@ struct CollectionScreen: View {
                             Text("Version \(pack.version) · acquired \(pack.acquiredAt.formatted(date: .abbreviated, time: .shortened))")
                                 .font(.caption).foregroundStyle(.secondary)
                             if let definition = store.definitions[pack.definitionID] {
-                                NavigationLink("Contents and probabilities") { PackContentsScreen(pack: definition) }
+                                Button("View contents and odds") { inspectingPack = definition }
+                                    .buttonStyle(.bordered).frame(minHeight: 44)
+                                    .accessibilityIdentifier("collection.contents.\(pack.id)")
                             }
                             Button("Open pack") { confirmingPack = pack }
+                                .buttonStyle(.borderedProminent).frame(minHeight: 44)
                                 .disabled(!store.canMutate).accessibilityIdentifier("collection.open.\(pack.id)")
                         }.padding(.vertical, 4)
                     }
