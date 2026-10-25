@@ -50,8 +50,8 @@ struct PackOpeningFixtureScreen: View {
     var body: some View {
         Group {
             if let store = store, let pack = pack, let assets = assets {
-                PackOpeningScreen(store: store, pack: pack, assets: assets)
-                    .environment(\.accessibilityReduceMotion, ProcessInfo.processInfo.arguments.contains("--fixture-reduce-motion"))
+                PackOpeningScreen(store: store, pack: pack, assets: assets,
+                                  reduceMotionOverride: ProcessInfo.processInfo.arguments.contains("--fixture-reduce-motion"))
             } else if let error = error { Text(error) }
             else { ProgressView("Loading presentation fixture…") }
         }.task {

@@ -24,12 +24,13 @@ struct ForestButterfly: View {
 struct VisitorGardenOverlay: View {
     @ObservedObject var store: VisitorCoordinator
     var renderer: RealityGardenRenderer? = nil
+    var reduceMotionOverride: Bool? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.2)) { _ in
             ZStack {
                 ForEach(store.visibleOpportunities) { visitor in
-                    VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion, renderer: renderer)
+                    VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotionOverride ?? reduceMotion, renderer: renderer)
                         .id(visitor.id)
                 }
             }

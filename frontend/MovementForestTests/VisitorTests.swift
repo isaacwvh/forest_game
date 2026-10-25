@@ -293,8 +293,7 @@ final class VisitorTests: XCTestCase {
         VisitorVisualDiagnostics.onFrame = { _, pose in frames.append(pose) }
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
-        window.rootViewController = UIHostingController(rootView: VisitorGardenOverlay(store: store)
-            .environment(\.accessibilityReduceMotion, false))
+        window.rootViewController = UIHostingController(rootView: VisitorGardenOverlay(store: store, reduceMotionOverride: false))
         window.makeKeyAndVisible()
         defer { window.isHidden = true; window.rootViewController = nil; VisitorVisualDiagnostics.onFrame = nil; releaseHeartbeat(service) }
         try await waitUntil { !frames.isEmpty }
@@ -329,8 +328,7 @@ final class VisitorTests: XCTestCase {
         VisitorVisualDiagnostics.onVisibility = { _, visible in rendered = visible }
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
-        window.rootViewController = UIHostingController(rootView: VisitorGardenOverlay(store: store)
-            .environment(\.accessibilityReduceMotion, true))
+        window.rootViewController = UIHostingController(rootView: VisitorGardenOverlay(store: store, reduceMotionOverride: true))
         window.makeKeyAndVisible()
         defer {
             window.isHidden = true; window.rootViewController = nil

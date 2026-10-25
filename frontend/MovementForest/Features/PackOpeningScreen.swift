@@ -20,9 +20,11 @@ struct PackOpeningScreen: View {
     @ObservedObject var store: CollectionCoordinator
     let pack: APIOwnedPack
     let assets: any AssetCatalogProviding
+    var reduceMotionOverride: Bool? = nil
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var phase
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    private var reduceMotion: Bool { reduceMotionOverride ?? systemReduceMotion }
     @AccessibilityFocusState private var actionFocused: Bool
     @State private var step: PackRevealStep = .waiting
     @State private var receipt: APICollectionReceipt?
