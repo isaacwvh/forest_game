@@ -46,9 +46,12 @@ jobs:
           ruff check backend
           ruff format --check backend
       - name: PostgreSQL migrations, ownership and concurrency
-        run: python -m pytest backend/tests -q 2>&1 | tee backend-tests.log
+        run: |
+          set -euo pipefail
+          python -m pytest backend/tests -q 2>&1 | tee backend-tests.log
       - name: Activity, skills and scheduled-visitor HTTP walkthroughs
         run: |
+          set -euo pipefail
           {
             python backend/scripts/smoke_activity.py
             python backend/scripts/smoke_skills.py
@@ -56,6 +59,7 @@ jobs:
           } 2>&1 | tee activity-smoke.log
       - name: Visitor HTTP walkthrough and pacing model
         run: |
+          set -euo pipefail
           {
             python backend/scripts/smoke_visitors.py
             python backend/scripts/simulate_visitors.py

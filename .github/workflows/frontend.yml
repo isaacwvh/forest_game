@@ -19,6 +19,7 @@ jobs:
         run: xcodebuild -version
       - name: Validate, test Debug, build Release
         run: |
+          set -euo pipefail
           {
             python3 frontend/scripts/generate_project.py --check
             bash frontend/scripts/test-mac.sh

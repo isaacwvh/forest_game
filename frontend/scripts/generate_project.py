@@ -38,7 +38,9 @@ def generated_files():
 
     def files(directory):
         result = []
-        for path in sorted((ROOT / directory).rglob("*.swift")):
+        # Path ordering is case-insensitive on Windows and case-sensitive on
+        # macOS/Linux. Sort the exact portable string to make generation identical.
+        for path in sorted((ROOT / directory).rglob("*.swift"), key=lambda item: item.as_posix()):
             relative = path.relative_to(ROOT).as_posix()
             result.append(add(relative, "PBXFileReference", lastKnownFileType="sourcecode.swift", name=path.name,
                               path=relative, sourceTree="SOURCE_ROOT"))
