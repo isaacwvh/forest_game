@@ -65,11 +65,12 @@ class ExactJSONRoute(APIRoute):
         handler = super().get_route_handler()
 
         async def exact_handler(request: Request):
+            limit = 1_048_576 if request.url.path == "/v1/activity/sync" else MAX_BODY_BYTES
             size = 0
             chunks = []
             async for chunk in request.stream():
                 size += len(chunk)
-                if size > MAX_BODY_BYTES:
+                if size > limit:
                     raise ApiError(413, "request_too_large", "Request body is too large")
                 chunks.append(chunk)
             body = b"".join(chunks)

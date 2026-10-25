@@ -25,6 +25,7 @@ struct CollectionJournalStore: CollectionJournalPersisting {
 final class CollectionCoordinator: ObservableObject {
     let id = UUID()
     @Published private(set) var offers: [APIExchangeOffer] = []
+    @Published private(set) var milestones: [APIIntroMilestone] = []
     @Published private(set) var packs: [APIOwnedPack] = []
     @Published private(set) var history: [APICollectionReceipt] = []
     @Published private(set) var catalogue: APICatalogue?
@@ -72,15 +73,21 @@ final class CollectionCoordinator: ObservableObject {
             let receipt = try await service.mutate(pending)
             guard attached else { return }
             let isOpening = pending.kind == .open
+            let matchesOperation: Bool
+            switch pending.kind {
+            case .open: matchesOperation = receipt.ownedPackId == pending.target && receipt.plant != nil && receipt.openingId != nil
+            case .exchange: matchesOperation = receipt.requestId == pending.id && receipt.exchangeId != nil && receipt.packs?.isEmpty == false
+            case .milestone: matchesOperation = receipt.milestoneId == pending.milestoneID && receipt.milestoneEventId != nil && receipt.tokensEarned != nil
+            }
             guard receipt.economyVersion >= 0, ExactAmount.integer(receipt.tokenBalance) != nil,
-                  (isOpening ? (receipt.ownedPackId == pending.target && receipt.plant != nil && receipt.openingId != nil) :
-                    (receipt.requestId == pending.id && receipt.exchangeId != nil && receipt.packs?.isEmpty == false)) else {
+                  matchesOperation else {
                 throw ForestError.invalidData("The reward response could not be verified. Retry the saved request.")
             }
             // Persist the result and removal together. A disk failure retains the request.
             try persist(CollectionJournalState(pending: nil, result: receipt))
             applyWallet(receipt.tokenBalance, version: receipt.economyVersion)
-            message = isOpening ? "Your plant is in Storage." : "Packs added to Draws."
+            message = pending.kind == .milestone ? "Milestone confirmed: +\(receipt.tokensEarned ?? "0") visitor tokens." :
+                (isOpening ? "Your plant is in Storage." : "Packs added to Draws.")
             if isOpening { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
                     ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
@@ -94,6 +101,7 @@ final class CollectionCoordinator: ObservableObject {
         guard attached else { return }
         applyWallet(summary.tokenBalance, version: summary.economyVersion)
         offers = summary.offers
+        milestones = summary.milestones ?? []
         for offer in offers { definitions[offer.pack.id] = offer.pack }
         let catalogue = try await service.catalogue()
         guard attached else { return }
@@ -145,6 +153,15 @@ final class CollectionCoordinator: ObservableObject {
         do {
             let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))
             await submit(PendingCollectionOperation(id: id, kind: .open, target: pack.id, body: body))
+        } catch { message = error.localizedDescription }
+    }
+    func claim(_ milestone: APIIntroMilestone) async {
+        guard milestone.eligible, !milestone.claimed else { return }
+        let id = UUID()
+        do {
+            let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))
+            await submit(PendingCollectionOperation(id: id, kind: .milestone, target: nil,
+                                                     body: body, milestoneID: milestone.id))
         } catch { message = error.localizedDescription }
     }
     func dismissResult() {

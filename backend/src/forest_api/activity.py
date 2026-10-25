@@ -2,15 +2,18 @@
 
 from collections.abc import Callable
 from datetime import UTC, date, datetime, time, timedelta
+from fractions import Fraction
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from forest_api import activity_inputs as inputs
 from forest_api import services
 from forest_api.activity_schemas import (
     AcknowledgeRecap,
+    ActivityDayInput,
     ActivityStatus,
     DayResult,
     DeviceDTO,
@@ -69,6 +72,7 @@ def device_dto(device: ActivityDevice) -> DeviceDTO:
         baseline_observed_at=device.baseline_observed_at,
         baseline_steps=device.baseline_steps,
         ready=device.baseline_date is not None,
+        metric_baselines=device.metric_baselines,
     )
 
 
@@ -142,6 +146,7 @@ def establish_baseline(session, settings, user, device, steps, observed_at, boun
     device.baseline_at, device.baseline_observed_at = boundary, observed_at
     device.baseline_date = day
     device.baseline_steps = steps
+    inputs.set_baseline(device, "steps", {"ready": True})
 
 
 def check_observation(observed: datetime, boundary: datetime, *, enrol: bool = False):
@@ -195,6 +200,7 @@ def enrol(
                 establish_baseline(
                     session, settings, user, device, body.steps, body.observed_at, boundary
                 )
+            inputs.enrol_optional(session, settings, user, device, body, boundary)
             result = EnrolResult(request_id=body.request_id, device=device_dto(device))
         services.record_request(session, user.id, body, operation, digest, result)
     return result
@@ -279,11 +285,18 @@ def sync(
         day_results, credits = [], []
         skill_bonus = dict.fromkeys(before, 0)
         accounting_started = False
-        for entry in sorted(body.days, key=lambda item: item.game_date):
+        workout_quantities, workout_rates, workout_receipts = inputs.workout_credits(
+            session, settings, user, device, body, boundary
+        )
+        entries = {entry.game_date: entry for entry in body.days}
+        for day in workout_quantities:
+            entries.setdefault(day, ActivityDayInput(game_date=day, steps=None))
+        for entry in sorted(entries.values(), key=lambda item: item.game_date):
             established = False
-            if device.baseline_date is None and entry.steps is not None:
+            steps = entry.steps if inputs.step_ready(device) or entry.game_date == today else None
+            if not inputs.step_ready(device) and steps is not None:
                 establish_baseline(
-                    session, settings, user, device, entry.steps, body.observed_at, boundary
+                    session, settings, user, device, steps, body.observed_at, boundary
                 )
                 established = True
             row = bucket(session, settings, user, device, entry.game_date, body.observed_at)
@@ -294,25 +307,39 @@ def sync(
             config = session.get(EconomyConfig, row.rule_version)
             rules = rules_for(config, settings)
             if body.observed_at >= row.observed_at:
-                row.observed_at, row.is_available = body.observed_at, entry.steps is not None
-                if entry.steps is not None:
-                    row.observed_steps = entry.steps
+                row.observed_at, row.is_available = body.observed_at, steps is not None
+                if steps is not None:
+                    row.observed_steps = steps
             old = row.credited_steps
             candidate = (
                 old
-                if entry.steps is None
+                if steps is None
                 else max(
                     old,
-                    checked_add(
-                        row.baseline_credit_steps, max(0, entry.steps - row.baseline_steps)
-                    ),
+                    checked_add(row.baseline_credit_steps, max(0, steps - row.baseline_steps)),
                 )
             )
             water_steps = capped_quantity(candidate, rules.metrics["steps"]) - capped_quantity(
                 old, rules.metrics["steps"]
             )
             credit = None
-            if candidate > old:
+            quantities, extra_rates, metric_receipts = inputs.daily_credits(
+                session, settings, user, device, entry, body.observed_at, boundary
+            )
+            quantities.update(workout_quantities.get(entry.game_date, {}))
+            rates = {**rules.metrics, **extra_rates, **workout_rates.get(entry.game_date, {})}
+            for metric, quantity in workout_quantities.get(entry.game_date, {}).items():
+                metric_receipts[metric] = {
+                    "available": True,
+                    "newlyEligible": str(quantity),
+                    "waterQuantity": str(quantity),
+                }
+            activity_metrics = dict(progress.activity_metrics or {})
+            for metric, receipt in metric_receipts.items():
+                delta = Fraction(receipt["newlyEligible"])
+                activity_metrics[metric] = str(Fraction(activity_metrics.get(metric, "0")) + delta)
+            progress.activity_metrics = activity_metrics
+            if candidate > old or quantities:
                 if not accounting_started:
                     accounting.before_change(session, garden, boundary)
                     accounting_started = True
@@ -327,6 +354,7 @@ def sync(
                     end_steps=candidate,
                     water_steps=water_steps,
                     accepted_at=boundary,
+                    metric_quantities={metric: str(q) for metric, q in quantities.items()},
                 )
                 session.add(credit)
                 session.flush()
@@ -350,12 +378,12 @@ def sync(
                     try:
                         definition = BehaviourDefinition.model_validate(behaviour.rules)
                         activity_factors, water_factor = skills.growth(
-                            source_facts[str(plant.id)], rules.metrics
+                            source_facts[str(plant.id)], rates
                         )
-                        skill_context = skills.context(source_facts[str(plant.id)], rules.metrics)
+                        skill_context = skills.context(source_facts[str(plant.id)], rates)
                         result = calculate_growth(
-                            {"steps": water_steps},
-                            rules.metrics,
+                            {"steps": water_steps, **quantities},
+                            rates,
                             definition.metric_multipliers,
                             prior,
                             growth.maximum_growth_micro_units,
@@ -364,8 +392,8 @@ def sync(
                             water_factor=water_factor,
                         )
                         neutral = calculate_growth(
-                            {"steps": water_steps},
-                            rules.metrics,
+                            {"steps": water_steps, **quantities},
+                            rates,
                             definition.metric_multipliers,
                             prior,
                             growth.maximum_growth_micro_units,
@@ -384,6 +412,8 @@ def sync(
                         result.fractional_state,
                     )
                     stage = stage_for(result.growth, growth.thresholds)
+                    if prior < growth.thresholds["seedling"] <= result.growth:
+                        progress.first_seedling_at = progress.first_seedling_at or boundary
                     if prior < growth.thresholds["adult"] <= result.growth and (
                         plant.first_matured_at is None
                     ):
@@ -403,6 +433,11 @@ def sync(
                                 ),
                                 "ruleVersion": config.version,
                                 "steps": water_steps,
+                                "metricQuantities": {m: str(q) for m, q in quantities.items()},
+                                "metricRates": {
+                                    m: rates[m].model_dump(mode="json") for m in quantities
+                                },
+                                "metricReceipts": metric_receipts,
                                 "coefficient": str(definition.metric_multipliers.get("steps", 0)),
                                 "normalisation": rules.metrics["steps"].normalisation,
                                 "baseWaterMicroUnits": str(
@@ -438,6 +473,7 @@ def sync(
                     credited_steps=candidate,
                     rule_version=config.version,
                     activity_credit_id=credit.id if credit else None,
+                    metrics=metric_receipts,
                 )
             )
 
@@ -478,7 +514,7 @@ def sync(
                     "activityDays": [
                         day.model_dump(mode="json", by_alias=True)
                         for day in day_results
-                        if day.newly_eligible_steps > 0
+                        if day.activity_credit_id is not None
                     ],
                     "resourceDeltas": {},
                 },
@@ -508,6 +544,8 @@ def sync(
             activity_steps=str(progress.activity_steps),
             first_maturity_count=progress.first_maturity_count,
             recap_id=recap_id,
+            workouts=workout_receipts,
+            activity_metrics=progress.activity_metrics,
         )
         services.record_request(session, user.id, body, operation, digest, response)
     return response
@@ -521,13 +559,18 @@ def status(session: Session, identity: Identity, *, clock=utc_now) -> ActivitySt
         return ActivityStatus(
             server_time=clock(),
             game_timezone=user.game_timezone,
-            supported_metrics=["steps"],
+            supported_metrics=[
+                "steps",
+                *inputs.DAILY_METRICS,
+                *["workout_minutes." + t for t in sorted(set(inputs.WORKOUT_TYPES.values()))],
+            ],
             reconciliation_days=RECONCILIATION_DAYS,
             queued_upload_max_age_days=QUEUED_MAX_AGE_DAYS,
             device=device_dto(device) if device else None,
             activity_steps=str(progress.activity_steps if progress else 0),
             first_maturity_count=progress.first_maturity_count if progress else 0,
             last_sync_at=progress.last_sync_at if progress else None,
+            activity_metrics=progress.activity_metrics if progress else {},
         )
 
 

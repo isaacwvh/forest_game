@@ -46,6 +46,70 @@ enum ActivityWire {
         // existing server watermarks handle repeats and downward corrections.
         return Int64(value.rounded(.down))
     }
+    static func quantity(_ value: Double?, maximum: Double = 999_999_999) -> String? {
+        guard let value = value, value.isFinite, value >= 0, value <= maximum else { return nil }
+        return String(format: "%.3f", locale: Locale(identifier: "en_US_POSIX"),
+                      (value * 1000).rounded(.down) / 1000)
+    }
+    static func workout(_ value: WorkoutObservation) -> WorkoutUpload? {
+        let elapsed = value.end.timeIntervalSince(value.start)
+        guard value.wasUserEntered != true, value.activityType <= 10_000,
+              elapsed > 0, value.durationSeconds.isFinite, value.durationSeconds >= 0,
+              value.durationSeconds <= 86_400, !value.sourceBundleIdentifier.isEmpty,
+              value.sourceBundleIdentifier.count <= 255, value.segments.count <= 256,
+              value.hasSegments || value.segments.isEmpty,
+              value.segments.allSatisfy({ segment in
+                  (0...10_000).contains(segment.originalType) && segment.start >= value.start &&
+                  segment.end <= value.end && segment.start < segment.end &&
+                  (0...86_400_000).contains(segment.durationMilliseconds) &&
+                  Double(segment.durationMilliseconds) <= segment.end.timeIntervalSince(segment.start) * 1000 + 0.001
+              }) else { return nil }
+        // Match ISO8601DateFormatter's millisecond wire precision before bounding
+        // durations. Sub-millisecond Health dates must not invalidate a whole sync.
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        func wireDate(_ date: Date) -> Date { formatter.date(from: formatter.string(from: date)) ?? date }
+        let start = wireDate(value.start), end = wireDate(value.end)
+        guard start < end else { return nil }
+        let parentMilliseconds = min(Int64((end.timeIntervalSince(start) * 1000).rounded()),
+                                     Int64((value.durationSeconds * 1000).rounded(.down)))
+        let boundedSegments = value.segments.compactMap { segment -> WorkoutSegmentUpload? in
+            let left = wireDate(segment.start), right = wireDate(segment.end)
+            guard left < right else { return nil }
+            return WorkoutSegmentUpload(originalType: segment.originalType, start: left, end: right,
+                durationMilliseconds: min(segment.durationMilliseconds, Int64((right.timeIntervalSince(left) * 1000).rounded())))
+        }
+        let total = boundedSegments.reduce(Int64(0)) { $0 + $1.durationMilliseconds }
+        let segments = total > parentMilliseconds && total > 0 ? boundedSegments.map {
+            WorkoutSegmentUpload(originalType: $0.originalType, start: $0.start, end: $0.end,
+                durationMilliseconds: Int64((Double($0.durationMilliseconds) * Double(parentMilliseconds) / Double(total)).rounded(.down)))
+        } : boundedSegments
+        return WorkoutUpload(workoutId: value.id, originalType: Int(value.activityType),
+                             start: start, end: end,
+                             durationMilliseconds: parentMilliseconds,
+                             sourceBundleIdentifier: value.sourceBundleIdentifier,
+                             wasUserEntered: value.wasUserEntered, hasSegments: value.hasSegments,
+                             segments: segments)
+    }
+}
+
+struct WorkoutSegmentUpload: Codable, Equatable {
+    let originalType: Int
+    let start: Date
+    let end: Date
+    let durationMilliseconds: Int64
+}
+
+struct WorkoutUpload: Codable, Equatable {
+    let workoutId: UUID
+    let originalType: Int
+    let start: Date
+    let end: Date
+    let durationMilliseconds: Int64
+    let sourceBundleIdentifier: String
+    let wasUserEntered: Bool?
+    let hasSegments: Bool
+    let segments: [WorkoutSegmentUpload]
 }
 
 struct APIActivityDevice: Codable, Equatable {
@@ -68,17 +132,26 @@ struct APIActivityStatus: Codable {
     let activitySteps: String
     let firstMaturityCount: Int64
     let lastSyncAt: Date?
+    var activityMetrics: [String: String]? = nil
 }
 
 struct ActivityDayUpload: Codable, Equatable {
     let gameDate: String
     let steps: Int64?
-    enum CodingKeys: String, CodingKey { case gameDate, steps }
+    var walkingRunningDistanceMetres: String? = nil
+    var activeEnergyKcal: String? = nil
+    var flightsClimbed: Int64? = nil
+    enum CodingKeys: String, CodingKey {
+        case gameDate, steps, walkingRunningDistanceMetres, activeEnergyKcal, flightsClimbed
+    }
     func encode(to encoder: Encoder) throws {
         var values = encoder.container(keyedBy: CodingKeys.self)
         try values.encode(gameDate, forKey: .gameDate)
         if let steps = steps { try values.encode(steps, forKey: .steps) }
         else { try values.encodeNil(forKey: .steps) }
+        try values.encodeIfPresent(walkingRunningDistanceMetres, forKey: .walkingRunningDistanceMetres)
+        try values.encodeIfPresent(activeEnergyKcal, forKey: .activeEnergyKcal)
+        try values.encodeIfPresent(flightsClimbed, forKey: .flightsClimbed)
     }
 }
 
@@ -88,6 +161,10 @@ struct ActivityEnrolmentRequest: Codable {
     let observedAt: Date
     let expectedDeviceId: UUID?
     let steps: Int64?
+    var walkingRunningDistanceMetres: String? = nil
+    var activeEnergyKcal: String? = nil
+    var flightsClimbed: Int64? = nil
+    var workoutsAvailable: Bool? = nil
 }
 
 struct ActivitySyncRequest: Codable {
@@ -96,6 +173,8 @@ struct ActivitySyncRequest: Codable {
     let deviceId: UUID
     let observedAt: Date
     let days: [ActivityDayUpload]
+    var workoutsAvailable: Bool? = nil
+    var workouts: [WorkoutUpload]? = nil
 }
 
 struct APIActivityEnrolment: Codable {

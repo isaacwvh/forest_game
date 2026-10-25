@@ -134,9 +134,12 @@ def main():
     entitlements = plistlib.loads((config / "MovementForest.entitlements").read_bytes())
     require(bool(info.get("NSHealthShareUsageDescription")), "Missing Health read explanation")
     require("NSCameraUsageDescription" not in info, "Non-AR baseline should not request camera")
-    require(entitlements == {"com.apple.developer.healthkit": True}, "Unexpected entitlements")
+    require(entitlements == {"com.apple.developer.healthkit": True,
+                             "com.apple.developer.healthkit.background-delivery": True},
+            "Unexpected entitlements")
     apple_entitlements = plistlib.loads((config / "MovementForestApple.entitlements").read_bytes())
     require(apple_entitlements == {"com.apple.developer.healthkit": True,
+                                  "com.apple.developer.healthkit.background-delivery": True,
                                   "com.apple.developer.applesignin": ["Default"]}, "Invalid optional Apple entitlement")
     require(info["CFBundleURLTypes"][0]["CFBundleURLSchemes"] == ["$(FOREST_AUTH_CALLBACK_SCHEME)"],
             "Auth callback scheme differs from configuration")

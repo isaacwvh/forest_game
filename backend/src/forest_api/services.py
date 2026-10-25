@@ -171,6 +171,20 @@ def owned_plant(
 
 def request_hash(operation: str, body: DTO) -> str:
     payload = body.model_dump(mode="json", by_alias=True, exclude={"request_id"})
+    if operation in {"activity_sync", "activity_enrolment"}:
+        # Old queued request bytes retain their pre-extension digest.
+        def omit_neutral_additions(item):
+            for name in ("walkingRunningDistanceMetres", "activeEnergyKcal", "flightsClimbed"):
+                if item.get(name) is None:
+                    item.pop(name, None)
+
+        omit_neutral_additions(payload)
+        for day in payload.get("days", []):
+            omit_neutral_additions(day)
+        if not payload.get("workoutsAvailable"):
+            payload.pop("workoutsAvailable", None)
+        if not payload.get("workouts"):
+            payload.pop("workouts", None)
     canonical = json.dumps([operation, payload], sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode()).hexdigest()
 
@@ -187,7 +201,12 @@ def replay(
 
 
 def record_request(
-    session: Session, user_id: UUID, body: DTO, operation: str, payload_hash: str, response: DTO
+    session: Session,
+    user_id: UUID,
+    body: DTO,
+    operation: str,
+    payload_hash: str,
+    response: DTO | dict,
 ) -> None:
     session.add(
         ApiRequest(
@@ -195,7 +214,9 @@ def record_request(
             request_id=body.request_id,
             operation=operation,
             payload_hash=payload_hash,
-            response=response.model_dump(mode="json", by_alias=True),
+            response=response
+            if isinstance(response, dict)
+            else response.model_dump(mode="json", by_alias=True),
         )
     )
 

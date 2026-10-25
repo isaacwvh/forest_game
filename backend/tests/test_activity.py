@@ -371,16 +371,16 @@ def test_device_and_date_validation(client, headers, actors, changes, error):
     assert response.json()["error"]["code"] == error
 
 
-def test_unimplemented_metrics_duplicate_dates_and_whole_batch_validation(
+def test_optional_workout_contract_duplicate_dates_and_whole_batch_validation(
     app, client, headers, actors
 ):
     actor = actors()
-    assert submit(client, headers, actor, workouts=[]).status_code == 422
+    assert submit(client, headers, actor, workouts=[]).status_code == 200
     days = [{"gameDate": "2026-10-22", "steps": 3000}] * 2
     assert submit(client, headers, actor, days=days).status_code == 422
     days = [{"gameDate": "2026-10-22", "steps": 3000}, {"gameDate": "2026-10-23", "steps": 1}]
     assert submit(client, headers, actor, days=days).status_code == 422
-    assert submit(client, headers, actor).json()["days"][0]["newlyEligibleSteps"] == 1000
+    assert submit(client, headers, actor).json()["days"][0]["newlyEligibleSteps"] == 0
 
 
 def test_game_calendar_dst_and_new_days(app, client, headers, actors):
@@ -581,7 +581,14 @@ def test_configuration_immutability_and_single_active_device(app, client, header
 def test_api_status_and_strict_body_limits(client, headers, actors):
     actor = actors()
     result = client.get("/v1/me/activity", headers=headers()).json()
-    assert result["supportedMetrics"] == ["steps"] and result["device"]["ready"]
+    assert {
+        "steps",
+        "walking_running_distance_km",
+        "active_energy_kcal",
+        "flights_climbed",
+        "workout_minutes.running",
+    } <= set(result["supportedMetrics"])
+    assert result["device"]["ready"]
     assert result["queuedUploadMaxAgeDays"] == 30
     assert (
         client.post(
@@ -590,7 +597,8 @@ def test_api_status_and_strict_body_limits(client, headers, actors):
         == 422
     )
     assert (
-        client.post("/v1/activity/sync", headers=headers(), content=b" " * 65537).status_code == 413
+        client.post("/v1/activity/sync", headers=headers(), content=b" " * 1_048_577).status_code
+        == 413
     )
     assert submit(client, headers, actor).status_code == 200
 

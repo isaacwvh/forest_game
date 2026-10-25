@@ -36,8 +36,11 @@ private final class FakeCollection: CollectionServing {
     var loseResponse = false
     var reject: APIError?
     var onMutation: (() -> Void)?
+    var milestones: [APIIntroMilestone] = []
     init(_ contract: CollectionContract) { self.contract = contract }
-    func summary() async throws -> APICollectionSummary { contract.summary }
+    func summary() async throws -> APICollectionSummary {
+        var value = contract.summary; value.milestones = milestones; return value
+    }
     func catalogue() async throws -> APICatalogue { contract.catalogue }
     func packs(after: UUID?) async throws -> APIPackPage { contract.packs }
     func openings(after: UUID?) async throws -> APIOpeningPage { APIOpeningPage(openings: [contract.opening], nextCursor: nil) }
@@ -48,6 +51,10 @@ private final class FakeCollection: CollectionServing {
         try operation.validate(); operations.append(operation); onMutation?()
         if let reject = reject { throw reject }
         if loseResponse { throw URLError(.networkConnectionLost) }
+        if operation.kind == .milestone {
+            return APICollectionReceipt(requestId: operation.id, tokenBalance: "30", economyVersion: 100,
+                milestoneId: operation.milestoneID, milestoneEventId: UUID(), tokensEarned: "30")
+        }
         var receipt = operation.kind == .exchange ? contract.exchange : contract.opening
         // Emulate the server's request binding while keeping genuine wire fields.
         var object = try XCTUnwrap(JSONSerialization.jsonObject(with: ActivityWire.encoder().encode(receipt)) as? [String: Any])
@@ -60,6 +67,27 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testMilestoneLostResponseRetainsClaimBytesAndRecoversAfterRelaunch() async throws {
+        let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
+        service.milestones = [APIIntroMilestone(milestoneId: "first_movement", title: "First movement",
+            description: "Sync movement.", rewardTokens: "30", eligible: true, claimed: false)]
+        let user = UUID(), first = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await first.refresh()
+        service.loseResponse = true
+        await first.claim(try XCTUnwrap(first.milestones.first))
+        let saved = try XCTUnwrap(journal.value.pending)
+        XCTAssertEqual(saved.kind, .milestone)
+        XCTAssertEqual(saved.milestoneID, "first_movement")
+        first.deactivate(); service.loseResponse = false
+        let reopened = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await reopened.refresh()
+        XCTAssertEqual(service.operations[0], service.operations[1])
+        XCTAssertEqual(service.operations.last?.body, saved.body)
+        XCTAssertNil(reopened.state.pending)
+        XCTAssertEqual(reopened.state.result?.tokensEarned, "30")
+        XCTAssertEqual(reopened.tokenBalance, "30")
+    }
+
     func testRealWireContractAndCatalogueStats() throws {
         let contract = try CollectionContract.load()
         XCTAssertEqual(contract.exchange.packs?.count, 2)

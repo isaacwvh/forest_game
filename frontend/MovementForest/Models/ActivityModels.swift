@@ -6,6 +6,9 @@ struct ActivityDay: Identifiable, Equatable {
     let end: Date
     /// nil means no readable data; it must never be silently changed to zero.
     let steps: Double?
+    var walkingRunningDistanceMetres: Double? = nil
+    var activeEnergyKcal: Double? = nil
+    var flightsClimbed: Double? = nil
 }
 
 struct WorkoutObservation: Identifiable, Equatable {
@@ -19,7 +22,9 @@ struct WorkoutObservation: Identifiable, Equatable {
     let distanceMetres: Double?
     let sourceName: String
     let sourceBundleIdentifier: String
-    let wasUserEntered: Bool
+    let wasUserEntered: Bool?
+    var hasSegments: Bool = false
+    var segments: [WorkoutSegmentUpload] = []
 }
 
 struct ActivityReport {
@@ -31,6 +36,7 @@ struct ActivityReport {
     let workoutsIssue: String?
     let isFixture: Bool
     var todaySteps: Double? { days.last?.steps }
+    var metricIssues: [String: String] = [:]
 }
 
 enum ActivityCalendar {

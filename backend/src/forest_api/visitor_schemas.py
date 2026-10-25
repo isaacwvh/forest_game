@@ -18,6 +18,7 @@ class VisitorRuleDefinition(Definition):
     opportunity_seconds: int = Field(default=20, ge=15, le=25)
     gap_slots: int = Field(default=3, ge=1, le=20)
     tokens_per_visit: int = Field(default=1, ge=1, le=1_000_000)
+    tutorial_first_visitor: bool = False
 
     @model_validator(mode="after")
     def timing(self):

@@ -522,6 +522,38 @@ final class ActivitySyncTests: XCTestCase {
 }
 
 final class ActivityWireTests: XCTestCase {
+    func testOptionalQuantitiesAreIndependentAndConservative() throws {
+        XCTAssertEqual(ActivityWire.quantity(1234.5679), "1234.567")
+        XCTAssertNil(ActivityWire.quantity(.nan))
+        XCTAssertNil(ActivityWire.quantity(-1))
+        let day = ActivityDayUpload(gameDate: "2026-10-25", steps: 1000,
+                                    walkingRunningDistanceMetres: nil, activeEnergyKcal: "100.000")
+        let decoded = try ActivityWire.decoder().decode(ActivityDayUpload.self, from: ActivityWire.encoder().encode(day))
+        XCTAssertEqual(decoded.steps, 1000)
+        XCTAssertNil(decoded.walkingRunningDistanceMetres)
+        XCTAssertEqual(decoded.activeEnergyKcal, "100.000")
+    }
+
+    func testWorkoutWireExcludesManualAndBoundsSegmentsWithoutBlockingSteps() throws {
+        let start = Date(timeIntervalSince1970: 1_793_000_000.0004)
+        func observation(manual: Bool? = nil, segments: [WorkoutSegmentUpload] = []) -> WorkoutObservation {
+            WorkoutObservation(id: UUID(), activityType: 37, title: "Run", isRunning: true,
+                start: start, end: start.addingTimeInterval(600.0004), durationSeconds: 600,
+                distanceMetres: nil, sourceName: "Test", sourceBundleIdentifier: "test.recorded",
+                wasUserEntered: manual, hasSegments: !segments.isEmpty, segments: segments)
+        }
+        XCTAssertNil(ActivityWire.workout(observation(manual: true)))
+        XCTAssertNotNil(ActivityWire.workout(observation(manual: false)))
+        let upload = try XCTUnwrap(ActivityWire.workout(observation()))
+        XCTAssertNil(upload.wasUserEntered)
+        let decoded = try ActivityWire.decoder().decode(WorkoutUpload.self, from: ActivityWire.encoder().encode(upload))
+        XCTAssertLessThanOrEqual(decoded.durationMilliseconds, Int64((decoded.end.timeIntervalSince(decoded.start) * 1000).rounded()))
+        let segment = WorkoutSegmentUpload(originalType: 37, start: start, end: start.addingTimeInterval(1), durationMilliseconds: 1000)
+        XCTAssertNil(ActivityWire.workout(observation(segments: Array(repeating: segment, count: 257))))
+        let bounded = try XCTUnwrap(ActivityWire.workout(observation(segments: Array(repeating: segment, count: 256))))
+        XCTAssertLessThanOrEqual(bounded.segments.reduce(0) { $0 + $1.durationMilliseconds }, bounded.durationMilliseconds)
+    }
+
     func testFractionalAndWholeSecondTimestampDecoding() throws {
         struct Value: Decodable { let date: Date }
         for value in ["2026-10-22T04:00:00Z", "2026-10-22T04:00:00.123456+00:00", "2026-10-22T12:00:00+08:00"] {

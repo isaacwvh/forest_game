@@ -43,7 +43,12 @@ try:
     if result.returncode:
         sys.exit(result.returncode)
     if smoke:
-        for script in ("smoke_activity.py", "smoke_visitors.py"):
+        for script in (
+            "smoke_activity.py",
+            "smoke_visitors.py",
+            "smoke_skills.py",
+            "smoke_launch.py",
+        ):
             subprocess.run(
                 [
                     sys.executable,

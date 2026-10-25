@@ -14,6 +14,14 @@ def main() -> None:
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("seed-dev", help="Seed explicitly unapproved local/test catalogue")
     commands.add_parser("seed-skills-dev", help="Publish Sleeping Dew and new development packs")
+    commands.add_parser(
+        "publish-launch-balance", help="Publish the approved two-species activity economy"
+    )
+    activity_grant = commands.add_parser(
+        "grant-activity-test-plants", help="Grant two new-profile test sprouts"
+    )
+    activity_grant.add_argument("username")
+    activity_grant.add_argument("--dry-run", action="store_true")
     grant = commands.add_parser(
         "grant-adult-moonwillow", help="Grant one mature test copy into storage"
     )
@@ -43,7 +51,19 @@ def main() -> None:
     database = Database(settings)
     try:
         with database.sessions() as session:
-            if args.command == "seed-skills-dev":
+            if args.command == "publish-launch-balance":
+                from forest_api.launch_balance import publish
+
+                print(json.dumps(publish(session, settings)))
+            elif args.command == "grant-activity-test-plants":
+                from forest_api.launch_balance import grant_test_plants
+
+                print(
+                    json.dumps(
+                        grant_test_plants(session, settings, args.username, dry_run=args.dry_run)
+                    )
+                )
+            elif args.command == "seed-skills-dev":
                 from forest_api.skill_seed import seed_skills
 
                 seed_skills(session, settings)

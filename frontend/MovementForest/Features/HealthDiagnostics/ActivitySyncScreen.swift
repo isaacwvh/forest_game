@@ -20,13 +20,17 @@ struct ActivitySyncScreen: View {
     var body: some View {
         List {
             Section("Movement grows your planted forest") {
-                Text("Steps provide water to each planted copy. Plants in storage keep their progress and do not grow.")
-                Toggle("Sync steps with my garden", isOn: Binding(get: { sync.enabled }, set: { value in
+                Text("Each planted copy converts its supported activities into water. Plants in storage keep their progress and do not grow.")
+                Toggle("Sync activity with my garden", isOn: Binding(get: { sync.enabled }, set: { value in
                     if value { showingConsent = true }
                     else { Task { await sync.setEnabled(false) } }
                 })).disabled(sync.busy || sync.recoveryLocked || !sync.canUpload)
                     .accessibilityIdentifier("sync.enabled")
-                Text("When enabled, daily step totals and observation dates are saved on this iPhone and uploaded to your connected backend. Recorded workouts are not uploaded. You can pause future uploads here.")
+                if sync.enabled && !sync.includesOptionalActivity {
+                    Text("Your existing permission uploads steps only.")
+                    Button("Enable optional quantities and workouts") { showingConsent = true }
+                }
+                Text("With full activity sync enabled, daily steps, distance, active energy, flights and recorded workout identity, type, source, timestamps and eligible segments are queued on this iPhone and uploaded for growth. You can pause future uploads here.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Sync status") {
@@ -38,7 +42,7 @@ struct ActivitySyncScreen: View {
                     DetailRow(title: "Lifetime eligible steps", value: status.activitySteps)
                     DetailRow(title: "First maturities", value: String(status.firstMaturityCount))
                     if let device = status.device {
-                        DetailRow(title: "Activity baseline", value: device.ready ? "\(device.baselineDate ?? "") · \(device.baselineSteps.map(String.init) ?? "Unavailable") steps" : "Waiting for readable current-day steps")
+                        DetailRow(title: "Activity baseline", value: device.ready ? "\(device.baselineDate ?? "") · metrics establish eligibility separately" : "Waiting for readable current-day activity")
                     }
                 }
                 DetailRow(title: "Saved requests awaiting confirmation", value: String(sync.pendingCount))
@@ -94,11 +98,11 @@ struct ActivitySyncScreen: View {
             }
         }.navigationTitle("Activity")
             .refreshable { _ = await sync.synchronize() }
-            .alert("Upload daily steps to your garden?", isPresented: $showingConsent) {
-                Button("Enable step sync") { Task { await sync.setEnabled(true) } }
+            .alert("Upload activity to your garden?", isPresented: $showingConsent) {
+                Button("Enable activity sync") { Task { await sync.setEnabled(true) } }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("Daily totals and observation dates will be saved locally for reliable retries and sent to your connected backend to calculate growth. Workouts stay on your iPhone. Health access is optional.")
+                Text("Daily quantities and recorded workout details will be saved locally for reliable retries and sent to your backend to calculate growth. Manually entered workouts do not qualify. Each new metric starts with a baseline; old activity earns no historical reward. Health access is optional.")
             }
             .alert("Replace the reporting iPhone?", isPresented: $replacing) {
                 Button("Use this iPhone", role: .destructive) { Task { _ = await sync.synchronize(replacingDevice: true) } }

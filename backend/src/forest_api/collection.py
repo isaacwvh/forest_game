@@ -244,7 +244,15 @@ def read(session, settings, identity, *, kind="summary", limit=30, after=None):
                         "pack": definition_dto(row, definition),
                     }
                 )
-            return {**wallet_dto(wallet), "offers": offers}
+            from forest_api import milestones
+
+            return {
+                **wallet_dto(wallet),
+                "offers": offers,
+                "milestones": milestones.summary(
+                    session, user.id, services.get_catalogue_state(session, settings), wallet
+                ),
+            }
         if kind == "packs":
             query = select(OwnedPack).where(
                 OwnedPack.owner_id == user.id,

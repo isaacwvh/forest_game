@@ -394,3 +394,67 @@ storage using the repeat-safe CLI; SQL confirmed the stored copy and mature
 growth of 1,000,000,000 micro-units. The verified game username is isaac_auth_test
 (display name Isaac Test), correcting the earlier transposed username advice.
 No Docker engine restart, data reset, volume deletion or auth changes occurred.
+
+## Wider activity and launch balance — 25 October 2026
+
+Final complete PostgreSQL suite: **425 passed in 316.52s**. Focused launch run:
+**26 passed**, followed by four passing real Uvicorn HTTP walkthroughs: existing
+activity, visitors/collection, Sleeping Dew, and the new nonfixture launch.
+
+The new coverage verifies steps plus workouts, all optional daily quantities,
+independent first-readable baselines, unavailable steps with usable workouts,
+manual true/false/absent metadata, replay/concurrent imports, cross-source/type
+overlaps, split versus whole sessions, multisport parent suppression, paused
+duration across midnight, shared two-hour cap and overflow without backlog,
+exact fractions, curve continuity/bounds, actual ×4 composition and explicit
+zero workout coefficients. Publication tests verify fresh production settings
+without a fixture seed, repeat safety, profile/old-owned-pack preservation and
+fresh local sprouts without resetting progress. Finite milestone tests verify
+concurrent claims, once-only wallet ledger credits without hosted-count inflation,
+earned growth → milestones → exchange → a new-profile sprout. Existing migration
+model parity, downgrade/reupgrade, immutability and preservation tests pass at
+`0007_activity_launch`. Legacy queued-request hashes remain compatible.
+
+New HTTP walkthrough migrates an empty disposable database, publishes nonfixture
+configuration, enrols four quantities/workouts, places a new Oak, credits exactly
+100.004166 water from 10,000 steps plus one eligible workout second (with fraction
+carried), earns a seedling, claims movement/seedling milestones and verifies the
+same receipts/balance after an actual server restart.
+
+Ruff lint, Ruff format (76 Python files), pip dependency check and diff whitespace
+pass. Portable frontend resources/project/contracts and all **50 Swift syntax
+parses** pass. Added native optional-wire/workout-boundary and milestone journal
+recovery regressions; XCTest, Apple SDK typechecking, Release simulator build and
+physical-device Health/background/consent acceptance are **not executed** on this
+Windows host. Use `frontend/scripts/test-mac.sh` and B8_ACTIVITY_ACCEPTANCE.md.
+
+All PostgreSQL checks used random disposable `forest_test_*` databases on the
+dedicated loopback cluster; that cluster was stopped afterwards. The existing
+Docker status command returned an engine HTTP 500. No engine restart, live game
+migration, live publication or personal plant grant was performed. The ready-to-run
+commands are in [LAUNCH_ACTIVITY.md](LAUNCH_ACTIVITY.md). Existing personal data,
+auth/signing settings and unrelated uncommitted plant assets were preserved.
+
+### Existing Docker installation upgraded — 25 October 2026
+
+After the user started Docker, rebuilt both API and tools-profile migration
+images, started PostgreSQL against the existing `movement-forest_forest-db`
+volume, verified the active `isaac_auth_test` account and upgraded from
+`0006_garden_skills` to `0007_activity_launch`. Published `launch-balance-v1`
+(effective 2026-10-25 13:45:47 UTC), including version-10 offers and `b8-caps-v2`.
+Started the rebuilt API; Compose database/API health checks and host HTTP
+`/health/ready` all pass.
+
+Before/after migration and publication checksums match for all pre-existing
+owned plants, garden placements and wallets. Granted exactly one new stored
+Standard Oak (`launch_oak` v1) and Standard Moonwillow (`launch_moonwillow` v1),
+both sprouts at zero growth with steps/workout wildcard coefficients of 1.
+The follow-up dry run finds those same copies rather than proposing duplicates.
+The account retains 205 tokens, 17 active hosted visits and 231 offline hosted
+visits. Its existing adult Moonwillow with behaviour v2/Sleeping Dew remains
+available for bonus testing. No other personal rewards were claimed or awarded;
+no data reset, auth/signing change or Docker engine restart was performed.
+
+This supersedes the earlier Docker deployment block above. Native Mac/iPhone
+checks remain pending; follow frontend/B8_ACTIVITY_ACCEPTANCE.md with the updated
+app and the same account/installation.

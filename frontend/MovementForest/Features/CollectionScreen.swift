@@ -61,6 +61,23 @@ struct CollectionScreen: View {
             }
             switch destination {
             case .exchange:
+                if !store.milestones.isEmpty {
+                    Section("Your first garden") {
+                        ForEach(store.milestones) { milestone in
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(milestone.title).font(.headline)
+                                Text(milestone.description).font(.caption).foregroundStyle(.secondary)
+                                if milestone.claimed { Label("Claimed", systemImage: "checkmark.circle") }
+                                else {
+                                    Button("Claim \(milestone.rewardTokens) tokens") {
+                                        Task { await store.claim(milestone) }
+                                    }.disabled(!milestone.eligible || !store.canMutate)
+                                        .accessibilityIdentifier("milestone.\(milestone.id)")
+                                }
+                            }.padding(.vertical, 4)
+                        }
+                    }
+                }
                 Section("Exchange tokens for packs") {
                     if store.offers.isEmpty && !store.busy { Text("No exchange offers are currently available.") }
                     ForEach(store.offers) { offer in ExchangeOfferRow(store: store, offer: offer) }
@@ -315,6 +332,8 @@ private struct ReceiptRow: View {
                     Text("Place new plants from Garden → Storage.").font(.caption).foregroundStyle(.secondary)
                 }
             }
+        } else if receipt.milestoneId != nil {
+            Text("Milestone reward: +\(receipt.tokensEarned ?? "0") visitor tokens.")
         } else {
             Text("Exchanged \(receipt.tokensSpent ?? "0") tokens for \(receipt.quantity ?? 0) packs.")
         }

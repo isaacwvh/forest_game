@@ -70,6 +70,7 @@ struct PendingActivityOperation: Codable, Identifiable {
 }
 
 struct ActivityJournalState: Codable {
+    var expandedInputsEnabled: Bool? = nil
     var enabled = false
     var status: APIActivityStatus?
     var operations: [PendingActivityOperation] = []

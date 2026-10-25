@@ -12,6 +12,26 @@ from forest_api.server_clock import request_clock
 router = APIRouter(tags=["collection"])
 
 
+@router.post("/v1/me/milestones/{milestone_id}/claim")
+def claim_milestone(
+    milestone_id: str,
+    body: OpenPackRequest,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+):
+    from forest_api import milestones
+
+    return milestones.claim(
+        session,
+        request.app.state.settings,
+        identity,
+        milestone_id,
+        body,
+        request_clock(request, session),
+    )
+
+
 @router.get("/v1/me/collection")
 def summary(
     request: Request,

@@ -224,7 +224,14 @@ def active_interval(session, state, context, active, start, end, boundary, can_i
         if existing is None:
             state.gap_slots += 1
             rule = context.snapshot["rules"]
-            if slot_succeeds(probability, state.gap_slots, rule["gap_slots"], draw):
+            first_tutorial = rule.get("tutorial_first_visitor", False) and not session.scalar(
+                select(VisitorOpportunity.id)
+                .where(VisitorOpportunity.garden_id == state.garden_id)
+                .limit(1)
+            )
+            if first_tutorial or slot_succeeds(
+                probability, state.gap_slots, rule["gap_slots"], draw
+            ):
                 issued = EPOCH + timedelta(seconds=eligible_slot * SLOT_SECONDS)
                 expires = min(
                     issued + timedelta(seconds=rule["opportunity_seconds"]), active.lease_expires_at

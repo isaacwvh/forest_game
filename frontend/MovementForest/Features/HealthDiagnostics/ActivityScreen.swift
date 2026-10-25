@@ -6,7 +6,7 @@ struct ActivityScreen: View {
         List {
             Section {
                 Text("Everyday movement, a growing forest.").font(.title2).fontWeight(.semibold)
-                Text("Read steps and recorded workouts from Apple Health. After connecting your garden, you can separately enable step uploads to grow your planted plants. Workouts remain local diagnostics at this stage.")
+                Text("Read steps, walking/running distance, active energy, flights climbed and recorded workouts from Apple Health. Enable activity uploads separately to grow your planted plants.")
                     .foregroundStyle(.secondary)
             }
             if store.provider.isFixture {
@@ -20,7 +20,7 @@ struct ActivityScreen: View {
             } else {
                 if !store.hasRequestedAccess || store.requestIssue != nil {
                     Section {
-                        Text("We request read access to steps and workouts. You choose what to share, and can keep using the garden without connecting.")
+                        Text("Choose which activity quantities and recorded workouts to share. Missing optional data does not prevent steps from growing your garden.")
                         Button(store.provider.isFixture ? "Load sample activity" : "Connect Apple Health") { Task { await store.connect() } }
                             .disabled(store.isLoading).accessibilityIdentifier("activity.connect")
                     }
@@ -35,6 +35,14 @@ struct ActivityScreen: View {
                             Text("No readable step data for today.")
                         }
                         if let issue = report.stepsIssue { Text(issue).foregroundStyle(.secondary) }
+                        if let today = report.days.last {
+                            DetailRow(title: "Walking + running distance", value: today.walkingRunningDistanceMetres.map { "\(($0 / 1000).formatted(.number.precision(.fractionLength(2)))) km" } ?? "Unavailable")
+                            DetailRow(title: "Active energy", value: today.activeEnergyKcal.map { "\($0.formatted(.number.precision(.fractionLength(1)))) kcal" } ?? "Unavailable")
+                            DetailRow(title: "Flights climbed", value: today.flightsClimbed.map { $0.formatted(.number.precision(.fractionLength(0))) } ?? "Unavailable")
+                        }
+                        ForEach(report.metricIssues.keys.sorted(), id: \.self) { key in
+                            Text("\(metricTitle(key)): \(report.metricIssues[key] ?? "")").font(.caption).foregroundStyle(.secondary)
+                        }
                         Text("Last checked \(report.observedAt.formatted(date: .omitted, time: .shortened)) · \(report.timeZoneIdentifier)")
                             .font(.caption).foregroundStyle(.secondary)
                     }
@@ -48,7 +56,7 @@ struct ActivityScreen: View {
                             }.accessibilityElement(children: .combine)
                         }
                     }
-                    Section("Recorded workouts · last 30 days") {
+                    Section("Recorded workouts · recent 7 days") {
                         if let issue = report.workoutsIssue { Text(issue) }
                         if report.workouts.isEmpty { Text("No readable workouts for this period.").foregroundStyle(.secondary) }
                         ForEach(report.workouts) { workout in
@@ -58,7 +66,7 @@ struct ActivityScreen: View {
                                     .font(.subheadline).foregroundStyle(.secondary)
                             }.accessibilityElement(children: .combine)
                         }
-                        if report.workouts.count >= 100 { Text("Showing the 100 most recent workouts.").font(.caption) }
+                        Text("Manually entered workouts are excluded. Supported workout types earn additional water from eligible duration; unsupported types are retained for diagnostics.").font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 if store.hasRequestedAccess {
@@ -73,5 +81,14 @@ struct ActivityScreen: View {
         }
         .navigationTitle("Activity")
         .refreshable { await store.refresh() }
+    }
+
+    private func metricTitle(_ key: String) -> String {
+        switch key {
+        case "walking_running_distance_km": return "Walking + running distance"
+        case "active_energy_kcal": return "Active energy"
+        case "flights_climbed": return "Flights climbed"
+        default: return "Activity"
+        }
     }
 }

@@ -110,6 +110,17 @@ struct APICollectionSummary: Codable {
     let tokenBalance: String
     let economyVersion: Int64
     let offers: [APIExchangeOffer]
+    var milestones: [APIIntroMilestone]? = nil
+}
+
+struct APIIntroMilestone: Codable, Identifiable {
+    let milestoneId: String
+    let title: String
+    let description: String
+    let rewardTokens: String
+    let eligible: Bool
+    let claimed: Bool
+    var id: String { milestoneId }
 }
 
 struct APIOwnedPack: Codable, Identifiable {
@@ -140,6 +151,9 @@ struct APICollectionReceipt: Codable, Identifiable {
     var rarity: String? = nil
     var openedAt: Date? = nil
     var plant: APIOwnedPlant? = nil
+    var milestoneId: String? = nil
+    var milestoneEventId: UUID? = nil
+    var tokensEarned: String? = nil
     var id: UUID { openingId ?? exchangeId ?? requestId }
 }
 
@@ -153,13 +167,21 @@ struct CollectionExchangeBody: Codable {
 struct CollectionOpenBody: Codable { let requestId: UUID }
 
 struct PendingCollectionOperation: Codable, Equatable {
-    enum Kind: String, Codable { case exchange, open }
+    enum Kind: String, Codable { case exchange, open, milestone }
     let id: UUID
     let kind: Kind
     let target: UUID?
     let body: Data
+    var milestoneID: String? = nil
     func validate() throws {
         switch kind {
+        case .milestone:
+            let request = try ActivityWire.decoder().decode(CollectionOpenBody.self, from: body)
+            guard request.requestId == id, target == nil,
+                  let milestoneID = milestoneID,
+                  milestoneID.range(of: "^[a-z][a-z0-9_]{0,63}$", options: .regularExpression) != nil else {
+                throw ForestError.invalidData("The saved milestone claim could not be verified.")
+            }
         case .exchange:
             let request = try ActivityWire.decoder().decode(CollectionExchangeBody.self, from: body)
             guard request.requestId == id, target == nil, (1...20).contains(request.quantity),
@@ -211,7 +233,12 @@ struct APICollectionRepository: CollectionServing {
     }
     func mutate(_ operation: PendingCollectionOperation) async throws -> APICollectionReceipt {
         try operation.validate()
-        let path = operation.kind == .exchange ? "v1/me/exchanges" : "v1/me/packs/\(operation.target!.uuidString)/open"
+        let path: String
+        switch operation.kind {
+        case .exchange: path = "v1/me/exchanges"
+        case .open: path = "v1/me/packs/\(operation.target!.uuidString)/open"
+        case .milestone: path = "v1/me/milestones/\(operation.milestoneID!)/claim"
+        }
         return try await client.request(path, method: "POST", body: operation.body)
     }
 }

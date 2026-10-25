@@ -1,6 +1,11 @@
 # B4/B5 activity backend and F5 integration contract
 
-Implemented 22 October 2026. Steps only are enabled for uploads. The generic pure
+Current update: [typed activity and launch configuration](LAUNCH_ACTIVITY.md),
+25 October 2026, migration `0007_activity_launch`. The historical steps-only
+contract below remains compatible, with optional daily quantities and workouts
+now supported. Activity sync has a 1 MiB limit; other mutations retain 64 KiB.
+
+Original increment, 22 October 2026: steps only were enabled. The generic pure
 calculator also tests other canonical metric dimensions; their import handlers,
 workouts, boosts, skills and weather remain B8. Visitor production remains B6.
 No activity operation creates visitor tokens or seed tickets.

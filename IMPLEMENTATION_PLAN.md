@@ -267,19 +267,31 @@ See [backend/SKILLS_API.md](backend/SKILLS_API.md) for upgrade/provisioning and
 Executed checks and actual personal provisioning status belong in VALIDATION.md;
 source or Windows parsing does not imply Xcode/Release/iPhone execution.
 
-Remaining B8 increments retain explicit scope:
+## B8 wider activity and launch balance increment — 25 October 2026
 
-1. Personal step baseline: propose 14 completed-day lookback, at least 7 valid
-   days, floor 3,000 steps; frozen pre-day inputs/target; neutral warm-up; marginal
-   +10% from 1–1.5× baseline, +20% from 1.5–2×, then normal rewards. Values remain
-   fixture proposals. Unavailable data is excluded, true zero is valid; late
-   corrections never rewrite a frozen target. Bands share the activity cap pool.
-2. Wider daily inputs: separate availability, enrolment baselines, watermarks,
-   cumulative quantity caps and canonical units for distance/energy/flights;
-   corresponding explicit HealthKit permissions and durable upload consent.
-3. Typed workouts: raw type/manual-entry tri-state, parent/segment policy,
-   deterministic overlap deduplication, cross-midnight duration and corrections;
-   exact-type → wildcard → zero coefficients; no duplicate untyped contribution.
+Source implements independent daily distance/active-energy/flights tracking and
+rewards, typed workout uploads, manual-entry exclusion, replay/overlap handling,
+paused/multisport intervals and account-midnight attribution. Explicit optional
+upload consent preserves legacy journals and step-only availability. Migration
+`0007_activity_launch` adds quantity/interval/identity records and milestone claims.
+`launch-balance-v1` publishes nonfixture Oak/Moonwillow profiles, rarity/footprint
+targets, the revised attraction curve, 120/240-token packs and finite introductory
+milestones. `b8-caps-v2` uses +100% per growth layer (×4 maximum); old profile,
+pack, policy and settlement versions remain intact. See
+[LAUNCH_ACTIVITY.md](backend/LAUNCH_ACTIVITY.md) for constants and upgrade steps,
+and [B8_ACTIVITY_ACCEPTANCE.md](frontend/B8_ACTIVITY_ACCEPTANCE.md) for device flow.
+Production configuration publication is available independently of development
+seeds. Portable validation does not establish Mac/iPhone acceptance.
+
+Remaining scope after this increment:
+
+1. Personal activity baseline boosts are explicitly deferred until after launch.
+   No personal lookback/boost storage or bonus bands are introduced. Anti-backfill
+   enrolment baselines remain required and are distinct from this optional system.
+2. Permanent pack unlocks are deferred; both launch offers are available. The
+   implemented five one-time milestones provide the small introductory track.
+3. Wider Apple SDK/XCTest/Release and physical-device acceptance remain separate
+   checks with actual results recorded in validation guides.
 4. Assign further visitor skills only after balancing. Implemented attraction /
    capacity handlers are tested with synthetic profiles; weather, offline-rate
    skills, stateful/one-use mechanics and complex synergies remain deferred.

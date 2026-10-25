@@ -1,12 +1,26 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.19\
-Date: 24 October 2026\
+Document version: 0.20\
+Date: 25 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
 
 This project-root copy is the working specification for future sessions. It incorporates the plant production decisions below and supersedes the older Downloads copy. The practical asset production procedure is [PLANT_ASSET_WORKFLOW.md](PLANT_ASSET_WORKFLOW.md). These documents record requirements and plans; they do not mean the game behaviours have been implemented.
+
+**Approved activity/balance update, 25 October 2026:** the current two-species
+configuration and accounting rules are recorded in
+[backend/LAUNCH_ACTIVITY.md](backend/LAUNCH_ACTIVITY.md), superseding earlier
+open/illustrative rates, attraction curves, prices and growth-cap choices below.
+Track all four scoped daily quantities and typed recorded workouts. Oak and
+Moonwillow use steps 1 / workout wildcard 1; workout water is 2.5 per 10 eligible
+minutes, shared 120-minute daily cap. Each growth layer permits +100% (maximum
+×4). Personal baseline boosts and permanent pack unlocks are deferred; five
+finite introductory milestones fund early packs. Selected attraction is linear
+through A=300 (p=0.10+A/600), then tapers toward 0.80 with scale 120. Rarity and
+footprint targets follow the revised workbook. Existing owned profiles/packs
+remain immutable. Source implementation is distinct from recorded validation
+and Apple-platform/device acceptance; see the linked validation/acceptance guides.
 
 **Implementation checkpoint, 23 October 2026:** work through B5 and the tested
 F5/F5a email-authentication path is accepted by the user, except deferred SMTP and

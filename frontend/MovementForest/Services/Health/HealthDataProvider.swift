@@ -8,9 +8,11 @@ protocol HealthDataProviding {
     func requestReadAccess() async throws
     func readActivity(now: Date, timeZone: TimeZone) async -> ActivityReport
     func readStepObservation(now: Date, timeZone: TimeZone) async -> ActivityReport
+    func observeChanges(_ handler: @escaping @MainActor () async -> Void)
 }
 
 extension HealthDataProviding {
+    func observeChanges(_ handler: @escaping @MainActor () async -> Void) { }
     func readStepObservation(now: Date, timeZone: TimeZone) async -> ActivityReport {
         await readActivity(now: now, timeZone: timeZone)
     }
@@ -59,8 +61,13 @@ final class ActivityStore: ObservableObject {
         report = await provider.readActivity(now: Date(), timeZone: timeZone)
     }
 
-    func readForUpload(timeZone: TimeZone) async -> ActivityReport {
+    func readForUpload(timeZone: TimeZone, includingOptional: Bool = false) async -> ActivityReport {
         self.timeZone = timeZone
+        if includingOptional {
+            let result = await provider.readActivity(now: Date(), timeZone: timeZone)
+            report = result
+            return result
+        }
         let result = await provider.readStepObservation(now: Date(), timeZone: timeZone)
         // Preserve workout diagnostics from a previous local read.
         report = ActivityReport(observedAt: result.observedAt, timeZoneIdentifier: result.timeZoneIdentifier,

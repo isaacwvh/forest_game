@@ -346,3 +346,40 @@ resource/contract checks, all 50 Swift syntax parses and diff whitespace passed.
 These tests require XCTest on a Mac; no Apple SDK compilation or native execution
 is claimed on this Windows host. Device acceptance: install the updated app over
 the existing installation and use Sync now; do not delete the app or saved queue.
+
+## Wider activity / introductory milestones — 25 October 2026
+
+Source extends Health permissions/diagnostics to all four scoped daily quantities
+and seven supported workout categories. Active workout intervals, typed multisport
+segments, manual-entry tri-state, millisecond wire bounds and independent optional
+failures feed the durable upload queue. Existing saved opt-in remains steps-only
+until explicit wider consent. Best-effort observer/background delivery supplements
+foreground/manual reconciliation. New collection milestone claims use the same
+account-scoped durable receipt recovery and monotonic wallet handling.
+
+Passed portable resource/plist/project/legacy editor/collection/Sleeping Dew
+contract checks and syntax parsing for all **50 Swift files**. Added native cases
+for independent optional quantities, manual filtering, timestamp/duration bounds,
+oversized individual workouts and lost milestone response/relaunch replay.
+These XCTest cases are authored but **not executed here**. Backend full suite:
+**425 passed**; all four actual HTTP walkthroughs pass, including nonfixture
+launch activity/milestone receipts replayed after server restart.
+
+Xcode/Apple SDK compilation, XCTest/UI, Release simulator build, signing entitlement
+acceptance and iPhone Health/observer/background flows remain pending on a Mac and
+device. Run `bash frontend/scripts/test-mac.sh`, then
+[B8_ACTIVITY_ACCEPTANCE.md](B8_ACTIVITY_ACCEPTANCE.md). Existing Docker returned
+HTTP 500, so migration/publication/personal grants were not applied to that game
+installation. Upgrade and repeat-safe fresh-sprout commands are in
+[LAUNCH_ACTIVITY.md](../backend/LAUNCH_ACTIVITY.md). Preserve app data and pending
+requests; old owned plants and old packs keep their original pinned behaviour.
+
+### Docker provisioning follow-up — 25 October 2026
+
+The local game installation is now migrated to `0007_activity_launch`, published
+with `launch-balance-v1` and running a healthy rebuilt API. `isaac_auth_test` has
+one fresh Standard Oak and one fresh Standard Moonwillow sprout in storage with
+workout-enabled launch profiles; its original adult Sleeping Dew source and
+205-token wallet are preserved. This resolves the Docker provisioning block
+above. Install the updated native client and run B8_ACTIVITY_ACCEPTANCE.md;
+Apple SDK/XCTest/Release and real-device acceptance are still pending.

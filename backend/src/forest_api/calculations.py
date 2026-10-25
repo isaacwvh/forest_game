@@ -1,7 +1,7 @@
 """B4 pure calculations. No clock, persistence, currency or external services."""
 
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, localcontext
 from fractions import Fraction
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -55,10 +55,13 @@ class VisitorCurve(Definition):
     offline_rate_cap_per_second: str
     base_capacity: int = Field(ge=0, le=1_000_000_000)
     maximum_capacity: int = Field(ge=0, le=1_000_000_000)
+    knee_micro_units: int = Field(default=300_000_000, gt=0, le=MAX_INTEGER)
+    knee_probability: str = "0.6"
+    tail_scale_micro_units: int = Field(default=120_000_000, gt=0, le=MAX_INTEGER)
 
     @model_validator(mode="after")
     def valid(self):
-        if self.strategy != "bounded_attraction_v1":
+        if self.strategy not in {"bounded_attraction_v1", "linear_softcap_v2"}:
             raise ValueError("Unsupported curve strategy")
         if not 0 < exact(self.starter_probability) <= exact(self.maximum_probability) <= 1:
             raise ValueError("Invalid probability bounds")
@@ -67,6 +70,12 @@ class VisitorCurve(Definition):
         exact(self.offline_rate_cap_per_second)
         if self.base_capacity > self.maximum_capacity:
             raise ValueError("Capacity exceeds maximum")
+        if self.strategy == "linear_softcap_v2" and not (
+            exact(self.starter_probability)
+            < exact(self.knee_probability)
+            < exact(self.maximum_probability)
+        ):
+            raise ValueError("Linear curve requires increasing floor, knee and ceiling")
         return self
 
 
@@ -74,6 +83,7 @@ class CalculationRules(Definition):
     schema_version: int = Field(default=1, ge=1, le=1)
     metrics: dict[str, MetricRate]
     visitors: VisitorCurve
+    workout_daily_cap_seconds: int = Field(default=7200, ge=0, le=86400)
 
     @model_validator(mode="after")
     def known_metrics(self):
@@ -183,12 +193,37 @@ def visitor_parameters(total_attraction: int, placed_count: int, curve: VisitorC
         raise ValueError("Invalid attraction")
     probability = Fraction(0)
     if placed_count:
-        probability = max(
-            exact(curve.starter_probability),
-            exact(curve.maximum_probability)
-            * total_attraction
-            / (total_attraction + curve.k_micro_units),
-        )
+        if curve.strategy == "linear_softcap_v2":
+            floor, knee, ceiling = (
+                exact(curve.starter_probability),
+                exact(curve.knee_probability),
+                exact(curve.maximum_probability),
+            )
+            if total_attraction <= curve.knee_micro_units:
+                probability = floor + (knee - floor) * Fraction(
+                    total_attraction, curve.knee_micro_units
+                )
+            else:
+                # Freeze the deterministic, high-precision result in the visitor context.
+                with localcontext() as context:
+                    context.prec = 36
+                    decay = (
+                        Decimal(
+                            -min(
+                                total_attraction - curve.knee_micro_units,
+                                60 * curve.tail_scale_micro_units,
+                            )
+                        )
+                        / curve.tail_scale_micro_units
+                    ).exp()
+                probability = ceiling - (ceiling - knee) * Fraction(decay)
+        else:
+            probability = max(
+                exact(curve.starter_probability),
+                exact(curve.maximum_probability)
+                * total_attraction
+                / (total_attraction + curve.k_micro_units),
+            )
     offline = min(
         exact(curve.offline_rate_cap_per_second),
         probability / curve.slot_seconds * exact(curve.offline_fraction),

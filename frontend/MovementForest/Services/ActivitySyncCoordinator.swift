@@ -4,6 +4,7 @@ import Combine
 @MainActor
 final class ActivitySyncCoordinator: ObservableObject {
     @Published private(set) var enabled = false
+    @Published private(set) var includesOptionalActivity = false
     @Published private(set) var busy = false
     @Published private(set) var message = "Activity sync is off."
     @Published private(set) var status: APIActivityStatus?
@@ -28,12 +29,14 @@ final class ActivitySyncCoordinator: ObservableObject {
         do {
             saved = try resolvedJournal.load(server: service.serverID, user: editor.profile.userId) ?? ActivityJournalState()
             enabled = saved.enabled; status = saved.status; pendingCount = saved.operations.count
+            includesOptionalActivity = saved.expandedInputsEnabled == true
             message = enabled ? "Ready to reconcile activity." : "Activity sync is off."
         } catch {
             recoveryLocked = true
             message = "The saved activity queue could not be read. Sync and editing are paused to protect pending requests."
         }
         updateEditingGate()
+        if enabled { observeHealthChanges() }
     }
 
     var otherDeviceActive: Bool {
@@ -50,6 +53,7 @@ final class ActivitySyncCoordinator: ObservableObject {
     private func save(_ proposed: ActivityJournalState) throws {
         try journal.save(proposed, server: service.serverID, user: editor.profile.userId)
         saved = proposed; enabled = saved.enabled; status = saved.status; pendingCount = saved.operations.count
+        includesOptionalActivity = saved.expandedInputsEnabled == true
         updateEditingGate()
     }
     private func updateEditingGate() {
@@ -60,14 +64,24 @@ final class ActivitySyncCoordinator: ObservableObject {
         guard active, !busy, !recoveryLocked else { return }
         guard !value || canUpload else { message = "Sample or unavailable Health data cannot be uploaded."; return }
         do {
-            var next = saved; next.enabled = value; try save(next)
+            var next = saved; next.enabled = value
+            if value { next.expandedInputsEnabled = true }
+            try save(next)
             if value {
-                if !health.hasRequestedAccess { await health.connect() }
+                await health.connect()
+                observeHealthChanges()
                 _ = await synchronize()
             } else {
                 message = pendingCount > 0 ? "Uploads paused. Re-enable sync to resolve saved requests before editing." : "Activity sync is off."
             }
         } catch { message = "The activity preference could not be saved. Nothing was sent." }
+    }
+
+    private func observeHealthChanges() {
+        health.provider.observeChanges { [weak self] in
+            guard let self = self, self.active, self.enabled else { return }
+            _ = await self.synchronize()
+        }
     }
 
     /// Coalesces foreground/manual calls. A membership preflight waits for the
@@ -119,10 +133,16 @@ final class ActivitySyncCoordinator: ObservableObject {
                 }
                 let observation = try await observe()
                 if status?.device == nil || replacingDevice {
-                    let request = ActivityEnrolmentRequest(requestId: UUID(), installationId: installationID,
+                    var request = ActivityEnrolmentRequest(requestId: UUID(), installationId: installationID,
                                                           observedAt: observation.observedAt,
                                                           expectedDeviceId: replacingDevice ? status?.device?.deviceId : nil,
                                                           steps: observation.days.last?.steps)
+                    if includesOptionalActivity {
+                        request.walkingRunningDistanceMetres = observation.days.last?.walkingRunningDistanceMetres
+                        request.activeEnergyKcal = observation.days.last?.activeEnergyKcal
+                        request.flightsClimbed = observation.days.last?.flightsClimbed
+                        request.workoutsAvailable = observation.workoutsAvailable ? true : nil
+                    }
                     try enqueue(.init(id: request.requestId, kind: .enrolment,
                                       body: ActivityWire.encoder().encode(request), recapID: nil))
                     try await drain()
@@ -133,10 +153,13 @@ final class ActivitySyncCoordinator: ObservableObject {
                     try await refreshStatus()
                 }
                 if status?.device?.ready != true {
-                    message = "Waiting for readable current-day steps to establish your baseline. No historical growth was awarded."
+                    message = "Waiting for readable current-day activity to establish a baseline. No historical growth was awarded."
                 } else if observation.days.last?.steps == nil {
                     message = "Sync confirmed, but today's steps are unavailable. Existing growth is preserved; unlock your iPhone and review Health access."
-                } else { message = "Activity confirmed. Only newly eligible steps grow planted plants." }
+                } else { message = "Activity confirmed. New movement grows plants through their pinned activity multipliers." }
+                if observation.omittedWorkouts > 0 {
+                    message += " Some workout records could not be uploaded; other readable activity was synced."
+                }
             } else { message = "Activity sync is off. Your confirmed garden is up to date." }
             await editor.refresh()
             try await loadRecaps()
@@ -185,21 +208,37 @@ final class ActivitySyncCoordinator: ObservableObject {
     private struct Observation {
         let observedAt: Date
         let days: [ActivityDayUpload]
+        var workouts: [WorkoutUpload] = []
+        var workoutsAvailable = false
+        var omittedWorkouts = 0
     }
     private func observe() async throws -> Observation {
         guard let status = status, let timeZone = TimeZone(identifier: status.gameTimezone) else {
             throw ForestError.invalidData("Load the account's game timezone first.")
         }
-        let report = await health.readForUpload(timeZone: timeZone)
+        let extended = includesOptionalActivity && status.supportedMetrics.count > 1
+        let report = await health.readForUpload(timeZone: timeZone, includingOptional: extended)
         guard active, !report.isFixture, report.timeZoneIdentifier == timeZone.identifier else {
             throw ForestError.invalidData("This activity observation cannot be uploaded.")
         }
         let days = try report.days.suffix(status.reconciliationDays).map {
-            ActivityDayUpload(gameDate: ActivityWire.gameDate($0.start, timeZone: timeZone),
-                              steps: try ActivityWire.steps(report.stepsIssue == nil ? $0.steps : nil))
+            var day = ActivityDayUpload(gameDate: ActivityWire.gameDate($0.start, timeZone: timeZone),
+                                        steps: try ActivityWire.steps(report.stepsIssue == nil ? $0.steps : nil))
+            if extended {
+                day.walkingRunningDistanceMetres = ActivityWire.quantity($0.walkingRunningDistanceMetres)
+                day.activeEnergyKcal = ActivityWire.quantity($0.activeEnergyKcal, maximum: 9_999_999)
+                if let flights = $0.flightsClimbed, flights.isFinite, flights >= 0, flights <= 1_000_000 {
+                    day.flightsClimbed = Int64(flights.rounded(.down))
+                }
+            }
+            return day
         }
         guard !days.isEmpty else { throw ForestError.invalidData("There is no current-day observation to upload.") }
-        return Observation(observedAt: report.observedAt, days: days)
+        let readableWorkouts = extended && report.workoutsIssue == nil
+        let workouts = readableWorkouts ? report.workouts.compactMap(ActivityWire.workout) : []
+        return Observation(observedAt: report.observedAt, days: days, workouts: workouts,
+                           workoutsAvailable: readableWorkouts,
+                           omittedWorkouts: readableWorkouts ? report.workouts.count - workouts.count : 0)
     }
 
     private func enqueueSync(_ observation: Observation) throws {
@@ -211,12 +250,27 @@ final class ActivitySyncCoordinator: ObservableObject {
         guard !days.isEmpty else { return }
         // Never rewrite queued bytes. Identical cumulative totals already in the
         // queue do not need another request merely because the app foregrounded.
-        if let last = saved.operations.last, last.kind == .sync,
-           let request = try? ActivityWire.decoder().decode(ActivitySyncRequest.self, from: last.body),
-           request.deviceId == device.deviceId, request.days == days { return }
-        let request = ActivitySyncRequest(requestId: UUID(), installationId: installationID,
-                                          deviceId: device.deviceId, observedAt: observation.observedAt, days: days)
-        try enqueue(.init(id: request.requestId, kind: .sync, body: ActivityWire.encoder().encode(request), recapID: nil))
+        var chunks: [[WorkoutUpload]] = [[]]
+        var segmentCount = 0
+        for workout in observation.workouts {
+            if chunks[chunks.count - 1].count >= 500 || segmentCount + workout.segments.count > 2000 {
+                chunks.append([]); segmentCount = 0
+            }
+            chunks[chunks.count - 1].append(workout)
+            segmentCount += workout.segments.count
+        }
+        for chunk in chunks {
+            if let last = saved.operations.last, last.kind == .sync,
+               let request = try? ActivityWire.decoder().decode(ActivitySyncRequest.self, from: last.body),
+               request.deviceId == device.deviceId, request.days == days,
+               (request.workouts ?? []) == chunk,
+               (request.workoutsAvailable ?? false) == observation.workoutsAvailable { continue }
+            var request = ActivitySyncRequest(requestId: UUID(), installationId: installationID,
+                                              deviceId: device.deviceId, observedAt: observation.observedAt, days: days)
+            request.workoutsAvailable = observation.workoutsAvailable ? true : nil
+            request.workouts = chunk.isEmpty ? nil : chunk
+            try enqueue(.init(id: request.requestId, kind: .sync, body: ActivityWire.encoder().encode(request), recapID: nil))
+        }
     }
 
     private func enqueue(_ operation: PendingActivityOperation) throws {

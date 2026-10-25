@@ -329,6 +329,7 @@ class ActivityDevice(Base):
     baseline_observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     baseline_date: Mapped[date | None] = mapped_column(Date)
     baseline_steps: Mapped[int | None] = mapped_column(BigInteger)
+    metric_baselines: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
 
 
 class ActivityDay(Base):
@@ -368,10 +369,11 @@ class ActivityCredit(Base):
         ForeignKeyConstraint(
             ["device_id", "owner_id"], ["activity_devices.id", "activity_devices.owner_id"]
         ),
-        UniqueConstraint("owner_id", "game_date", "end_steps"),
+        UniqueConstraint("owner_id", "game_date", "request_id"),
         CheckConstraint(
-            "start_steps >= 0 AND end_steps > start_steps "
-            "AND water_steps >= 0 AND water_steps <= end_steps - start_steps",
+            "start_steps >= 0 AND end_steps >= start_steps "
+            "AND water_steps >= 0 AND water_steps <= end_steps - start_steps "
+            "AND (end_steps > start_steps OR metric_quantities <> '{}'::jsonb)",
             name="range",
         ),
     )
@@ -385,6 +387,7 @@ class ActivityCredit(Base):
     end_steps: Mapped[int] = mapped_column(BigInteger)
     water_steps: Mapped[int] = mapped_column(BigInteger)
     accepted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    metric_quantities: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
 
 
 class PlantGrowthCredit(Base):
@@ -410,6 +413,8 @@ class PlayerProgress(Base):
     activity_steps: Mapped[int] = mapped_column(BigInteger, default=0)
     first_maturity_count: Mapped[int] = mapped_column(BigInteger, default=0)
     last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    first_seedling_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    activity_metrics: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
 
 
 class RewardEvent(Base):
