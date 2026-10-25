@@ -3,6 +3,7 @@ import Combine
 
 @MainActor
 final class ActivitySyncCoordinator: ObservableObject {
+    let id = UUID()
     @Published private(set) var enabled = false
     @Published private(set) var includesOptionalActivity = false
     @Published private(set) var busy = false
@@ -343,10 +344,11 @@ final class ActivitySyncCoordinator: ObservableObject {
         recaps = all.sorted { $0.createdAt < $1.createdAt }
     }
 
-    func dismissRecaps() async {
-        guard active, !busy, running == nil, !recoveryLocked, !recaps.isEmpty else { return }
-        busy = true
-        defer { busy = false; updateEditingGate() }
+    func dismissRecaps(ids: Set<UUID>? = nil) async {
+        guard active, !recoveryLocked, !recaps.isEmpty else { return }
+        let canDrain = !busy && running == nil
+        if canDrain { busy = true }
+        defer { if canDrain { busy = false }; updateEditingGate() }
         do {
             var next = saved
             let available = max(0, 256 - next.operations.count)
@@ -354,7 +356,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                 message = "Confirm saved requests before acknowledging more recaps."
                 return
             }
-            for recap in recaps.prefix(available) where !next.dismissedRecaps.contains(recap.id) {
+            for recap in recaps.filter({ ids?.contains($0.id) ?? true }).prefix(available) where !next.dismissedRecaps.contains(recap.id) {
                 let id = UUID()
                 next.operations.append(.init(id: id, kind: .acknowledgement,
                                              body: try ActivityWire.encoder().encode(RequestIdentity(requestId: id)), recapID: recap.id))
@@ -362,6 +364,10 @@ final class ActivitySyncCoordinator: ObservableObject {
             }
             try save(next)
             recaps.removeAll { saved.dismissedRecaps.contains($0.id) }
+            guard canDrain else {
+                message = "Recap acknowledged on this iPhone. Confirmation will retry with saved activity."
+                return
+            }
             // Presentation can only acknowledge already committed events. Do
             // not capture or submit new activity as a side effect of dismissal.
             try await drain(acknowledgementsOnly: true)

@@ -303,7 +303,113 @@ Remaining scope after this increment:
    capacity handlers are tested with synthetic profiles; weather, offline-rate
    skills, stateful/one-use mechanics and complex synergies remain deferred.
 
-## F8 presentation and collection polish — deferred
+## F8 presentation and collection polish — incremental
+
+### F8.1 first-release presentation — source implemented, 26 October 2026
+
+Scope: portrait-only play with a consistent light appearance; no Dark Mode or
+landscape support in this batch. App entry presents a dismissible, scrollable
+per-copy activity update after authentication, including saved water, skill
+contribution, stage changes and current progress. Fresh launches and genuine
+background returns rearm it; routine/manual/observer syncs and transient inactive
+states do not. Empty returns show a quiet status. A frozen receipt set is
+acknowledged durably on dismissal, including while another sync is running;
+dismissing a loading sheet cannot cause a later sync to reopen it.
+
+Exchange separates inspection, explicit confirmation and inline pending/result/
+recovery feedback. Packs replaces the player-facing Draws label. Pack opening
+uses confirmation, the bundled Woodland image layers, two deliberate taps,
+receipt-rarity light, the saved sprout and Continue. Other themes use an explicit
+generic wrapper. Interrupted openings retain their saved result/history without
+automatically replaying the ceremony. Images are downsampled to at most 900 pixels
+on the long edge. The three delivered aligned PNGs total 3,911,092 bytes and
+would occupy approximately 18 MiB as full-resolution RGBA images, superseding
+the older unmeasured resource estimates below.
+
+The bundled butterfly USDZ uses shared template clones and its embedded wing
+animation, board-relative paths and camera projection for 64-point touch targets.
+The separate accessible Welcome action remains available. Motion follows the
+existing server-issued opportunity identity/time, expiry and modal eligibility.
+Storage is directly accessible from Garden; placing enters the existing editor.
+Progress, metric labels, Health upload copy and screen-reader focus are refined.
+
+Portable assets/project/contracts and all 56 Swift syntax parses pass. The full
+PostgreSQL suite passes 454 tests and all four real HTTP walkthroughs pass.
+Ten native regression cases were added; Xcode/Apple SDK compilation, XCTest/UI,
+Release build, visual acceptance and physical minimum-device measurements remain
+pending. Follow [frontend/F8_ACCEPTANCE.md](frontend/F8_ACCEPTANCE.md). This closes
+the source scope only, not all of F8 or deployment readiness. Catalogue discovery,
+the economy increment below, remote asset delivery, watering/swarm and elaborate
+effects remain separate increments.
+
+### Early collection pacing and lifetime step rewards — planned, 26 October 2026
+
+Add this gameplay/economy follow-up to F8 alongside presentation polish. This is
+a plan only: the current runtime rewards, prices, visitor rates and database stay
+unchanged until this increment is implemented and validated. It requires backend
+reward accounting as well as frontend milestone presentation.
+
+**Problem and target:** at attraction 2–10, current offline income is 31–35 tokens
+per hour, so a 1,200-token Woodland pack takes approximately 38h 43m–34h 17m from
+zero without milestones. The existing first-movement/first-hosted/three-hosted
+rewards already total 1,200 tokens; make that opening funding clear. Improve the
+next acquisition steps so players can populate a garden with about 3–4 plants
+early, while retaining the longer-term pack prices and attraction curve. Reward
+finite introductory achievements rather than increasing recurring income again.
+
+**Proposed introductory track:** direct rewards are owned unopened Woodland
+packs, opened through the existing server-authoritative draw flow. Each pack
+awards one sprout under its pinned pool; duplicate species/variants remain valid.
+
+| Achievement | Proposed reward | Change from current rescaled track |
+| --- | --- | --- |
+| Starting garden | Existing starter Oak | Unchanged; never grant a second starter |
+| First eligible movement | 1 Woodland pack | Replaces 300 tokens |
+| First hosted visitor | 300 tokens | Unchanged |
+| Three hosted visitors total | 1 Woodland pack | Replaces 600 tokens |
+| First seedling earned through activity | 1 Woodland pack | Replaces 300 tokens |
+| First adult earned through activity | 900 tokens | Unchanged |
+
+This proposal gives the starter plus two reward plants in the opening session,
+with another pack tied to growth. Its introductory reward value is 4,800 tokens
+(three Woodland packs plus 1,200 tokens), versus 2,400 currently. Players must
+still claim/open rewards and place sprouts; do not promise automatic placement.
+
+**Lifetime step track — provisional reward targets:** add separate, once-only
+account milestones at **3,000**, **10,000** and **50,000** cumulative eligible
+steps, provisionally awarding **one Woodland pack each**. These are direct pack
+grants, not permanent access unlocks, and are additional to the introductory
+track. Use the existing authoritative lifetime credited-step counter after
+confirming its semantics; count eligible steps once per account, independent of
+plant count, species coefficients, boosts and whether a plant is already mature.
+Do not count workout minutes as steps or import pre-enrolment Health history.
+Re-enrolment, device replacement, repeated syncs and downward corrections must
+not manufacture progress or repeat a reward. Personal activity baseline boosts
+remain deferred; no new personal lookback history is needed for this track.
+
+**Combined pacing review:** the 3,000-step pack can provide the fourth plant
+before the seedling reward; these are overlapping achievements, not a promise
+of exactly four plants or a cap. Before publishing final rewards, simulate both
+tracks together for low/high daily steps, workout-only users, active/offline
+play, duplicates and growing attraction. Check that the opening is generous
+without exhausting the two-species test collection immediately. Keep step
+milestones supplemental: workout users retain the introductory movement/growth
+route. Later thresholds/rewards beyond 50,000 steps require a separate decision.
+
+**Implementation and acceptance:** show threshold, authoritative progress,
+reward type and claim status clearly, with a route to Draws after a pack claim.
+Grant packs atomically with durable milestone receipts and stable account-scoped
+claim IDs; no token deduction or activity-sync token minting. Pin the applicable
+pack pool/version when awarding. Existing accounts should use already credited
+steps and may claim newly introduced thresholds once. Preserve all historical
+claims/receipts; decide an explicit compensation policy before changing rewards
+for already-claimed introductory milestones, without silently resetting them.
+Test exact thresholds, crossing multiple thresholds in one sync, capped growth
+and mature plants, claim races, rollback, replay, interrupted pack opening,
+account switching and upgrade compatibility. Record backend and native results
+when implemented; this documentation update does not establish those tests.
+
+### Visitor and collection presentation
 
 The current functional B6/F6 experience is accepted. Schedule these visual changes
 in the existing final hardening/polish milestone, after the remaining gameplay:
@@ -401,9 +507,9 @@ Handle missing artwork/loading, block background interactions, and preserve
 visitor modal/session lifecycle behaviour. Validate all four rarity colours with
 presentation fixtures, both taps, cancellation, failure/retry/recovery, VoiceOver,
 Reduce Motion, large text, portrait/landscape and minimum-device performance.
-Asset creation and frontend implementation remain deferred; this records the plan.
+Assets and frontend presentation are integrated in F8.1; native acceptance remains pending.
 
-Cosmetic watering, swarm and unboxing effects remain in F8 as already planned.
+Cosmetic watering, swarm and elaborate effects remain in later F8 increments.
 These presentation improvements do not block B7/F7 or reopen completed B6/F6 logic.
 
 ## Historical B1–B3 delivery outline

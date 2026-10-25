@@ -12,7 +12,7 @@ struct SettingsScreen: View {
                     .foregroundStyle(.secondary)
             }
             Section("Your data") {
-                Text("Health reads stay local until you separately enable step sync in Activity. When enabled, daily step totals and observation dates are saved on this iPhone for reliable retries and uploaded to your connected backend. Recorded workouts remain local diagnostics.")
+                Text("Health reads stay local until you enable activity sync in Activity. With full sync enabled, daily steps, walking/running distance, active energy, flights climbed and recorded workout details are saved on this iPhone for reliable retries and uploaded to calculate plant growth. Existing steps-only consent stays steps-only until you enable the optional inputs.")
                 Text("Your confirmed garden is cached for offline viewing. Pausing sync retains unresolved requests; reconnect and re-enable sync to confirm them. Disconnecting keeps each account’s pending operations separate.")
                 Text("The app remembers only whether you have tried connecting Health. That preference is not proof of permission.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -22,7 +22,7 @@ struct SettingsScreen: View {
                     .accessibilityIdentifier("settings.account")
             }
             Section("Accessibility") {
-                Text("Plant details are also available through the Plants button. Wind animation follows your iPhone’s Reduce Motion setting.")
+                Text("Plant details are also available through the Plants button. Animation follows your iPhone’s Reduce Motion setting. The app uses a light appearance and portrait layout.")
             }
             #if DEBUG
             Section("Development") {

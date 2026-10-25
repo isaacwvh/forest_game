@@ -24,7 +24,8 @@
     <key>LSRequiresIPhoneOS</key><true/>
     <key>UIApplicationSceneManifest</key><dict><key>UIApplicationSupportsMultipleScenes</key><false/></dict>
     <key>UILaunchScreen</key><dict/>
-    <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
+    <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
+    <key>UIUserInterfaceStyle</key><string>Light</string>
     <key>NSHealthShareUsageDescription</key><string>Movement Forest reads steps, walking/running distance, active energy, flights climbed and recorded workouts. After you enable activity sync, daily quantities and workout identity, type, source, timestamps and eligible segments are uploaded to your backend to grow planted plants. Health access is optional.</string>
     <key>NSLocalNetworkUsageDescription</key><string>Connect to your development garden service on your private network to load and save plant arrangements.</string>
 </dict></plist>

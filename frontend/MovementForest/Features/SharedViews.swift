@@ -1,5 +1,20 @@
 import SwiftUI
 
+enum ActivityMetricLabel {
+    static func title(_ key: String) -> String {
+        switch key {
+        case "steps": return "Steps"
+        case "walking_running_distance_km": return "Walking and running distance"
+        case "active_energy_kcal": return "Active energy"
+        case "flights_climbed": return "Flights climbed"
+        case "workout_minutes.*": return "Recorded workouts (default)"
+        default:
+            return key.replacingOccurrences(of: "workout_minutes.", with: "Workout: ")
+                .replacingOccurrences(of: "_", with: " ").capitalized
+        }
+    }
+}
+
 struct RecoveryView: View {
     let title: String
     let message: String

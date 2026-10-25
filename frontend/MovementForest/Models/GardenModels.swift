@@ -6,6 +6,10 @@ enum GrowthStage: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String { self == .young ? "Young plant" : rawValue.capitalized }
     var number: Int { (Self.allCases.firstIndex(of: self) ?? 0) + 1 }
+    var next: Self? {
+        let index = number
+        return index < Self.allCases.count ? Self.allCases[index] : nil
+    }
 }
 
 struct GardenPlant: Codable, Identifiable, Equatable {

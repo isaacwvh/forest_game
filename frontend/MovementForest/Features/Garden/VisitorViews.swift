@@ -23,12 +23,13 @@ struct ForestButterfly: View {
 @MainActor
 struct VisitorGardenOverlay: View {
     @ObservedObject var store: VisitorCoordinator
+    var renderer: RealityGardenRenderer? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.2)) { _ in
             ZStack {
                 ForEach(store.visibleOpportunities) { visitor in
-                    VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion)
+                    VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion, renderer: renderer)
                         .id(visitor.id)
                 }
             }
@@ -68,6 +69,7 @@ private struct VisitorFlightView: View {
     @ObservedObject var store: VisitorCoordinator
     let visitor: APIVisitorOpportunity
     let reduceMotion: Bool
+    var renderer: RealityGardenRenderer? = nil
     // Identity is the opportunity, so heartbeats do not restart its flight.
     @State private var appearedAt = Date()
     var body: some View {
@@ -79,14 +81,21 @@ private struct VisitorFlightView: View {
                                             remaining: visitor.expiresAt.timeIntervalSince(now), reduceMotion: reduceMotion,
                                             lane: min(12, max(0, visitor.lane ?? 0)))
                 GeometryReader { geometry in
+                    let projection = renderer?.projectedVisitor(visitor.id)
+                    let fallback = renderer?.visitorAssetReady != true
                     Button { Task { await store.welcome(visitor) } } label: {
-                        ForestButterfly(flap: pose.flap)
-                            .contentShape(Rectangle())
+                        Group {
+                            if fallback { ForestButterfly(flap: pose.flap) }
+                            else { Color.clear.frame(width: 64, height: 64) }
+                        }.contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .disabled(!store.canRequestReward)
-                    .position(x: max(36, min(geometry.size.width - 36, geometry.size.width * pose.x)),
-                              y: max(36, min(geometry.size.height - 36, geometry.size.height * pose.y)))
+                    .position(x: projection?.x ?? max(36, min(geometry.size.width - 36, geometry.size.width * pose.x)),
+                              y: projection?.y ?? max(36, min(geometry.size.height - 36, geometry.size.height * pose.y)))
+                    .opacity(fallback || projection != nil ? 1 : 0)
+                    .allowsHitTesting(fallback || projection != nil)
+                    .accessibilityHidden(!fallback && projection == nil)
                     .accessibilityLabel("Welcome visitor")
                     .accessibilityHint("Earn \(visitor.tokens) visitor tokens after server confirmation")
                     .accessibilityIdentifier("visitors.butterfly")
@@ -101,6 +110,28 @@ private struct VisitorFlightView: View {
                 #endif
             }
         }
+    }
+}
+
+/// Board-local flight; server-issued identity/time keeps motion stable across refreshes.
+struct VisitorWorldPose {
+    let position: SIMD3<Float>
+    let heading: Float
+    init(elapsed: TimeInterval, remaining: TimeInterval, lane: Int, width: Float, depth: Float,
+         height: Float, reduceMotion: Bool) {
+        let index = max(0, min(11, lane - 1))
+        let column = Float(index % 3), row = Float(index / 3)
+        let age = Float(max(0, elapsed))
+        let phase = age * 0.6 + Float(index) * 1.7
+        let x = width * (0.22 + column * 0.28)
+        let z = depth * (0.18 + row * 0.20)
+        let arrival = min(1, age / 1.5)
+        let departure = 1 - min(1, Float(max(0, remaining)) / 1.5)
+        position = reduceMotion ? SIMD3(x, height + row * 0.15, z) :
+            SIMD3(x + sin(phase) * width * 0.055 - (1 - arrival) * width * 0.3 + departure * width * 0.3,
+                  height + row * 0.15 + sin(age * 0.9 + column) * 0.15,
+                  z + cos(phase) * depth * 0.055)
+        heading = reduceMotion ? 0 : (arrival < 1 || departure > 0 ? -.pi / 2 : phase - .pi / 2)
     }
 }
 

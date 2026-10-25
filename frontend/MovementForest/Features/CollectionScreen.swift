@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum CollectionDestination: String, CaseIterable, Identifiable {
-    case exchange = "Exchange", catalog = "Catalog", draws = "Draws"
+    case exchange = "Exchange", catalog = "Catalog", draws = "Packs"
     var id: String { rawValue }
     var symbol: String {
         switch self { case .exchange: return "arrow.left.arrow.right"; case .catalog: return "books.vertical"; case .draws: return "shippingbox" }
@@ -13,12 +13,15 @@ struct CollectionHostScreen: View {
     @ObservedObject var connection: GardenConnection
     let destination: CollectionDestination
     let assets: any AssetCatalogProviding
+    var navigate: ((CollectionDestination?) -> Void)? = nil
+    var openingChanged: ((Bool) -> Void)? = nil
     var body: some View {
         Group {
             if let store = connection.collection {
-                CollectionScreen(store: store, destination: destination, assets: assets).id(store.id)
+                CollectionScreen(store: store, destination: destination, assets: assets, navigate: navigate,
+                                 openingChanged: openingChanged).id(store.id)
             } else {
-                Text("Connect to your account in Settings to use Exchange, Catalog and Draws.")
+                Text("Connect to your account in Settings to use Exchange, Catalog and Packs.")
                     .foregroundStyle(.secondary).padding()
             }
         }.navigationTitle(destination.rawValue).navigationBarTitleDisplayMode(.inline)
@@ -30,8 +33,13 @@ struct CollectionScreen: View {
     @ObservedObject var store: CollectionCoordinator
     let destination: CollectionDestination
     let assets: any AssetCatalogProviding
+    var navigate: ((CollectionDestination?) -> Void)? = nil
+    var openingChanged: ((Bool) -> Void)? = nil
     @State private var search = ""
     @State private var rarity = "All"
+    @State private var confirmingPack: APIOwnedPack?
+    @State private var openingPack: APIOwnedPack?
+    @AccessibilityFocusState private var resultFocused: Bool
     private var catalogueSpecies: [APISpecies] { store.catalogue?.species ?? [] }
     var body: some View {
         Group {
@@ -44,6 +52,19 @@ struct CollectionScreen: View {
                 .accessibilityLabel("Refresh collection").disabled(store.busy || store.recoveryLocked)
         } }
         .task { await store.refresh() }
+        .alert("Open pack?", isPresented: Binding(get: { confirmingPack != nil }, set: { if !$0 { confirmingPack = nil } }), presenting: confirmingPack) { pack in
+            Button("Cancel", role: .cancel) { confirmingPack = nil }
+            Button("Open") { openingPack = pack; confirmingPack = nil }
+        } message: { _ in Text("This opens one pack and saves its sprout in Storage.") }
+        .fullScreenCover(item: $openingPack, onDismiss: {
+            openingChanged?(false)
+            resultFocused = store.state.pending == nil && store.state.result?.plant != nil
+        }) { pack in
+            PackOpeningScreen(store: store, pack: pack, assets: assets)
+        }
+        .onChange(of: openingPack?.id) { openingChanged?($0 != nil) }
+        .onChange(of: confirmingPack?.id) { openingChanged?($0 != nil || openingPack != nil) }
+        .onDisappear { openingChanged?(false) }
     }
     private var content: some View {
         List {
@@ -80,12 +101,16 @@ struct CollectionScreen: View {
                 }
                 Section("Exchange tokens for packs") {
                     if store.offers.isEmpty && !store.busy { Text("No exchange offers are currently available.") }
-                    ForEach(store.offers) { offer in ExchangeOfferRow(store: store, offer: offer) }
+                    ForEach(store.offers) { offer in ExchangeOfferRow(store: store, offer: offer, navigate: navigate) }
                 }
             case .draws:
                 if let result = store.state.result {
                     Section("Latest confirmed result") {
                         ReceiptRow(receipt: result, catalogue: store.catalogue, assets: assets)
+                            .accessibilityElement(children: .combine).accessibilityFocused($resultFocused)
+                        if result.plant != nil {
+                            Button("Go to Garden") { navigate?(nil) }.frame(minHeight: 44)
+                        }
                         Button("Dismiss result") { store.dismissResult() }.disabled(store.busy)
                     }
                 }
@@ -93,13 +118,16 @@ struct CollectionScreen: View {
                     if store.packs.isEmpty && !store.busy { Text("No unopened packs. Exchange visitor tokens for a pack first.") }
                     ForEach(store.packs) { pack in
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(store.definitions[pack.definitionID]?.displayName ?? pack.packId).font(.headline)
+                            HStack(spacing: 12) {
+                                PackThumbnail(packID: pack.packId)
+                                Text(store.definitions[pack.definitionID]?.displayName ?? pack.packId).font(.headline)
+                            }
                             Text("Version \(pack.version) · acquired \(pack.acquiredAt.formatted(date: .abbreviated, time: .shortened))")
                                 .font(.caption).foregroundStyle(.secondary)
                             if let definition = store.definitions[pack.definitionID] {
                                 NavigationLink("Contents and probabilities") { PackContentsScreen(pack: definition) }
                             }
-                            Button("Open pack") { Task { await store.open(pack) } }
+                            Button("Open pack") { confirmingPack = pack }
                                 .disabled(!store.canMutate).accessibilityIdentifier("collection.open.\(pack.id)")
                         }.padding(.vertical, 4)
                     }
@@ -150,7 +178,13 @@ struct CollectionScreen: View {
 private struct ExchangeOfferRow: View {
     @ObservedObject var store: CollectionCoordinator
     let offer: APIExchangeOffer
+    var navigate: ((CollectionDestination?) -> Void)? = nil
     @State private var quantity = 1
+    @State private var confirming = false
+    private var totalCost: String {
+        guard let cost = ExactAmount.integer(offer.tokenCost) else { return "Unavailable" }
+        return (cost * Decimal(quantity)).formatted()
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(offer.pack.displayName).font(.headline)
@@ -160,14 +194,53 @@ private struct ExchangeOfferRow: View {
             if let cost = ExactAmount.integer(offer.tokenCost) {
                 Text("Total: \((cost * Decimal(quantity)).formatted()) tokens").monospacedDigit()
             }
-            NavigationLink("Contents and probabilities") { PackContentsScreen(pack: offer.pack) }
-            Button("Exchange for \(quantity) \(quantity == 1 ? "pack" : "packs")") { Task { await store.exchange(offer, quantity: quantity) } }
+            NavigationLink("View contents and odds") { PackContentsScreen(pack: offer.pack) }
+                .frame(minHeight: 44)
+                .accessibilityHint("Inspect this pack without spending tokens")
+            Button("Exchange \(totalCost) tokens for \(quantity) \(quantity == 1 ? "pack" : "packs")") { confirming = true }
                 .disabled(!store.canMutate || !store.canAfford(offer, quantity: quantity))
+                .buttonStyle(.borderedProminent).frame(minHeight: 44)
                 .accessibilityIdentifier("collection.exchange.\(offer.offerId)")
+            if store.exchangeOfferID == offer.offerId, let message = store.exchangeMessage {
+                Text(message).font(.callout).accessibilityIdentifier("collection.exchangeFeedback")
+                if store.state.pending?.kind == .exchange {
+                    Button("Retry saved purchase") { Task { await store.refresh() } }
+                        .disabled(store.busy).frame(minHeight: 44)
+                }
+            }
+            if let receipt = store.confirmedExchange, receipt.packs?.first?.packId == offer.pack.packId {
+                Label("\(receipt.quantity ?? 0) \(offer.pack.displayName) added", systemImage: "checkmark.circle.fill")
+                    .accessibilityIdentifier("collection.exchangeSuccess")
+                Text("Confirmed purchase · Remaining balance: \(store.tokenBalance ?? receipt.tokenBalance) tokens")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("Open packs") { navigate?(.draws) }.frame(minHeight: 44)
+            }
             if store.tokenBalance != nil && !store.canAfford(offer, quantity: quantity) {
                 Text("Earn more visitor tokens to exchange this quantity.").font(.caption).foregroundStyle(.secondary)
             }
         }.padding(.vertical, 4)
+            .alert("Exchange tokens?", isPresented: $confirming) {
+                Button("Cancel", role: .cancel) { }
+                Button("Exchange") { Task { await store.exchange(offer, quantity: quantity) } }
+            } message: {
+                Text("Spend \(totalCost) visitor tokens for \(quantity) \(offer.pack.displayName)?")
+            }
+    }
+}
+
+private struct PackThumbnail: View {
+    let packID: String
+    @State private var image: UIImage?
+    var body: some View {
+        Group {
+            if let image = image { Image(uiImage: image).resizable().scaledToFit() }
+            else { Image(systemName: "shippingbox").font(.title) }
+        }.frame(width: 48, height: 64).accessibilityHidden(true)
+            .task {
+                if let path = PresentationAssets.packPath(packID: packID, part: "sealed") {
+                    image = PresentationAssets.image(path, maximumPixels: 180)
+                }
+            }
     }
 }
 
@@ -276,7 +349,7 @@ private struct CatalogDetailScreen: View {
                         ForEach(offer.pack.speciesOdds.filter { $0.speciesId == row.species.speciesId }) { odds in SpeciesOddsView(odds: odds) }
                     }
                 }
-                Text("Current exchange packs. Older packs keep their own probabilities, shown in Draws.")
+                Text("Current exchange packs. Older packs keep their own probabilities, shown in Packs.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Growth and attraction by stage") {
@@ -294,9 +367,9 @@ private struct CatalogDetailScreen: View {
             Section("Activity multipliers") {
                 let multipliers = profile("behaviour")?.metricMultipliers ?? [:]
                 ForEach(multipliers.keys.sorted(), id: \.self) { key in
-                    LabeledContent(key.replacingOccurrences(of: "_", with: " "), value: "\(multipliers[key]!.formatted())×")
+                    LabeledContent(ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×")
                 }
-                Text("Growth uses the listed activity multipliers. Unlisted activities contribute no growth.")
+                Text("Recorded workouts use their exact multiplier when listed, otherwise the recorded-workout default. Other unlisted activities contribute no growth.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             if let skills = profile("behaviour")?.gardenEffects, !skills.isEmpty {

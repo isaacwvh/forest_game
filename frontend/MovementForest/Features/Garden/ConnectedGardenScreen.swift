@@ -56,7 +56,7 @@ struct ConnectedGardenScreen: View {
                     })
                     .accessibilityHidden(true)
                     .overlay {
-                        if let visitors = visitors { VisitorGardenOverlay(store: visitors) }
+                        if let visitors = visitors { VisitorGardenOverlay(store: visitors, renderer: renderer) }
                     }
                 } status: { statusPanel } controls: { controls }
             } else if store.state.busy {
@@ -113,7 +113,8 @@ struct ConnectedGardenScreen: View {
         }
         .onChange(of: visitorEligible) { visitors?.setEligible($0) }
         .onChange(of: visitors?.id) { _ in visitors?.setEligible(visitorEligible) }
-        .onAppear { visible = true; visitors?.setEligible(visitorEligible) }
+        .onChange(of: visitors?.id) { _ in renderer.setVisitors(visitors) }
+        .onAppear { visible = true; renderer.setVisitors(visitors); visitors?.setEligible(visitorEligible) }
         .onDisappear { visible = false; visitors?.setEligible(false); store.cancelCandidate(); renderer.setActive(false) }
     }
 
@@ -201,6 +202,10 @@ struct ConnectedGardenScreen: View {
     private var controls: some View {
         VStack(spacing: 8) {
             if renderer.isLoading { ProgressView("Loading plants…") }
+            if let issue = renderer.visitorAssetIssue {
+                Text(issue).font(.caption).foregroundStyle(.secondary)
+                Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.frame(minHeight: 44)
+            }
             if !renderer.errors.isEmpty { Button("Some plant assets need attention") { sheet = .errors }.font(.caption) }
             if let selected = store.selected {
                 Text("\(selected.speciesId.capitalized) · \(selected.variantId.capitalized) · \(selected.growthStage.title)")
@@ -233,10 +238,8 @@ struct ConnectedGardenScreen: View {
                 HStack {
                     Button { sheet = .plants } label: { Label("Plants", systemImage: "leaf").frame(minHeight: 44) }
                         .accessibilityIdentifier("garden.plants")
-                    if store.editing {
-                        Button { sheet = .storage } label: { Label("Storage", systemImage: "tray").frame(minHeight: 44) }
-                            .disabled(!store.canEdit || renderer.isLoading).accessibilityIdentifier("editor.storage")
-                    }
+                    Button { sheet = .storage } label: { Label("Storage", systemImage: "tray").frame(minHeight: 44) }
+                        .disabled(!store.canEdit || renderer.isLoading).accessibilityIdentifier("editor.storage")
                     Spacer(minLength: 0)
                 }
                 HStack {
@@ -270,6 +273,7 @@ struct ConnectedGardenScreen: View {
             if store.inventory.isEmpty { Text("No stored plants. Storing a garden plant keeps its identity and progress.") }
             ForEach(store.inventory) { plant in
                 Button {
+                    if !store.editing { store.editing = true }
                     store.begin(plant, kind: .plant)
                     if store.candidate != nil { sheet = nil }
                 } label: { plantRow(plant) }.disabled(!store.canEdit)

@@ -63,6 +63,30 @@ def main():
             require(width > 0 and height > 0 and colour in [4, 6], f"Thumbnail lacks alpha channel: {thumb}")
             catalog[(species_id, manifest["assetVersion"], asset["stage"], asset["variant"])] = asset
             models += 1
+    for folder in ["packs", "butterfly"]:
+        require(f"../assets/{folder}" in project_text, f"Presentation resources missing: {folder}")
+    pack_bytes = 0
+    pack_dimensions = set()
+    for part in ["sealed", "opened", "top-strip"]:
+        png = (REPO / f"assets/packs/woodland/v1/woodland-pack-{part}.png").read_bytes()
+        require(png[:8] == b"\x89PNG\r\n\x1a\n", "Invalid pack PNG")
+        width, height, _, colour = struct.unpack(">IIBB", png[16:26])
+        require(colour in [4, 6] and max(width, height) <= 1536, "Pack image budget/alpha mismatch")
+        pack_dimensions.add((width, height))
+        pack_bytes += len(png)
+    require(len(pack_dimensions) == 1, "Pack layers must share an aligned canvas")
+    require(pack_bytes <= 5 * 1024 * 1024, "Pack theme exceeds 5 MiB compressed budget")
+    visitor = json.loads((REPO / "assets/butterfly/v1/butterfly.json").read_text())
+    require(visitor["assetType"] == "visitor" and visitor["visitorId"] == "butterfly", "Invalid visitor manifest")
+    require(visitor["animation"]["loop"] and visitor["placement"]["rootMotion"] is False, "Invalid wing/flight boundary")
+    for asset in visitor["assets"]:
+        path = (REPO / "assets/butterfly/v1" / asset["file"]).resolve()
+        require(path.is_relative_to((REPO / "assets/butterfly/v1").resolve()), "Unsafe visitor path")
+        data = path.read_bytes()
+        require(len(data) == asset["bytes"] <= 10 * 1024 * 1024, "Visitor size mismatch/budget")
+        require(hashlib.sha256(data).hexdigest() == asset["sha256"], "Visitor checksum mismatch")
+        with zipfile.ZipFile(path) as archive:
+            require(archive.testzip() is None, "Visitor USDZ CRC failure")
     fixture = json.loads((ROOT / "MovementForest/Resources/Fixtures/sample-garden.json").read_text())
     require(fixture["isSample"] is True, "Fixture must be labelled sample")
     require(len(fixture["plants"]) == 15, "Expected 15-plant sample")
@@ -131,6 +155,8 @@ def main():
     require(next(p for p in skills["syncResult"]["garden"]["plants"] if p["speciesId"] == "oak")["growthMicroUnits"] == "10400000", "Expected confirmed 4% growth")
     config = ROOT / "MovementForest/Configuration"
     info = plistlib.loads((config / "Info.plist").read_bytes())
+    require(info["UISupportedInterfaceOrientations"] == ["UIInterfaceOrientationPortrait"], "Portrait-only contract differs")
+    require(info["UIUserInterfaceStyle"] == "Light", "Light appearance contract differs")
     entitlements = plistlib.loads((config / "MovementForest.entitlements").read_bytes())
     require(bool(info.get("NSHealthShareUsageDescription")), "Missing Health read explanation")
     require("NSCameraUsageDescription" not in info, "Non-AR baseline should not request camera")
@@ -158,6 +184,7 @@ def main():
     print("PASS: synthetic B3 editor contract, owned-copy identity, bundled API asset keys and shared geometry resource.")
     print("PASS: real synthetic collection exchange/opening accounting, pack consumption, probabilities and bundled award thumbnail.")
     print("PASS: HTTP-derived Sleeping Dew source/activation/storage, +4% growth and versioned cap contract.")
+    print(f"PASS: F8 portrait/light configuration, butterfly checksum/archive, three aligned pack PNGs ({pack_bytes:,} bytes).")
     print("Swift compilation, native UI, imported axes, animation, and real HealthKit remain Mac/iPhone checks.")
 
 

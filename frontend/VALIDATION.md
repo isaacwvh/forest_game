@@ -405,3 +405,37 @@ pending. Earlier remote iOS failures were investigated before the successful run
 workflow failure summaries were added to make future failures inspectable.
 Follow VISITOR_RESCALE_ACCEPTANCE.md after
 applying backend/VISITOR_RESCALE.md and installing the updated Mac-built app.
+
+## F8.1 first-release presentation — 26 October 2026
+
+Source implements the app-entry recap with saved per-copy water/skill/stage
+information and a frozen acknowledgement set, explicit exchange confirmation and
+inline recovery feedback, bundled two-tap Woodland opening, generic fallback
+wrappers, animated board-relative butterfly rendering/projected touch targets,
+direct Storage access and clearer progress/Health copy. Portrait-only and a fixed
+light appearance are enforced. Catalogue discovery and new economy rewards remain
+outside this increment.
+
+Passed on Windows: generated-project consistency; 20 plant USDZ archives and
+checksums, 20 plant alpha thumbnails, existing synthetic editor/collection/skill
+contracts; butterfly checksum/archive; three aligned pack PNGs totalling 3,911,092
+bytes; portrait/light Info.plist contract; all 56 Swift source syntax parses;
+backend Ruff lint and format (81 files), pip dependency consistency and diff
+whitespace. Full isolated PostgreSQL regression: **454 passed in 323.04 seconds**.
+All four actual HTTP walkthroughs pass: activity, visitor/collection/restart,
+Sleeping Dew and launch/rescale. The dedicated validation cluster was stopped
+normally afterwards; no personal game database or reward configuration was changed.
+
+Ten native cases were added: app-entry rearming/suppression, dismissal before
+delayed sync completes, merged/de-duplicated recap credits, display-sized bundled
+artwork, board-scale/static flight, displayed-only acknowledgement, acknowledgement
+during an in-flight sync, confirmed exchange surviving a refresh failure, all
+four rarity opening flows and Reduce Motion opening. The Debug UI fixtures use
+an in-memory journal and synthetic receipts, with no account connection.
+
+**Not executed here:** Apple SDK typechecking, XCTest/UI, Release build, iPhone
+visual/accessibility acceptance or minimum-device Instruments measurements.
+Windows syntax checks do not establish those results. Run
+`bash frontend/scripts/test-mac.sh` on a Mac and follow
+[F8_ACCEPTANCE.md](F8_ACCEPTANCE.md) on the existing installation. Source scope is
+implemented; native/device acceptance and broader F8/deployment remain pending.

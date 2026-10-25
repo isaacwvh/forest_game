@@ -2,6 +2,7 @@ import SwiftUI
 import RealityKit
 import Combine
 import UIKit
+import CryptoKit
 
 @MainActor
 protocol GardenRenderer: AnyObject {
@@ -42,6 +43,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     @Published private(set) var loadSeconds: Double = 0
     @Published private(set) var modelLoadCount = 0
     @Published private(set) var lastGroundPoint: SIMD2<Double>?
+    @Published private(set) var visitorAssetReady = false
+    @Published private(set) var visitorAssetIssue: String?
     @Published var selectedPlantID: UUID? { didSet { updateSelection() } }
     var onSelect: ((UUID?) -> Void)?
     var onGroundDrag: ((SIMD2<Double>?, GardenDragPhase) -> Void)?
@@ -50,6 +53,12 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private let rig = AnchorEntity(world: .zero)
     private let camera = PerspectiveCamera()
     private let loader = PlantModelLoader()
+    private let visitorRoot = AnchorEntity(world: .zero)
+    private weak var visitorStore: VisitorCoordinator?
+    private var visitorTemplate: Entity?
+    private var visitorLoadTask: Task<Void, Never>?
+    private var visitorEntities: [UUID: Entity] = [:]
+    private var visitorPlaybacks: [UUID: [AnimationPlaybackController]] = [:]
     private var snapshot: GardenSnapshot?
     private var loadTask: Task<Void, Never>?
     private var generation = UUID()
@@ -90,6 +99,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         view.renderOptions.insert(.disableDepthOfField)
         view.scene.addAnchor(root)
         view.scene.addAnchor(rig)
+        view.scene.addAnchor(visitorRoot)
         camera.camera.fieldOfViewInDegrees = 42
         camera.name = "garden-camera"
         rig.addChild(camera)
@@ -272,16 +282,25 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         for controller in playbacks {
             if wantsMotion && isActive { controller.resume() } else { controller.pause() }
         }
+        for controller in visitorPlaybacks.values.flatMap({ $0 }) {
+            if wantsMotion && isActive { controller.resume() } else { controller.pause() }
+        }
     }
     func setActive(_ active: Bool) {
         guard isActive != active else { return }
         isActive = active
         view.isHidden = !active
+        visitorRoot.isEnabled = active
         frameTime = 0
         frameCount = 0
         applyMotion()
     }
     func stop() {
+        visitorLoadTask?.cancel(); visitorLoadTask = nil
+        visitorPlaybacks.values.flatMap { $0 }.forEach { $0.stop() }
+        visitorPlaybacks.removeAll(); visitorEntities.removeAll()
+        for child in Array(visitorRoot.children) { child.removeFromParent() }
+        visitorTemplate = nil; visitorStore = nil; visitorAssetReady = false
         loadTask?.cancel()
         loadTask = nil
         generation = UUID()
@@ -355,12 +374,97 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
 
     private func recordFrame(_ delta: TimeInterval) {
         guard isActive, delta > 0, delta < 1 else { return }
+        updateVisitors()
         frameTime += delta
         frameCount += 1
         if frameTime >= 1 {
             sceneUpdateMilliseconds = frameTime / Double(frameCount) * 1000
             frameTime = 0
             frameCount = 0
+        }
+    }
+
+    func setVisitors(_ store: VisitorCoordinator?) {
+        if visitorStore?.id != store?.id {
+            visitorPlaybacks.values.flatMap { $0 }.forEach { $0.stop() }
+            visitorPlaybacks.removeAll(); visitorEntities.removeAll()
+            for child in Array(visitorRoot.children) { child.removeFromParent() }
+        }
+        visitorStore = store
+        guard store != nil, visitorTemplate == nil, visitorLoadTask == nil else { return }
+        visitorLoadTask = Task { [weak self] in
+            guard let self = self else { return }
+            defer { self.visitorLoadTask = nil }
+            do {
+                let (manifest, url) = try VisitorAssetManifest.load()
+                let asset = manifest.assets[0]
+                try await Task.detached(priority: .utility) {
+                    let data = try Data(contentsOf: url, options: .mappedIfSafe)
+                    guard data.count == asset.bytes,
+                          SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == asset.sha256 else {
+                        throw ForestError.invalidData("Butterfly checksum mismatch.")
+                    }
+                }.value
+                try Task.checkCancellation()
+                for try await imported in Entity.loadAsync(contentsOf: url).values {
+                    try Task.checkCancellation()
+                    func hasAnimation(_ node: Entity) -> Bool {
+                        !node.availableAnimations.isEmpty || node.children.contains { hasAnimation($0) }
+                    }
+                    guard hasAnimation(imported) else { throw ForestError.assetLoad("Butterfly wing animation is unavailable.") }
+                    let adapter = Entity(); adapter.addChild(imported)
+                    if AssetOrientation.needsZUpCorrection(imported: imported.visualBounds(relativeTo: adapter).extents,
+                                                          authored: asset.bounds.extents) {
+                        adapter.orientation = simd_quatf(angle: -.pi / 2, axis: [1, 0, 0])
+                    }
+                    self.visitorTemplate = adapter; self.visitorAssetReady = true; self.visitorAssetIssue = nil
+                    self.updateVisitors()
+                    return
+                }
+                throw ForestError.assetLoad("No butterfly model was imported.")
+            } catch is CancellationError { }
+            catch { self.visitorAssetIssue = "Visitor artwork is unavailable. You can still welcome visitors." }
+        }
+    }
+
+    func projectedVisitor(_ id: UUID) -> CGPoint? {
+        guard visitorStore?.eligible == true, isActive, let entity = visitorEntities[id],
+              let point = view.project(entity.position(relativeTo: nil)),
+              point.x >= 32, point.y >= 32, point.x <= view.bounds.width - 32,
+              point.y <= view.bounds.height - 32 else { return nil }
+        return point
+    }
+
+    private func updateVisitors() {
+        guard let store = visitorStore, let garden = snapshot, let now = store.serverNow else { return }
+        let visitors = store.eligible ? store.visibleOpportunities : []
+        let wanted = Set(visitors.map(\.id))
+        for id in Array(visitorEntities.keys) where !wanted.contains(id) {
+            visitorPlaybacks.removeValue(forKey: id)?.forEach { $0.stop() }
+            visitorEntities.removeValue(forKey: id)?.removeFromParent()
+        }
+        guard let template = visitorTemplate else { return }
+        for visitor in visitors {
+            if visitorEntities[visitor.id] == nil {
+                let entity = Entity()
+                let model = template.clone(recursive: true)
+                model.scale = SIMD3(repeating: 1.5)
+                entity.addChild(model); visitorRoot.addChild(entity)
+                visitorEntities[visitor.id] = entity
+                func play(_ node: Entity) {
+                    if let animation = node.availableAnimations.first {
+                        visitorPlaybacks[visitor.id, default: []].append(node.playAnimation(animation.repeat(duration: .infinity),
+                            transitionDuration: 0, startsPaused: !wantsMotion || !isActive))
+                    } else { for child in node.children { play(child) } }
+                }
+                play(model)
+            }
+            let height = max(1.6, (diagnostics.map { $0.minimumY + $0.bounds.y }.max() ?? 1) + 0.25)
+            let pose = VisitorWorldPose(elapsed: now.timeIntervalSince(visitor.issuedAt), remaining: visitor.expiresAt.timeIntervalSince(now),
+                lane: visitor.lane ?? 1, width: Float(garden.width * garden.gardenUnitMetres),
+                depth: Float(garden.depth * garden.gardenUnitMetres), height: height, reduceMotion: !wantsMotion)
+            visitorEntities[visitor.id]?.position = pose.position
+            visitorEntities[visitor.id]?.orientation = simd_quatf(angle: pose.heading, axis: [0, 1, 0])
         }
     }
 

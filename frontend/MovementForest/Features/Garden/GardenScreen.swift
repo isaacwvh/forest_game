@@ -96,8 +96,8 @@ struct PlantDetailScreen: View {
                 DetailRow(title: "Growth stage", value: "\(plant.growthStage.number) of 4 · \(plant.growthStage.title)")
                 if let owned = owned {
                     DetailRow(title: "Total water / growth", value: ExactAmount.water(owned.growthMicroUnits))
-                    if let progress = owned.growthProgress, let fraction = progress.fraction(growth: owned.growthMicroUnits) {
-                        ProgressView(value: fraction).accessibilityLabel("Progress to next growth stage")
+                    PlantGrowthProgress(plant: owned)
+                    if let progress = owned.growthProgress {
                         if let next = progress.nextStageMicroUnits {
                             DetailRow(title: "Next stage at", value: "\(ExactAmount.water(next)) total water")
                         } else { Text("Fully grown").foregroundStyle(.secondary) }

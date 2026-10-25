@@ -35,6 +35,9 @@ final class CollectionCoordinator: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var recoveryLocked = false
     @Published private(set) var message: String?
+    @Published private(set) var confirmedExchange: APICollectionReceipt?
+    @Published private(set) var exchangeOfferID: String?
+    @Published private(set) var exchangeMessage: String?
     @Published private(set) var state = CollectionJournalState()
     @Published private(set) var packCursor: UUID?
     @Published private(set) var historyCursor: UUID?
@@ -49,7 +52,11 @@ final class CollectionCoordinator: ObservableObject {
         self.userID = userID; self.service = service
         let resolved = journal ?? CollectionJournalStore()
         self.journal = resolved
-        do { state = try resolved.load(server: service.serverID, user: userID) ?? CollectionJournalState(); try state.pending?.validate() }
+        do {
+            state = try resolved.load(server: service.serverID, user: userID) ?? CollectionJournalState()
+            try state.pending?.validate()
+            if state.result?.exchangeId != nil { confirmedExchange = state.result }
+        }
         catch { recoveryLocked = true; message = "The saved collection request needs attention. It has been retained." }
     }
 
@@ -85,9 +92,14 @@ final class CollectionCoordinator: ObservableObject {
             }
             // Persist the result and removal together. A disk failure retains the request.
             try persist(CollectionJournalState(pending: nil, result: receipt))
+            if pending.kind == .exchange {
+                confirmedExchange = receipt
+                exchangeOfferID = (try? ActivityWire.decoder().decode(CollectionExchangeBody.self, from: pending.body))?.offerId
+                exchangeMessage = "Purchase confirmed. Your packs are saved."
+            }
             applyWallet(receipt.tokenBalance, version: receipt.economyVersion)
             message = pending.kind == .milestone ? "Milestone confirmed: +\(receipt.tokensEarned ?? "0") visitor tokens." :
-                (isOpening ? "Your plant is in Storage." : "Packs added to Draws.")
+                (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
             if isOpening { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
                     ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
@@ -126,7 +138,11 @@ final class CollectionCoordinator: ObservableObject {
         guard attached, !busy, !recoveryLocked else { return }
         busy = true; defer { busy = false }
         do { try await recover(); guard attached else { return }; try await loadCurrent() }
-        catch { if attached { message = "\(error.localizedDescription)" } }
+        catch { if attached {
+            message = "\(error.localizedDescription)"
+            if state.pending?.kind == .exchange { exchangeMessage = "Purchase confirmation interrupted. Retry the saved request to recover its result." }
+            else if exchangeOfferID != nil && confirmedExchange == nil { exchangeMessage = message }
+        } }
     }
     private func submit(_ operation: PendingCollectionOperation) async {
         guard canMutate else { return }
@@ -137,10 +153,20 @@ final class CollectionCoordinator: ObservableObject {
             try await recover()
             guard attached else { return }
             try await loadCurrent()
-        } catch { if attached { message = error.localizedDescription } }
+        } catch { if attached {
+            message = error.localizedDescription
+            if operation.kind == .exchange {
+                if confirmedExchange?.requestId == operation.id {
+                    exchangeMessage = "Purchase confirmed. Refresh the collection to update its list."
+                } else {
+                    exchangeMessage = state.pending == nil ? message : "Purchase confirmation interrupted. Retry the saved request to recover its result."
+                }
+            }
+        } }
     }
     func exchange(_ offer: APIExchangeOffer, quantity: Int) async {
-        guard canAfford(offer, quantity: quantity) else { return }
+        guard canMutate, canAfford(offer, quantity: quantity) else { return }
+        exchangeOfferID = offer.offerId; exchangeMessage = "Confirming purchase…"; confirmedExchange = nil
         let id = UUID()
         do {
             let body = try ActivityWire.encoder().encode(CollectionExchangeBody(requestId: id, offerId: offer.offerId,

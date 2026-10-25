@@ -37,8 +37,10 @@ private final class FakeCollection: CollectionServing {
     var reject: APIError?
     var onMutation: (() -> Void)?
     var milestones: [APIIntroMilestone] = []
+    var failSummaryAfterMutation = false
     init(_ contract: CollectionContract) { self.contract = contract }
     func summary() async throws -> APICollectionSummary {
+        if failSummaryAfterMutation && !operations.isEmpty { throw URLError(.networkConnectionLost) }
         var value = contract.summary; value.milestones = milestones; return value
     }
     func catalogue() async throws -> APICatalogue { contract.catalogue }
@@ -67,6 +69,19 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testConfirmedExchangeSurvivesFailureOfTheFollowingRefresh() async throws {
+        let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: journal)
+        await store.refresh()
+        service.failSummaryAfterMutation = true
+        await store.exchange(try XCTUnwrap(store.offers.first), quantity: 1)
+        XCTAssertNil(store.state.pending)
+        XCTAssertNotNil(store.confirmedExchange?.exchangeId)
+        XCTAssertTrue(store.exchangeMessage?.contains("Purchase confirmed") == true)
+        XCTAssertEqual(service.operations.count, 1)
+        XCTAssertEqual(store.confirmedExchange?.id, journal.value.result?.id)
+    }
+
     func testMilestoneLostResponseRetainsClaimBytesAndRecoversAfterRelaunch() async throws {
         let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
         service.milestones = [APIIntroMilestone(milestoneId: "first_movement", title: "First movement",

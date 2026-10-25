@@ -1,10 +1,19 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.21\
-Date: 25 October 2026\
+Document version: 0.22\
+Date: 26 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
+
+**F8.1 presentation update, 26 October 2026:** source integrates the app-entry
+scrollable plant/skill recap, explicit exchange feedback, agreed two-tap bundled
+pack opening and animated board-relative butterfly. This first polish batch is
+portrait-only with a consistent light appearance; Dark Mode and landscape play
+are deferred. Accessibility/recovery cases are included. Native build, device
+visual acceptance and minimum-device measurements remain separate gates; see
+[F8 acceptance](frontend/F8_ACCEPTANCE.md). Catalogue discovery, new milestone
+rewards, watering/swarm and elaborate effects remain separate increments.
 
 This project-root copy is the working specification for future sessions. It incorporates the plant production decisions below and supersedes the older Downloads copy. The practical asset production procedure is [PLANT_ASSET_WORKFLOW.md](PLANT_ASSET_WORKFLOW.md). These documents record requirements and plans; they do not mean the game behaviours have been implemented.
 
@@ -177,7 +186,7 @@ Account settings provide linked sign-in methods, **Link Google/Apple**, password
 - A retry must also return the same awarded plant ID, not create another plant.
 - Duplicates are separate owned plants with independent growth and attraction contributions while placed. A new duplicate starts as a sprout even if another copy is adult. No shared species progression or prestige is introduced. Breeding or duplicate conversion is later work unless explicitly added to V1.
 
-**Agreed opening presentation, 23 October 2026 — deferred to F8 polishing:**
+**Agreed opening presentation, 23 October 2026 — source implemented in F8.1:**
 replace the result-text/history-only opening presentation and the earlier
 unspecified result-view/popup proposal with this simple two-tap sequence:
 
@@ -311,7 +320,7 @@ Calculate the day's cumulative eligible boosted entitlement and subtract already
 
 ### 4.4 Login watering and progress recap
 
-**Agreed presentation direction; implementation deferred:** on opening/returning to the app, sync new activity and show a short garden-wide watering animation followed by a compact recap of newly confirmed rewards:
+**F8.1 presentation:** on launch/login or a genuine background return, sync activity and show one dismissible, scrollable per-plant recap. Routine manual/observer/pre-edit syncs and transient inactive states do not reopen it. A return without new credits shows a quiet status and current progress. Acknowledgement covers only displayed receipt IDs. Garden-wide watering animation remains deferred. The recap includes:
 
 - Newly credited activity, water/progress gained per affected garden plant, previous/current stages and any stage advances.
 - Newly available stored visits and capacity, shown separately from already claimed visitor tokens. After a confirmed welcome, claim, milestone or exchange, show its visitor-token/pack changes separately from water; a HealthKit sync itself earns no tickets.
@@ -1116,11 +1125,11 @@ All operations verify idempotency and use the common account/garden/wallet lock 
 
 ### 12.4 Effects: deferred work
 
-**Later, not implemented:** login watering/recap animation, stage transition effects, tap/selection responses, drag/placement effects, storage return effects and unboxing presentation. Existing oak models contain wind sway only. Do not add effect files or extra transition renders to each plant package now.
+**Later, not implemented:** login watering animation, elaborate stage transition effects, tap/selection responses, drag/placement effects and storage return effects. The recap sheet and core two-tap unboxing presentation are source-implemented in F8.1. Existing oak models contain wind sway only. Do not add effect files or extra transition renders to each plant package now.
 
 When effects work is resumed, prototype one shared runtime effects controller in the iOS app: a brief leaf/sparkle burst masks the stage-model swap, selection uses a small pulse/ring, dragging shows placement validity, placement settles gently, and storage return uses shared presentation. Pack opening follows the agreed image-layer sequence in section 3.4 and the asset scope below. Keep the garden anchor separate from temporary visual motion. Reuse a small set of shared sprites/emitters, tint/scale by variant/bounds, preload required assets, avoid replay on retries, limit simultaneous effects and support reduced motion. Final appearance, timing, platform availability and performance remain to be validated. Quick Look previews embedded USDZ animation, not these app-controlled effects.
 
-**Pack-opening assets and implementation — agreed, deferred to F8:**
+**Pack-opening assets and implementation — source integrated in F8.1:**
 
 - Supply **three aligned transparent PNG images per pack theme**: the sealed
   wrapper, an opened body with torn rim/dark opening, and its detached top strip.
@@ -1131,25 +1140,25 @@ When effects work is resumed, prototype one shared runtime effects controller in
   animates scale, position, rotation, opacity and masking of image layers; runtime
   gradients create the light and halo. No separate light image per rarity is
   required. Tear/reveal sounds and light haptics are optional.
-- **Provisional estimates:** two images up to 1024×1536 px and a cropped strip
-  around 1024×256 px should total roughly 0.5–2 MB compressed per theme; budget
-  2 MB until measured. At those dimensions, decoded image memory is about 13 MiB
-  before rendering overhead, excluding the reused sprout and other UI. Load only
-  the active theme and needed sprout. Compression/detail and final dimensions
-  determine actual sizes; these are planning estimates, not delivered assets.
+- **Measured F8.1 assets:** the three Woodland PNGs total 3,911,092 bytes and
+  each uses a 1024×1536 aligned canvas, approximately 18 MiB decoded RGBA before
+  overhead at full resolution. This supersedes the earlier 2 MB/13 MiB estimates.
+  Opening downsampling is bounded to 900 pixels on the long edge; inventory uses
+  180 pixels. Load only the active theme and required sprout. Actual device/GPU
+  memory and minimum-device performance still require native measurement.
 - **Frontend scope:** confirmation, reusable overlay, two-tap presentation states,
   themed image lookup/loading, receipt-based rarity tint, sprout/result display
   and dismissal. Prevent repeated taps from skipping transitions or creating
   extra requests; handle pending/failure/missing artwork and account-scoped
   recovery. Block background interactions and preserve visitor modal/session
   lifecycle rules. Support VoiceOver and Reduce Motion, and verify large text,
-  device orientations and minimum-device performance. Suggested animation timings
+  portrait iPhone sizes and minimum-device performance. Suggested animation timings
   and acceptance checks are recorded in the F8 implementation backlog.
 - **Backend scope:** no gameplay, endpoint or database change is required for
   this presentation. Reuse the existing opening endpoint, committed receipt and
   durable retry/history guarantees. Awarding remains independent of animation
-  progress. Detailed frontend logic is deferred to polishing; this decision does
-  not create assets or implement the sequence now.
+  progress. F8.1 supplies the frontend source and bundles the delivered artwork;
+  native compilation, visual acceptance and performance checks remain pending.
 
 ### 12.5 Shared visitor controller and assets
 

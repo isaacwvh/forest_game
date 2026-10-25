@@ -6,7 +6,7 @@ struct MovementForestApp: App {
     @StateObject private var container = AppContainer()
     var body: some Scene {
         WindowGroup {
-            RootView(container: container).tint(.forestTint)
+            RootView(container: container).tint(.forestTint).preferredColorScheme(.light)
                 .onOpenURL { url in Task { await container.connection.authentication?.handleCallback(url) } }
         }
     }
@@ -43,6 +43,7 @@ final class AppContainer: ObservableObject {
     }
 }
 
+@MainActor
 struct RootView: View {
     @ObservedObject var container: AppContainer
     @Environment(\.scenePhase) private var phase
@@ -50,15 +51,36 @@ struct RootView: View {
     @State private var settingsPresented = false
     @State private var menuPresented = false
     @State private var collectionDestination: CollectionDestination?
+    @State private var packOpeningPresented = false
+    @StateObject private var entryRecap = AppEntryRecapCoordinator()
+
+    private var entryAllowed: Bool {
+        phase == .active && !settingsPresented && !menuPresented && !packOpeningPresented
+    }
+    private func presentEntryIfReady() {
+        guard entryAllowed, let sync = container.connection.activitySync,
+              let editor = container.connection.editor else { return }
+        entryRecap.begin(sync: sync, editor: editor)
+    }
 
     var body: some View {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--fixture-pack") {
+            PackOpeningFixtureScreen()
+        } else { application }
+        #else
+        application
+        #endif
+    }
+
+    private var application: some View {
         Group {
             if let catalog = container.catalog {
                 ZStack(alignment: .leading) {
                 TabView(selection: $selectedTab) {
                     NavigationStack {
                         GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
-                                         active: selectedTab == 0 && !settingsPresented && !menuPresented && collectionDestination == nil)
+                                         active: selectedTab == 0 && !settingsPresented && !menuPresented && collectionDestination == nil && !entryRecap.showing)
                             .toolbar { menuButton; settingsButton }
                     }
                     .tabItem { Label("Garden", systemImage: "leaf") }.tag(0)
@@ -73,7 +95,9 @@ struct RootView: View {
                 .accessibilityHidden(collectionDestination != nil || menuPresented)
                 if let destination = collectionDestination {
                     NavigationStack {
-                        CollectionHostScreen(connection: container.connection, destination: destination, assets: catalog)
+                        CollectionHostScreen(connection: container.connection, destination: destination, assets: catalog,
+                                             navigate: { collectionDestination = $0; if $0 == nil { selectedTab = 0 } },
+                                             openingChanged: { packOpeningPresented = $0 })
                             .toolbar {
                                 menuButton
                                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -117,18 +141,29 @@ struct RootView: View {
                             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { settingsPresented = false } } }
                     }
                 }
+                .sheet(isPresented: $entryRecap.showing, onDismiss: { entryRecap.dismissed() }) {
+                    ActivityRecapScreen(recap: entryRecap, catalogue: container.connection.editor?.catalogue, assets: catalog)
+                }
+                .onChange(of: container.connection.activitySync?.id) { _ in presentEntryIfReady() }
+                .onChange(of: container.connection.editor?.profile.userId) { user in
+                    if user == nil { entryRecap.signOut() }
+                }
+                .onChange(of: entryAllowed) { allowed in if allowed { presentEntryIfReady() } }
                 .task {
                     if container.garden.garden == nil { await container.garden.load() }
                     if !ProcessInfo.processInfo.arguments.contains("--fixture-health") {
                         await container.connection.restore(assets: catalog)
                     }
                     await container.activity.refresh()
+                    presentEntryIfReady()
                 }
                 .onChange(of: phase) { value in
+                    if value == .background { entryRecap.background() }
                     if value == .active { Task {
                         await container.connection.connectManaged(assets: catalog)
                         if let sync = container.connection.activitySync { _ = await sync.synchronize() }
                         await container.activity.refresh()
+                        presentEntryIfReady()
                     } }
                 }
             } else {

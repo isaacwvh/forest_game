@@ -50,6 +50,7 @@ def generated_files():
     resource_refs = []
     asset_ids = json.loads((ROOT / "MovementForest/Resources/Fixtures/asset-index.json").read_text())
     for name, path in [(name, f"../assets/{name}") for name in asset_ids] + [
+                       ("packs", "../assets/packs"), ("butterfly", "../assets/butterfly"),
                        ("Fixtures", "MovementForest/Resources/Fixtures")]:
         resource_refs.append(add("resource-" + name, "PBXFileReference", lastKnownFileType="folder",
                                  name=name, path=path, sourceTree="SOURCE_ROOT"))

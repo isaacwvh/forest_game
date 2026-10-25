@@ -120,7 +120,7 @@ struct GardenActivityStatus: View {
             if sync.busy { ProgressView("Syncing activity…") }
             Text(sync.message).font(.caption)
             if !sync.recaps.isEmpty {
-                Text("New confirmed growth · Open Activity for your recap").font(.caption).fontWeight(.semibold)
+                Text("New confirmed growth · Review it in Activity").font(.caption).fontWeight(.semibold)
             }
         }
     }

@@ -138,6 +138,77 @@ private final class SyncTestService: GardenServing, ActivityServing {
 
 @MainActor
 final class ActivitySyncTests: XCTestCase {
+    func testDismissedLoadingEntryDoesNotReopenWhenSyncFinishes() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        service.pauseNext = true
+        let entry = AppEntryRecapCoordinator()
+        entry.begin(sync: sync, editor: editor)
+        XCTAssertTrue(entry.showing)
+        for _ in 0..<300 {
+            if service.gate != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let gate = try XCTUnwrap(service.gate)
+        entry.showing = false; entry.dismissed()
+        gate.resume(); service.gate = nil
+        for _ in 0..<300 {
+            if !sync.busy { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertFalse(entry.showing)
+        entry.begin(sync: sync, editor: editor)
+        XCTAssertFalse(entry.showing, "An ordinary in-session update must not rearm entry presentation")
+        entry.background()
+        entry.begin(sync: sync, editor: editor)
+        XCTAssertTrue(entry.showing)
+        entry.background()
+    }
+
+    func testRecapDismissalIsPersistedWhileAnotherSyncIsInFlight() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        let shown = try XCTUnwrap(sync.recaps.first)
+        service.pauseNext = true
+        let running = Task { await sync.synchronize() }
+        for _ in 0..<300 {
+            if service.gate != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let gate = try XCTUnwrap(service.gate)
+        await sync.dismissRecaps(ids: [shown.id])
+        XCTAssertTrue(journal.value?.dismissedRecaps.contains(shown.id) == true)
+        XCTAssertTrue(journal.value?.operations.contains { $0.recapID == shown.id } == true)
+        gate.resume(); service.gate = nil
+        _ = await running.value
+        XCTAssertEqual(service.ackBodies.count, 1)
+        XCTAssertTrue(sync.recaps.isEmpty)
+    }
+
+    func testRecapDismissalAcknowledgesOnlyThePresentedBatch() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        let shown = try XCTUnwrap(sync.recaps.first)
+        let later = APIRewardRecap(recapId: UUID(), createdAt: shown.createdAt.addingTimeInterval(1), payload: shown.payload)
+        service.pendingRecaps = [shown, later]
+        // A normal foreground sync discovers another receipt after the UI took its snapshot.
+        await sync.setEnabled(false)
+        _ = await sync.synchronize()
+        await sync.dismissRecaps(ids: [shown.id])
+        XCTAssertEqual(sync.recaps.map(\.id), [later.id])
+        XCTAssertEqual(service.ackBodies.count, 1)
+        XCTAssertEqual(service.current.plants.first?.growthMicroUnits, service.fixture.syncResult.garden.plants.first?.growthMicroUnits)
+    }
+
     private func health(_ fixture: ActivityContract) -> ActivityStore {
         ActivityStore(provider: SyncHealthProvider(fixture), defaults: UserDefaults(suiteName: "f5-" + UUID().uuidString)!)
     }
