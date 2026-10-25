@@ -179,7 +179,7 @@ struct HealthDiagnosticsScreen: View {
                             Text("\(Int(workout.durationSeconds)) seconds")
                             Text(workout.distanceMetres.map { String(format: "%.0f metres (workout aggregate)", $0) } ?? "Distance unavailable")
                             Text("Source: \(workout.sourceName) · \(workout.sourceBundleIdentifier)")
-                            Text("Manually entered: \(workout.wasUserEntered ? "Yes" : "No")")
+                            Text("Manually entered: \(workout.wasUserEntered.map { $0 ? "Yes" : "No" } ?? "Not provided")")
                         }.font(.caption).textSelection(.enabled)
                     }
                 }
