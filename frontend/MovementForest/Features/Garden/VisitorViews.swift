@@ -25,9 +25,13 @@ struct VisitorGardenOverlay: View {
     @ObservedObject var store: VisitorCoordinator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
-        if let visitor = store.visibleOpportunity {
-            VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion)
-                .id(visitor.id)
+        TimelineView(.periodic(from: .now, by: 0.2)) { _ in
+            ZStack {
+                ForEach(store.visibleOpportunities) { visitor in
+                    VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion)
+                        .id(visitor.id)
+                }
+            }
         }
     }
 }
@@ -36,12 +40,16 @@ struct VisitorFlightPose: Equatable {
     let x: Double
     let y: Double
     let flap: Double
-    init(elapsed: TimeInterval, remaining: TimeInterval, reduceMotion: Bool) {
+    init(elapsed: TimeInterval, remaining: TimeInterval, reduceMotion: Bool, lane: Int = 0) {
         let age = max(0, elapsed)
         let entry = 1 - pow(1 - min(age / 1.5, 1), 3)
         let exit = min(max(remaining, 0) / 1.5, 1)
-        x = reduceMotion ? 0.5 : (1 - entry) * -0.15 + entry * (0.5 + 0.17 * sin(age * 0.6)) + (1 - exit) * 0.7
-        y = reduceMotion ? 0.36 : 0.36 + 0.09 * sin(age * 0.9)
+        let column = Double(max(0, lane - 1) % 3), row = Double(max(0, lane - 1) / 3)
+        let centreX = lane == 0 ? 0.5 : 0.22 + 0.28 * column
+        let centreY = lane == 0 ? 0.36 : 0.18 + 0.13 * row
+        let sway = lane == 0 ? 0.17 : 0.035
+        x = reduceMotion ? centreX : (1 - entry) * -0.15 + entry * (centreX + sway * sin(age * 0.6)) + (1 - exit) * 0.7
+        y = reduceMotion ? centreY : centreY + (lane == 0 ? 0.09 : 0.025) * sin(age * 0.9)
         flap = reduceMotion ? 1 : (sin(age * 9) + 1) / 2
     }
 }
@@ -66,9 +74,10 @@ private struct VisitorFlightView: View {
         TimelineView(.periodic(from: .now, by: reduceMotion ? 1 : 1.0 / 30)) { context in
             // Compute changing frame inputs BEFORE GeometryReader. Its cached
             // layout closure must not be the only reader of the clock.
-            if store.visibleOpportunity?.id == visitor.id, let now = store.serverNow {
+            if store.visibleOpportunities.contains(where: { $0.id == visitor.id }), let now = store.serverNow {
                 let pose = VisitorFlightPose(elapsed: context.date.timeIntervalSince(appearedAt),
-                                            remaining: visitor.expiresAt.timeIntervalSince(now), reduceMotion: reduceMotion)
+                                            remaining: visitor.expiresAt.timeIntervalSince(now), reduceMotion: reduceMotion,
+                                            lane: min(12, max(0, visitor.lane ?? 0)))
                 GeometryReader { geometry in
                     Button { Task { await store.welcome(visitor) } } label: {
                         ForestButterfly(flap: pose.flap)
@@ -135,6 +144,9 @@ struct VisitorStatusPanel: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Placed plants contribute \(ExactAmount.water(value.totalAttractionMicroUnits)) attraction. Higher stages attract more; stored plants contribute none.")
                         Text("Away rate: \(value.offlineVisitsPerHour) visits/hour. Only collected whole visits become tokens.")
+                        if let activeRate = value.activeVisitsPerHour {
+                            Text("Active arrival target: \(activeRate) visitors/hour while this garden is open. Tap butterflies to welcome them.")
+                        }
                         if let seconds = value.secondsUntilFull {
                             Text(seconds == 0 ? "Storage is full. Earned visits stay until collected." : "About \(max(1, (seconds + 59) / 60)) minutes until full while away.")
                         } else { Text("Time to full is shown while inactive and producing visits.") }

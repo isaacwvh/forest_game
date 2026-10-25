@@ -74,6 +74,56 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testScheduledVisitorsStayHiddenUntilDueAndAllowWelcomingAnyVisibleCopy() async throws {
+        let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let session = try XCTUnwrap(f.active.session)
+        let now = f.active.serverTime
+        let first = APIVisitorOpportunity(opportunityId: UUID(), sessionId: session.sessionId,
+            issuedAt: now.addingTimeInterval(5), expiresAt: now.addingTimeInterval(25),
+            visualKey: "forest-butterfly-v1", tokens: "1", lane: 1)
+        let second = APIVisitorOpportunity(opportunityId: UUID(), sessionId: session.sessionId,
+            issuedAt: now.addingTimeInterval(6), expiresAt: now.addingTimeInterval(26),
+            visualKey: "forest-butterfly-v1", tokens: "1", lane: 2)
+        let array = try JSONSerialization.jsonObject(with: ActivityWire.encoder().encode([first, second]))
+        let summary = try changed(f.active, ["opportunities": array, "arrivalProtocol": 2])
+        var elapsed: TimeInterval = 0
+        let store = VisitorCoordinator(userID: UUID(), installationID: session.installationId,
+                                      service: service, journal: MemoryVisitorJournal(), uptime: { elapsed })
+        store.apply(summary); store.setEligible(true, reconcile: false)
+        XCTAssertTrue(store.visibleOpportunities.isEmpty)
+        await store.welcome(first)
+        XCTAssertTrue(service.operations.isEmpty)
+        elapsed = 5
+        XCTAssertEqual(store.visibleOpportunities.map(\.id), [first.id])
+        elapsed = 6
+        XCTAssertEqual(Set(store.visibleOpportunities.map(\.id)), Set([first.id, second.id]))
+        await store.welcome(second)
+        XCTAssertEqual(service.operations.last?.target, second.id)
+        store.apply(try changed(summary, ["version": summary.version + 100]))
+        elapsed = 26
+        XCTAssertTrue(store.visibleOpportunities.isEmpty)
+    }
+
+    func testNewArrivalProtocolIsNegotiatedOnlyWhenAdvertised() async throws {
+        let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        service.current = try changed(f.initial, ["arrivalProtocol": 2])
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service,
+                                      journal: MemoryVisitorJournal())
+        store.setEligible(true, reconcile: false); await store.tick(force: true)
+        let operation = try XCTUnwrap(service.operations.first)
+        XCTAssertEqual(operation.kind, .start)
+        let body = try ActivityWire.decoder().decode(VisitorMutationBody.self, from: operation.body)
+        XCTAssertEqual(body.arrivalProtocol, 2)
+    }
+
+    func testScheduledReducedMotionLanesAreDistinctAndLegacyPoseIsPreserved() {
+        let poses = (1...12).map { VisitorFlightPose(elapsed: 0, remaining: 20, reduceMotion: true, lane: $0) }
+        XCTAssertEqual(Set(poses.map { "\($0.x),\($0.y)" }).count, 12)
+        XCTAssertTrue(poses.allSatisfy { (0...1).contains($0.x) && (0...1).contains($0.y) })
+        let legacy = VisitorFlightPose(elapsed: 0, remaining: 20, reduceMotion: true)
+        XCTAssertEqual(legacy.x, 0.5); XCTAssertEqual(legacy.y, 0.36)
+    }
+
     private func waitUntil(_ condition: () -> Bool) async throws {
         for _ in 0..<300 {
             if condition() { return }

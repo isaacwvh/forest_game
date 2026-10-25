@@ -59,13 +59,17 @@ final class VisitorCoordinator: ObservableObject {
     var confirmingReward: Bool {
         queuedReward != nil || pending?.kind == .welcome || pending?.kind == .claim
     }
-    var visibleOpportunity: APIVisitorOpportunity? {
-        guard attached, eligible, connected, queuedReward == nil,
-              pending == nil || pending?.kind == .heartbeat,
+    var visibleOpportunities: [APIVisitorOpportunity] {
+        guard attached, eligible, connected,
+              pending == nil || pending?.kind == .heartbeat || pending?.kind == .welcome || pending?.kind == .claim,
               let now = serverNow, let session = summary?.session,
-              session.installationId == installationID, session.leaseExpiresAt > now else { return nil }
-        return summary?.opportunities.first { $0.sessionId == session.sessionId && $0.expiresAt > now }
+              session.installationId == installationID, session.leaseExpiresAt > now else { return [] }
+        let welcoming = queuedReward?.kind == .welcome ? queuedReward?.target : (pending?.kind == .welcome ? pending?.target : nil)
+        return Array((summary?.opportunities ?? []).filter {
+            $0.sessionId == session.sessionId && $0.issuedAt <= now && $0.expiresAt > now && $0.id != welcoming
+        }.prefix(12))
     }
+    var visibleOpportunity: APIVisitorOpportunity? { visibleOpportunities.first }
 
     func start() {
         guard worker == nil, attached else { return }
@@ -126,7 +130,9 @@ final class VisitorCoordinator: ObservableObject {
     private func operation(_ kind: PendingVisitorOperation.Kind, target: UUID?) throws -> PendingVisitorOperation {
         let id = UUID()
         let installation = kind == .start || kind == .heartbeat || kind == .end ? installationID : nil
-        let body = try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: installation))
+        let protocolVersion = kind == .start && summary?.arrivalProtocol == 2 ? 2 : nil
+        let body = try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: installation,
+                                                                       arrivalProtocol: protocolVersion))
         return PendingVisitorOperation(id: id, kind: kind, target: target, body: body)
     }
 
@@ -176,7 +182,7 @@ final class VisitorCoordinator: ObservableObject {
     }
 
     func welcome(_ opportunity: APIVisitorOpportunity) async {
-        guard canRequestReward, visibleOpportunity?.id == opportunity.id else { return }
+        guard canRequestReward, visibleOpportunities.contains(where: { $0.id == opportunity.id }) else { return }
         await reward(.welcome, target: opportunity.id)
     }
 

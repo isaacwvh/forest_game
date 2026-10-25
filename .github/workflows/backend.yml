@@ -46,9 +46,25 @@ jobs:
           ruff check backend
           ruff format --check backend
       - name: PostgreSQL migrations, ownership and concurrency
-        run: python -m pytest backend/tests -q
-      - name: Activity HTTP walkthrough
-        run: python backend/scripts/smoke_activity.py
+        run: python -m pytest backend/tests -q 2>&1 | tee backend-tests.log
+      - name: Summarize test failure
+        if: failure()
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          log = Path("backend-tests.log")
+          if log.exists():
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+                  summary.write("### Backend test failure\n\n```text\n")
+                  summary.write("\n".join(log.read_text(errors="replace").splitlines()[-120:]))
+                  summary.write("\n```\n")
+          PY
+      - name: Activity, skills and scheduled-visitor HTTP walkthroughs
+        run: |
+          python backend/scripts/smoke_activity.py
+          python backend/scripts/smoke_skills.py
+          python backend/scripts/smoke_launch.py
       - name: Visitor HTTP walkthrough and pacing model
         run: |
           python backend/scripts/smoke_visitors.py

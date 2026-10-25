@@ -58,6 +58,7 @@ class VisitorCurve(Definition):
     knee_micro_units: int = Field(default=300_000_000, gt=0, le=MAX_INTEGER)
     knee_probability: str = "0.6"
     tail_scale_micro_units: int = Field(default=120_000_000, gt=0, le=MAX_INTEGER)
+    arrival_rate_multiplier: str = "1"
 
     @model_validator(mode="after")
     def valid(self):
@@ -68,6 +69,8 @@ class VisitorCurve(Definition):
         if not 0 <= exact(self.offline_fraction) < 1:
             raise ValueError("Invalid offline fraction")
         exact(self.offline_rate_cap_per_second)
+        if not 0 < exact(self.arrival_rate_multiplier) <= 10:
+            raise ValueError("Arrival rate multiplier must be positive and at most ten")
         if self.base_capacity > self.maximum_capacity:
             raise ValueError("Capacity exceeds maximum")
         if self.strategy == "linear_softcap_v2" and not (
@@ -224,13 +227,15 @@ def visitor_parameters(total_attraction: int, placed_count: int, curve: VisitorC
                 * total_attraction
                 / (total_attraction + curve.k_micro_units),
             )
+    active_rate = probability / curve.slot_seconds * exact(curve.arrival_rate_multiplier)
     offline = min(
         exact(curve.offline_rate_cap_per_second),
-        probability / curve.slot_seconds * exact(curve.offline_fraction),
+        active_rate * exact(curve.offline_fraction),
     )
     # Exact fractions are internal configuration results, not issued visitor opportunities.
     return {
         "active_probability": probability,
+        "active_rate": active_rate,
         "offline_rate": offline,
         "capacity": min(curve.base_capacity, curve.maximum_capacity),
     }

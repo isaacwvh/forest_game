@@ -19,8 +19,23 @@ jobs:
         run: xcodebuild -version
       - name: Validate, test Debug, build Release
         run: |
-          python3 frontend/scripts/generate_project.py --check
-          bash frontend/scripts/test-mac.sh
+          {
+            python3 frontend/scripts/generate_project.py --check
+            bash frontend/scripts/test-mac.sh
+          } 2>&1 | tee ios-validation.log
+      - name: Summarize validation failure
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          log = Path("ios-validation.log")
+          if log.exists():
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+                  summary.write("### iOS validation failure\n\n```text\n")
+                  summary.write("\n".join(log.read_text(errors="replace").splitlines()[-120:]))
+                  summary.write("\n```\n")
+          PY
       - name: Retain native test results
         if: always()
         uses: actions/upload-artifact@v4

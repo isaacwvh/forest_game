@@ -1,7 +1,7 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.20\
+Document version: 0.21\
 Date: 25 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
@@ -21,6 +21,15 @@ through A=300 (p=0.10+A/600), then tapers toward 0.80 with scale 120. Rarity and
 footprint targets follow the revised workbook. Existing owned profiles/packs
 remain immutable. Source implementation is distinct from recorded validation
 and Apple-platform/device acceptance; see the linked validation/acceptance guides.
+
+**Approved visitor rescale, 25 October 2026:** preserve the attraction curve and
+multiply base arrival/offline rates ×10. Non-empty floor is 120 active arrivals/hour;
+A=50 gives 220/hour. Scheduled intervals replace the 30-second chance/forced-gap
+mechanism, using 0.5–1.5 times the target mean. Prices, storage, milestone rewards
+and existing wallet/stored-return value scale ×10, with immutable conversion
+audits and preserved historical receipts/counters. No plant/growth changes.
+Exact decisions, compatibility and upgrade steps are in
+[backend/VISITOR_RESCALE.md](backend/VISITOR_RESCALE.md).
 
 **Implementation checkpoint, 23 October 2026:** work through B5 and the tested
 F5/F5a email-authentication path is accepted by the user, except deferred SMTP and

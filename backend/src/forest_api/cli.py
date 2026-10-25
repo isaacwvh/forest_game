@@ -17,6 +17,9 @@ def main() -> None:
     commands.add_parser(
         "publish-launch-balance", help="Publish the approved two-species activity economy"
     )
+    commands.add_parser(
+        "publish-visitor-rescale", help="Convert the economy once and publish scheduled arrivals"
+    )
     activity_grant = commands.add_parser(
         "grant-activity-test-plants", help="Grant two new-profile test sprouts"
     )
@@ -51,7 +54,11 @@ def main() -> None:
     database = Database(settings)
     try:
         with database.sessions() as session:
-            if args.command == "publish-launch-balance":
+            if args.command == "publish-visitor-rescale":
+                from forest_api.visitor_rescale import publish
+
+                print(json.dumps(publish(session, settings)))
+            elif args.command == "publish-launch-balance":
                 from forest_api.launch_balance import publish
 
                 print(json.dumps(publish(session, settings)))

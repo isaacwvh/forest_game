@@ -152,9 +152,12 @@ class SkillSnapshot:
         total += min(flat_requested, flat_budget)
         return int(min(total, base * (1 + exact(self.caps.total_attraction_bonus))))
 
-    def capacity(self, base, maximum):
+    def capacity(self, base, maximum, *, flat_multiplier=1):
         value = base * (1 + min(self.total("offline_capacity"), exact(self.caps.capacity_bonus)))
-        value += min(self.total("offline_capacity", operation="flat"), self.caps.flat_capacity)
+        value += min(
+            self.total("offline_capacity", operation="flat") * flat_multiplier,
+            self.caps.flat_capacity,
+        )
         return int(min(value, maximum, base * (1 + exact(self.caps.capacity_bonus))))
 
     def context(self, plant, metrics):

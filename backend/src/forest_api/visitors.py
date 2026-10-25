@@ -13,7 +13,7 @@ from uuid import uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from forest_api import services
+from forest_api import services, visitor_schedule
 from forest_api.calculations import (
     MAX_INTEGER,
     MICRO,
@@ -102,7 +102,9 @@ def create_context(session, settings, garden, boundary):
     attraction = skills.attraction()
     parameters = visitor_parameters(attraction, len(sources), definition.curve)
     parameters["capacity"] = skills.capacity(
-        definition.curve.base_capacity, definition.curve.maximum_capacity
+        definition.curve.base_capacity,
+        definition.curve.maximum_capacity,
+        flat_multiplier=definition.capacity_flat_multiplier,
     )
     context = VisitorContext(
         id=uuid4(),
@@ -113,6 +115,7 @@ def create_context(session, settings, garden, boundary):
             "sources": sources,
             "attraction": str(attraction),
             "probability": fraction_json(parameters["active_probability"]),
+            "activeRate": fraction_json(parameters["active_rate"]),
             "offlineRate": fraction_json(parameters["offline_rate"]),
             "capacity": parameters["capacity"],
             "rules": definition.model_dump(mode="json"),
@@ -157,6 +160,8 @@ def active_session(session, garden):
 
 
 def expire_opportunities(session, garden, boundary, *, close=False):
+    if close:
+        visitor_schedule.pause(session, garden.id, boundary)
     for opportunity in session.scalars(
         select(VisitorOpportunity).where(
             VisitorOpportunity.garden_id == garden.id, VisitorOpportunity.status == "issued"
@@ -204,6 +209,8 @@ def inactive_interval(session, state, context, start, end):
 
 
 def active_interval(session, state, context, active, start, end, boundary, can_issue, draw):
+    if context.snapshot["rules"].get("arrival_protocol", 1) == 2:
+        return {"scheduledArrivals": True}
     first = max(state.last_slot + 1, slot_at(start) + 1)
     last = slot_at(end)
     # A slot exactly at a closing lease/context boundary belongs to the NEXT interval.
@@ -325,6 +332,7 @@ def settle(session, settings, garden, boundary, *, can_issue=False, draw=random_
             active = None
             expire_opportunities(session, garden, end, close=True)
         if end in change_times:
+            visitor_schedule.pause(session, garden.id, end)
             state.context_id = create_context(session, settings, garden, end).id
     # The slot at exactly 'boundary' has not been covered by [start,end). It can
     # be decided here using the CURRENT context, once, only during live polling.
@@ -392,10 +400,14 @@ class VisitorAccounting:
 
     def after_change(self, session: Session, garden: Garden, boundary: datetime):
         state = session.get(VisitorState, garden.id)
+        visitor_schedule.pause(session, garden.id, max(boundary, state.settled_at))
         state.context_id = create_context(
             session, self.settings, garden, max(boundary, state.settled_at)
         ).id
         state.version = checked(state.version + 1)
+        active = active_session(session, garden)
+        if active:
+            visitor_schedule.plan(session, garden, state, active, max(boundary, state.settled_at))
 
 
 def summary(session, garden, state, boundary):
@@ -420,9 +432,23 @@ def summary(session, garden, state, boundary):
             VisitorOpportunity.status == "issued",
             VisitorOpportunity.expires_at > boundary,
         )
-        .order_by(VisitorOpportunity.slot)
+        .order_by(VisitorOpportunity.issued_at, VisitorOpportunity.id)
     ).all()
     return VisitorSummary(
+        arrival_protocol=context.snapshot["rules"].get("arrival_protocol", 1),
+        active_visits_per_hour=str(
+            float(
+                fraction_read(
+                    context.snapshot.get(
+                        "activeRate",
+                        fraction_json(
+                            fraction_read(context.snapshot["probability"]) / SLOT_SECONDS
+                        ),
+                    )
+                )
+                * 3600
+            )
+        ),
         garden_id=garden.id,
         server_time=boundary,
         version=state.version,
@@ -451,6 +477,7 @@ def summary(session, garden, state, boundary):
         else None,
         opportunities=[
             VisitorOpportunityDTO(
+                lane=(-o.slot - 1) % visitor_schedule.MAX_VISIBLE + 1 if o.slot < 0 else 0,
                 opportunity_id=o.id,
                 session_id=o.session_id,
                 issued_at=o.issued_at,
@@ -510,6 +537,12 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
         event_id, visits, tokens = None, 0, 0
         reward_detail = []
         if operation == "visitor_start":
+            if rules.get("arrival_protocol", 1) == 2 and body.arrival_protocol != 2:
+                raise ApiError(
+                    409,
+                    "visitor_client_update_required",
+                    "Update Movement Forest to use the new visitor arrivals",
+                )
             if active and active.installation_id != body.installation_id:
                 raise ApiError(
                     409,
@@ -523,6 +556,7 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
                     garden_id=garden.id,
                     installation_id=body.installation_id,
                     started_at=boundary,
+                    arrival_protocol=body.arrival_protocol,
                     lease_expires_at=boundary + timedelta(seconds=rules["lease_seconds"]),
                 )
                 session.add(active)
@@ -564,6 +598,8 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
                 raise ApiError(
                     409, "visitor_expired", "This visitor has departed. Wait for the next arrival"
                 )
+            if opportunity.issued_at > boundary:
+                raise ApiError(409, "visitor_not_arrived", "This visitor has not arrived yet")
             visits, tokens = 1, opportunity.tokens
             opportunity.status = "welcomed"
             reward_detail = [
@@ -627,6 +663,9 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
                 )
             )
         state.version = checked(state.version + 1)
+        session.flush()  # A newly started session must exist before its opportunity rows.
+        if active and active.ended_at is None:
+            visitor_schedule.plan(session, garden, state, active, boundary)
         session.flush()
         current_summary = summary(session, garden, state, boundary)
         if operation in {"visitor_claim", "visitor_welcome"}:

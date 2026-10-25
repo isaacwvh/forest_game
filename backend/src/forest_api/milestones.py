@@ -6,7 +6,7 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 from forest_api import collection, services
 from forest_api.activity_models import MilestoneClaim
 from forest_api.errors import ApiError
-from forest_api.launch_balance import VERSION
+from forest_api.launch_balance import RESCALE_VERSION, VERSION
 from forest_api.models import PlayerProgress
 from forest_api.visitor_models import VisitorRewardEvent, VisitorWalletEntry
 
@@ -20,8 +20,9 @@ TRACK = (
 
 
 def summary(session, owner, catalogue, wallet):
-    if catalogue.version != VERSION:
+    if catalogue.version not in {VERSION, RESCALE_VERSION}:
         return []
+    scale = 10 if catalogue.version == RESCALE_VERSION else 1
     progress = session.get(PlayerProgress, owner)
     hosted = wallet.hosted_active + wallet.hosted_offline
     movement = bool(
@@ -43,7 +44,7 @@ def summary(session, owner, catalogue, wallet):
             "milestoneId": key,
             "title": title,
             "description": description,
-            "rewardTokens": str(reward),
+            "rewardTokens": str(reward * scale),
             "eligible": eligible[key],
             "claimed": session.get(MilestoneClaim, (owner, key)) is not None,
         }

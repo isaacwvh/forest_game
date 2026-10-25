@@ -458,3 +458,37 @@ no data reset, auth/signing change or Docker engine restart was performed.
 This supersedes the earlier Docker deployment block above. Native Mac/iPhone
 checks remain pending; follow frontend/B8_ACTIVITY_ACCEPTANCE.md with the updated
 app and the same account/installation.
+
+## Scheduled visitors and tenfold economy — 25 October 2026
+
+Full PostgreSQL suite: **453 passed in 333.16s**. Final scheduler/conversion
+regression group after lane and rounding guards: **29 passed in 29.52s**.
+The extra rounding-boundary case was added after the full run. All four real
+Uvicorn HTTP walkthroughs pass, including a new once-only ×10 conversion,
+future-arrival/early-claim guard, first actual welcome and replay after server
+restart. The final microsecond wait clamp is covered by the focused group.
+
+Coverage includes exact scaled rates/fractions/lots, wallet ledger conversion,
+overflow and injected-failure rollback, concurrent publication, a milestone claim
+racing cutover, immutable receipts/audits, old-offer retirement, profile/progress
+preservation, explicit client capability gating, multiple scheduled identities,
+lease expiry without backfill, frozen waiting progress, rate changes, repeated
+replanning/lane reservations and mean-interval pacing. Existing legacy visitor,
+activity, migration model parity/downgrade/reupgrade and concurrency checks pass.
+Activity launch fixtures now anchor at game-local noon so duration/cap tests do
+not accidentally cross midnight depending on the wall-clock test start time.
+
+Ruff lint/format (81 Python files), pip check, diff whitespace, portable frontend
+assets/contracts, generated-project consistency and all 50 Swift syntax parses
+pass. The retained legacy-fixture pacing simulation passes. Native XCTest cases
+were added for not-before visibility, multiple simultaneous visitors, arbitrary
+visible-target welcomes, protocol negotiation and Reduce Motion lane separation.
+Windows does not establish Apple SDK/XCTest/Release or iPhone acceptance.
+
+Docker image build/status attempts again returned engine HTTP 500. No live
+0008 migration, currency conversion, rule publication or account reset has been
+performed. The isolated validation cluster was stopped after each run; tests
+created/dropped only random forest_test_* databases. Upgrade and exact selected
+values are in [VISITOR_RESCALE.md](VISITOR_RESCALE.md). GitHub workflows now run
+the skills/new launch HTTP smoke and retain short failure summaries so remote
+native and Linux results can be distinguished from local validation.

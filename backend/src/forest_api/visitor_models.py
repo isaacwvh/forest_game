@@ -89,6 +89,7 @@ class VisitorSession(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     lease_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    arrival_protocol: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
 
 class VisitorSettlement(Base):
@@ -175,3 +176,22 @@ class VisitorThrottle(Base):
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
     window_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     requests: Mapped[int] = mapped_column(Integer)
+
+
+class VisitorSchedule(Base):
+    __tablename__ = "visitor_schedules"
+    __table_args__ = (CheckConstraint("sequence >= 0", name="sequence"),)
+    garden_id: Mapped[UUID] = mapped_column(ForeignKey("gardens.id"), primary_key=True)
+    context_id: Mapped[UUID] = mapped_column(ForeignKey("visitor_contexts.id"))
+    next_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    remaining: Mapped[dict] = mapped_column(JSONB, default=dict)
+    sequence: Mapped[int] = mapped_column(BigInteger, default=0)
+    tutorial_used: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class VisitorEconomyConversion(Base):
+    __tablename__ = "visitor_economy_conversions"
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    version: Mapped[str] = mapped_column(String(100), primary_key=True)
+    converted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    detail: Mapped[dict] = mapped_column(JSONB)

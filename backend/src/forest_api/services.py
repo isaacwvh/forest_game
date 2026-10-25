@@ -171,6 +171,8 @@ def owned_plant(
 
 def request_hash(operation: str, body: DTO) -> str:
     payload = body.model_dump(mode="json", by_alias=True, exclude={"request_id"})
+    if operation.startswith("visitor_") and payload.get("arrivalProtocol") == 1:
+        payload.pop("arrivalProtocol")
     if operation in {"activity_sync", "activity_enrolment"}:
         # Old queued request bytes retain their pre-extension digest.
         def omit_neutral_additions(item):

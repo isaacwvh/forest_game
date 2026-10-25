@@ -223,9 +223,43 @@ def main():
             assert request("/v1/activity/sync", body) == result
             assert request("/v1/me/milestones/first_movement/claim", milestone_body) == milestone
             assert request("/v1/me/collection")["tokenBalance"] == "60"
+            from forest_api import visitor_rescale
+
+            with database.sessions() as session:
+                visitor_rescale.publish(session, settings)
+            assert request("/v1/me/collection")["tokenBalance"] == "600"
+            active = request(
+                "/v1/me/visitor-sessions",
+                {"requestId": str(uuid4()), "installationId": installation, "arrivalProtocol": 2},
+            )
+            first = active["opportunities"][0]
+            welcome_path = "/v1/me/visitor-opportunities/" + first["opportunityId"] + "/welcome"
+            try:
+                request(welcome_path, {"requestId": str(uuid4())})
+                raise AssertionError("An early future claim must be rejected")
+            except urllib.error.HTTPError as error:
+                assert error.code == 409
+            time.sleep(
+                max(
+                    0,
+                    (datetime.fromisoformat(first["issuedAt"]) - datetime.now(UTC)).total_seconds(),
+                )
+                + 0.1
+            )
+            welcome_body = {"requestId": str(uuid4())}
+            welcome = request(welcome_path, welcome_body)
+            assert welcome["tokens"] == "1" and welcome["summary"]["tokenBalance"] == "601"
+            server.terminate()
+            server.wait(timeout=10)
+            server = start()
+            assert request(welcome_path, welcome_body) == welcome
+            assert request("/v1/me/milestones/first_movement/claim", milestone_body) == milestone
+            assert request("/v1/me/collection")["tokenBalance"] == "601"
+            with database.sessions() as session:
+                assert visitor_rescale.publish(session, settings)["alreadyPublished"]
             print(
                 "PASS: HTTP nonfixture launch, typed daily/workout growth, seedling, "
-                "milestone ledger, restart/replay."
+                "milestone ledger, ×10 conversion, scheduled/early welcome guards, restart/replay."
             )
     finally:
         if server is not None:

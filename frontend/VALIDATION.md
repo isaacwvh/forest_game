@@ -383,3 +383,23 @@ workout-enabled launch profiles; its original adult Sleeping Dew source and
 205-token wallet are preserved. This resolves the Docker provisioning block
 above. Install the updated native client and run B8_ACTIVITY_ACCEPTANCE.md;
 Apple SDK/XCTest/Release and real-device acceptance are still pending.
+
+## Scheduled visitor rescale — 25 October 2026
+
+Source negotiates protocol 2, retains legacy journals, hides future opportunities
+until confirmed server time, shows up to 12 independently tappable visitors in
+reserved lanes and keeps existing ten-second network heartbeats. A local 0.2-second
+presentation tick reveals arrivals between heartbeats. Due visitors retain their
+identity through polling, and Reduce Motion uses distinct static positions.
+The status disclosure includes the active target as well as the offline rate.
+
+Portable assets/plist/project/contract checks, generated-project consistency and
+all 50 Swift syntax parses pass. New native visibility/protocol/multiple-target/
+lane tests are authored but not executed on Windows. Backend: full 453 tests,
+then final 29 focused rescale tests; all four real HTTP walkthroughs pass.
+
+Docker again returns engine HTTP 500, so the live backend conversion remains
+pending. Earlier remote iOS failures are visible in GitHub, but detailed logs
+require authentication; no remote native pass is claimed. Workflow failure
+summaries were added for the next run. Follow VISITOR_RESCALE_ACCEPTANCE.md after
+applying backend/VISITOR_RESCALE.md and installing the updated Mac-built app.

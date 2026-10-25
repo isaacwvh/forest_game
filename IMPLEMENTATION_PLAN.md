@@ -269,6 +269,13 @@ source or Windows parsing does not imply Xcode/Release/iPhone execution.
 
 ## B8 wider activity and launch balance increment — 25 October 2026
 
+The subsequent scheduled-visitor rescale is implemented in
+[VISITOR_RESCALE.md](backend/VISITOR_RESCALE.md): ×10 base arrival/offline rates,
+1,200/2,400-token offers, 1,500/4,500 capacity, scaled finite milestone rewards,
+audited once-only balance/stored-return conversion and batched server-authorized
+arrivals. Legacy rules/receipts remain valid. Apple-platform and physical-device
+acceptance is recorded separately from portable validation.
+
 Source implements independent daily distance/active-energy/flights tracking and
 rewards, typed workout uploads, manual-entry exclusion, replay/overlap handling,
 paused/multisport intervals and account-midnight attribution. Explicit optional

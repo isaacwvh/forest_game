@@ -29,6 +29,7 @@ from forest_api.visitor_models import VisitorRules, VisitorState
 from forest_api.visitor_schemas import VisitorRuleDefinition
 
 VERSION = "launch-balance-v1"
+RESCALE_VERSION = "launch-visitors-v2"
 POLICY = "b8-caps-v2"
 PACK_VERSION = 10
 WOODLAND_COST = 120
@@ -93,7 +94,7 @@ def publish(session, settings, *, effective_at=None):
         catalogue = session.scalar(
             select(GameCatalogue).where(GameCatalogue.id == 1).with_for_update()
         )
-        if catalogue is not None and catalogue.version == VERSION:
+        if catalogue is not None and catalogue.version in {VERSION, RESCALE_VERSION}:
             return {"version": VERSION, "alreadyPublished": True}
         now = session.scalar(select(func.clock_timestamp()))
         latest = session.scalar(select(func.max(VisitorState.settled_at)))
@@ -320,7 +321,7 @@ def grant_test_plants(session, settings, username, *, dry_run=False):
             raise ValueError("Specify an existing active game username")
         services.lock_garden(session, user.id, write=True)
         catalogue = services.get_catalogue_state(session, settings, lock=True)
-        if catalogue.version != VERSION:
+        if catalogue.version not in {VERSION, RESCALE_VERSION}:
             raise ValueError("Publish the activity balance before granting test plants")
         results = []
         for species in PLANTS:

@@ -1,5 +1,8 @@
 # Activity and two-species balance update — 25 October 2026
 
+Visitor economy update: [VISITOR_RESCALE.md](VISITOR_RESCALE.md) supersedes the
+visitor timing, token, capacity and milestone numbers below after publication.
+
 Migration: `0007_activity_launch`. Publication: `launch-balance-v1`.
 These selected test-launch values supersede earlier development fixtures. Changing
 the workbook does not publish runtime configuration. Personal baseline boosts,

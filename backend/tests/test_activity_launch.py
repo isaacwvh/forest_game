@@ -32,7 +32,15 @@ from forest_api.visitor_models import VisitorWallet
 def player(app, client, headers, register):
     with app.state.database.sessions() as session:
         publication = launch_balance.publish(session, app.state.settings)
-    now = [datetime.fromisoformat(publication["effectiveAt"]) + timedelta(seconds=1)]
+    # Keep duration/cap cases independent of the wall-clock hour (especially midnight).
+    now = [
+        (
+            datetime.fromisoformat(publication["effectiveAt"]).astimezone(
+                ZoneInfo("Asia/Singapore")
+            )
+            + timedelta(days=1)
+        ).replace(hour=12, minute=0, second=0, microsecond=0)
+    ]
     app.state.clock = lambda: now[0]
     account = register()
     owner = UUID(account["profile"]["userId"])

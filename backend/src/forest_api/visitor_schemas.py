@@ -9,6 +9,8 @@ from forest_api.schemas import DTO
 
 
 class VisitorRuleDefinition(Definition):
+    arrival_protocol: Literal[1, 2] = 1
+    capacity_flat_multiplier: int = Field(default=1, ge=1, le=10, strict=True)
     skill_policy_version: str = Field(default="b8-caps-v1", min_length=1, max_length=100)
     curve: VisitorCurve
     # Slot grid must remain stable across rule versions.
@@ -22,6 +24,8 @@ class VisitorRuleDefinition(Definition):
 
     @model_validator(mode="after")
     def timing(self):
+        if self.arrival_protocol == 1 and self.curve.arrival_rate_multiplier != "1":
+            raise ValueError("Scaled arrivals require the scheduled visitor protocol")
         if self.curve.slot_seconds != 30:
             raise ValueError("Visitor slots use the stable 30-second grid")
         if self.opportunity_seconds < self.heartbeat_seconds + 5:
@@ -37,6 +41,7 @@ class VisitorRequest(DTO):
 
 class StartVisitorSession(VisitorRequest):
     installation_id: UUID
+    arrival_protocol: Literal[1, 2] = 1
 
 
 class SessionVisitorRequest(StartVisitorSession):
@@ -44,6 +49,7 @@ class SessionVisitorRequest(StartVisitorSession):
 
 
 class VisitorOpportunityDTO(DTO):
+    lane: int = 0
     opportunity_id: UUID
     session_id: UUID
     issued_at: datetime
@@ -59,6 +65,8 @@ class VisitorSessionDTO(DTO):
 
 
 class VisitorSummary(DTO):
+    arrival_protocol: int = 1
+    active_visits_per_hour: str = "0"
     garden_id: UUID
     server_time: datetime
     version: int
