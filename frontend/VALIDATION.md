@@ -555,3 +555,57 @@ iPhone visual/touch/accessibility acceptance or Instruments. Xcode is unavailabl
 on this Windows host. Native tests are added, not claimed as passing. No push or
 remote CI was run. Run `bash frontend/scripts/test-mac.sh` on Mac, then the F8.2
 walkthrough in `F8_ACCEPTANCE.md`.
+
+
+## F8.3 first-version frontend — 27 October 2026
+
+Source implemented locally:
+
+- Shared mounted Garden with My plants / Garden / Edit / Activity navigation,
+  retained sidebar routes and Settings. Browsing keeps its viewport allocation;
+  focused Edit hides normal navigation and returns to Garden with Done.
+- Read-only combined Planted/Stored ownership, current-copy details, shared
+  pagination/cache and separate inventory-read versus mutation readiness.
+- Storage details before Place; selected planted-copy Move/Rotate/Store/details;
+  cancellation and a narrow generation guard across asynchronous activity preflight.
+  Submitted requests keep the existing UUID/body/journal/retry contract.
+- Compact Garden summary, secondary visitor/skills information, accessible actions
+  and large-text control reflow. Existing artwork/readiness/hit-testing/flight and
+  renderer implementations are unchanged.
+- Player-facing technical-output/copy cleanup across Garden/sample, owned details,
+  Activity, collection pages, account, Settings and recap. Pack opening changes
+  only its placement instructions; Continue later and ceremony behavior remain.
+- Settings → Developer tools → Diagnostics: real account/renderer snapshots,
+  allowlisted operation metadata and request IDs, filters/search and explicit manual
+  copy/export. Protected local recent history is bounded to 1,000 events / 2 MiB /
+  seven days, excludes Health bodies/credentials and is excluded from backups.
+  Debug and explicit optimized InternalRelease enable tools; public Release does not.
+
+Passed locally on Windows:
+
+- Deterministic generated project/shared schemes and all source/resource references.
+- Portable assets/plists/editor/collection/skills contracts: 20 USDZs and alpha
+  thumbnails, butterfly checksum/archive, aligned pack images and existing icons.
+- Explicit InternalRelease launch/profile/archive scheme/configuration checks.
+- Syntax parsing of all 64 Swift files (50 app source files).
+- Python validator/generator syntax, UTF-8 source text and git diff whitespace checks.
+- Git Bash `--noprofile --norc -n frontend/scripts/test-mac.sh` syntax check. Its
+  first sandboxed launch hit an MSYS startup restriction; the read-only retry
+  outside that restriction exited successfully. The script itself was not executed.
+
+Added native tests cover read-only pagination while editing is blocked, cursor
+invalidation, Done during preflight, preflight clearing a preview without dropping
+an accepted intent, original-byte retry after Done, diagnostic bounds/persistence/
+account isolation/disabled storage/safe messages, four-entry navigation, contextual
+Place, preview cancellation/background exit and mounted renderer/camera/import
+retention. Debug UI tests use a synthetic in-memory garden route with no network,
+disk edit journal or Health upload. These tests are added, not recorded as passing.
+
+Not executed: Apple SDK typechecking/builds, Debug XCTest/UI, public Release or
+InternalRelease builds, physical iPhone visual/touch/accessibility acceptance,
+Instruments or CI. This host has no Xcode/Apple SDK. Run
+`bash frontend/scripts/test-mac.sh` on Mac, then the F8.3 walkthrough in
+F8_ACCEPTANCE.md, including live-account interrupted requests/relaunch and accepted
+F8.2 loading/taps/rewards/recap/pack/Milestones regressions. No push was performed.
+Backend, renderer, Health collection, recap coordinator, assets, economy and durable
+request payload/endpoint contracts were not changed by this increment.

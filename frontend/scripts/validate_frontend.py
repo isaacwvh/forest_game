@@ -185,6 +185,13 @@ def main():
     require(set(info["ForestAuth"]) == {"SupabaseURL", "PublishableKey", "GameAPIURL", "CallbackScheme",
                                        "GoogleEnabled", "AppleEnabled"}, "Missing auth configuration fields")
     ET.parse(ROOT / "MovementForest.xcodeproj/xcshareddata/xcschemes/MovementForest.xcscheme")
+    internal_scheme = ET.parse(ROOT / "MovementForest.xcodeproj/xcshareddata/xcschemes/MovementForest-Internal.xcscheme")
+    for action in ["LaunchAction", "ProfileAction", "ArchiveAction"]:
+        require(internal_scheme.find(action).attrib["buildConfiguration"] == "InternalRelease",
+                f"Internal diagnostics scheme must use InternalRelease for {action}")
+    require('INTERNAL_TOOLS $(inherited)' in project_text and
+            ('name = "InternalRelease"' in project_text or 'name = InternalRelease;' in project_text),
+            "Missing explicit internal-build tools configuration")
     sources = list((ROOT / "MovementForest").rglob("*.swift"))
     require(len(sources) >= 15, "Source set incomplete")
     # Catch accidental platform creep and health payload logging in this baseline.
@@ -198,6 +205,7 @@ def main():
     print("PASS: real synthetic collection exchange/opening accounting, pack consumption, probabilities and bundled award thumbnail.")
     print("PASS: HTTP-derived Sleeping Dew source/activation/storage, +4% growth and versioned cap contract.")
     print(f"PASS: F8 portrait/light configuration, butterfly checksum/archive, three aligned pack PNGs ({pack_bytes:,} bytes).")
+    print("PASS: internal Release diagnostics scheme and generated configuration; public Release remains separate.")
     print("Swift compilation, native UI, imported axes, animation, and real HealthKit remain Mac/iPhone checks.")
 
 

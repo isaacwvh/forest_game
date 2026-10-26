@@ -1,11 +1,20 @@
-#if DEBUG
+#if DEBUG || INTERNAL_TOOLS
 import SwiftUI
 
 struct DeveloperToolsScreen: View {
     let catalog: any AssetCatalogProviding
     @ObservedObject var activity: ActivityStore
+    @ObservedObject var connection: GardenConnection
     var body: some View {
         List {
+            Section("Current session") {
+                NavigationLink("Diagnostics") { DiagnosticsScreen(connection: connection) }
+                    .accessibilityIdentifier("developer.diagnostics.link")
+                if connection.authentication == nil && connection.configurationIssue == nil {
+                    NavigationLink("Garden connection") { GardenConnectionScreen(connection: connection, catalog: catalog) }
+                        .accessibilityIdentifier("settings.connection")
+                }
+            }
             Section("Rendering") {
                 NavigationLink("Asset inspector") { AssetInspectorScreen(catalog: catalog) }
                 NavigationLink("Garden scenes") { SceneLabScreen(catalog: catalog) }

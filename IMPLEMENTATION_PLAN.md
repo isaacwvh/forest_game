@@ -1,7 +1,16 @@
 # Movement Forest implementation plan
 
-Revised 26 October 2026 against `forest_game_v1_spec.md`, version 0.23.
+Revised 27 October 2026 against `forest_game_v1_spec.md`, version 0.23.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
+
+**Current presentation handoff — 27 October 2026:** F8.2 is completed and user
+accepted. The next presentation increment is **F8.3 first-version frontend presentation**
+below (source implemented; native/device acceptance pending): My plants / Garden / Edit / Activity; details-first focused editing; compact
+Garden; frontend-wide developer-output cleanup with retained internal diagnostics;
+and consistent presentation. Implementation is now recorded in the F8.3 source handoff below.
+Workout eligibility and pack-opening cleanup are explicitly deferred. Asset
+delivery and later custom page designs remain separate decisions. This checkpoint
+supersedes earlier F8.3 Storage-tab proposals, not the historical backend gates.
 
 The first B8 skill/cap increment is now source-implemented below, including
 Sleeping Dew and the native Active skills disclosure. Its selected provisional
@@ -467,7 +476,14 @@ the source scope only, not all of F8 or deployment readiness. Catalogue discover
 the economy increment below, remote asset delivery, watering/swarm and elaborate
 effects remain separate increments.
 
-### F8.2 focused presentation refinements — source implemented, native acceptance pending
+### F8.2 focused presentation refinements — completed, user accepted 27 October 2026
+
+**Live-test acceptance:** the user confirmed that butterfly tapping is much more
+seamless, the icon draft looks good, pack lighting is fixed and Milestones works
+as expected, and explicitly accepted F8.2 as complete. Commit `cedba46` was pushed
+to GitHub `main`. This closes the bounded F8.2 polish batch and releases the F8.3
+planning gate. It does not claim unrecorded XCTest/UI, Release, accessibility or
+performance checks passed, or establish the current CI result.
 
 **Bounded batch:** the F8.1 lifecycle/loading tickets are closed above.
 These four work items define F8.2; source implementation is complete. Preserve
@@ -598,9 +614,10 @@ Portable project/asset/contracts and all 59 Swift syntax parses pass locally.
 Native regression coverage was extended for boundary/overlapping targets, camera
 projection and one welcome, milestone refresh/claim recovery, icon resolution,
 Milestones navigation and both taps for all four rarities with/without Reduce
-Motion. These native tests, Apple SDK builds and physical-iPhone acceptance remain
-unexecuted on Windows; source validation does not establish visual/touch acceptance.
-No push or remote CI run was performed. See `frontend/F8_ACCEPTANCE.md`.
+Motion. These native tests and Apple SDK builds were not executed on Windows.
+The subsequent user live-test acceptance above is separate evidence. The original
+local handoff preceded the push of `cedba46`; CI results have not been recorded
+here. See `frontend/F8_ACCEPTANCE.md`.
 
 **Validation and handoff:** run portable frontend project/asset/contract checks,
 Swift parsing and whitespace checks. On Mac, run
@@ -619,39 +636,289 @@ lifetime steps and collection pacing retain their separate economy scope below.
 No catalogue stage-discovery system, watering/swarm effects, remote assets or
 deployment work is included.
 
-### F8.3 navigation and home cleanup — planned, gated on stability confirmation
+### F8.3 first-version frontend presentation — confirmed scope, 27 October 2026
 
-Keep this coordinated batch for after the user confirms development is stable
-enough to simplify the main interface. Do not remove development visibility as
-a side effect of F8.2.
+**Handoff / status:** source implemented locally on 27 October 2026; native
+Xcode/XCTest and iPhone acceptance remain pending. Portable validation is recorded
+in frontend/VALIDATION.md. No push or CI was requested or run. This section supersedes the earlier three-tab
+Garden/Activity/Storage
+proposal and its immediate-placement inventory picker. F8.2 is completed and user
+accepted; preserve it as the baseline rather than reopening accepted work.
 
-- **Compact Garden header:** replace the expanded development/status area with
-  tokens, attraction and stored visits/capacity. Distinguish stored visits from
-  the spendable token wallet and keep collection discoverable. Move detailed
-  explanations into secondary views while preserving the mounted garden/camera.
-- **Bottom navigation and editing:** provide Garden, Activity and Storage as
-  destinations, with an explicit Edit Garden mode action in the bottom controls
-  and a clear exit. Keep Exchange, Packs, Catalog and Milestones in the sidebar.
-  Friends and other future destinations remain outside this batch.
-- **Read-only Storage outside editing:** allow browsing owned copies and their
-  progress without starting placement. Placement, movement, rotation and storing
-  require Edit Garden; the editing flow retains access to placeable inventory.
-  Preserve copy identity, pagination and progress across both views.
-- **Developer-output cleanup across screens:** move request IDs, raw diagnostics,
-  fixture/balance verification and other development-only output into developer
-  tools. Keep useful loading, offline/cached, permission, error and recovery states
-  available to players. Retain technical diagnostics for development builds.
+**Goal:** deliver a clean, coherent, usable first version of the entire frontend
+using its current native visual style, fonts, shared icons and existing artwork.
+Normal pages must be free of additional developer/debug output. Preserve useful
+technical information in Developer tools. This is the functional presentation
+baseline before later custom page designs, backgrounds or new visual assets.
+Preserve portrait-only play, light appearance, APIs, economy, ownership and Health
+collection/consent rules. No new gameplay, reward rules or asset-delivery system.
 
-**Acceptance:** browsing Storage cannot change placement; entering/exiting editing
-and switching destinations preserve camera, selection and pending-request safety.
-The entry recap still appears over Garden on return, ordinary sync stays quiet,
-and visitor eligibility correctly follows editing/navigation/modals. Validate the
-compact header, bottom controls and remaining sidebar on portrait iPhones with
-large text and VoiceOver. Recheck upper-boundary butterfly taps after layout changes.
+#### F8.3a — bottom navigation and shared scene ownership
 
-Catalogue stage discovery, watering animations, swarms and elaborate effects
-remain deferred to later increments. These two presentation batches do not
-implement or approve the separate economy/reward changes below.
+- Bottom menu, in this order: **My plants, Garden, Edit, Activity**. My plants,
+  Garden and Activity are browsing destinations; Edit explicitly enters focused
+  Garden editing mode, not another Garden/renderer instance. No standalone Storage
+  tab. Storage remains the stored-copy section and the inventory entry in editing.
+- Keep Exchange, Packs, Catalog and Milestones in the existing sidebar outside
+  editing, with Settings reachable. Do not add placeholder Friends/quest/event
+  destinations. Initial and accepted entry-recap presentation remains over Garden.
+- Preserve one mounted Garden, camera state, account-bound editor/inventory,
+  activity and collection coordinators. Switching destinations must not reimport
+  models, reset the scene or create visitor sessions as a navigation side effect.
+- Keep normal Garden selection and its Plant details action. All browsing and
+  details routes outside editing are read-only. Preserve valid copy selection;
+  clear stale selection after a confirmed removal or account switch.
+- **Primary surfaces:** `App/MovementForestApp.swift`,
+  `Features/Garden/ConnectedGardenScreen.swift`, `Features/Garden/GardenScreen.swift`
+  and navigation/editor tests under `frontend/MovementForest`.
+- **Done when:** all four menu entries and sidebar destinations work, share the
+  same account state, and preserve the mounted Garden/camera without browse edits.
+
+#### F8.3b — My plants: all owned copies, read-only
+
+- Provide one scrollable overview with clearly labelled **Planted** at the top
+  and **Stored** below. Combine confirmed placed copies and paginated stored
+  inventory; this is an owned-copy view, separate from the species Catalog.
+- Each row opens that exact copy's plant details: thumbnail, species/variant,
+  stage, confirmed growth/progress, available pinned per-copy multipliers and
+  garden-skill state. Keep duplicates separate by copy identity. Do not invent
+  missing fields, totals or progress from a partially loaded inventory.
+- My plants and its details have no Place, Move, Rotate or Store actions and do
+  not enable editing. There is no automatic switch to placement from browsing.
+- Provide loading, genuinely empty, cached/offline, refresh failure, retry and
+  load-more states. Browsing and pagination must not depend on mutation readiness;
+  `GardenEditorStore.loadMore()` is currently gated by `canEdit` and needs a narrow
+  read/mutation separation. Keep account attachment, cursor/generation and stale
+  response protection; do not bypass them when making reads independent.
+- Share existing inventory state with editing. Preserve loaded pages where valid;
+  respect refresh/cursor invalidation after mutations/account changes. Confirmed
+  Place/Store updates must move the same copy between sections without duplication
+  or loss of growth/profiles. No second ownership source or new inventory cache.
+- Disconnected/sample sessions show clear, truthful explanatory states and cannot
+  expose another account's copies or mutate sample ownership.
+- **Primary surfaces:** a My plants view under `Features`, existing plant details,
+  `Services/GardenEditorStore.swift`, `MovementForestApp.swift` and inventory tests.
+- **Done when:** both sections and per-copy details work through pagination,
+  offline viewing and account switches; browsing issues zero garden mutations.
+
+#### F8.3c — focused Edit mode and details-first placement
+
+- Enter from the bottom **Edit** action. While editing, hide the ordinary bottom
+  menu and sidebar entry points. Keep the scene, an obvious mode indication,
+  **Storage**, necessary contextual editing controls and a top **Done/tick** with
+  an accessible "Done editing" label. Retain necessary loading/recovery feedback
+  and accessible alternatives to camera/precise placement gestures.
+- Stored-copy flow: **Edit → Storage → select copy → plant details → Place →
+  placement preview → confirm**. Selecting a row must not start placement. Details
+  show a bottom Place action only in this edit context, enabled by the existing
+  mutation-safety rules. Returning from details without Place makes no preview
+  or request. Cancel during placement leaves the copy stored.
+- Selecting a planted copy offers **Move, Rotate, Store, Plant details**. Details
+  remain inspection only; Move/Rotate/Store preserve their current behavior and
+  clearance rules. Retain useful precise controls, placement validity and adult
+  preview; remove unrelated navigation/buttons rather than editing functionality.
+- Reuse shared detail content with explicit read-only/edit context. Do not duplicate
+  plant data or infer edit permission from the fact that a details screen is open.
+- Done cancels an unsubmitted preview and exits to Garden browsing. It does not
+  undo confirmed edits, and is not an implicit batch-save action. Backgrounding
+  cancels unsubmitted previews and returns to browsing on resume. Preserve original
+  UUID/body and journal for any submitted/in-flight/unknown edit; exit must not
+  discard, recreate or resubmit it. Pending recovery stays visible/reachable and
+  blocks unsafe mutations. Account changes retain existing isolation.
+- Pause visitors during editing and inventory/details modals using the existing
+  eligibility rules. Preserve accepted entry-recap blocking and resume semantics.
+- **Primary surfaces:** `ConnectedGardenScreen.swift`, shared plant details,
+  `GardenEditorStore.swift`, app navigation and editor recovery tests. Make only
+  demonstrated mode/read-safety changes; do not add another save state machine.
+- **Done when:** every stored-copy route shows details before Place; planted-copy
+  actions include details; Done and interruptions safely preserve confirmed edits,
+  the camera and exactly one original pending operation.
+
+#### F8.3d — compact Garden and secondary game information
+
+- Replace expanded routine status text with **visitor tokens, attraction, stored
+  visits/capacity**, using F8.2 icons and readable labels. Distinguish spendable
+  tokens from uncollected visits; missing values must not appear as zero.
+- Keep **Collect stored visits** and accessible **Welcome visitor** reachable,
+  with concise pending/result/retry feedback and single rewards. Put detailed
+  rates/capacity explanations, hosted totals and active skills in labelled secondary
+  game-information views. They are useful gameplay information, not developer logs.
+  Keep activity history, sync controls and Health permissions in Activity/Settings.
+- Give the scene space recovered from routine text. Scene bounds may adapt to
+  viewport/safe area/text size but must stay stable through transient status
+  messages. Reflow large text without overlapping header or scene touch areas.
+  Preserve selected-copy inspection and necessary accessible camera controls.
+- **Protected behavior:** retain F8.2 ARView-local hit testing and visual-bound
+  alignment, readiness observation outside `GeometryReader`, preload/shared cache,
+  timeout/retry, embedded animation and renderer/resume ownership. Do not alter
+  flight clocks/scheduling or compensate for a new header with displaced invisible
+  targets. Limit renderer changes to a demonstrated viewport/projection defect.
+- **Primary surfaces:** `Features/Garden/GardenViewportLayout.swift`,
+  `ConnectedGardenScreen.swift`, `VisitorViews.swift`, `Features/SharedViews.swift`
+  and existing Activity/skills information surfaces.
+- **Done when:** Garden has a compact, understandable summary and clear primary
+  actions; taps still align at the new boundaries through orbit, pan and zoom.
+
+#### F8.3e — frontend-wide developer-output cleanup and retained diagnostics
+
+- Audit every player-facing page and reachable secondary view: Garden, My plants,
+  copy details, editing, Activity/Health views, Exchange, Packs/results/history,
+  Catalog, Milestones, Settings/account and recap/loading/error/empty states.
+  Remove technical/debug-only output from these normal routes. No raw request IDs,
+  payloads, internal asset/profile/version diagnostics, balance-verification output,
+  verbose lifecycle/sync traces or developer baseline text should remain there.
+- Move that information into **Settings → Developer tools → Diagnostics**. The
+  current Developer tools has inspectors and Health diagnostics, not a unified
+  event-log viewer. Add the viewer before removing existing useful visibility.
+  Provide timestamped/filterable events, request IDs and operation/retry outcomes,
+  live Garden renderer/asset state, activity/baseline diagnostics and collection/
+  wallet confirmation/recovery state. Inspect the real session, not only sample
+  scenes. Retain existing asset/scene/Health inspectors and system logging.
+- Provide manual Copy/export and a bounded recent history, including enough
+  previous-session events to investigate relaunches; do not keep unbounded logs.
+  Never log credentials/tokens or unnecessary personal Health payloads. Keep detailed
+  Health inspection local/explicit. Backend logs remain backend-side and correlate
+  through request IDs; no automatic upload or remote log-streaming service.
+- Current access is `#if DEBUG` only. Keep Developer tools readily available in
+  development and explicitly enabled internal Release/TestFlight builds, so device
+  testing does not lose diagnostics in Release configuration. Detailed tools are
+  excluded/disabled for public production builds; do not rely on hidden gestures
+  or an undocumented route for internal testers.
+- Keep concise player-facing loading, offline/cached, permission, pending,
+  confirmed and failure states with useful Retry/Reconnect actions. No recovery
+  path may require Developer tools. Preserve meaningful sample/provisional labels
+  where removing them would misrepresent data. Game explanations belong in normal
+  secondary information views, not exclusively in diagnostics.
+- **Primary surfaces:** all `Features` pages, `SettingsScreen.swift`,
+  `Features/DeveloperTools`, `Features/HealthDiagnostics` and shared display views.
+  Change service display/log separation only where needed; preserve instrumentation,
+  durable operations and existing log emission/rendering sequencing.
+- **Done when:** normal navigation is free of developer/debug clutter across all
+  states, while useful events and live diagnostic state remain accessible during
+  internal iPhone testing, including an internal Release configuration.
+
+#### F8.3f — consistent first-version presentation and copy
+
+- Review the complete frontend for consistent native typography, spacing, section
+  hierarchy, readable labels/units, shared icons and accessible touch targets.
+  Keep clear empty/loading/error/pending/result states and scrollability with large
+  text. Distinguish a missing metric from zero; preserve per-copy multipliers.
+- Update instructions and accessibility copy for **My plants → Stored** browsing
+  and **Edit → Storage → details → Place** placement. This includes pack-result,
+  receipt, empty-Garden and Settings helper text. Navigation-copy corrections in
+  `PackOpeningScreen.swift` are allowed; ceremony controls/recovery changes below
+  are deferred. Do not remove Continue later in this increment.
+- Preserve consent/account flows, meaningful gameplay information and all existing
+  confirmation/retry actions. Reuse current assets and native visual language;
+  no custom backgrounds, new art, ornamental effects or new page design system.
+- **Done when:** ordinary app journeys look intentional and understandable as a
+  first frontend version, with debugging accessible through Developer tools.
+
+**Implementation order:** preserve diagnostics access/viewer first → navigation
+and My plants → focused Edit/details-first placement → compact Garden/secondary
+information → frontend-wide technical-output and presentation/copy pass. Perform
+cleanup across all pages, not just the redesigned Garden. Keep changes reviewable.
+
+**Validation and handoff:** run portable project/asset/contract checks, Swift
+syntax parsing and whitespace checks. Extend native tests for four-entry navigation,
+read-only combined ownership/pagination, contextual details/Place, edit exit and
+pending recovery, account isolation and final-layout visitor targets. On Mac run
+`bash frontend/scripts/test-mac.sh` for Debug XCTest/UI and Release build; also
+verify internal Release diagnostics access and public-build gating. Device flow:
+My plants (Planted/Stored) → inspect each without mutation → Garden → Edit (normal
+navigation hidden) → Storage → details (no preview) → Place → cancel → Place and
+confirm → select placed copy → Details/Move/Rotate/Store → Done → My plants.
+Repeat with failed/lost responses, background/relaunch, cached inventory and account
+switch. Verify no duplicate copy/reward/request, stable camera, normal-page cleanup
+and useful diagnostic history/export. Check large text, VoiceOver, Reduce Motion,
+upper-boundary butterfly taps through orbit/pan/zoom, accepted cold/warm artwork
+loading, 30-second entry recap versus quiet routine/Notification Centre refresh,
+existing two-tap lighting and Milestones claims. Record executed checks separately
+from user acceptance. No unexecuted check is a pass; this plan update runs no app,
+backend, native tests or CI.
+
+**Outside F8.3:** workout-eligibility/anti-idle changes and pack-opening cleanup
+below; backend/schema/API/economy changes; new species integration; numeric
+milestone progress/early-collection/lifetime-step rewards; catalogue discovery;
+My plants search/filter/sort/bulk operations; placement-rule changes; custom
+backgrounds/new assets; asset hosting/cache migration; watering/swarm effects;
+onboarding/auth redesign; Dark Mode/landscape; general renderer rewrites and
+deployment. This polish does not itself establish production/release readiness;
+existing provider, deployment and minimum-device evidence gates still apply.
+
+### Later polish — pack-opening interruption cleanup (deferred; not F8.3)
+
+- Remove **Continue later** from the ceremony in a separate future increment.
+  Preserve Cancel before opening confirmation, the two deliberate taps during an
+  uninterrupted ceremony, receipt-derived lighting and final Continue.
+- If interrupted after a confirmed server opening, treat presentation as complete:
+  retain the saved plant/result/history and do not replay the ceremony on return.
+  Plant ownership never depends on watching or dismissing the animation.
+- If interrupted before confirmation, recover the original saved UUID/body. Show
+  completion only after the receipt confirms the award; do not invent ownership or
+  submit another opening. Retain useful confirmation/error/retry navigation.
+- Validate interruption during confirmation, tear, opened wait, reveal and result;
+  cover network loss, background, relaunch, account switch, repeated taps and
+  Reduce Motion. Exactly one pack consumption and saved sprout; no replay.
+- Primary surfaces: `PackOpeningScreen.swift`, collection coordinator/journal only
+  if a concrete gap exists, fixtures and opening/recovery tests. This is deferred
+  behavior work; F8.3 only updates navigation text on these surfaces.
+
+### Later activity integrity — workout eligibility and idle sessions (deferred)
+
+**Separate reward-validation work, not presentation polish.** Investigate sessions
+left recording while inactive, preserving genuine workouts with limited sensor
+coverage. Do not implement a universal "no steps/distance/energy means cheating"
+rule, choose thresholds silently, or alter past rewards as part of F8.3.
+
+- Retain existing manual-entry exclusion, bounds, pauses/segments, baseline windows,
+  deduplication, overlap handling and daily caps. First document actual coverage
+  and representative valid/idle samples for each supported workout type.
+- Current `WorkoutUpload` has duration/type/source/segments but no per-workout
+  steps, distance or energy evidence. Plan explicit HealthKit extraction, versioned
+  upload/schema compatibility and backend-authoritative eligibility before use.
+  Preserve pending journal bytes/retry identity across any protocol upgrade.
+- Distinguish observed zero from unavailable/missing data; HealthKit read-access
+  restrictions can resemble no samples. Apply type-specific evidence: distance
+  cannot be mandatory for strength/yoga, nor steps for cycling/swimming. Do not
+  use unrelated daily totals to validate a particular workout.
+- Assess long idle tails/intervals as well as whole-session totals. A small initial
+  effort or nonzero calorie estimate alone must not validate hours of duration.
+  Determine supported evidence and practical limits before enforcement; additional
+  permissions/sensors require explicit scope, not automatic collection expansion.
+- Specify handling of unknown/late evidence, re-evaluation and previously imported
+  immutable workout identities before making exclusion permanent. Keep explainable
+  outcome/reason codes in Activity and detailed Developer tools diagnostics.
+- Exclude only ineligible workout bonus credit; do not delete the person's Health
+  record or remove independently valid daily steps/quantities. No retrospective
+  clawbacks or changed reward rates without a separate explicit decision.
+- Test genuine indoor/outdoor workouts by type, pauses, missing permissions/data,
+  zero evidence, idle tails, partial/delayed samples, overlaps, replay, upgrades and
+  account/device changes. These checks reduce obvious abuse, not prove exercise.
+
+### Later visual design and asset delivery — separate decisions
+
+- **Visual design:** after F8.3's clean first-version baseline, apply any supplied
+  page designs, custom backgrounds, new visual assets or optional effects as their
+  own scoped work. Preserve the functional navigation/editing and diagnostic
+  boundaries established here; no invented final visual direction in F8.3.
+- **Asset delivery remains undecided:** the user will choose bundled, remote or
+  hybrid delivery later. Core icons, butterfly and pack art can remain bundled
+  with downloadable/cached plant packages, but this is a recommendation, not an
+  approved migration. Current runtime source measurements: all nine local species
+  models/thumbnails total about 57.09 MiB; the currently bundled Oak/Moonwillow
+  art totals 11.29 MiB; core icons/butterfly/pack art totals about 11.54 MiB.
+  Extrapolating 75 similar species gives about 487 MiB of artwork. The discussed
+  roughly 600 MiB installed-app budget is provisional; code/library size, archived
+  Release download/install sizes and memory remain unmeasured. Copies reuse art;
+  this estimate is for species with the current stage/variant mix.
+- If remote delivery is selected, scope trusted immutable/versioned manifests,
+  checksums, local download cache, prefetch/eviction, offline/retry behavior and
+  CDN publication/cost separately. Hand verified local files to existing rendering;
+  do not introduce a network dependency into the accepted butterfly sequence.
+- New species publication, catalogue stage discovery, early-collection/lifetime-
+  step rewards, provider/deployment work and performance measurements retain their
+  separate plan sections and acceptance gates; none is approved by this polish.
 
 ### Early collection pacing and lifetime step rewards — planned, 26 October 2026
 
@@ -721,6 +988,13 @@ account switching and upgrade compatibility. Record backend and native results
 when implemented; this documentation update does not establish those tests.
 
 ### Visitor and collection presentation
+
+**Historical presentation brief:** the butterfly asset/depth, Exchange feedback
+and two-tap lighting items below were subsequently delivered in F8.1/F8.2. Use the
+accepted F8.2 baseline and current F8.3 handoff above for next work; do not reimplement
+these historical items. Catalogue discovery and other explicit deferrals remain
+future scopes. The later pack-interruption scope above adds a separate behavior
+refinement and is not included in F8.3.
 
 The current functional B6/F6 experience is accepted. Schedule these visual changes
 in the existing final hardening/polish milestone, after the remaining gameplay:

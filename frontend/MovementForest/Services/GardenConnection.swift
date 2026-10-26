@@ -42,6 +42,18 @@ private enum DevelopmentCredential {
 
 @MainActor
 final class GardenConnection: ObservableObject {
+    #if DEBUG
+    func installPresentationFixture(assets: any AssetCatalogProviding) async {
+        do {
+            let service = try PresentationGardenService()
+            let profile = try await service.profile()
+            let store = GardenEditorStore(profile: profile, service: service, assets: assets, journal: PresentationEditJournal())
+            editor = store
+            editorUpdates = store.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+            await store.start()
+        } catch { status = "Presentation fixture couldn’t load." }
+    }
+    #endif
     let authentication: AuthenticationStore?
     let configurationIssue: String?
     @Published private(set) var editor: GardenEditorStore?
@@ -82,7 +94,7 @@ final class GardenConnection: ObservableObject {
             issue = nil
         } catch { configuredAuth = nil; issue = error.localizedDescription; initialURL = "" }
         authentication = configuredAuth; configurationIssue = issue; savedURL = initialURL
-        #if DEBUG
+        #if DEBUG || INTERNAL_TOOLS
         if authentication == nil && configurationIssue == nil { savedURL = defaults.string(forKey: Self.urlKey) ?? "" }
         #endif
     }
@@ -108,7 +120,7 @@ final class GardenConnection: ObservableObject {
             return
         }
         guard configurationIssue == nil else { status = configurationIssue; return }
-        #if DEBUG
+        #if DEBUG || INTERNAL_TOOLS
         guard !restored else { return }
         restored = true
         do {
@@ -130,7 +142,7 @@ final class GardenConnection: ObservableObject {
     }
 
     func connect(url: String, token: String, assets: any AssetCatalogProviding) async {
-        #if DEBUG
+        #if DEBUG || INTERNAL_TOOLS
         guard authentication == nil, configurationIssue == nil else { return }
         guard !busy else { return }
         connecting = true; status = "Checking connection…"
@@ -251,7 +263,8 @@ final class GardenConnection: ObservableObject {
             status = "Signed in as \(profile.displayName)."
         } catch {
             guard managedGeneration == operation else { return }
-            status = "Account connection paused. \(error.localizedDescription) Saved requests are retained."
+            PlayerMessage.recordFailure("Connection", error)
+            status = PlayerMessage.failure(error, fallback: "Account connection paused. Try connecting again. Saved requests are retained.")
         }
     }
 
@@ -266,6 +279,9 @@ final class GardenConnection: ObservableObject {
     }
 
     private func installActivity(client: APIClient, store: GardenEditorStore, visitorsEnabled: Bool = true) {
+        var client = client
+        client.diagnosticScope = store.diagnosticScope
+        DiagnosticHistory.shared.setScope(store.diagnosticScope)
         collection?.deactivate(); collection = nil; collectionUpdates = nil
         if visitorsEnabled {
             let collection = CollectionCoordinator(userID: store.profile.userId, service: APICollectionRepository(client: client))
@@ -286,7 +302,10 @@ final class GardenConnection: ObservableObject {
                 collection?.onWallet = { [weak visitor] balance, version in visitor?.applyWallet(balance, version: version) }
                 visitorUpdates = visitor.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
                 visitor.start()
-            } catch { status = "Visitors paused: the installation identity could not be read." }
+            } catch {
+                PlayerMessage.recordFailure("Visitors", error, scope: store.diagnosticScope)
+                status = "Visitors couldn’t start on this iPhone. Reconnect to try again."
+            }
         }
         guard let health = health else { return }
         do {
@@ -302,7 +321,8 @@ final class GardenConnection: ObservableObject {
             store.reconcileActivity = { [weak coordinator] in _ = await coordinator?.synchronize() }
         } catch {
             store.activityBlocked = true
-            status = "The installation identity could not be read. Activity and editing are paused."
+            PlayerMessage.recordFailure("Activity", error, scope: store.diagnosticScope)
+            status = "Activity couldn’t start on this iPhone. Activity and editing are paused; reconnect to try again."
         }
     }
 
@@ -311,7 +331,7 @@ final class GardenConnection: ObservableObject {
             await createManagedAccount(username: username, displayName: displayName, assets: assets)
             return
         }
-        #if DEBUG
+        #if DEBUG || INTERNAL_TOOLS
         guard !busy, let client = pendingClient, let credential = pendingCredential else { return }
         connecting = true
         let key = UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
@@ -343,7 +363,8 @@ final class GardenConnection: ObservableObject {
                 }
             }
             connecting = false
-            status = "Account creation was not confirmed. \(error.localizedDescription)"
+            PlayerMessage.recordFailure("Account creation", error)
+            status = PlayerMessage.failure(error, fallback: "Account creation wasn’t confirmed. Check your details and try again; your saved request is retained.")
         }
         #endif
     }
@@ -377,12 +398,13 @@ final class GardenConnection: ObservableObject {
                 catch { status = "The rejected account request could not be cleared. Retry after checking device storage."; connecting = false; return }
             }
             connecting = false
-            status = "Account creation was not confirmed. \(error.localizedDescription) Retry preserves the original request."
+            PlayerMessage.recordFailure("Account creation", error)
+            status = PlayerMessage.failure(error, fallback: "Account creation wasn’t confirmed. Check your details and try again; your saved request is retained.")
         }
     }
 
     func disconnect() {
-        #if DEBUG
+        #if DEBUG || INTERNAL_TOOLS
         guard authentication == nil else { return }
         guard !busy else { return }
         do {

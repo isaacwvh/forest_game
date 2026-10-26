@@ -27,12 +27,8 @@ struct ActivityRecapScreen: View {
                                         .frame(width: 48, height: 64).accessibilityHidden(true)
                                 }
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text(row.plant.map { "\($0.speciesId.capitalized) · \($0.variantId.capitalized)" } ?? "Plant \(row.id.uuidString.prefix(8))")
+                                    Text(OwnedCopyLabel.title(row.id, in: recap.rows.compactMap(\.plant)))
                                         .font(.headline)
-                                    if let plant = row.plant,
-                                       recap.rows.filter({ $0.plant?.speciesId == plant.speciesId && $0.plant?.variantId == plant.variantId }).count > 1 {
-                                        Text("Copy \(row.id.uuidString.prefix(4))").font(.caption).foregroundStyle(.secondary)
-                                    }
                                     if row.water != "0" {
                                         Text("+\(ExactAmount.water(row.water)) water")
                                         if row.skillWater != "0" {
@@ -51,7 +47,7 @@ struct ActivityRecapScreen: View {
                             }.padding(.vertical, 4).accessibilityElement(children: .combine)
                         }
                     }
-                } else if !recap.loading { Text("No plant progress is available yet. Open Garden → Storage to plant a copy.") }
+                } else if !recap.loading { Text("No plant progress is available yet. Open Edit → Storage → plant details → Place to plant a copy.") }
                 if !recap.activeSkills.isEmpty {
                     Section("Skills active now") {
                         ForEach(recap.activeSkills) { skill in

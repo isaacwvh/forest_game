@@ -25,7 +25,7 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
             } else {
                 VStack(spacing: 0) {
                     ScrollView { status() }
-                        .frame(height: min(320, geometry.size.height * 0.42))
+                        .frame(height: min(260, geometry.size.height * 0.32))
                         .background(Color(uiColor: .systemBackground))
                     scene().frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
                     ScrollView { controls() }

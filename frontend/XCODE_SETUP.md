@@ -167,7 +167,7 @@ appear. Synthetic fixtures cannot establish real-device workout feasibility.
 
 ## 8. Inspect rendering
 
-In the Debug app, open **Settings > Developer tools**:
+In Debug or the explicit internal build, open **Settings > Developer tools**:
 
 - **Asset inspector:** select every species, variant and stage. Check materials,
   ground contact, relative sizes and wind. There are 20 delivered combinations.
@@ -176,9 +176,18 @@ In the Debug app, open **Settings > Developer tools**:
 - **Sample/empty/failure activity screens:** exercise UI states independently of
   your Health records.
 
-Also test Reduce Motion, Dark Mode and a large text size. Use
-`MAC_TEST_CHECKLIST.md` for the complete acceptance list. Developer tools are
-excluded from Release builds.
+Also test Reduce Motion, VoiceOver and large text in the portrait/light app. Use
+`MAC_TEST_CHECKLIST.md` and `F8_ACCEPTANCE.md` for acceptance. Public **Release**
+excludes Developer tools. For internal device testing select the shared
+**MovementForest-Internal** scheme: Run, Profile and Archive use **InternalRelease**
+with `INTERNAL_TOOLS`; optimization remains enabled. Do not use that scheme for a
+public release. The regular **MovementForest** scheme still archives public Release.
+
+**Diagnostics** shows the real session, pending request IDs and live renderer state.
+Filter by category or search outcomes/IDs; Copy/export is manual. Recent local
+history survives relaunch (up to 1,000 events, 2 MiB or seven days). The Health
+inspector is explicit; general event logs omit credentials and Health bodies.
+Development-token connection is now under **Developer tools > Garden connection**.
 
 ## 9. Run automated tests on the Mac
 

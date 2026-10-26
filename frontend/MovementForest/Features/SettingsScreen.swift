@@ -14,27 +14,20 @@ struct SettingsScreen: View {
             Section("Your data") {
                 Text("Health reads stay local until you enable activity sync in Activity. With full sync enabled, daily steps, walking/running distance, active energy, flights climbed and recorded workout details are saved on this iPhone for reliable retries and uploaded to calculate plant growth. Existing steps-only consent stays steps-only until you enable the optional inputs.")
                 Text("Your confirmed garden is cached for offline viewing. Pausing sync retains unresolved requests; reconnect and re-enable sync to confirm them. Disconnecting keeps each account’s pending operations separate.")
-                Text("The app remembers only whether you have tried connecting Health. That preference is not proof of permission.")
-                    .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Your account") {
                 NavigationLink("Account and sign-in") { AccountScreen(connection: connection, catalog: catalog) }
                     .accessibilityIdentifier("settings.account")
             }
             Section("Accessibility") {
-                Text("Plant details are also available through the Plants button. Animation follows your iPhone’s Reduce Motion setting. The app uses a light appearance and portrait layout.")
+                Text("Inspect your copies in My plants, or use the Garden’s Plants list. Arrange plants through Edit → Storage → plant details → Place. Animation follows your iPhone’s Reduce Motion setting.")
             }
-            #if DEBUG
+            #if DEBUG || INTERNAL_TOOLS
             Section("Development") {
-                if connection.authentication == nil && connection.configurationIssue == nil {
-                    NavigationLink("Garden connection") { GardenConnectionScreen(connection: connection, catalog: catalog) }
-                    .accessibilityIdentifier("settings.connection")
-                }
-                NavigationLink("Developer tools") { DeveloperToolsScreen(catalog: catalog, activity: activity) }
+                NavigationLink("Developer tools") { DeveloperToolsScreen(catalog: catalog, activity: activity, connection: connection) }
                     .accessibilityIdentifier("settings.developer")
             }
             #endif
-            Section { Text("Frontend baseline · iOS 16 and later").font(.footnote).foregroundStyle(.secondary) }
         }.navigationTitle("Settings")
     }
 }

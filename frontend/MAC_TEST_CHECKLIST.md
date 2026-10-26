@@ -51,7 +51,7 @@ another session.
 
 ## F2 — rendering and interactions
 
-Open Settings > Developer tools in the Debug build.
+Open Settings > Developer tools in Debug or the explicit InternalRelease build.
 
 - [ ] Asset Inspector: check all **20** species/stage/variant combinations.
 - [ ] Verify ground contact, materials, scale and named wind motion for each.
@@ -102,3 +102,10 @@ expires after seven days, after which it needs rebuilding/reinstallation.
 Follow [F5_ACCEPTANCE.md](F5_ACCEPTANCE.md) for the current backend/Tailscale flow.
 Record native results, including Xcode/OS versions, there. The earlier checklist
 above also applies to rendering, accessibility and local Health diagnostics.
+
+## F8.3 current presentation
+
+Use the F8.3 walkthrough in F8_ACCEPTANCE.md. Verify Debug and InternalRelease
+show Diagnostics; public Release does not. Portrait/light are the current play
+scope. Run `bash frontend/scripts/test-mac.sh` for Debug XCTest/UI and both Release
+builds, then verify real iPhone loading, taps, camera, recovery and accessibility.

@@ -3,7 +3,7 @@
 Visual authority: the existing oak/Moonwillow assets and section 12.3 of the root
 specification. Preserve their calm, stylized miniature-world appearance.
 
-- Native SwiftUI Garden/Activity tabs, navigation stacks, lists, forms and sheets.
+- Native SwiftUI lists, forms, sheets and navigation stacks; My plants / Garden / Edit / Activity bottom navigation. Edit enters a focused mode on the mounted Garden.
 - F8.1 uses portrait-only play and a consistent light appearance, including native
   sheets. Dark Mode and landscape play are outside this release batch.
 - System text styles, SF Symbols, semantic UI backgrounds and secondary text.
@@ -15,7 +15,7 @@ specification. Preserve their calm, stylized miniature-world appearance.
 - Plant selection uses a small yellow marker, independent of gameplay clearance.
 - Embedded wind respects Reduce Motion and inactive views. Scene changes preserve identity.
 - A native Plants list provides access to details without precise 3D touch selection.
-- Detailed inspection and synthetic fixtures are under Debug-only developer tools.
+- Detailed inspection and synthetic fixtures are under developer tools in Debug and explicitly internal Release builds; public Release excludes their routes.
 - Visitor controls extend the existing native garden status area with confirmed
   tokens, stored visits, one collection action and a collapsed explanation.
 - The bundled butterfly USDZ uses a shared template, embedded wing animation and
@@ -36,15 +36,15 @@ Evidence is source inspection only. Light appearance, Dynamic Type, portrait lay
 VoiceOver, touch interaction, lighting, imported orientation and performance need
 native validation. No HTML/CSS detector or browser screenshot substitutes for it.
 
-- Garden skills use a native inline DisclosureGroup in the existing status panel.
-  Preserve the mounted scene and fixed viewport when expanding it. Show confirmed
+- Garden skills live under Garden info → Active skills.
+  Preserve the mounted scene and fixed viewport while presenting secondary information. Show confirmed
   effective water, source/duplicate explanations and capped-state text; cached
   summaries are explicitly last confirmed. Pending placement never activates a
   skill. Owned/catalogue details explain adult activation and stored inactivity.
 
-- A leading collection menu opens Exchange, Catalog and Packs. Preserve the
+- A leading collection menu opens Exchange, Packs, Catalog and Milestones. Preserve the
   mounted garden/camera while browsing; the menu and collection routes pause
-  active visitors. Garden/Activity and settings retain their native navigation.
+  active visitors. Browsing and settings retain their native navigation. Editing hides the bottom navigation and sidebar, with Storage and Done editing always clear.
 - Exchange separates read-only contents from explicit purchase confirmation,
   with inline pending/success/recovery feedback and a route to Packs. Packs
   separates unopened packs, the persisted confirmed result and history.
@@ -71,3 +71,13 @@ native validation. No HTML/CSS detector or browser screenshot substitutes for it
   from plant packages and downsampled for display. Other themes use a generic
   wrapper. Rarity comes from the saved receipt. Recovery uses the durable result
   and history; it does not automatically replay the two taps.
+
+- My plants combines confirmed Planted copies above paginated Stored copies. Rows
+  open read-only copy details. Storage inside Edit opens the same details with a
+  bottom Place action. Details resolve current copy identity from the account store.
+- Garden prioritizes tokens, attraction and stored visits/capacity, with Collect
+  and accessible Welcome. Visitor explanations and active skills are secondary.
+  Status text scrolls within geometry-reserved regions; it does not move tap targets.
+- Settings → Developer tools → Diagnostics shows the real connected state and
+  live Garden renderer, plus bounded local events with manual copy/export. It does
+  not create a renderer, own requests, upload logs or capture credentials/Health bodies.

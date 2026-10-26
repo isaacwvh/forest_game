@@ -110,9 +110,12 @@ final class VisitorCoordinator: ObservableObject {
     private func recover() async throws {
         while let operation = pending {
             do {
+                let scope = DiagnosticHistory.scope(server: service.serverID, user: userID)
+                DiagnosticHistory.shared.record("Visitors", "sending \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: scope)
                 let (value, reward) = try await service.mutate(operation)
                 guard attached else { return }
                 apply(value)
+                DiagnosticHistory.shared.record("Visitors", "confirmed \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: scope)
                 try persist(VisitorJournalState(pending: queuedReward))
                 if let reward = reward {
                     message = reward.visits == "0" ? "No whole stored visits to collect yet." :
@@ -180,7 +183,9 @@ final class VisitorCoordinator: ObservableObject {
         } catch {
             guard attached else { return }
             connected = false; needsRead = true
-            let issue = "Visitors paused. \(error.localizedDescription) Retry to confirm any saved request."
+            PlayerMessage.recordFailure("Visitors", error, requestID: pending?.id.uuidString,
+                scope: DiagnosticHistory.scope(server: service.serverID, user: userID))
+            let issue = "Visitors paused. " + PlayerMessage.failure(error, fallback: "Retry to confirm any saved request.")
             lastConnectionIssue = issue; message = issue
             let failure = error as NSError
             LifecycleDiagnostics.event("visitor request failed domain=\(failure.domain) code=\(failure.code)")

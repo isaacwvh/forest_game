@@ -98,6 +98,8 @@ private final class EditorTestService: GardenServing {
     var gate: CheckedContinuation<Void, Never>?
     var extraInventory: [APIOwnedPlant] = []
     var pages: [String: APIInventory] = [:]
+    var pauseInventory = false
+    var inventoryGate: CheckedContinuation<Void, Never>?
 
     init(_ fixture: EditorContract) {
         self.fixture = fixture; current = fixture.emptyGarden; catalogueValue = fixture.catalogue
@@ -110,6 +112,7 @@ private final class EditorTestService: GardenServing {
     }
     func garden() async throws -> APIGarden { current }
     func inventory(after: UUID?) async throws -> APIInventory {
+        if pauseInventory { pauseInventory = false; await withCheckedContinuation { inventoryGate = $0 } }
         if let page = pages[after?.uuidString ?? "first"] { return page }
         let placed = Set(current.plants.map(\.id))
         let copies = fixture.inventory.plants + extraInventory
@@ -381,6 +384,74 @@ final class GardenEditorTests: XCTestCase {
         await store.start(); await store.loadMore()
         XCTAssertEqual(store.inventory.map(\.id), [first.id, second.id])
         XCTAssertNil(store.nextCursor)
+    }
+
+    func testReadOnlyPaginationWorksWhileActivityBlocksEditing() async throws {
+        let service = EditorTestService(try EditorContract.load()), store = try makeStore(service)
+        let first = try XCTUnwrap(service.fixture.inventory.plants.first)
+        let next = APIOwnedPlant(plantId: UUID(), speciesId: first.speciesId, variantId: first.variantId,
+            growthMicroUnits: "0", growthStage: first.growthStage, modelKey: first.modelKey, thumbnailKey: first.thumbnailKey, placement: nil)
+        service.pages["first"] = APIInventory(plants: [first], nextCursor: first.id)
+        service.pages[first.id.uuidString] = APIInventory(plants: [first, next], nextCursor: nil)
+        await store.start(); store.activityBlocked = true
+        XCTAssertFalse(store.canEdit); XCTAssertTrue(store.canReadInventory)
+        await store.loadMore()
+        XCTAssertEqual(Set(store.inventory.map(\.id)), Set([first.id, next.id]))
+        XCTAssertTrue(service.bodies.isEmpty)
+    }
+
+    func testInventoryPageCannotMergeAfterRefreshInvalidatesItsCursor() async throws {
+        let service = EditorTestService(try EditorContract.load()), store = try makeStore(service)
+        let first = try XCTUnwrap(service.fixture.inventory.plants.first)
+        let stale = APIOwnedPlant(plantId: UUID(), speciesId: first.speciesId, variantId: first.variantId,
+            growthMicroUnits: "0", growthStage: first.growthStage, modelKey: first.modelKey, thumbnailKey: first.thumbnailKey, placement: nil)
+        service.pages["first"] = APIInventory(plants: [first], nextCursor: first.id)
+        service.pages[first.id.uuidString] = APIInventory(plants: [stale], nextCursor: nil)
+        await store.start(); service.pauseInventory = true
+        let read = Task { await store.loadMore() }
+        for _ in 0..<1000 where service.inventoryGate == nil { try await Task.sleep(nanoseconds: 1_000_000) }
+        let gate = try XCTUnwrap(service.inventoryGate)
+        await store.refresh(); gate.resume(); await read.value
+        XCTAssertEqual(store.inventory.map(\.id), [first.id]); XCTAssertEqual(store.nextCursor, first.id)
+        XCTAssertTrue(service.bodies.isEmpty)
+    }
+
+    func testDoneDuringActivityPreflightDoesNotSubmitTheCancelledEdit() async throws {
+        let service = EditorTestService(try EditorContract.load()), store = try makeStore(service)
+        await store.start(); store.editing = true
+        var gate: CheckedContinuation<Bool, Never>?
+        store.prepareMembershipChange = { await withCheckedContinuation { gate = $0 } }
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        let save = Task { await store.releaseCandidate() }
+        for _ in 0..<1000 where gate == nil { try await Task.sleep(nanoseconds: 1_000_000) }
+        let continuation = try XCTUnwrap(gate)
+        store.endEditing(); continuation.resume(returning: true); await save.value
+        XCTAssertTrue(service.bodies.isEmpty); XCTAssertNil(store.pending); XCTAssertNil(store.candidate)
+        XCTAssertFalse(store.editing)
+    }
+
+    func testActivityPreflightMayClearPreviewWithoutCancellingTheSubmittedIntent() async throws {
+        let service = EditorTestService(try EditorContract.load()), store = try makeStore(service)
+        await store.start()
+        store.prepareMembershipChange = {
+            XCTAssertTrue(store.beginActivityOperation()); store.endActivityOperation(); return true
+        }
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        await store.releaseCandidate()
+        XCTAssertEqual(service.bodies.count, 1); XCTAssertEqual(store.confirmed?.plants.count, 1)
+    }
+
+    func testDonePreservesUnknownRequestAndRetryUsesTheSameBytes() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start(); store.editing = true; service.loseNextResponse = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant); await store.releaseCandidate()
+        let saved = try XCTUnwrap(store.pending)
+        store.endEditing()
+        XCTAssertEqual(store.pending?.body, saved.body); XCTAssertFalse(store.editing)
+        await store.retryPending()
+        XCTAssertEqual(service.bodies.count, 2); XCTAssertEqual(service.bodies[0], service.bodies[1])
+        XCTAssertEqual(service.receipts.count, 1); XCTAssertNil(store.pending)
     }
 
     func testReplayReceiptCannotHideNewerServerLayout() async throws {

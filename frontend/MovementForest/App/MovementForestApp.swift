@@ -40,7 +40,23 @@ final class AppContainer: ObservableObject {
 
     func loadCatalog() {
         do { catalog = try BundleAssetCatalog(); startupError = nil }
-        catch { startupError = error.localizedDescription }
+        catch {
+            PlayerMessage.recordFailure("Assets", error)
+            startupError = "Garden artwork couldn’t load. Try again."
+        }
+    }
+}
+
+enum ForestDestination: String, CaseIterable, Identifiable {
+    case myPlants = "My plants", garden = "Garden", edit = "Edit", activity = "Activity"
+    var id: String { rawValue }
+    var symbol: String {
+        switch self {
+        case .myPlants: return "leaf"
+        case .garden: return "tree"
+        case .edit: return "pencil"
+        case .activity: return "figure.walk"
+        }
     }
 }
 
@@ -49,7 +65,7 @@ struct RootView: View {
     @ObservedObject var container: AppContainer
     @ObservedObject private var connection: GardenConnection
     @Environment(\.scenePhase) private var phase
-    @State private var selectedTab = 0
+    @State private var selectedTab = ForestDestination.garden
     @State private var settingsPresented = false
     @State private var menuPresented = false
     @State private var collectionDestination: CollectionDestination?
@@ -63,8 +79,10 @@ struct RootView: View {
         self.connection = container.connection
     }
 
+    private var focusedEditing: Bool { connection.editor?.editing == true }
+
     private var entryAllowed: Bool {
-        resume.foreground && !settingsPresented && !menuPresented && !packOpeningPresented && !childEntryBlocked
+        resume.foreground && !settingsPresented && !menuPresented && !packOpeningPresented && !childEntryBlocked && !focusedEditing
     }
 
     private func sceneChanged(to value: ScenePhase) {
@@ -74,6 +92,9 @@ struct RootView: View {
     }
 
     private func presentEntryIfReady() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--fixture-garden") { return }
+        #endif
         guard resume.foreground else { return }
         guard let sync = connection.activitySync,
               let editor = connection.editor, sync.isAttached(to: editor) else {
@@ -86,7 +107,7 @@ struct RootView: View {
         let reconciliation = resume.reconciliation(for: sync)
         guard entryAllowed else { entryRecap.skipEntry(editor: editor); return }
         if entryRecap.begin(sync: sync, editor: editor, reconciliation: reconciliation) {
-            selectedTab = 0
+            selectedTab = .garden
             collectionDestination = nil
         }
     }
@@ -105,18 +126,28 @@ struct RootView: View {
         Group {
             if let catalog = container.catalog {
                 ZStack(alignment: .leading) {
-                TabView(selection: $selectedTab) {
+                ZStack {
+                    // Always mounted: browsing and Edit use this same renderer/camera.
                     NavigationStack {
                         GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
-                                         active: selectedTab == 0 && !settingsPresented && !menuPresented && collectionDestination == nil && !entryRecap.showing)
-                            .toolbar { menuButton; settingsButton }
+                            active: selectedTab == .garden && !settingsPresented && !menuPresented && collectionDestination == nil && !entryRecap.showing)
+                            .toolbar { if !focusedEditing { menuButton; settingsButton } }
                     }
-                    .tabItem { Label("Garden", systemImage: "leaf") }.tag(0)
-                    NavigationStack {
-                        ConnectedActivityScreen(connection: container.connection, store: container.activity)
-                            .toolbar { menuButton; settingsButton }
+                    .opacity(selectedTab == .garden ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .garden)
+                    .accessibilityHidden(selectedTab != .garden)
+                    if selectedTab == .myPlants {
+                        NavigationStack {
+                            MyPlantsHostScreen(connection: connection, catalog: catalog)
+                                .toolbar { menuButton; settingsButton }
+                        }
                     }
-                    .tabItem { Label("Activity", systemImage: "figure.walk") }.tag(1)
+                    if selectedTab == .activity {
+                        NavigationStack {
+                            ConnectedActivityScreen(connection: connection, store: container.activity)
+                                .toolbar { menuButton; settingsButton }
+                        }
+                    }
                 }
                 .opacity(collectionDestination == nil ? 1 : 0)
                 .allowsHitTesting(collectionDestination == nil && !menuPresented)
@@ -124,13 +155,11 @@ struct RootView: View {
                 if let destination = collectionDestination {
                     NavigationStack {
                         CollectionHostScreen(connection: container.connection, destination: destination, assets: catalog,
-                                             navigate: { collectionDestination = $0; if $0 == nil { selectedTab = 0 } },
+                                             navigate: { collectionDestination = $0; if $0 == nil { selectedTab = .garden } },
                                              openingChanged: { packOpeningPresented = $0 })
                             .toolbar {
                                 menuButton
-                                ToolbarItem(placement: .navigationBarTrailing) {
-                                    Button("Garden") { collectionDestination = nil; selectedTab = 0 }
-                                }
+                                settingsButton
                             }
                     }.id(destination)
                         .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
@@ -154,7 +183,7 @@ struct RootView: View {
                                         .accessibilityIdentifier("menu.\(destination.id)")
                                 }.listStyle(.plain)
                                 Button("Return to Garden") {
-                                    collectionDestination = nil; selectedTab = 0; menuPresented = false
+                                    collectionDestination = nil; selectedTab = .garden; menuPresented = false
                                 }.padding()
                             }
                             .frame(width: min(300, geometry.size.width * 0.85))
@@ -162,6 +191,11 @@ struct RootView: View {
                         }
                     }.accessibilityElement(children: .contain)
                 }
+                }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if !focusedEditing {
+                        bottomNavigation
+                    }
                 }
                 .sheet(isPresented: $settingsPresented) {
                     NavigationStack {
@@ -179,6 +213,8 @@ struct RootView: View {
                 .onChange(of: connection.connecting) { busy in if !busy { presentEntryIfReady() } }
                 .onChange(of: connection.editor?.profile.userId) { user in
                     if user == nil { entryRecap.signOut() }
+                    DiagnosticHistory.shared.setScope(connection.editor?.diagnosticScope)
+                    selectedTab = .garden; menuPresented = false; collectionDestination = nil
                 }
                 .onChange(of: entryAllowed) { _ in presentEntryIfReady() }
                 .onPreferenceChange(EntryPresentationBlocker.self) { childEntryBlocked = $0 }
@@ -190,6 +226,12 @@ struct RootView: View {
                     // environment snapshot after authentication finishes.
                     if resume.initializeSceneIfNeeded(to: phase, recap: entryRecap) { presentEntryIfReady() }
                     if container.garden.garden == nil { await container.garden.load() }
+                    #if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains("--fixture-garden") {
+                        await connection.installPresentationFixture(assets: catalog)
+                        return
+                    }
+                    #endif
                     if !ProcessInfo.processInfo.arguments.contains("--fixture-health") {
                         await container.connection.restore(assets: catalog)
                     }
@@ -203,6 +245,38 @@ struct RootView: View {
                              actionTitle: "Try again", action: container.loadCatalog)
             }
         }
+    }
+
+    private func navigate(to destination: ForestDestination) {
+        if destination == .edit {
+            guard let editor = connection.editor, editor.canEdit else { return }
+            collectionDestination = nil; selectedTab = .garden; menuPresented = false
+            editor.editing = true
+        } else {
+            collectionDestination = nil; selectedTab = destination
+        }
+    }
+
+    private var bottomNavigation: some View {
+        HStack(spacing: 0) {
+            ForEach(ForestDestination.allCases) { destination in
+                Button { navigate(to: destination) } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: destination.symbol).font(.body)
+                        Text(destination.rawValue).font(.caption).lineLimit(2).minimumScaleFactor(0.8)
+                            .multilineTextAlignment(.center)
+                    }.frame(maxWidth: .infinity, minHeight: 50)
+                }
+                .foregroundStyle(selectedTab == destination && collectionDestination == nil ? Color.forestTint : Color.secondary)
+                .disabled(destination == .edit && connection.editor?.canEdit != true)
+                .accessibilityIdentifier("navigation." + destination.id)
+                .accessibilityLabel(destination.rawValue)
+                .accessibilityAddTraits(selectedTab == destination && collectionDestination == nil ? .isSelected : [])
+            }
+        }.padding(.horizontal, 8).padding(.top, 4)
+            .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
+            .background(Color(uiColor: .systemBackground))
+            .overlay(alignment: .top) { Divider() }
     }
 
     private var settingsButton: some ToolbarContent {

@@ -67,7 +67,7 @@ struct ActivityScreen: View {
                                     .font(.subheadline).foregroundStyle(.secondary)
                             }.accessibilityElement(children: .combine)
                         }
-                        Text("Manually entered workouts are excluded. Supported workout types earn additional water from eligible duration; unsupported types are retained for diagnostics.").font(.caption).foregroundStyle(.secondary)
+                        Text("Manually entered workouts are excluded. Supported workout types earn additional water from eligible duration.").font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 if store.hasRequestedAccess {

@@ -21,7 +21,7 @@ struct GardenScreen: View {
                                     motionEnabled: !reduceMotion, active: active && visible && phase == .active)
                         .accessibilityHidden(true)
                     if renderer.isLoading {
-                        ProgressView("Growing the view… \(renderer.loadedCount)/\(garden.plants.count)")
+                        ProgressView("Loading plants…")
                             .padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12)).padding()
                     }
                 }
@@ -64,21 +64,21 @@ struct GardenScreen: View {
                 .sheet(isPresented: $errorsPresented) {
                     NavigationStack {
                         List {
-                            ForEach(Array(renderer.errors.enumerated()), id: \.offset) { _, error in Text(error) }
+                            Text("Some plants couldn’t be displayed. Try loading the artwork again.")
                             Button("Reload plants") { errorsPresented = false; renderer.retry(garden, catalog: catalog) }
                         }.navigationTitle("Loading plants")
                             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { errorsPresented = false } } }
                     }
                 }
                 .onChange(of: renderer.selectedPlantID) { id in selectedPlant = garden.plants.first { $0.id == id } }
-            } else if let error = store.error {
-                RecoveryView(title: "Your garden couldn’t load", message: error, actionTitle: "Try again") { Task { await store.load() } }
+            } else if store.error != nil {
+                RecoveryView(title: "Your garden couldn’t load", message: "Your garden couldn’t load. Please try again.", actionTitle: "Try again") { Task { await store.load() } }
             } else {
                 ProgressView("Opening your forest…").frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .navigationTitle("Your forest").navigationBarTitleDisplayMode(.inline)
-        .onAppear { visible = true }
+        .onAppear { visible = true; LiveGardenDiagnostics.shared.renderer = renderer }
         .onDisappear { visible = false; renderer.setActive(false) }
     }
 }
@@ -134,7 +134,7 @@ struct PlantDetailScreen: View {
                             Text(skill.name).font(.headline)
                             Text(skill.description).font(.callout)
                             Text(owned?.placement == nil ? "Inactive in storage" :
-                                 plant.growthStage == .adult ? "Fully grown source · Check Active skills for effective bonuses" :
+                                 plant.growthStage == .adult ? "Fully grown source · See Garden info → Active skills for effective bonuses" :
                                  "Requires a fully grown plant in the garden")
                                 .font(.caption).foregroundStyle(.secondary)
                         }

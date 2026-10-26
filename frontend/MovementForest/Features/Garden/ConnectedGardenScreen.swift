@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum GardenEditorSheet: String, Identifiable {
-    case plants, storage, position, rotation, errors
+    case plants, storage, position, rotation, errors, information, details
     var id: String { rawValue }
 }
 
@@ -19,6 +19,7 @@ struct ConnectedGardenScreen: View {
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var textSize
 
     private var visitorEligible: Bool {
         active && visible && phase == .active && sheet == nil && store.canPresentVisitors
@@ -68,7 +69,7 @@ struct ConnectedGardenScreen: View {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle").font(.largeTitle)
                     Text(store.message ?? "Saved-edit recovery needs attention.")
-                    Text("Reconnect after inspecting the saved edit. It has not been discarded.").font(.footnote)
+                    Text("Your saved edit is retained. Sign in again through Settings → Account and sign-in to reconnect.").font(.footnote)
                 }.padding()
             } else {
                 RecoveryView(title: "Your garden couldn’t load", message: store.message ?? "Reconnect or refresh your garden.",
@@ -80,10 +81,12 @@ struct ConnectedGardenScreen: View {
         .navigationTitle("Your forest").navigationBarTitleDisplayMode(.inline)
         .preference(key: EntryPresentationBlocker.self, value: sheet != nil || (active && store.editing))
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(store.editing ? "Done" : "Edit") {
-                    if store.editing { store.endEditing() } else { store.editing = true }
-                }.disabled(!store.canEdit && !store.editing).accessibilityIdentifier("editor.edit")
+            if store.editing {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { sheet = nil; store.endEditing() } label: {
+                        Label("Done", systemImage: "checkmark").frame(minHeight: 44)
+                    }.accessibilityLabel("Done editing").accessibilityIdentifier("editor.done")
+                }
             }
         }
         .sheet(item: $sheet) { item in
@@ -91,144 +94,144 @@ struct ConnectedGardenScreen: View {
                 switch item {
                 case .plants: plantsList
                 case .storage: storageList
+                case .details:
+                    if let id = store.selectedID { OwnedPlantDetailScreen(store: store, copyID: id, catalog: catalog) }
+                case .information: gardenInformation
                 case .position, .rotation:
                     CandidateControlsScreen(store: store, rotationOnly: item == .rotation)
                 case .errors:
                     List {
-                        ForEach(Array(renderer.errors.enumerated()), id: \.offset) { _, error in Text(error) }
-                        Button("Reload plant assets") {
+                        Text("Some plants couldn’t be displayed. Your plants and progress are saved.")
+                        Button("Reload plants") {
                             sheet = nil
                             if let garden = store.rendered { renderer.retry(garden, catalog: catalog) }
                         }
-                    }.navigationTitle("Plant assets")
+                    }.navigationTitle("Plant artwork")
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
                 }
             }
         }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
-        .onChange(of: store.canEdit) { if !$0 { store.cancelCandidate() } }
+        .onChange(of: store.canEdit) { if !$0 && !store.preparingMembership { store.cancelCandidate() } }
         .onChange(of: active) { value in
             if !value { store.cancelCandidate() }
         }
         .onChange(of: phase) { value in
-            if value != .active { store.cancelCandidate() }
+            if value == .background {
+                if store.editing { sheet = nil; store.endEditing() }
+                else { store.cancelCandidate() }
+            }
+            else if value != .active { store.cancelCandidate() }
         }
         .onChange(of: visitorEligible) { visitors?.setEligible($0) }
         .task(id: visitors?.id) { [visitors] in
             guard !Task.isCancelled else { return }
             renderer.setVisitors(visitors); visitors?.setEligible(visitorEligible)
         }
-        .onAppear { visible = true; visitors?.setEligible(visitorEligible) }
+        .onAppear { visible = true; LiveGardenDiagnostics.shared.renderer = renderer; visitors?.setEligible(visitorEligible) }
         .onDisappear { visible = false; visitors?.setEligible(false); store.cancelCandidate(); renderer.setActive(false) }
     }
 
     private var statusPanel: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(store.profile.displayName + "’s forest").font(.headline)
-            if store.showingCached {
-                Text("Cached garden · Last confirmed \(store.confirmedAt.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "earlier")")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            if let attraction = store.confirmed?.totalAttractionMicroUnits {
-                Text("Garden attraction: \(ExactAmount.water(attraction))").font(.caption)
-            }
-            if let activitySync = activitySync { GardenActivityStatus(sync: activitySync) }
-            if let visitors = visitors { VisitorStatusPanel(store: visitors) }
-            if let summary = store.confirmed?.skillSummary {
-                DisclosureGroup {
-                    if summary.activeSkills.isEmpty {
-                        Text("No active skills. Place a fully grown plant with a garden skill to activate it.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    ForEach(summary.activeSkills) { skill in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(alignment: .firstTextBaseline) {
-                                Text(skill.name).font(.subheadline).fontWeight(.semibold)
-                                Spacer(minLength: 8)
-                                Text(skill.bonusText).font(.caption).foregroundStyle(.secondary)
-                            }
-                            if let source = store.confirmed?.plants.first(where: { $0.id == skill.sourcePlantId }) {
-                                Text("\(source.speciesId.capitalized) · Fully grown" +
-                                     (skill.eligibleSourcePlantIds.count > 1 ? " · \(skill.eligibleSourcePlantIds.count) sources share this bonus" : ""))
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                            Text(skill.description).font(.caption).foregroundStyle(.secondary)
-                        }.padding(.vertical, 4).accessibilityElement(children: .combine)
-                    }
-                    if summary.capReached {
-                        Text(summary.caps.description)
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    if store.showingCached {
-                        Text("Last confirmed skills · Refresh to check current effects.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                } label: {
-                    HStack {
-                        Text("Active skills · \(summary.activeSkills.count)")
-                        Spacer(minLength: 8)
-                        if let headline = summary.waterHeadline { Text(headline).foregroundStyle(.secondary) }
-                    }.font(.caption).frame(minHeight: 44)
-                }.accessibilityIdentifier("garden.skills")
+        VStack(alignment: .leading, spacing: 8) {
+            if store.editing {
+                Label("Editing garden", systemImage: "pencil").font(.headline)
             } else {
-                Text("Skill status unavailable · Refresh your garden.").font(.caption).foregroundStyle(.secondary)
+                if let visitors = visitors { VisitorStatusPanel(store: visitors) }
+                if let attraction = store.confirmed?.totalAttractionMicroUnits {
+                    QuantityLabel(metric: "attraction", text: "\(ExactAmount.water(attraction)) attraction").font(.subheadline)
+                }
             }
+            if store.showingCached { Label("Saved garden · Connect to refresh", systemImage: "wifi.slash").font(.caption) }
             if let candidate = store.candidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
                     .font(.callout).accessibilityIdentifier("editor.validity")
-                Text(candidate.kind == .rotate ? "Adjust the angle, then apply your rotation." : "Drag or tap the ground to place. A valid release saves your edit.")
+                Text(candidate.kind == .rotate ? "Adjust the angle, then apply." : "Drag or tap the ground. A valid release saves your edit.")
                     .font(.caption).foregroundStyle(.secondary)
                 if store.adultPreview { Text("Adult preview · Clearance stays the same").font(.caption) }
             } else if let message = store.message {
                 Text(message).font(.callout).accessibilityIdentifier("editor.status")
             } else if store.confirmed?.plants.isEmpty == true {
-                Text("Open Storage to plant your starter.").font(.callout)
-            } else {
-                Text(store.editing ? "Select a plant to move, rotate or store it." : "Tap a plant or open Plants to inspect it.")
-                    .font(.caption).foregroundStyle(.secondary)
+                Text(store.editing ? "Open Storage and choose a plant to inspect, then Place." : "Use Edit → Storage to plant your first copy.").font(.callout)
+            } else if store.editing {
+                Text("Select a plant to move, rotate, store or inspect.").font(.caption).foregroundStyle(.secondary)
             }
-            if store.state.busy { ProgressView().accessibilityLabel("Loading garden") }
+            if store.state.busy { ProgressView(store.state == .saving ? "Saving edit…" : "Refreshing garden…") }
             if store.state == .unknown {
-                Button("Retry saved edit") { Task { await store.retryPending() } }
-                    .accessibilityIdentifier("editor.retry")
+                Button("Retry saved edit") { Task { await store.retryPending() } }.accessibilityIdentifier("editor.retry")
             } else if store.state == .blocked && store.pending == nil && !store.recoveryLocked {
                 Button("Refresh garden") { Task { await store.refresh() } }
             } else if store.state == .authenticationRequired {
-                Text("Open Settings → Garden connection and enter a fresh token.").font(.caption)
-            }
-            if let requestID = store.pendingRequestID {
-                Text("Pending request: \(requestID)").font(.caption2).textSelection(.enabled)
+                Text("Sign in again through Settings → Account and sign-in. Your saved requests are retained.").font(.caption)
             }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal).padding(.vertical, 10)
             .background(Color(uiColor: .systemBackground))
     }
 
+    private var gardenInformation: some View {
+        List {
+            if let visitors = visitors { VisitorInformationSection(store: visitors) }
+            Section("Active skills") {
+                if let summary = store.confirmed?.skillSummary {
+                    if summary.activeSkills.isEmpty { Text("No active skills. Fully grown planted sources activate their garden skills.") }
+                    ForEach(summary.activeSkills) { skill in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(skill.name).font(.headline)
+                            Text(skill.bonusText).font(.subheadline)
+                            Text(skill.description).foregroundStyle(.secondary)
+                            if let source = store.ownedCopy(skill.sourcePlantId) {
+                                Text(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []) + " · Fully grown source")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            if skill.eligibleSourcePlantIds.count > 1 {
+                                Text("\(skill.eligibleSourcePlantIds.count) sources share this bonus.").font(.caption)
+                            }
+                        }.padding(.vertical, 4)
+                    }
+                    if summary.capReached { Text(summary.caps.description).font(.footnote) }
+                } else { Text("Skill information is unavailable. Refresh your garden to try again.") }
+                if store.showingCached { Text("Last confirmed skills").font(.caption).foregroundStyle(.secondary) }
+            }
+            Section("Garden controls") {
+                Text("Drag to orbit · Pinch to zoom · Two fingers to pan")
+                Text("Inspect owned copies in My plants. Arrange them through Edit → Storage → plant details → Place.")
+            }
+        }.navigationTitle("Garden information")
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
+    }
+
     private var controls: some View {
         VStack(spacing: 8) {
             if renderer.isLoading { ProgressView("Loading plants…") }
-            if let issue = renderer.visitorAssetIssue {
-                Text(issue).font(.caption).foregroundStyle(.secondary)
+            if renderer.visitorAssetIssue != nil {
+                Text("Butterfly artwork is unavailable. You can still welcome visitors.").font(.caption).foregroundStyle(.secondary)
                 Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.frame(minHeight: 44)
             }
-            if !renderer.errors.isEmpty { Button("Some plant assets need attention") { sheet = .errors }.font(.caption) }
+            if !renderer.errors.isEmpty { Button("Some plants couldn’t load") { sheet = .errors }.font(.caption) }
             if let selected = store.selected {
                 Text("\(selected.speciesId.capitalized) · \(selected.variantId.capitalized) · \(selected.growthStage.title)")
                     .font(.subheadline)
                 if store.editing && store.candidate == nil && selected.placement != nil {
-                    HStack {
+                    editingLayout {
                         Button("Move") { store.begin(selected, kind: .move) }.accessibilityIdentifier("editor.move")
                         Button("Rotate") { store.begin(selected, kind: .rotate); if store.candidate != nil { sheet = .rotation } }
                             .accessibilityIdentifier("editor.rotate")
-                        Button("Store") { Task { await store.storeSelected() } }.accessibilityIdentifier("editor.store")
+                        Button("Store") {
+                            let id = selected.id
+                            Task {
+                                guard store.editing, store.selectedID == id else { return }
+                                await store.storeSelected()
+                            }
+                        }.accessibilityIdentifier("editor.store")
                     }.buttonStyle(.bordered).controlSize(.large).disabled(!store.canEdit || renderer.isLoading)
                 }
-                if !store.editing, let rendered = store.render(selected) {
-                    NavigationLink("Plant details") { PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false,
-                                                                         owned: selected, catalogue: store.catalogue) }
+                if store.candidate == nil {
+                    Button("Plant details") { sheet = .details }.frame(minHeight: 44)
+                        .accessibilityIdentifier("garden.details")
                 }
             }
             if let candidate = store.candidate {
-                HStack {
+                editingLayout {
                     Button("Cancel") { store.cancelCandidate() }.accessibilityIdentifier("editor.cancel")
                     if candidate.kind != .rotate {
                         Button("Position…") { sheet = .position }.accessibilityIdentifier("editor.position")
@@ -241,10 +244,15 @@ struct ConnectedGardenScreen: View {
             }
             VStack(spacing: 0) {
                 HStack {
-                    Button { sheet = .plants } label: { Label("Plants", systemImage: "leaf").frame(minHeight: 44) }
+                    Button { sheet = .plants } label: { Label(store.editing ? "Select plant" : "Plants", systemImage: "leaf").frame(minHeight: 44) }
                         .accessibilityIdentifier("garden.plants")
-                    Button { sheet = .storage } label: { Label("Storage", systemImage: "tray").frame(minHeight: 44) }
-                        .disabled(!store.canEdit || renderer.isLoading).accessibilityIdentifier("editor.storage")
+                    if store.editing {
+                        Button { sheet = .storage } label: { Label("Storage", systemImage: "tray").frame(minHeight: 44) }
+                            .accessibilityIdentifier("editor.storage")
+                    } else {
+                        Button { sheet = .information } label: { Label("Garden info", systemImage: "info.circle").frame(minHeight: 44) }
+                            .accessibilityIdentifier("garden.info")
+                    }
                     Spacer(minLength: 0)
                 }
                 HStack {
@@ -260,13 +268,23 @@ struct ConnectedGardenScreen: View {
         }.padding(.horizontal).padding(.bottom, 8).background(Color(uiColor: .systemBackground))
     }
 
+    private var editingLayout: AnyLayout {
+        textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 12))
+    }
+
     private var plantsList: some View {
         List {
-            if store.confirmed?.plants.isEmpty != false { Text("Your garden is empty. Plant a copy from Storage.") }
+            if store.confirmed?.plants.isEmpty != false { Text("No planted copies. Use Edit → Storage to place a plant.") }
             ForEach(store.confirmed?.plants ?? []) { plant in
-                Button {
-                    store.cancelCandidate(); store.selectedID = plant.id; sheet = nil
-                } label: { plantRow(plant) }.accessibilityIdentifier("editor.plant.\(plant.id)")
+                if store.editing {
+                    Button { store.cancelCandidate(); store.selectedID = plant.id; sheet = nil } label: {
+                        OwnedPlantRow(plant: plant, store: store, catalog: catalog)
+                    }.accessibilityIdentifier("editor.plant.\(plant.id)")
+                } else {
+                    NavigationLink { OwnedPlantDetailScreen(store: store, copyID: plant.id, catalog: catalog) } label: {
+                        OwnedPlantRow(plant: plant, store: store, catalog: catalog)
+                    }
+                }
             }
         }.navigationTitle("Garden plants")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
@@ -275,31 +293,19 @@ struct ConnectedGardenScreen: View {
     private var storageList: some View {
         List {
             if let message = store.message { Text(message).font(.callout) }
-            if store.inventory.isEmpty { Text("No stored plants. Storing a garden plant keeps its identity and progress.") }
+            if store.inventory.isEmpty { Text("No stored copies in the saved inventory. Storing a plant preserves its progress.") }
             ForEach(store.inventory) { plant in
-                Button {
-                    if !store.editing { store.editing = true }
-                    store.begin(plant, kind: .plant)
-                    if store.candidate != nil { sheet = nil }
-                } label: { plantRow(plant) }.disabled(!store.canEdit)
+                NavigationLink {
+                    OwnedPlantDetailScreen(store: store, copyID: plant.id, catalog: catalog, context: .storagePlacement,
+                                           placed: { sheet = nil })
+                } label: { OwnedPlantRow(plant: plant, store: store, catalog: catalog) }
+                    .accessibilityIdentifier("storage.copy.\(plant.id)")
             }
-            if store.nextCursor != nil {
-                Button(store.inventoryLoading ? "Loading…" : "Load more") { Task { await store.loadMore() } }
-                    .disabled(store.inventoryLoading)
-            }
-        }.navigationTitle("Plant storage")
+            InventoryPagination(store: store)
+        }.navigationTitle("Storage")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
     }
 
-    private func plantRow(_ plant: APIOwnedPlant) -> some View {
-        HStack(spacing: 12) {
-            if let rendered = store.render(plant) { PlantThumbnail(plant: rendered, catalog: catalog).frame(width: 48, height: 56) }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(plant.speciesId.capitalized).font(.headline)
-                Text("\(plant.variantId.capitalized) · \(plant.growthStage.title)").font(.subheadline).foregroundStyle(.secondary)
-            }
-        }.accessibilityElement(children: .combine)
-    }
 }
 
 @MainActor
@@ -360,10 +366,8 @@ struct GardenHostScreen: View {
         } else if !connection.savedURL.isEmpty {
             VStack(spacing: 16) {
                 Text("Your garden connection needs attention").font(.title2)
-                Text(connection.status ?? "Reconnect to load your saved garden.")
-                #if DEBUG
-                NavigationLink("Garden connection") { GardenConnectionScreen(connection: connection, catalog: catalog) }
-                #endif
+                Text("Sign in again through Settings → Account and sign-in to reconnect. Your saved requests are retained.")
+                NavigationLink("Account and sign-in") { AccountScreen(connection: connection, catalog: catalog) }
             }.padding()
         } else {
             GardenScreen(store: sample, catalog: catalog, active: active)

@@ -22,3 +22,6 @@ xcodebuild -project MovementForest.xcodeproj -scheme MovementForest \
 xcodebuild -project MovementForest.xcodeproj -scheme MovementForest -configuration Release \
   -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project MovementForest.xcodeproj -scheme MovementForest-Internal -configuration InternalRelease \
+  -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO build

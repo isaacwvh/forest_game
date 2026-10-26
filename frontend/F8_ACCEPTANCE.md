@@ -212,9 +212,13 @@ asset delivery and deployment are separate work.
 
 ## F8.2 local implementation and test flow
 
-Source implemented locally; Apple SDK build/XCTest/UI and iPhone acceptance are
-pending. No push or remote CI was run. On Mac, run `bash frontend/scripts/test-mac.sh`
-from the repository root before the device walkthrough.
+**F8.2 completed — user accepted 27 October 2026.** Live testing confirmed more
+seamless butterfly taps, acceptable draft icons, fixed pack lighting and working
+Milestones. The user explicitly closed this batch. Commit `cedba46` was pushed
+to GitHub `main`. Apple SDK build/XCTest/UI, broader accessibility/performance
+checks and current CI results are not established by this acceptance. On Mac,
+run `bash frontend/scripts/test-mac.sh` from the repository root for native checks.
+The walkthrough below remains the regression reference for F8.3.
 
 1. Cold-launch Garden and observe loading → model without an intermediate fallback
    or manual retry. Orbit, two-finger pan and pinch; tap each visible butterfly's
@@ -250,3 +254,63 @@ one welcome, claim recovery/freshness, runtime icon resolution, Milestones routi
 and four receipt rarities with both motion settings. Existing preload/cache,
 loading-to-model, timeout and renderer-retention tests remain unchanged. Added
 native tests are not recorded as passing until run with Apple SDKs.
+
+
+## F8.3 first-version frontend — source handoff, 27 October 2026
+
+Source is implemented locally. Native builds/XCTest and physical-device acceptance
+are pending; portable checks are recorded in VALIDATION.md. No push or CI was run.
+
+Use the existing account/backend installation. Debug includes tools. For optimized
+internal device testing select **MovementForest-Internal** (InternalRelease).
+Regular MovementForest archives public Release without Developer tools.
+
+1. Cold launch: Garden opens, with the existing recap/loading sequence. Dismiss
+   the recap. Check My plants / Garden / Edit / Activity order and the sidebar's
+   Exchange / Packs / Catalog / Milestones destinations. Orbit, pan and zoom.
+2. Open **My plants**. Planted appears above Stored. Inspect a copy in each section;
+   details have no Place/Move/Rotate/Store. Check progress, pinned multipliers and
+   skill state. Load additional stored pages, including duplicates. Return to
+   Garden: camera and loaded artwork remain unchanged.
+3. Tap **Edit**. Normal bottom navigation, Settings and sidebar disappear. Storage,
+   contextual controls and **Done editing** remain. Storage → copy opens details
+   with a bottom **Place**. Back out without Place: nothing previews or saves.
+4. Repeat Storage → details → Place, then Cancel. The copy remains stored. Repeat
+   and apply a valid placement (valid drag release also saves). Check invalid
+   placement, precise Position, rotation and adult preview; no invalid save occurs.
+5. Select a planted copy via the scene or **Select plant**. Check **Move, Rotate,
+   Store, Plant details**. Details only inspect. Confirm a move/rotation, then
+   Store. Done returns to Garden without undoing confirmed changes. My plants
+   shows the same copy in the correct section, preserving growth/profiles.
+6. Background with an unsubmitted preview: resume in browsing, with no edit sent.
+   Separately interrupt connectivity after submitting: Done, relaunch and retry
+   retain the original saved request, with one confirmed result. A pre-edit sync
+   that completes after Done must not submit a cancelled preview. Check cached
+   browsing and pagination while activity blocks editing. Switch accounts; no
+   previous copies, pending operations or details may leak into the next account.
+7. Garden's summary shows confirmed visitor tokens, attraction and stored visits /
+   capacity. Check Collect and accessible Welcome with pending/result/retry states.
+   Garden info contains rates, capacity explanations, hosted totals and skills.
+   Tap butterfly centres/edges at the upper scene boundary after orbit/pan/zoom,
+   through loading, refresh and resume. Repeated taps/claims award once.
+8. Visit Activity/Health, all sidebar pages, owned/catalogue details, account and
+   Settings, including empty/loading/offline/failure states. No raw IDs, payloads,
+   asset errors, schema/profile versions, verification output or developer setup
+   instructions belong in these normal views. Useful odds, skill explanations,
+   provisional/sample labels, consent and recovery remain available.
+9. Open **Settings → Developer tools → Diagnostics**. Inspect the live renderer,
+   current pending state, category/search filters and original request outcomes.
+   Copy/export manually. Relaunch and confirm recent history remains. General logs
+   omit credentials and Health bodies; explicit Health inspection remains local.
+   InternalRelease has this route; public Release does not.
+10. Recheck largest text, VoiceOver, Reduce Motion, 44-point controls and scrolling.
+    Recheck real background ≥30 seconds versus quiet brief Notification/Control
+    Centre interruptions, ordinary sync and manual refresh. Existing normal
+    details/info sheets retain their flow and entry blocking across backgrounding.
+    Verify the accepted two-tap pack lighting and Milestones claims. **Continue
+    later remains**; workout eligibility rules are unchanged.
+
+Run `bash frontend/scripts/test-mac.sh` on Mac for Debug XCTest/UI plus public
+Release and InternalRelease builds. Debug `--fixture-health --fixture-garden`
+provides an in-memory edit journey without network, disk journals or Health uploads;
+use live accounts for recovery/relaunch, visitor and reward acceptance.

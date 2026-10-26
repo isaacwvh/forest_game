@@ -226,7 +226,7 @@ struct VisitorWorldPose {
 @MainActor
 struct VisitorStatusPanel: View {
     @ObservedObject var store: VisitorCoordinator
-    @State private var explanation = false
+    @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let value = store.summary {
@@ -234,11 +234,11 @@ struct VisitorStatusPanel: View {
                     HStack {
                         QuantityLabel(metric: "tokens", text: "\(store.tokenBalance) tokens")
                         Spacer()
-                        Text("Stored \(value.claimableVisits)/\(value.capacity)")
+                        QuantityLabel(metric: "offline_capacity", text: "Stored visits \(value.claimableVisits)/\(value.capacity)")
                     }
                     VStack(alignment: .leading) {
                         QuantityLabel(metric: "tokens", text: "\(store.tokenBalance) visitor tokens")
-                        Text("Stored visits: \(value.claimableVisits) · Capacity \(value.capacity)")
+                        QuantityLabel(metric: "offline_capacity", text: "Stored visits: \(value.claimableVisits) · Capacity \(value.capacity)")
                     }
                 }.font(.subheadline).monospacedDigit()
                 if !store.eligible {
@@ -248,31 +248,17 @@ struct VisitorStatusPanel: View {
                 } else {
                     Text("Watch for a butterfly, then tap to welcome it.").font(.caption)
                 }
-                HStack {
+                actionLayout {
                     Button("Collect stored visits") { Task { await store.claim() } }
                         .disabled(!store.canRequestReward || value.claimableVisits == "0")
                         .accessibilityIdentifier("visitors.claim")
-                    Spacer(minLength: 4)
+                    if !textSize.isAccessibilitySize { Spacer(minLength: 4) }
                     if let opportunity = store.visibleOpportunity {
                         Button("Welcome visitor") { Task { await store.welcome(opportunity) } }
                             .disabled(!store.canRequestReward)
                             .accessibilityIdentifier("visitors.welcome")
                     }
                 }.font(.callout).frame(minHeight: 44)
-                DisclosureGroup("How visitors work", isExpanded: $explanation) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Placed plants contribute \(ExactAmount.water(value.totalAttractionMicroUnits)) attraction. Higher stages attract more; stored plants contribute none.")
-                        Text("Away rate: \(value.offlineVisitsPerHour) visits/hour. Only collected whole visits become tokens.")
-                        if let activeRate = value.activeVisitsPerHour {
-                            Text("Active arrival target: \(activeRate) visitors/hour while this garden is open. Tap butterflies to welcome them.")
-                        }
-                        if let seconds = value.secondsUntilFull {
-                            Text(seconds == 0 ? "Storage is full. Earned visits stay until collected." : "About \(max(1, (seconds + 59) / 60)) minutes until full while away.")
-                        } else { Text("Time to full is shown while inactive and producing visits.") }
-                        Text("Hosted: \(value.hostedTotal) · Active \(value.hostedActive) · Collected \(value.hostedOffline)")
-                        if value.isFixture { Text("Development rates and rewards · Balance is provisional.") }
-                    }.font(.caption).foregroundStyle(.secondary).padding(.top, 4)
-                }.font(.caption)
             } else { Text("Connecting visitors…").font(.caption) }
             if store.recoveringRequest || store.confirmingReward {
                 Label("Confirming saved visitor request…", systemImage: "clock").font(.caption)
@@ -283,6 +269,33 @@ struct VisitorStatusPanel: View {
                     .disabled(store.busy || store.recoveryLocked).font(.callout).frame(minHeight: 44)
                     .accessibilityIdentifier("visitors.retry")
             }
+        }
+    }
+
+    private var actionLayout: AnyLayout {
+        textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
+    }
+}
+
+@MainActor
+struct VisitorInformationSection: View {
+    @ObservedObject var store: VisitorCoordinator
+    var body: some View {
+        Section("Visitors") {
+            if let value = store.summary {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Placed plants contribute \(ExactAmount.water(value.totalAttractionMicroUnits)) attraction. Higher stages attract more; stored plants contribute none.")
+                    Text("Away rate: \(value.offlineVisitsPerHour) visits/hour. Only collected whole visits become tokens.")
+                    if let activeRate = value.activeVisitsPerHour {
+                        Text("Active arrival target: \(activeRate) visitors/hour while this garden is open. Tap butterflies to welcome them.")
+                    }
+                    if let seconds = value.secondsUntilFull {
+                        Text(seconds == 0 ? "Storage is full. Earned visits stay until collected." : "About \(max(1, (seconds + 59) / 60)) minutes until full while away.")
+                    } else { Text("Time to full is shown while inactive and producing visits.") }
+                    Text("Hosted: \(value.hostedTotal) · Active \(value.hostedActive) · Collected \(value.hostedOffline)")
+                    if value.isFixture { Text("Development rates and rewards · Balance is provisional.") }
+                }.font(.caption).foregroundStyle(.secondary).padding(.top, 4)
+            } else { Text("Visitor information is unavailable. Return to Garden and retry visitors.") }
         }
     }
 }

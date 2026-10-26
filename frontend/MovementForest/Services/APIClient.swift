@@ -62,6 +62,7 @@ struct APIClient {
     let baseURL: URL
     let tokens: any TokenProviding
     let transport: any HTTPTransport
+    var diagnosticScope: String? = nil
 
     @MainActor
     init(baseURL: URL, tokens: any TokenProviding) {
@@ -116,9 +117,11 @@ struct APIClient {
         }
         guard (200..<300).contains(response.statusCode) else {
             let detail = try? JSONDecoder().decode(APIErrorEnvelope.self, from: data)
+            DiagnosticHistory.shared.record("HTTP", "\(method) \(path) failed: \(response.statusCode) \(detail?.error.code ?? "http_error")", scope: diagnosticScope)
             throw APIError(status: response.statusCode, code: detail?.error.code ?? "http_error",
                            message: detail?.error.message ?? "The server could not complete this request (\(response.statusCode)).")
         }
+        DiagnosticHistory.shared.record("HTTP", "\(method) \(path) response: \(response.statusCode)", scope: diagnosticScope)
         return try ActivityWire.decoder().decode(T.self, from: data)
     }
 }

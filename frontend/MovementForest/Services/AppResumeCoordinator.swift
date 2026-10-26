@@ -17,8 +17,9 @@ enum LifecycleClock {
 enum LifecycleDiagnostics {
     private static let logger = Logger(subsystem: "MovementForest", category: "Lifecycle")
     static func event(_ message: String) {
-        #if DEBUG
+        #if DEBUG || INTERNAL_TOOLS
         logger.debug("\(LifecycleClock.elapsed, privacy: .public) \(message, privacy: .public)")
+        DiagnosticHistory.shared.record("Lifecycle", message)
         #endif
     }
 }

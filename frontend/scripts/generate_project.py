@@ -88,7 +88,7 @@ def generated_files():
                   add("frameworks-" + name, "PBXFrameworksBuildPhase", buildActionMask=2147483647, files=frameworks, runOnlyForDeploymentPostprocessing=0),
                   add("resources-" + name, "PBXResourcesBuildPhase", buildActionMask=2147483647, files=resources, runOnlyForDeploymentPostprocessing=0)]
         configs = []
-        for mode in ["Debug", "Release"]:
+        for mode in ["Debug", "Release", "InternalRelease"]:
             settings = {"PRODUCT_NAME": "$(TARGET_NAME)", "CODE_SIGN_STYLE": "Automatic",
                         "PRODUCT_BUNDLE_IDENTIFIER": "com.example.movementforest" + ("." + name if name != "MovementForest" else ""),
                         "TARGETED_DEVICE_FAMILY": "1", "SUPPORTS_MACCATALYST": "NO", "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD": "NO",
@@ -125,7 +125,7 @@ def generated_files():
               add("products-group", "PBXGroup", name="Products", children=products, sourceTree="<group>")]
     main_group = add("main-group", "PBXGroup", children=groups, sourceTree="<group>")
     configs = []
-    for mode in ["Debug", "Release"]:
+    for mode in ["Debug", "Release", "InternalRelease"]:
         settings = {"SDKROOT": "iphoneos", "IPHONEOS_DEPLOYMENT_TARGET": "16.0", "CLANG_ENABLE_MODULES": "YES",
                     "CLANG_ENABLE_OBJC_ARC": "YES", "SWIFT_VERSION": "5.0", "SWIFT_STRICT_CONCURRENCY": "targeted",
                     "ENABLE_USER_SCRIPT_SANDBOXING": "YES", "GCC_C_LANGUAGE_STANDARD": "gnu17",
@@ -133,6 +133,8 @@ def generated_files():
                     "DEBUG_INFORMATION_FORMAT": "dwarf" if mode == "Debug" else "dwarf-with-dsym"}
         if mode == "Debug":
             settings.update({"SWIFT_ACTIVE_COMPILATION_CONDITIONS": "DEBUG $(inherited)", "ENABLE_TESTABILITY": "YES", "ONLY_ACTIVE_ARCH": "YES"})
+        if mode == "InternalRelease":
+            settings["SWIFT_ACTIVE_COMPILATION_CONDITIONS"] = "INTERNAL_TOOLS $(inherited)"
         configs.append(add("project-configuration-" + mode, "XCBuildConfiguration", buildSettings=settings, name=mode))
     config_list = add("project-configurations", "XCConfigurationList", buildConfigurations=configs, defaultConfigurationIsVisible=0, defaultConfigurationName="Release")
     add("project", "PBXProject", attributes={"BuildIndependentTargetsInParallel": "YES", "LastUpgradeCheck": "1600",
@@ -163,7 +165,10 @@ def generated_files():
 </Scheme>
 '''
     return {"MovementForest.xcodeproj/project.pbxproj": project,
-            "MovementForest.xcodeproj/xcshareddata/xcschemes/MovementForest.xcscheme": scheme}
+            "MovementForest.xcodeproj/xcshareddata/xcschemes/MovementForest.xcscheme": scheme,
+            "MovementForest.xcodeproj/xcshareddata/xcschemes/MovementForest-Internal.xcscheme":
+                scheme.replace('buildConfiguration="Release"', 'buildConfiguration="InternalRelease"').replace(
+                    '<LaunchAction buildConfiguration="Debug"', '<LaunchAction buildConfiguration="InternalRelease"')}
 
 
 def main():

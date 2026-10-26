@@ -13,7 +13,7 @@ struct AccountScreen: View {
             } else {
                 List {
                     Text("Account sign-in is not configured in this build.").font(.headline)
-                    Text(connection.configurationIssue ?? "Add the Supabase URL, publishable key and game API URL to Configuration/Local.xcconfig, then rebuild. See frontend/F5A_AUTH_ACCEPTANCE.md.")
+                    Text("Sign-in is unavailable in this version. You can try again after installing an updated build.")
                     Text("You can continue exploring the sample garden.").foregroundStyle(.secondary)
                 }
             }
@@ -103,7 +103,7 @@ private struct ManagedAccountScreen: View {
                         .accessibilityIdentifier("account.password")
                     if creating {
                         SecureField("Confirm password", text: $confirmation).textContentType(.newPassword)
-                        Text("Use at least eight characters and follow any additional password requirements shown by your project.")
+                        Text("Use at least eight characters and follow the password requirements shown here.")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                     Button(creating ? "Create account" : "Sign in") { Task {

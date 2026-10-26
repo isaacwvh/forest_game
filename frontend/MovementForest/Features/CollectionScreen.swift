@@ -143,7 +143,7 @@ struct CollectionScreen: View {
                                 PackThumbnail(packID: pack.packId)
                                 Text(store.definitions[pack.definitionID]?.displayName ?? pack.packId).font(.headline)
                             }
-                            Text("Version \(pack.version) · acquired \(pack.acquiredAt.formatted(date: .abbreviated, time: .shortened))")
+                            Text("Acquired \(pack.acquiredAt.formatted(date: .abbreviated, time: .shortened))")
                                 .font(.caption).foregroundStyle(.secondary)
                             if let definition = store.definitions[pack.definitionID] {
                                 Button("View contents and odds") { inspectingPack = definition }
@@ -299,14 +299,13 @@ struct PackContentsScreen: View {
     var body: some View {
         List {
             Text(pack.description)
-            Text(pack.schemaVersion == 2 ? "Choose rarity, then a species equally within that rarity, then its weighted variant." :
-                 "Legacy pack: choose rarity, then one listed species/variant outcome equally.")
+            Text("Each pack contains one plant. Its possible plants and probabilities are shown below.")
             ForEach(pack.rarities) { pool in
                 Section("\(pool.rarity.capitalized) · \(pack.probability(pool))") {
                     ForEach(pack.speciesOdds.filter { $0.rarity == pool.rarity }) { odds in SpeciesOddsView(odds: odds) }
                 }
             }
-            Text("Pack version \(pack.version). This pack keeps these contents after future updates.")
+            Text("This pack keeps its contents and probabilities after future updates.")
                 .font(.caption).foregroundStyle(.secondary)
         }.navigationTitle(pack.displayName)
     }
@@ -395,7 +394,7 @@ private struct CatalogDetailScreen: View {
             }
             Section("Draw probabilities by pack") {
                 ForEach(offers.filter { $0.pack.speciesOdds.contains { $0.speciesId == row.species.speciesId } }) { offer in
-                    DisclosureGroup("\(offer.pack.displayName) · version \(offer.pack.version)") {
+                    DisclosureGroup(offer.pack.displayName) {
                         ForEach(offer.pack.speciesOdds.filter { $0.speciesId == row.species.speciesId }) { odds in SpeciesOddsView(odds: odds) }
                     }
                 }
@@ -452,7 +451,7 @@ private struct ReceiptRow: View {
                     Text("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)").font(.headline)
                     Text("\(receipt.rarity?.capitalized ?? "Plant") · Awarded as a sprout").font(.caption)
                     if let date = receipt.openedAt { Text(date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }
-                    Text("Place new plants from Garden → Storage.").font(.caption).foregroundStyle(.secondary)
+                    Text("Place new plants from Edit → Storage → plant details → Place.").font(.caption).foregroundStyle(.secondary)
                 }
             }
         } else if receipt.milestoneId != nil {

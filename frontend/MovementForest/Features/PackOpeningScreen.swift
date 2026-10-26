@@ -112,7 +112,7 @@ struct PackOpeningScreen: View {
                     } else if step == .result, let result = receipt, let plant = result.plant {
                         Text("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)").font(.title2.bold()).multilineTextAlignment(.center)
                         Text(PackRevealStep.rarityName(result.rarity)).font(.headline)
-                        Text("Your sprout is saved in Storage. Plant it from Garden → Storage.").multilineTextAlignment(.center)
+                        Text("Your sprout is saved in Storage. Plant it from Edit → Storage → plant details → Place.").multilineTextAlignment(.center)
                         Button("Continue") { dismiss() }.buttonStyle(.borderedProminent).controlSize(.large)
                             .frame(minHeight: 44).accessibilityFocused($actionFocused).accessibilityIdentifier("pack.continue")
                     } else { ProgressView().tint(.white).accessibilityLabel("Opening pack") }

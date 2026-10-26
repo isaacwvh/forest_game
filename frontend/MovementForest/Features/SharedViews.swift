@@ -7,6 +7,16 @@ struct EntryPresentationBlocker: PreferenceKey {
     static func reduce(value: inout Bool, nextValue: () -> Bool) { value = value || nextValue() }
 }
 
+enum OwnedCopyLabel {
+    static func title(_ id: UUID, in plants: [APIOwnedPlant]) -> String {
+        guard let plant = plants.first(where: { $0.id == id }) else { return "Plant progress" }
+        let copies = plants.filter { $0.speciesId == plant.speciesId && $0.variantId == plant.variantId }
+            .sorted { $0.id.uuidString < $1.id.uuidString }
+        let suffix = copies.count > 1 ? " · Copy \((copies.firstIndex { $0.id == id } ?? 0) + 1)" : ""
+        return "\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)" + suffix
+    }
+}
+
 enum ActivityMetricLabel {
     static func title(_ key: String) -> String {
         switch key {

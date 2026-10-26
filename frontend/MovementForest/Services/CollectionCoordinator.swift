@@ -64,6 +64,11 @@ final class CollectionCoordinator: ObservableObject {
         catch { recoveryLocked = true; message = "The saved collection request needs attention. It has been retained." }
     }
 
+    private var diagnosticScope: String { DiagnosticHistory.scope(server: service.serverID, user: userID) }
+    private func displayFailure(_ error: Error) -> String {
+        PlayerMessage.recordFailure("Collection", error, requestID: state.pending?.id.uuidString, scope: diagnosticScope)
+        return PlayerMessage.failure(error, fallback: "The collection couldn’t update. Retry to recover any saved request.")
+    }
     var canMutate: Bool { attached && !busy && !recoveryLocked && state.pending == nil && tokenBalance != nil }
     func canAfford(_ offer: APIExchangeOffer, quantity: Int) -> Bool {
         guard let balance = tokenBalance.flatMap(ExactAmount.integer), let cost = ExactAmount.integer(offer.tokenCost) else { return false }
@@ -81,6 +86,7 @@ final class CollectionCoordinator: ObservableObject {
     private func recover() async throws {
         guard let pending = state.pending else { return }
         do {
+            DiagnosticHistory.shared.record("Collection", "sending \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
             let receipt = try await service.mutate(pending)
             guard attached else { return }
             let isOpening = pending.kind == .open
@@ -103,6 +109,7 @@ final class CollectionCoordinator: ObservableObject {
                 exchangeMessage = "Purchase confirmed. Your packs are saved."
             }
             applyWallet(receipt.tokenBalance, version: receipt.economyVersion)
+            DiagnosticHistory.shared.record("Collection", "confirmed \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
             message = pending.kind == .milestone ? "Milestone confirmed: +\(receipt.tokensEarned ?? "0") visitor tokens." :
                 (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
             if isOpening { await onPlantAwarded?() }
@@ -146,7 +153,7 @@ final class CollectionCoordinator: ObservableObject {
         do { try await recover(); guard attached else { return }; try await loadCurrent() }
         catch { if attached {
             refreshFailed = true
-            message = "\(error.localizedDescription)"
+            message = displayFailure(error)
             if state.pending?.kind == .exchange { exchangeMessage = "Purchase confirmation interrupted. Retry the saved request to recover its result." }
             else if exchangeOfferID != nil && confirmedExchange == nil { exchangeMessage = message }
         } }
@@ -162,7 +169,7 @@ final class CollectionCoordinator: ObservableObject {
             try await loadCurrent()
         } catch { if attached {
             refreshFailed = true
-            message = error.localizedDescription
+            message = displayFailure(error)
             if operation.kind == .exchange {
                 if confirmedExchange?.requestId == operation.id {
                     exchangeMessage = "Purchase confirmed. Refresh the collection to update its list."
@@ -180,14 +187,14 @@ final class CollectionCoordinator: ObservableObject {
             let body = try ActivityWire.encoder().encode(CollectionExchangeBody(requestId: id, offerId: offer.offerId,
                                                                                offerVersion: offer.offerVersion, quantity: quantity))
             await submit(PendingCollectionOperation(id: id, kind: .exchange, target: nil, body: body))
-        } catch { message = error.localizedDescription }
+        } catch { message = displayFailure(error) }
     }
     func open(_ pack: APIOwnedPack) async {
         let id = UUID()
         do {
             let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))
             await submit(PendingCollectionOperation(id: id, kind: .open, target: pack.id, body: body))
-        } catch { message = error.localizedDescription }
+        } catch { message = displayFailure(error) }
     }
     func claim(_ milestone: APIIntroMilestone) async {
         guard canMutate, milestone.eligible, !milestone.claimed,
@@ -197,7 +204,7 @@ final class CollectionCoordinator: ObservableObject {
             let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))
             await submit(PendingCollectionOperation(id: id, kind: .milestone, target: nil,
                                                      body: body, milestoneID: milestone.id))
-        } catch { message = error.localizedDescription }
+        } catch { message = displayFailure(error) }
     }
     func dismissResult() {
         do { try persist(CollectionJournalState(pending: state.pending, result: nil)) }
@@ -220,6 +227,6 @@ final class CollectionCoordinator: ObservableObject {
                 let ids = Set(packs.map(\.id))
                 packs += page.packs.filter { !ids.contains($0.id) }; packCursor = page.nextCursor
             }
-        } catch { if attached { message = error.localizedDescription } }
+        } catch { if attached { message = displayFailure(error) } }
     }
 }

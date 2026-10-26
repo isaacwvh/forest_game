@@ -172,7 +172,7 @@ bash frontend/scripts/test-mac.sh SIMULATOR_UDID
 ```
 
 The script validates plists/resources, runs Debug unit/UI tests, and builds
-Release to check the configuration without developer screens. UI tests use
+public Release and InternalRelease to check both tools configurations. UI tests use
 synthetic activity and never request real Health access. For manual simulator
 testing, set the Run scheme argument `--fixture-health`; optionally also use
 `--empty-health` or `--failed-health`. These switches exist only in Debug.
@@ -200,3 +200,16 @@ RealityKit rendering or HealthKit device aggregation.
 Background Health delivery, CDN downloads/cache eviction, reward celebrations,
 full storage editing and server writes are deliberately outside F1–F3. Device
 performance, full minimum-device coverage and App Store preparation remain open.
+
+## F8.3 presentation
+
+Bottom navigation is My plants / Garden / Edit / Activity. Garden remains mounted
+through browsing and focused editing. My plants is read-only; placement starts at
+Edit → Storage → copy details → Place. Done cancels previews and retains submitted
+requests. Garden info holds visitor explanations and active skills.
+
+Internal diagnostics: Settings → Developer tools → Diagnostics in Debug or the
+MovementForest-Internal scheme (InternalRelease). The normal MovementForest
+scheme archives public Release without these routes. See F8_ACCEPTANCE.md for the
+full walkthrough. Debug UI tests additionally use `--fixture-health --fixture-garden`
+for a synthetic, in-memory owned-copy/edit flow without network or Health uploads.

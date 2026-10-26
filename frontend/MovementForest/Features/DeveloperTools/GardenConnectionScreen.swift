@@ -1,6 +1,6 @@
 import SwiftUI
 
-#if DEBUG
+#if DEBUG || INTERNAL_TOOLS
 @MainActor
 struct GardenConnectionScreen: View {
     @ObservedObject var connection: GardenConnection

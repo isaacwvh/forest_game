@@ -32,7 +32,7 @@ final class ActivitySyncCoordinator: ObservableObject {
             saved = try resolvedJournal.load(server: service.serverID, user: editor.profile.userId) ?? ActivityJournalState()
             enabled = saved.enabled; status = saved.status; pendingCount = saved.operations.count
             includesOptionalActivity = saved.expandedInputsEnabled == true
-            message = enabled ? "Ready to reconcile activity." : "Activity sync is off."
+            message = enabled ? "Ready to sync activity." : "Activity sync is off."
         } catch {
             recoveryLocked = true
             message = "The saved activity queue could not be read. Sync and editing are paused to protect pending requests."
@@ -185,10 +185,10 @@ final class ActivitySyncCoordinator: ObservableObject {
                     try await refreshStatus()
                 }
                 if status?.device?.ready != true {
-                    message = "Waiting for readable current-day activity to establish a baseline. No historical growth was awarded."
+                    message = "Waiting for today’s readable activity. No earlier movement was counted."
                 } else if observation.days.last?.steps == nil {
                     message = "Sync confirmed, but today's steps are unavailable. Existing growth is preserved; unlock your iPhone and review Health access."
-                } else { message = "Activity confirmed. New movement grows plants through their pinned activity multipliers." }
+                } else { message = "Activity confirmed. New movement grows your planted copies." }
                 if observation.omittedWorkouts > 0 {
                     message += " Some workout records could not be uploaded; other readable activity was synced."
                 }
@@ -199,20 +199,21 @@ final class ActivitySyncCoordinator: ObservableObject {
         } catch {
             guard active else { return false }
             guard !(error is CancellationError), !Task.isCancelled else { return false }
+            PlayerMessage.recordFailure("Activity", error, requestID: saved.operations.first?.id.uuidString, scope: editor.diagnosticScope)
             let issue = error as? APIError
             if issue?.status == 401 {
                 message = "Sign in again to the same account; saved requests will resume unchanged."
             } else if issue?.code == "idempotency_conflict" {
                 recoveryLocked = true
-                message = "A saved activity request conflicts with its receipt. Recovery is paused; inspect the pending request ID."
+                message = "A saved activity update couldn’t be confirmed. Sync and editing are paused to protect it. Sign in again to reconnect; your saved update is retained."
             } else if issue?.code == "inactive_activity_device" || issue?.code == "stale_activity_device" || issue?.code == "activity_device_mismatch" {
                 message = "The reporting device changed. Refresh, then explicitly choose which iPhone reports activity."
             } else if let issue = issue {
-                message = "Activity was not confirmed. \(issue.message)"
-            } else if let local = error as? ForestError {
-                message = "Activity was not confirmed. \(local.localizedDescription) Saved requests are retained."
+                message = PlayerMessage.failure(issue, fallback: "Activity couldn’t be confirmed. Retry sync; saved requests are retained.")
+            } else if error is ForestError {
+                message = "Activity couldn’t be confirmed. Retry sync; saved requests are retained."
             } else if error is DecodingError {
-                message = "The server response could not be verified. The original request is retained; reconnect before retrying."
+                message = "Activity couldn’t be confirmed. Your saved update is retained; reconnect before retrying."
             } else if (error as NSError).domain == NSCocoaErrorDomain {
                 message = "Activity data could not be saved on this iPhone. Check available storage and retry; existing requests are retained."
             } else {
@@ -325,6 +326,7 @@ final class ActivitySyncCoordinator: ObservableObject {
             if acknowledgementsOnly && operation.kind != .acknowledgement { return }
             guard active else { throw CancellationError() }
             do {
+                DiagnosticHistory.shared.record("Activity", "sending \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: editor.diagnosticScope)
                 switch operation.kind {
                 case .enrolment:
                     let result = try await service.enrol(body: operation.body)
@@ -354,6 +356,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                 throw error
             }
             guard active else { throw CancellationError() }
+            DiagnosticHistory.shared.record("Activity", "confirmed \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: editor.diagnosticScope)
             var next = saved; next.operations.removeFirst()
             if let recap = operation.recapID { next.dismissedRecaps.removeAll { $0 == recap } }
             try save(next)
@@ -408,7 +411,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                 "Recap acknowledgement is queued behind saved activity. Confirm it with Sync now."
         } catch let error as APIError where error.code == "idempotency_conflict" {
             recoveryLocked = true
-            message = "The recap request conflicts with a server receipt. Recovery is paused; inspect the pending request ID."
+            message = "The recap couldn’t be confirmed. Sign in again to reconnect; your saved request is retained."
         } catch {
             message = "Recap acknowledgement is not confirmed. Any saved request will retry unchanged; your growth is safe."
         }
