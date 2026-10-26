@@ -5,6 +5,17 @@ be recorded separately; portable parsing is not Apple SDK compilation.
 
 ## Lifecycle follow-up — source implemented, iPhone acceptance pending
 
+**First-return / butterfly retest:** after this follow-up, repeat a 35–45-second
+absence and return without opening Notification/Control Centre or tapping the
+screen. The recap must appear on that first return. Dismiss it, then briefly open
+Notification Centre: no second recap. Repeat from Garden, Activity and Packs with
+no existing blocking flow. Manual Sync now must remain quiet. Force-close and
+launch again to check startup artwork: the model is preloaded during connection,
+and any remaining import shows Loading butterfly rather than an old butterfly.
+The actual model must replace loading without a tap, resize, recap dismissal or
+another app switch. Welcome visitor remains usable during the import. An actual
+asset failure still shows its explicit recovery message/fallback.
+
 Use the existing installation and account; do not uninstall, clear queues or
 reset Health consent. No backend migration or balance change is needed. Copy the
 updated frontend source and Xcode project to the Mac, keeping the existing local

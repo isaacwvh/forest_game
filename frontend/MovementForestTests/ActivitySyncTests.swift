@@ -138,6 +138,42 @@ private final class SyncTestService: GardenServing, ActivityServing {
 
 @MainActor
 final class ActivitySyncTests: XCTestCase {
+    func testFirstActiveEventAfterAbsencePresentsRecapWithoutNotificationCentreRoundTrip() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        var now: TimeInterval = 100
+        let entry = AppEntryRecapCoordinator(uptime: { now }), resume = AppResumeCoordinator()
+        XCTAssertTrue(resume.sceneChanged(to: .active, recap: entry))
+        let launch = try XCTUnwrap(resume.reconciliation(for: sync))
+        XCTAssertTrue(entry.begin(sync: sync, editor: editor, reconciliation: launch))
+        _ = await launch.value
+        entry.showing = false; entry.dismissed()
+
+        XCTAssertFalse(resume.sceneChanged(to: .inactive, recap: entry))
+        XCTAssertFalse(resume.sceneChanged(to: .background, recap: entry))
+        now += 35
+        // This is the first return event, with no second interruption or user input.
+        XCTAssertTrue(resume.sceneChanged(to: .active, recap: entry))
+        let returned = try XCTUnwrap(resume.reconciliation(for: sync))
+        XCTAssertTrue(entry.begin(sync: sync, editor: editor, reconciliation: returned))
+        XCTAssertTrue(entry.showing)
+        XCTAssertTrue(entry.loading)
+        // A delayed startup closure holding the old background phase cannot undo it.
+        XCTAssertTrue(resume.initializeSceneIfNeeded(to: .background, recap: entry))
+        XCTAssertTrue(entry.showing)
+        _ = await returned.value
+        entry.showing = false; entry.dismissed()
+        _ = await sync.synchronize()
+        XCTAssertFalse(entry.begin(sync: sync, editor: editor))
+        resume.sceneChanged(to: .inactive, recap: entry)
+        now += 1
+        resume.sceneChanged(to: .active, recap: entry)
+        XCTAssertFalse(entry.begin(sync: sync, editor: editor))
+        XCTAssertFalse(entry.showing)
+    }
+
     func testEntryJoinsResumeImmediatelyAndDismissalLeavesSharedSyncRunning() async throws {
         let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
         let editor = try editor(service), health = health(service.fixture)

@@ -2,6 +2,7 @@ import XCTest
 import Foundation
 import SwiftUI
 import UIKit
+import RealityKit
 @testable import MovementForest
 
 private struct VisitorContract: Decodable {
@@ -74,6 +75,69 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testPreloadCachesBeforeRendererExistsAndWarmAttachmentDoesNotWaitForAnotherTask() async throws {
+        var importGate: CheckedContinuation<Entity, Error>?
+        defer { importGate?.resume(returning: Entity()) }
+        let library = VisitorModelLibrary(importer: {
+            try await withCheckedThrowingContinuation { importGate = $0 }
+        })
+        library.preload(); library.preload()
+        XCTAssertEqual(library.loadCount, 1)
+        try await waitUntil { importGate != nil }
+        XCTAssertNil(library.cachedClone())
+        let pending = try XCTUnwrap(importGate)
+        pending.resume(returning: Entity()); importGate = nil
+        try await waitUntil { library.cachedClone() != nil }
+
+        let fixture = try VisitorContract.load()
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: FakeVisitors(fixture), journal: MemoryVisitorJournal())
+        let renderer = RealityGardenRenderer(visitorModels: library)
+        defer { renderer.stop() }
+        renderer.setVisitors(store)
+        // Readiness must be synchronous when startup has already warmed the asset.
+        XCTAssertTrue(renderer.visitorAssetReady)
+        XCTAssertEqual(library.loadCount, 1)
+        renderer.detachView(); renderer.setVisitors(store)
+        XCTAssertTrue(renderer.visitorAssetReady)
+    }
+
+    #if DEBUG
+    func testOverlayChangesFromLoadingToModelWithoutSceneOrLayoutChange() async throws {
+        let fixture = try VisitorContract.load()
+        let store = VisitorCoordinator(userID: UUID(), installationID: try XCTUnwrap(fixture.active.session?.installationId),
+                                       service: FakeVisitors(fixture), journal: MemoryVisitorJournal())
+        store.apply(fixture.active); store.setEligible(true, reconcile: false)
+        XCTAssertFalse(store.visibleOpportunities.isEmpty)
+        var importGate: CheckedContinuation<Entity, Error>?
+        let library = VisitorModelLibrary(importer: {
+            try await withCheckedThrowingContinuation { importGate = $0 }
+        })
+        let renderer = RealityGardenRenderer(visitorModels: library)
+        renderer.setVisitors(store)
+        var states: [VisitorArtworkState] = []
+        VisitorVisualDiagnostics.onArtwork = { _, state in states.append(state) }
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = UIHostingController(rootView: VisitorGardenOverlay(store: store, renderer: renderer))
+        window.makeKeyAndVisible()
+        defer {
+            importGate?.resume(returning: Entity())
+            window.isHidden = true; window.rootViewController = nil
+            VisitorVisualDiagnostics.onArtwork = nil; renderer.stop()
+        }
+        try await waitUntil { importGate != nil && states.contains(.loading) }
+        XCTAssertFalse(states.contains(where: { $0.usesFallback }))
+        let frame = window.frame
+        let pending = try XCTUnwrap(importGate)
+        pending.resume(returning: Entity()); importGate = nil
+        try await waitUntil { states.contains(.model) }
+        XCTAssertTrue(renderer.visitorAssetReady)
+        XCTAssertEqual(window.frame, frame)
+        XCTAssertFalse(states.contains(where: { $0.usesFallback }))
+        XCTAssertEqual(library.loadCount, 1)
+    }
+    #endif
+
     func testLoadedButterflySurvivesPausesAndRendererReplacementWithoutAnotherImport() async throws {
         let fixture = try VisitorContract.load()
         let service = FakeVisitors(fixture)

@@ -1,9 +1,27 @@
 import XCTest
 import Foundation
+import Combine
 @testable import MovementForest
 
 @MainActor
 final class AppLifecycleTests: XCTestCase {
+    func testPublishedForegroundFollowsEventAndCannotBeOverwrittenByStaleStartupPhase() {
+        let resume = AppResumeCoordinator(), recap = AppEntryRecapCoordinator()
+        var observed: [Bool] = []
+        let updates = resume.$foreground.sink { observed.append($0) }
+        defer { updates.cancel() }
+        XCTAssertFalse(resume.initializeSceneIfNeeded(to: .inactive, recap: recap))
+        XCTAssertTrue(resume.sceneChanged(to: .active, recap: recap))
+        XCTAssertTrue(resume.foreground)
+        XCTAssertTrue(resume.initializeSceneIfNeeded(to: .inactive, recap: recap))
+        XCTAssertTrue(resume.foreground)
+        XCTAssertFalse(resume.sceneChanged(to: .background, recap: recap))
+        XCTAssertFalse(resume.initializeSceneIfNeeded(to: .active, recap: recap))
+        XCTAssertFalse(resume.foreground)
+        XCTAssertTrue(resume.sceneChanged(to: .active, recap: recap))
+        XCTAssertEqual(observed, [false, true, false, true])
+    }
+
     func testEntryThresholdUsesEachActualAbsenceRatherThanAccumulatingShortTrips() {
         var gate = AppEntryGate()
         let account = UUID()

@@ -71,6 +71,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private let rig = AnchorEntity(world: .zero)
     private let camera = PerspectiveCamera()
     private let loader = PlantModelLoader()
+    private let visitorModels: VisitorModelLibrary
     private let visitorRoot = AnchorEntity(world: .zero)
     private weak var visitorStore: VisitorCoordinator?
     private var visitorTemplate: Entity?
@@ -109,7 +110,10 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var frameTime: Double = 0
     private var frameCount = 0
 
-    override init() {
+    override convenience init() { self.init(visitorModels: VisitorModelLibrary.shared) }
+
+    init(visitorModels: VisitorModelLibrary) {
+        self.visitorModels = visitorModels
         view = ARView(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
         super.init()
         view.isHidden = true
@@ -436,11 +440,19 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         }
         visitorStore = store
         guard store != nil, visitorTemplate == nil, visitorLoadTask == nil else { return }
+        if let cached = visitorModels.cachedClone() {
+            visitorTemplate = cached; visitorAssetReady = true; visitorAssetIssue = nil
+            updateVisitors()
+            LifecycleDiagnostics.event("butterfly attached from cache renderer=\(diagnosticID)")
+            return
+        }
         let token = UUID(); visitorGeneration = token
+        visitorAssetIssue = nil
         let rendererID = diagnosticID
+        let models = visitorModels
         visitorLoadTask = Task { [weak self] in
             do {
-                let adapter = try await VisitorModelLibrary.shared.load()
+                let adapter = try await models.load()
                 try Task.checkCancellation()
                 guard let self = self, !self.disposed, self.visitorGeneration == token else { return }
                 self.visitorTemplate = adapter; self.visitorAssetReady = true; self.visitorAssetIssue = nil

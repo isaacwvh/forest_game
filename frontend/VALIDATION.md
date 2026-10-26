@@ -406,6 +406,34 @@ workflow failure summaries were added to make future failures inspectable.
 Follow VISITOR_RESCALE_ACCEPTANCE.md after
 applying backend/VISITOR_RESCALE.md and installing the updated Mac-built app.
 
+## F8.1 first-return and butterfly observation correction — 26 October 2026
+
+The user's iPhone retest found that a genuine long return could leave the recap
+pending until the next Notification Centre round trip, and old butterfly overlays
+still appeared at startup. Manual sync correctly stayed quiet.
+
+Source inspection found that root eligibility still read the environment phase
+inside the scene callback instead of exclusively using its new event value.
+The callback now updates one published foreground state before deciding on entry;
+one-time startup initialization cannot replay an older phase. The visitor overlay
+previously held an unobserved optional renderer and read readiness/projection in
+GeometryReader. A dedicated observed wrapper now supplies explicit artwork state,
+with per-frame projection resolved before layout. The butterfly is preloaded at
+app startup, cached imports attach synchronously, and normal loading has its own
+indicator. Failure retains fallback/retry; reward eligibility/accounting is intact.
+
+Added four native regression cases: first-return presentation without a second
+interruption and without manual-sync rearming; published scene transitions with
+stale startup rejection; preloading before renderer attachment; and a hosted
+overlay changing from delayed loading to model state without a layout/scene event.
+
+Passed here: generated-project and portable frontend assets/fixture contracts,
+all 59 Swift syntax parses, and diff whitespace checks. **Not executed:** Apple SDK
+compilation, XCTest/UI, Debug/Release builds, iPhone retest or Instruments. The
+source defects match the reported symptoms; exact on-device timing remains to be
+verified using the targeted sequence in `F8_ACCEPTANCE.md`. No backend, rewards,
+database, Health consent or art package was changed.
+
 ## F8.1 lifecycle follow-up — 26 October 2026
 
 Source adds one foreground resume owner and cancellation-responsive sync waiters,

@@ -34,6 +34,7 @@ final class AppContainer: ObservableObject {
         activity = ActivityStore(provider: HealthKitService())
         #endif
         connection.configureHealth(activity)
+        VisitorModelLibrary.shared.preload()
         loadCatalog()
     }
 
@@ -63,11 +64,17 @@ struct RootView: View {
     }
 
     private var entryAllowed: Bool {
-        phase == .active && !settingsPresented && !menuPresented && !packOpeningPresented && !childEntryBlocked
+        resume.foreground && !settingsPresented && !menuPresented && !packOpeningPresented && !childEntryBlocked
     }
+
+    private func sceneChanged(to value: ScenePhase) {
+        // Use the event value. The callback's captured environment can still
+        // describe the preceding scene phase during the transition.
+        if resume.sceneChanged(to: value, recap: entryRecap) { presentEntryIfReady() }
+    }
+
     private func presentEntryIfReady() {
-        guard phase == .active else { return }
-        resume.activate(); entryRecap.foreground()
+        guard resume.foreground else { return }
         guard let sync = connection.activitySync,
               let editor = connection.editor, sync.isAttached(to: editor) else {
             if !connection.connecting, let catalog = container.catalog {
@@ -179,6 +186,9 @@ struct RootView: View {
                     if !entryRecap.showing, let editor = connection.editor { entryRecap.skipEntry(editor: editor) }
                 }
                 .task {
+                    // Initialize once, before suspension. Never replay an old
+                    // environment snapshot after authentication finishes.
+                    if resume.initializeSceneIfNeeded(to: phase, recap: entryRecap) { presentEntryIfReady() }
                     if container.garden.garden == nil { await container.garden.load() }
                     if !ProcessInfo.processInfo.arguments.contains("--fixture-health") {
                         await container.connection.restore(assets: catalog)
@@ -186,12 +196,7 @@ struct RootView: View {
                     presentEntryIfReady()
                 }
                 .onChange(of: phase) { value in
-                    switch value {
-                    case .background: resume.background(); entryRecap.background()
-                    case .inactive: resume.inactive()
-                    case .active: presentEntryIfReady()
-                    @unknown default: break
-                    }
+                    sceneChanged(to: value)
                 }
             } else {
                 RecoveryView(title: "Your forest couldn’t load", message: container.startupError ?? "Resources are unavailable.",

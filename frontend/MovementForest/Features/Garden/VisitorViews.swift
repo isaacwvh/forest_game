@@ -27,15 +27,65 @@ struct VisitorGardenOverlay: View {
     var reduceMotionOverride: Bool? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
+        if let renderer = renderer {
+            RenderedVisitorGardenOverlay(store: store, renderer: renderer, reduceMotion: reduceMotionOverride ?? reduceMotion)
+        } else {
+            VisitorOverlayContent(store: store, renderer: nil, artwork: .screenSpace, reduceMotion: reduceMotionOverride ?? reduceMotion)
+        }
+    }
+}
+
+enum VisitorArtworkState: Equatable {
+    case screenSpace, loading, model, failure
+    var usesFallback: Bool { self == .screenSpace || self == .failure }
+}
+
+@MainActor
+private struct RenderedVisitorGardenOverlay: View {
+    @ObservedObject var store: VisitorCoordinator
+    @ObservedObject var renderer: RealityGardenRenderer
+    let reduceMotion: Bool
+    var body: some View {
+        // Observe readiness here, outside GeometryReader's cached layout closure.
+        let artwork: VisitorArtworkState = renderer.visitorAssetReady ? .model :
+            (renderer.visitorAssetIssue == nil ? .loading : .failure)
+        VisitorOverlayContent(store: store, renderer: renderer, artwork: artwork, reduceMotion: reduceMotion)
+    }
+}
+
+@MainActor
+private struct VisitorOverlayContent: View {
+    @ObservedObject var store: VisitorCoordinator
+    let renderer: RealityGardenRenderer?
+    let artwork: VisitorArtworkState
+    let reduceMotion: Bool
+    var body: some View {
         TimelineView(.animation(minimumInterval: 0.2, paused: !store.eligible)) { _ in
             ZStack {
-                ForEach(store.visibleOpportunities) { visitor in
-                    VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotionOverride ?? reduceMotion, renderer: renderer)
-                        .id(visitor.id)
+                if artwork == .loading {
+                    if !store.visibleOpportunities.isEmpty {
+                        ProgressView("Loading butterfly…").font(.caption)
+                            .allowsHitTesting(false).accessibilityIdentifier("visitors.artworkLoading")
+                    }
+                } else {
+                    ForEach(store.visibleOpportunities) { visitor in
+                        VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion, renderer: renderer, artwork: artwork)
+                            .id(visitor.id)
+                    }
                 }
             }
         }
+        #if DEBUG
+        .onAppear { reportArtwork(artwork) }
+        .onChange(of: artwork) { reportArtwork($0) }
+        #endif
     }
+
+    #if DEBUG
+    private func reportArtwork(_ state: VisitorArtworkState) {
+        for visitor in store.visibleOpportunities { VisitorVisualDiagnostics.onArtwork?(visitor.id, state) }
+    }
+    #endif
 }
 
 struct VisitorFlightPose: Equatable {
@@ -62,6 +112,7 @@ struct VisitorFlightPose: Equatable {
 enum VisitorVisualDiagnostics {
     static var onFrame: ((UUID, VisitorFlightPose) -> Void)?
     static var onVisibility: ((UUID, Bool) -> Void)?
+    static var onArtwork: ((UUID, VisitorArtworkState) -> Void)?
 }
 #endif
 
@@ -71,6 +122,7 @@ private struct VisitorFlightView: View {
     let visitor: APIVisitorOpportunity
     let reduceMotion: Bool
     var renderer: RealityGardenRenderer? = nil
+    let artwork: VisitorArtworkState
     // Identity is the opportunity, so heartbeats do not restart its flight.
     @State private var appearedAt = Date()
     var body: some View {
@@ -81,9 +133,9 @@ private struct VisitorFlightView: View {
                 let pose = VisitorFlightPose(elapsed: context.date.timeIntervalSince(appearedAt),
                                             remaining: visitor.expiresAt.timeIntervalSince(now), reduceMotion: reduceMotion,
                                             lane: min(12, max(0, visitor.lane ?? 0)))
+                let projection = renderer?.projectedVisitor(visitor.id)
+                let fallback = artwork.usesFallback
                 GeometryReader { geometry in
-                    let projection = renderer?.projectedVisitor(visitor.id)
-                    let fallback = renderer?.visitorAssetReady != true
                     Button { Task { await store.welcome(visitor) } } label: {
                         Group {
                             if fallback { ForestButterfly(flap: pose.flap) }
@@ -105,9 +157,11 @@ private struct VisitorFlightView: View {
                 .onAppear {
                     VisitorVisualDiagnostics.onFrame?(visitor.id, pose)
                     VisitorVisualDiagnostics.onVisibility?(visitor.id, true)
+                    VisitorVisualDiagnostics.onArtwork?(visitor.id, artwork)
                 }
                 .onDisappear { VisitorVisualDiagnostics.onVisibility?(visitor.id, false) }
                 .onChange(of: pose) { VisitorVisualDiagnostics.onFrame?(visitor.id, $0) }
+                .onChange(of: artwork) { VisitorVisualDiagnostics.onArtwork?(visitor.id, $0) }
                 #endif
             }
         }

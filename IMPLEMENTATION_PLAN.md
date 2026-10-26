@@ -327,6 +327,19 @@ the physical-device acceptance gate; this does not claim the lag is fixed on an
 iPhone or establish a memory-leak diagnosis. See `frontend/F8_ACCEPTANCE.md` and
 `frontend/VALIDATION.md` for the exact test flow and executed checks.
 
+**Play-test follow-up — source corrected, native retest pending:** the first
+return still deferred the recap until a later Notification Centre interaction,
+and some old butterfly overlays remained. Root eligibility still reread an
+environment phase from within a transition callback. It now uses the event value
+to update one published foreground state before testing eligibility; startup
+cannot replay a stale phase after a newer event. Butterfly loading now prewarms
+at app-container startup and attaches cached clones synchronously. The overlay
+directly observes renderer readiness and resolves projection/readiness before
+layout. Normal import uses a loading indicator rather than the old butterfly;
+the accessible Welcome action remains available. Actual asset failure retains
+the explicit fallback/retry path. Four targeted native regression cases were
+added; source/portable checks do not establish a successful device retest.
+
 **Reported on iPhone 14 Pro:** lag accumulates after repeated Home/app switches
 and Notification Centre interactions. The recap can arrive about 10 seconds after
 return, or around 30 seconds into the reported lag episode. The old butterfly

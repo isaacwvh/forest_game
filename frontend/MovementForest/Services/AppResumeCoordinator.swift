@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import os
+import SwiftUI
 
 /// Monotonic elapsed time that continues while the phone sleeps (iOS 16+).
 enum LifecycleClock {
@@ -26,14 +27,34 @@ enum LifecycleDiagnostics {
 /// owns durable work; cancelling this waiter never cancels or rewrites its journal.
 @MainActor
 final class AppResumeCoordinator: ObservableObject {
-    private var foreground = false
+    @Published private(set) var foreground = false
+    private(set) var hasSceneEvent = false
     private var needsResume = true
     private var handledSyncID: UUID?
     private var operation: Task<Bool, Never>?
     private var connectionOperation: Task<Void, Never>?
     private var attemptedConnection = false
 
+    @discardableResult
+    func sceneChanged(to value: ScenePhase, recap: AppEntryRecapCoordinator) -> Bool {
+        LifecycleDiagnostics.event("root scene event=\(String(describing: value))")
+        switch value {
+        case .background: background(); recap.background()
+        case .inactive: inactive()
+        case .active: activate(); recap.foreground()
+        @unknown default: break
+        }
+        return foreground
+    }
+
+    @discardableResult
+    func initializeSceneIfNeeded(to value: ScenePhase, recap: AppEntryRecapCoordinator) -> Bool {
+        guard !hasSceneEvent else { return foreground }
+        return sceneChanged(to: value, recap: recap)
+    }
+
     func activate() {
+        hasSceneEvent = true
         guard !foreground || needsResume else { return }
         foreground = true
         if needsResume {
@@ -45,6 +66,7 @@ final class AppResumeCoordinator: ObservableObject {
     }
 
     func inactive() {
+        hasSceneEvent = true
         guard foreground else { return }
         foreground = false
         // Inactivity alone does not earn another pass on reactivation.
