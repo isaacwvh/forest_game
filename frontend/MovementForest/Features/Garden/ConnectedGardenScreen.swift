@@ -114,9 +114,11 @@ struct ConnectedGardenScreen: View {
             if value != .active { store.cancelCandidate() }
         }
         .onChange(of: visitorEligible) { visitors?.setEligible($0) }
-        .onChange(of: visitors?.id) { _ in visitors?.setEligible(visitorEligible) }
-        .onChange(of: visitors?.id) { _ in renderer.setVisitors(visitors) }
-        .onAppear { visible = true; renderer.setVisitors(visitors); visitors?.setEligible(visitorEligible) }
+        .task(id: visitors?.id) { [visitors] in
+            guard !Task.isCancelled else { return }
+            renderer.setVisitors(visitors); visitors?.setEligible(visitorEligible)
+        }
+        .onAppear { visible = true; visitors?.setEligible(visitorEligible) }
         .onDisappear { visible = false; visitors?.setEligible(false); store.cancelCandidate(); renderer.setActive(false) }
     }
 

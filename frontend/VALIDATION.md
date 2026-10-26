@@ -406,6 +406,40 @@ workflow failure summaries were added to make future failures inspectable.
 Follow VISITOR_RESCALE_ACCEPTANCE.md after
 applying backend/VISITOR_RESCALE.md and installing the updated Mac-built app.
 
+## F8.1 bounded butterfly import / visitor recovery — 26 October 2026
+
+Device retesting accepted recap behavior but reported prolonged Loading butterfly
+after a process restart, sometimes alongside a visitor request timeout. The image
+shows Xcode renderer teardown and binding warnings, not backend request logs; it
+does not establish the source of the SDK delay. The 7,950,697-byte butterfly USDZ
+is bundled locally. Restarting loses its in-memory template, but a backend timeout
+is a separate path from file import.
+
+Source exposed an unbounded `LoadRequest.values` await shared by every renderer,
+visitor attachment driven by callbacks that reread captured view inputs, and a
+network error message that remained after recovery. The minimal follow-up uses
+an explicitly retained Combine subscription with a 10-second import timeout,
+single completion/cancellation, empty-result handling and cache release on failure.
+Retry cancels the old subscription and starts a fresh import; late events cannot
+replace its result. Attachment uses a task keyed to the current visitor controller.
+Successful visitor reconciliation clears only its own prior connection error and
+preserves the original durable request on retry. Checksum/import boundaries and
+visitor error domain/code are logged in Debug. Recap, backend, art and rewards are
+unchanged. The underlying SDK/device import timing still requires a native trace.
+
+API reference: Apple's [LoadRequest](https://developer.apple.com/documentation/realitykit/loadrequest)
+and [Combine event handling](https://developer.apple.com/documentation/combine/receiving-and-handling-events-with-combine).
+
+Added four native cases for immediate/empty publisher results, cancellation with
+late events, timed-out shared import followed by renderer retry, and visitor timeout
+recovery replaying identical request bytes while clearing stale error text.
+Read-only local backend check returned ready; the latest 40 API log lines showed
+normal startup only. This does not validate the iPhone's Tailscale route or explain
+its earlier request timeout. No backend service was restarted or reconfigured.
+Passed here: portable frontend project/asset/fixture contracts, all 59 Swift source
+syntax parses, and diff whitespace checks. Apple SDK builds, XCTest/UI and the
+iPhone restart/retry walkthrough remain unexecuted on this Windows host.
+
 ## F8.1 first-return and butterfly observation correction — 26 October 2026
 
 The user's iPhone retest found that a genuine long return could leave the recap

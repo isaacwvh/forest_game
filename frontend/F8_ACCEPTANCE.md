@@ -5,6 +5,18 @@ be recorded separately; portable parsing is not Apple SDK compilation.
 
 ## Lifecycle follow-up — source implemented, iPhone acceptance pending
 
+**Cold-start import timeout / recovery retest:** kill the backgrounded app and
+reopen it at least five times. Artwork should load normally; a stalled import
+must stop showing Loading butterfly after roughly ten seconds of import time
+and expose an artwork timeout with Retry visitor artwork. Tap that action without
+opening Notification Centre: a fresh load should replace the error when it
+succeeds. During a network outage, Retry visitors is separate from the artwork
+retry. Restore connectivity and confirm that a successful visitor refresh removes
+the old Visitors paused message. Welcome/claim rewards must occur once. Recheck
+the accepted first-return recap and quiet manual sync. In Debug, record the
+butterfly checksum/import-start/import-complete-or-failure lines and visitor error
+domain/code; the asset is bundled and does not download from the game backend.
+
 **First-return / butterfly retest:** after this follow-up, repeat a 35–45-second
 absence and return without opening Notification/Control Centre or tapping the
 screen. The recap must appear on that first return. Dismiss it, then briefly open

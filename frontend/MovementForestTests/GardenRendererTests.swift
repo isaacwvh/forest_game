@@ -7,6 +7,33 @@ import UIKit
 
 @MainActor
 final class GardenRendererTests: XCTestCase {
+    func testVisitorAssetRequestHandlesImmediateValueAndEmptyCompletion() async throws {
+        let expected = Entity()
+        let result = try await VisitorAssetLoadRequest().run { Just(expected).setFailureType(to: Error.self).eraseToAnyPublisher() }
+        XCTAssertTrue(result === expected)
+        do {
+            _ = try await VisitorAssetLoadRequest().run { Empty<Entity, Error>().eraseToAnyPublisher() }
+            XCTFail("Empty completion must fail rather than leave artwork loading")
+        } catch VisitorAssetLoadError.empty { }
+    }
+
+    func testCancellingVisitorAssetRequestCancelsSubscriptionAndIgnoresLateValue() async throws {
+        let subject = PassthroughSubject<Entity, Error>()
+        var subscribed = false, cancelled = false
+        let publisher = subject.handleEvents(receiveSubscription: { _ in subscribed = true }, receiveCancel: { cancelled = true })
+        let request = VisitorAssetLoadRequest()
+        let task = Task { try await request.run { publisher.eraseToAnyPublisher() } }
+        try await waitUntil { subscribed }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("Cancelled artwork request returned a model")
+        } catch is CancellationError { }
+        XCTAssertTrue(cancelled)
+        subject.send(Entity()); subject.send(completion: .finished)
+        await Task.yield()
+    }
+
     func testViewDetachPreservesSceneAndCameraButTerminalStopReleasesScene() async throws {
         let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
         defer { renderer.stop() }

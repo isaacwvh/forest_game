@@ -462,7 +462,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
             catch {
                 guard let self = self, !self.disposed, self.visitorGeneration == token else { return }
                 self.visitorLoadTask = nil
-                self.visitorAssetIssue = "Visitor artwork is unavailable. You can still welcome visitors."
+                self.visitorAssetIssue = (error as? VisitorAssetLoadError)?.errorDescription ??
+                    "Visitor artwork is unavailable. You can still welcome visitors."
                 LifecycleDiagnostics.event("butterfly failed renderer=\(rendererID)")
             }
         }

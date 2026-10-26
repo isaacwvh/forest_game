@@ -3,6 +3,7 @@ import Foundation
 import SwiftUI
 import UIKit
 import RealityKit
+import Combine
 @testable import MovementForest
 
 private struct VisitorContract: Decodable {
@@ -50,6 +51,7 @@ private final class FakeVisitors: VisitorServing {
     var blockHeartbeat = false
     var heartbeatContinuation: CheckedContinuation<Void, Never>?
     var onMutation: (() -> Void)?
+    var nextMutationError: Error?
     init(_ contract: VisitorContract) { self.contract = contract; current = contract.initial }
     func read() async throws -> APIVisitorSummary {
         if offline { throw URLError(.notConnectedToInternet) }
@@ -60,6 +62,7 @@ private final class FakeVisitors: VisitorServing {
         if operation.kind == .heartbeat && blockHeartbeat {
             await withCheckedContinuation { heartbeatContinuation = $0 }
         }
+        if let error = nextMutationError { nextMutationError = nil; throw error }
         if offline { throw URLError(.networkConnectionLost) }
         switch operation.kind {
         case .start: current = contract.active; return (current, nil)
@@ -75,6 +78,60 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testTimedOutAssetReleasesSharedImportAndRendererCanRetryWithoutAppSwitch() async throws {
+        let subject = PassthroughSubject<Entity, Error>()
+        var attempts = 0, cancelled = false
+        let recovered = Entity(); recovered.name = "recovered-butterfly"
+        let library = VisitorModelLibrary(importer: {
+            attempts += 1
+            let request = VisitorAssetLoadRequest()
+            if attempts == 1 {
+                return try await request.run(timeoutSeconds: 0.03) {
+                    subject.handleEvents(receiveCancel: { cancelled = true }).eraseToAnyPublisher()
+                }
+            }
+            return try await request.run { Just(recovered).setFailureType(to: Error.self).eraseToAnyPublisher() }
+        })
+        let fixture = try VisitorContract.load()
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: FakeVisitors(fixture), journal: MemoryVisitorJournal())
+        let renderer = RealityGardenRenderer(visitorModels: library)
+        defer { renderer.stop() }
+        renderer.setVisitors(store)
+        try await waitUntil { renderer.visitorAssetIssue != nil }
+        XCTAssertTrue(renderer.visitorAssetIssue?.contains("timed out") == true)
+        XCTAssertFalse(renderer.visitorAssetReady)
+        XCTAssertTrue(cancelled)
+        XCTAssertNil(library.cachedClone())
+        renderer.setVisitors(store)
+        try await waitUntil { renderer.visitorAssetReady }
+        XCTAssertNil(renderer.visitorAssetIssue)
+        XCTAssertEqual(library.loadCount, 2)
+        subject.send(Entity()); subject.send(completion: .finished)
+        await Task.yield()
+        XCTAssertEqual(library.cachedClone()?.name, "recovered-butterfly")
+        XCTAssertEqual(library.loadCount, 2)
+    }
+
+    func testVisitorTimeoutRecoveryClearsStaleMessageAndReplaysOriginalRequest() async throws {
+        let fixture = try VisitorContract.load(), journal = MemoryVisitorJournal()
+        let service = FakeVisitors(fixture)
+        service.nextMutationError = URLError(.timedOut)
+        let store = VisitorCoordinator(userID: UUID(), installationID: try XCTUnwrap(fixture.active.session?.installationId),
+                                       service: service, journal: journal)
+        store.setEligible(true, reconcile: false)
+        await store.tick(force: true)
+        XCTAssertFalse(store.connected)
+        XCTAssertTrue(store.message?.hasPrefix("Visitors paused.") == true)
+        let original = try XCTUnwrap(journal.value)
+        await store.tick(force: true)
+        XCTAssertTrue(store.connected)
+        XCTAssertNil(store.message)
+        XCTAssertNil(journal.value)
+        XCTAssertEqual(service.operations[0].id, original.id)
+        XCTAssertEqual(service.operations[1].id, original.id)
+        XCTAssertEqual(service.operations[1].body, original.body)
+    }
+
     func testPreloadCachesBeforeRendererExistsAndWarmAttachmentDoesNotWaitForAnotherTask() async throws {
         var importGate: CheckedContinuation<Entity, Error>?
         defer { importGate?.resume(returning: Entity()) }

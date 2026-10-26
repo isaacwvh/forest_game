@@ -24,6 +24,7 @@ final class VisitorCoordinator: ObservableObject {
     private var worker: Task<Void, Never>?
     private var attached = true
     private var needsRead = true
+    private var lastConnectionIssue: String?
     @Published private(set) var confirmedTokenBalance: String?
     private var economyVersion: Int64 = -1
     var onWallet: ((String, Int64) -> Void)?
@@ -174,10 +175,15 @@ final class VisitorCoordinator: ObservableObject {
             if attached, !eligible, let session = summary?.session, session.installationId == installationID {
                 try await submit(.end, target: session.sessionId)
             }
+            if let issue = lastConnectionIssue, message == issue { message = nil }
+            lastConnectionIssue = nil
         } catch {
             guard attached else { return }
             connected = false; needsRead = true
-            message = "Visitors paused. \(error.localizedDescription) Retry to confirm any saved request."
+            let issue = "Visitors paused. \(error.localizedDescription) Retry to confirm any saved request."
+            lastConnectionIssue = issue; message = issue
+            let failure = error as NSError
+            LifecycleDiagnostics.event("visitor request failed domain=\(failure.domain) code=\(failure.code)")
         }
     }
 
