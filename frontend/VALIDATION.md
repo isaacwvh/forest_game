@@ -528,3 +528,30 @@ Windows syntax checks do not establish those results. Run
 `bash frontend/scripts/test-mac.sh` on a Mac and follow
 [F8_ACCEPTANCE.md](F8_ACCEPTANCE.md) on the existing installation. Source scope is
 implemented; native/device acceptance and broader F8/deployment remain pending.
+
+## F8.2 local presentation implementation
+
+Passed locally on Windows:
+
+- Generated Xcode project consistency and resource/source inclusion.
+- Portable frontend assets/project/contract validator: 20 plant USDZs and alpha
+  thumbnails, visitor checksum/archive, three aligned pack PNGs, existing collection,
+  editor and skills contracts, portrait/light configuration, and 14 runtime icons.
+- All 59 Swift files parse without syntax errors.
+- All 14 runtime icon PNGs fully decode as transparent 128×128 RGBA; 237,017 bytes
+  compressed in total. Only this runtime export folder is added to the bundle.
+- Python generator/validator syntax and `git diff --check`.
+
+Added native tests cover viewport-edge/offscreen/overlapping visitor targets,
+rendered bounds through camera orbit/zoom and one welcome, milestone refresh
+failure/recovery and stale repeated claims, icon bundle lookup/workout fallbacks,
+Milestones sidebar routing, both taps across four rarities with/without Reduce
+Motion, and a generic pack. Existing butterfly loading/readiness, preload/cache,
+timeout/retry and retained-renderer tests remain intact. No import, resume, visitor
+scheduling, backend, Health collection or economy code was changed.
+
+Not executed: Apple SDK compilation, XCTest/UI, Debug/Release iOS builds, physical
+iPhone visual/touch/accessibility acceptance or Instruments. Xcode is unavailable
+on this Windows host. Native tests are added, not claimed as passing. No push or
+remote CI was run. Run `bash frontend/scripts/test-mac.sh` on Mac, then the F8.2
+walkthrough in `F8_ACCEPTANCE.md`.

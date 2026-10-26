@@ -147,8 +147,11 @@ private struct VisitorFlightView: View {
                     .position(x: projection?.x ?? max(36, min(geometry.size.width - 36, geometry.size.width * pose.x)),
                               y: projection?.y ?? max(36, min(geometry.size.height - 36, geometry.size.height * pose.y)))
                     .opacity(fallback || projection != nil ? 1 : 0)
-                    .allowsHitTesting(fallback || projection != nil)
-                    .accessibilityHidden(!fallback && projection == nil)
+                    // Model taps are resolved by the ARView's existing tap recognizer
+                    // against the current camera frame. An invisible SwiftUI button
+                    // must not intercept orbit/pan/pinch or lag behind the artwork.
+                    .allowsHitTesting(fallback)
+                    .accessibilityHidden(!fallback)
                     .accessibilityLabel("Welcome visitor")
                     .accessibilityHint("Earn \(visitor.tokens) visitor tokens after server confirmation")
                     .accessibilityIdentifier("visitors.butterfly")
@@ -165,6 +168,36 @@ private struct VisitorFlightView: View {
                 #endif
             }
         }
+    }
+}
+
+/// ARView-local points only. Clip to the actual scene, never into adjacent panels
+/// or navigation controls. A partly visible visitor keeps its visible touch area.
+struct VisitorHitTarget {
+    let id: UUID
+    let artwork: CGRect
+    let touch: CGRect
+
+    init?(id: UUID, artwork: CGRect, viewport: CGRect) {
+        guard artwork.minX.isFinite, artwork.minY.isFinite,
+              artwork.width.isFinite, artwork.height.isFinite,
+              artwork.width > 0, artwork.height > 0,
+              artwork.intersects(viewport) else { return nil }
+        self.id = id
+        self.artwork = artwork
+        touch = artwork.insetBy(dx: -max(0, (64 - artwork.width) / 2),
+                               dy: -max(0, (64 - artwork.height) / 2)).intersection(viewport)
+    }
+
+    static func pick(at point: CGPoint, from targets: [Self]) -> UUID? {
+        targets.filter { $0.touch.contains(point) }.sorted { a, b in
+            // Actual artwork wins over another visitor's padded target.
+            let aInside = a.artwork.contains(point), bInside = b.artwork.contains(point)
+            if aInside != bInside { return aInside }
+            let aDistance = hypot(a.artwork.midX - point.x, a.artwork.midY - point.y)
+            let bDistance = hypot(b.artwork.midX - point.x, b.artwork.midY - point.y)
+            return aDistance == bDistance ? a.id.uuidString < b.id.uuidString : aDistance < bDistance
+        }.first?.id
     }
 }
 
@@ -199,12 +232,12 @@ struct VisitorStatusPanel: View {
             if let value = store.summary {
                 ViewThatFits(in: .horizontal) {
                     HStack {
-                        Label("\(store.tokenBalance) tokens", systemImage: "sparkles")
+                        QuantityLabel(metric: "tokens", text: "\(store.tokenBalance) tokens")
                         Spacer()
                         Text("Stored \(value.claimableVisits)/\(value.capacity)")
                     }
                     VStack(alignment: .leading) {
-                        Label("\(store.tokenBalance) visitor tokens", systemImage: "sparkles")
+                        QuantityLabel(metric: "tokens", text: "\(store.tokenBalance) visitor tokens")
                         Text("Stored visits: \(value.claimableVisits) · Capacity \(value.capacity)")
                     }
                 }.font(.subheadline).monospacedDigit()

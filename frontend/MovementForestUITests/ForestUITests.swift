@@ -10,12 +10,16 @@ final class ForestUITests: XCTestCase {
             app.launch()
             let tear = app.buttons["pack.tear"]
             XCTAssertTrue(tear.waitForExistence(timeout: 15))
+            XCTAssertFalse(app.staticTexts[rarity.capitalized].exists)
             XCTAssertFalse(app.buttons["pack.continue"].exists)
             tear.tap()
             let reveal = app.buttons["pack.reveal"]
             XCTAssertTrue(reveal.waitForExistence(timeout: 5))
             XCTAssertTrue(app.staticTexts[rarity.capitalized].exists)
             XCTAssertFalse(app.buttons["pack.continue"].exists)
+            // Waiting in the opened state must never trigger the second tap.
+            Thread.sleep(forTimeInterval: 1)
+            XCTAssertTrue(reveal.exists)
             reveal.tap()
             XCTAssertTrue(app.buttons["pack.continue"].waitForExistence(timeout: 5))
             XCTAssertTrue(app.staticTexts["Your sprout is saved in Storage. Plant it from Garden → Storage."].exists)
@@ -25,21 +29,27 @@ final class ForestUITests: XCTestCase {
 
     func testReducedMotionPackStillRequiresTwoTaps() {
         let app = XCUIApplication()
-        app.launchArguments = ["--fixture-health", "--fixture-pack", "--fixture-reduce-motion"]
-        app.launch()
-        XCTAssertTrue(app.buttons["pack.tear"].waitForExistence(timeout: 15))
-        app.buttons["pack.tear"].tap()
-        XCTAssertTrue(app.buttons["pack.reveal"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["pack.continue"].exists)
-        app.buttons["pack.reveal"].tap()
-        XCTAssertTrue(app.buttons["pack.continue"].waitForExistence(timeout: 5))
+        for rarity in ["common", "rare", "epic", "legendary"] {
+            app.launchArguments = ["--fixture-health", "--fixture-pack", "--fixture-reduce-motion", "--fixture-" + rarity]
+            app.launch()
+            XCTAssertTrue(app.buttons["pack.tear"].waitForExistence(timeout: 15))
+            XCTAssertFalse(app.staticTexts[rarity.capitalized].exists)
+            app.buttons["pack.tear"].tap()
+            XCTAssertTrue(app.buttons["pack.reveal"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.staticTexts[rarity.capitalized].exists)
+            Thread.sleep(forTimeInterval: 1)
+            XCTAssertFalse(app.buttons["pack.continue"].exists)
+            app.buttons["pack.reveal"].tap()
+            XCTAssertTrue(app.buttons["pack.continue"].waitForExistence(timeout: 5))
+            app.terminate()
+        }
     }
 
     func testCollectionMenuRoutesAndReturnsToGarden() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]
         app.launch()
-        for destination in ["Exchange", "Catalog", "Packs"] {
+        for destination in ["Exchange", "Catalog", "Packs", "Milestones"] {
             let menu = app.buttons["collection.menu"].firstMatch
             XCTAssertTrue(menu.waitForExistence(timeout: 10))
             menu.tap()
@@ -50,6 +60,19 @@ final class ForestUITests: XCTestCase {
         }
         app.buttons["Garden"].firstMatch.tap()
         XCTAssertTrue(app.buttons["garden.plants"].waitForExistence(timeout: 10))
+    }
+
+    func testGenericPackKeepsTwoTapOpening() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-pack", "--fixture-generic-pack"]
+        app.launch()
+        XCTAssertTrue(app.buttons["pack.tear"].waitForExistence(timeout: 15))
+        app.buttons["pack.tear"].tap()
+        XCTAssertTrue(app.buttons["pack.reveal"].waitForExistence(timeout: 5))
+        Thread.sleep(forTimeInterval: 1)
+        XCTAssertFalse(app.buttons["pack.continue"].exists)
+        app.buttons["pack.reveal"].tap()
+        XCTAssertTrue(app.buttons["pack.continue"].waitForExistence(timeout: 5))
     }
 
     func testDevelopmentConnectionUsesExplicitURLAndSecureTokenEntry() {

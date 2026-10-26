@@ -38,8 +38,10 @@ private final class FakeCollection: CollectionServing {
     var onMutation: (() -> Void)?
     var milestones: [APIIntroMilestone] = []
     var failSummaryAfterMutation = false
+    var failSummary = false
     init(_ contract: CollectionContract) { self.contract = contract }
     func summary() async throws -> APICollectionSummary {
+        if failSummary { throw URLError(.notConnectedToInternet) }
         if failSummaryAfterMutation && !operations.isEmpty { throw URLError(.networkConnectionLost) }
         var value = contract.summary; value.milestones = milestones; return value
     }
@@ -69,6 +71,56 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testMilestoneConfirmationSurvivesRefreshFailureAndStaleRepeatedClaim() async throws {
+        let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
+        let milestone = APIIntroMilestone(milestoneId: "first_movement", title: "First movement",
+            description: "Sync movement.", rewardTokens: "30", eligible: true, claimed: false)
+        service.milestones = [milestone]
+        let user = UUID(), store = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await store.refresh()
+        XCTAssertNotNil(store.milestonesConfirmedAt)
+        service.failSummaryAfterMutation = true
+        await store.claim(milestone)
+        XCTAssertTrue(store.refreshFailed)
+        XCTAssertEqual(store.tokenBalance, "30")
+        XCTAssertTrue(store.confirmedMilestoneIDs.contains(milestone.id))
+        XCTAssertNil(store.state.pending)
+        await store.claim(milestone)
+        XCTAssertEqual(service.operations.count, 1)
+        store.deactivate()
+        let reopened = CollectionCoordinator(userID: user, service: service, journal: journal)
+        XCTAssertTrue(reopened.confirmedMilestoneIDs.contains(milestone.id))
+        await reopened.refresh()
+        XCTAssertTrue(reopened.refreshFailed)
+        XCTAssertEqual(service.operations.count, 1)
+    }
+
+    func testMilestoneRefreshFailureKeepsLastConfirmedRowsAndCanRecover() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        service.failSummary = true
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+        await store.refresh()
+        XCTAssertTrue(store.refreshFailed)
+        XCTAssertNil(store.milestonesConfirmedAt)
+        service.failSummary = false
+        service.milestones = [APIIntroMilestone(milestoneId: "first_movement", title: "First movement",
+            description: "Sync movement.", rewardTokens: "30", eligible: false, claimed: false)]
+        await store.refresh()
+        let confirmedAt = store.milestonesConfirmedAt
+        XCTAssertNotNil(confirmedAt)
+        XCTAssertFalse(store.refreshFailed)
+        service.failSummary = true
+        await store.refresh()
+        XCTAssertTrue(store.refreshFailed)
+        XCTAssertEqual(store.milestonesConfirmedAt, confirmedAt)
+        XCTAssertEqual(store.milestones.first?.title, "First movement")
+        await store.claim(try XCTUnwrap(store.milestones.first))
+        XCTAssertTrue(service.operations.isEmpty)
+        service.failSummary = false
+        await store.refresh()
+        XCTAssertFalse(store.refreshFailed)
+    }
+
     func testConfirmedExchangeSurvivesFailureOfTheFollowingRefresh() async throws {
         let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
         let store = CollectionCoordinator(userID: UUID(), service: service, journal: journal)

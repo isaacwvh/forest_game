@@ -66,7 +66,12 @@ struct PackOpeningFixtureScreen: View {
                 let coordinator = CollectionCoordinator(userID: UUID(), service: PackFixtureService(contract: contract, rarity: rarity),
                                                         journal: PackFixtureJournal())
                 await coordinator.refresh()
-                assets = try BundleAssetCatalog(); pack = contract.exchange.packs?.first; store = coordinator
+                assets = try BundleAssetCatalog()
+                if let original = contract.exchange.packs?.first, arguments.contains("--fixture-generic-pack") {
+                    pack = APIOwnedPack(ownedPackId: original.id, packId: "generic", version: original.version,
+                                        acquiredAt: original.acquiredAt)
+                } else { pack = contract.exchange.packs?.first }
+                store = coordinator
             } catch { self.error = error.localizedDescription }
         }
     }

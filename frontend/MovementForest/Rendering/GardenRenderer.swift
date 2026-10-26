@@ -470,11 +470,44 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     func projectedVisitor(_ id: UUID) -> CGPoint? {
+        // Presentation only; actual model hit geometry is calculated at tap time.
         guard visitorStore?.eligible == true, isActive, let entity = visitorEntities[id],
-              let point = view.project(entity.position(relativeTo: nil)),
-              point.x >= 32, point.y >= 32, point.x <= view.bounds.width - 32,
-              point.y <= view.bounds.height - 32 else { return nil }
+              camera.convert(position: entity.position(relativeTo: nil), from: nil).z < 0,
+              let point = view.project(entity.position(relativeTo: nil)), view.bounds.contains(point) else { return nil }
         return point
+    }
+
+    func visitorHitTarget(_ id: UUID) -> VisitorHitTarget? {
+        guard visitorStore?.eligible == true, isActive, let entity = visitorEntities[id] else { return nil }
+        let bounds = entity.visualBounds(relativeTo: nil)
+        // RealityKit may project points behind the camera as well.
+        guard camera.convert(position: bounds.center, from: nil).z < 0 else { return nil }
+        var points: [CGPoint] = []
+        for x in [bounds.min.x, bounds.max.x] {
+            for y in [bounds.min.y, bounds.max.y] {
+                for z in [bounds.min.z, bounds.max.z] {
+                    let world = SIMD3<Float>(x, y, z)
+                    guard camera.convert(position: world, from: nil).z < 0,
+                          let point = view.project(world), point.x.isFinite, point.y.isFinite else { return nil }
+                    points.append(point)
+                }
+            }
+        }
+        guard let minX = points.map(\.x).min(), let maxX = points.map(\.x).max(),
+              let minY = points.map(\.y).min(), let maxY = points.map(\.y).max() else { return nil }
+        return VisitorHitTarget(id: id, artwork: CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY),
+                                viewport: view.bounds)
+    }
+
+    @discardableResult
+    func welcomeVisitor(at point: CGPoint) -> Bool {
+        guard let store = visitorStore, store.canRequestReward else { return false }
+        let visitors = store.visibleOpportunities
+        let targets = visitors.compactMap { visitorHitTarget($0.id) }
+        guard let id = VisitorHitTarget.pick(at: point, from: targets),
+              let visitor = visitors.first(where: { $0.id == id }) else { return false }
+        Task { await store.welcome(visitor) }
+        return true
     }
 
     private func updateVisitors() {
@@ -580,6 +613,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
             onGroundDrag?(hit, .ended)
             return
         }
+        if welcomeVisitor(at: point) { return }
         if groundPicking, let garden = snapshot, let ray = view.ray(through: point) {
             lastGroundPoint = GardenCoordinates.groundIntersection(origin: ray.origin, direction: ray.direction,
                 width: garden.width, depth: garden.depth, unitMetres: garden.gardenUnitMetres)

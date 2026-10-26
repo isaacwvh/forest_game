@@ -30,18 +30,19 @@ struct ActivityScreen: View {
                 if let report = store.report {
                     Section("Today") {
                         if let steps = report.todaySteps {
-                            DetailRow(title: "Steps read from Health", value: steps.formatted(.number.precision(.fractionLength(0))))
+                            QuantityDetailRow(metric: "steps", title: "Steps read from Health", value: steps.formatted(.number.precision(.fractionLength(0))))
                         } else {
-                            Text("No readable step data for today.")
+                            QuantityLabel(metric: "steps", text: "No readable step data for today.")
                         }
                         if let issue = report.stepsIssue { Text(issue).foregroundStyle(.secondary) }
                         if let today = report.days.last {
-                            DetailRow(title: "Walking + running distance", value: today.walkingRunningDistanceMetres.map { "\(($0 / 1000).formatted(.number.precision(.fractionLength(2)))) km" } ?? "Unavailable")
-                            DetailRow(title: "Active energy", value: today.activeEnergyKcal.map { "\($0.formatted(.number.precision(.fractionLength(1)))) kcal" } ?? "Unavailable")
-                            DetailRow(title: "Flights climbed", value: today.flightsClimbed.map { $0.formatted(.number.precision(.fractionLength(0))) } ?? "Unavailable")
+                            QuantityDetailRow(metric: "walking_running_distance_km", title: "Walking + running distance", value: today.walkingRunningDistanceMetres.map { "\(($0 / 1000).formatted(.number.precision(.fractionLength(2)))) km" } ?? "Unavailable")
+                            QuantityDetailRow(metric: "active_energy_kcal", title: "Active energy", value: today.activeEnergyKcal.map { "\($0.formatted(.number.precision(.fractionLength(1)))) kcal" } ?? "Unavailable")
+                            QuantityDetailRow(metric: "flights_climbed", title: "Flights climbed", value: today.flightsClimbed.map { "\($0.formatted(.number.precision(.fractionLength(0)))) flights" } ?? "Unavailable")
                         }
                         ForEach(report.metricIssues.keys.sorted(), id: \.self) { key in
-                            Text("\(metricTitle(key)): \(report.metricIssues[key] ?? "")").font(.caption).foregroundStyle(.secondary)
+                            QuantityLabel(metric: key, text: "\(ActivityMetricLabel.title(key)): \(report.metricIssues[key] ?? "")")
+                                .font(.caption).foregroundStyle(.secondary)
                         }
                         Text("Last checked \(report.observedAt.formatted(date: .omitted, time: .shortened)) · \(report.timeZoneIdentifier)")
                             .font(.caption).foregroundStyle(.secondary)
@@ -49,7 +50,7 @@ struct ActivityScreen: View {
                     Section("Recent days") {
                         ForEach(report.days.reversed()) { day in
                             HStack {
-                                Text(ActivityCalendar.dayLabel(day.start, timeZoneIdentifier: report.timeZoneIdentifier))
+                                QuantityLabel(metric: "steps", text: ActivityCalendar.dayLabel(day.start, timeZoneIdentifier: report.timeZoneIdentifier))
                                 Spacer()
                                 Text(day.steps.map { $0.formatted(.number.precision(.fractionLength(0))) } ?? "No readable data")
                                     .foregroundStyle(.secondary).multilineTextAlignment(.trailing)
@@ -61,7 +62,7 @@ struct ActivityScreen: View {
                         if report.workouts.isEmpty { Text("No readable workouts for this period.").foregroundStyle(.secondary) }
                         ForEach(report.workouts) { workout in
                             VStack(alignment: .leading, spacing: 4) {
-                                Label(workout.title, systemImage: workout.isRunning ? "figure.run" : "figure.walk")
+                                QuantityLabel(metric: QuantityArtwork.workoutKey(workout.activityType), text: workout.title)
                                 Text("\(workout.start.formatted(date: .abbreviated, time: .shortened)) · \(Int(workout.durationSeconds / 60)) min")
                                     .font(.subheadline).foregroundStyle(.secondary)
                             }.accessibilityElement(children: .combine)
@@ -84,12 +85,4 @@ struct ActivityScreen: View {
         .refreshable { await store.refresh() }
     }
 
-    private func metricTitle(_ key: String) -> String {
-        switch key {
-        case "walking_running_distance_km": return "Walking + running distance"
-        case "active_energy_kcal": return "Active energy"
-        case "flights_climbed": return "Flights climbed"
-        default: return "Activity"
-        }
-    }
 }

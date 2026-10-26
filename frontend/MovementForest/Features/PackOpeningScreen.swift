@@ -56,11 +56,10 @@ struct PackOpeningScreen: View {
                 VStack(spacing: 20) {
                     Text(packName).font(.title2.bold()).multilineTextAlignment(.center)
                     ZStack {
-                        if showsLight {
+                        if showsLight && showsPlant {
                             Ellipse().fill(RadialGradient(colors: [rarityColour.opacity(0.85), rarityColour.opacity(0)],
                                                          center: .center, startRadius: 8, endRadius: 130))
-                                .frame(width: 260, height: showsPlant ? 280 : 120)
-                                .offset(y: showsPlant ? 0 : -60).accessibilityHidden(true)
+                                .frame(width: 260, height: 280).accessibilityHidden(true)
                         }
                         Group {
                             Group {
@@ -70,6 +69,12 @@ struct PackOpeningScreen: View {
                                     VStack { Image(systemName: "shippingbox.fill").font(.system(size: 100)); Text(packName) }
                                 }
                             }.frame(width: 210, height: 300)
+                                .overlay {
+                                    if showsLight {
+                                        PackMouthLight(colour: rarityColour, woodland: opened != nil)
+                                            .opacity(lifted ? 0 : 1)
+                                    }
+                                }
                                 .scaleEffect(step == .tearing && !reduceMotion ? 0.96 : 1)
                                 .offset(y: lifted && !reduceMotion ? 80 : 0).opacity(lifted ? 0 : 1)
                             if let strip = strip, step == .tearing || step == .opened {
@@ -161,5 +166,49 @@ struct PackOpeningScreen: View {
                 actionFocused = true
             }
         }
+    }
+}
+
+/// The Woodland opening is opaque in the supplied PNG. Trace only its interior
+/// aperture so the coloured light cannot wash across the opaque front artwork.
+private struct PackMouth: Shape {
+    var spill = false
+    func path(in rect: CGRect) -> Path {
+        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + x * rect.width, y: rect.minY + y * rect.height)
+        }
+        return Path { path in
+            path.move(to: p(0.145, 0.141))
+            path.addCurve(to: p(0.855, 0.141), control1: p(0.36, 0.148), control2: p(0.67, 0.145))
+            if spill {
+                path.addLine(to: p(0.855, 0.07))
+                path.addLine(to: p(0.145, 0.07))
+            } else {
+                path.addCurve(to: p(0.145, 0.141), control1: p(0.68, 0.158), control2: p(0.35, 0.158))
+            }
+            path.closeSubpath()
+        }
+    }
+}
+
+private struct PackMouthLight: View {
+    let colour: Color
+    let woodland: Bool
+    var body: some View {
+        ZStack {
+            if woodland {
+                PackMouth().fill(colour.opacity(0.95))
+                ZStack {
+                    Ellipse().fill(RadialGradient(colors: [colour.opacity(0.65), .clear],
+                        center: .center, startRadius: 0, endRadius: 75))
+                        .frame(width: 150, height: 44).offset(y: -108)
+                }.frame(width: 200, height: 300).mask(PackMouth(spill: true))
+            } else {
+                // Generic wrapper has no torn-image aperture; keep a small rim glow.
+                Ellipse().fill(RadialGradient(colors: [colour.opacity(0.8), .clear],
+                    center: .center, startRadius: 0, endRadius: 60))
+                    .frame(width: 120, height: 22).offset(y: -65)
+            }
+        }.frame(width: 200, height: 300).allowsHitTesting(false).accessibilityHidden(true)
     }
 }

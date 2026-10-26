@@ -223,7 +223,8 @@ struct ConnectedGardenScreen: View {
                     }.buttonStyle(.bordered).controlSize(.large).disabled(!store.canEdit || renderer.isLoading)
                 }
                 if !store.editing, let rendered = store.render(selected) {
-                    NavigationLink("Plant details") { PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false, owned: selected) }
+                    NavigationLink("Plant details") { PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false,
+                                                                         owned: selected, catalogue: store.catalogue) }
                 }
             }
             if let candidate = store.candidate {

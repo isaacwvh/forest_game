@@ -65,6 +65,19 @@ def main():
             models += 1
     for folder in ["packs", "butterfly"]:
         require(f"../assets/{folder}" in project_text, f"Presentation resources missing: {folder}")
+    require("../assets/quantity-icons-v1/png-128" in project_text, "Quantity icon exports are not bundled")
+    require("../assets/quantity-icons-v1/sources" not in project_text, "Original icon canvases must not be bundled")
+    icon_names = {"steps", "walking_running_distance_km", "active_energy_kcal", "flights_climbed",
+                  "workout_minutes.running", "workout_minutes.cycling", "workout_minutes.swimming",
+                  "workout_minutes.strength_training", "water", "attraction", "active_visitor_rate",
+                  "offline_visitor_rate", "offline_capacity", "tokens"}
+    icon_folder = REPO / "assets/quantity-icons-v1/png-128"
+    require({p.stem for p in icon_folder.iterdir()} == icon_names, "Unexpected/missing runtime icons")
+    for name in icon_names:
+        png = (icon_folder / f"{name}.png").read_bytes()
+        require(png[:8] == b"\x89PNG\r\n\x1a\n", f"Invalid quantity PNG: {name}")
+        width, height, _, colour = struct.unpack(">IIBB", png[16:26])
+        require((width, height, colour) == (128, 128, 6), f"Quantity image budget/alpha mismatch: {name}")
     pack_bytes = 0
     pack_dimensions = set()
     for part in ["sealed", "opened", "top-strip"]:

@@ -88,6 +88,7 @@ struct PlantDetailScreen: View {
     let catalog: any AssetCatalogProviding
     let isSample: Bool
     var owned: APIOwnedPlant? = nil
+    var catalogue: APICatalogue? = nil
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         List {
@@ -96,7 +97,7 @@ struct PlantDetailScreen: View {
                 DetailRow(title: "Variant", value: plant.variantId.capitalized)
                 DetailRow(title: "Growth stage", value: "\(plant.growthStage.number) of 4 · \(plant.growthStage.title)")
                 if let owned = owned {
-                    DetailRow(title: "Total water / growth", value: ExactAmount.water(owned.growthMicroUnits))
+                    QuantityDetailRow(metric: "water", title: "Total water / growth", value: ExactAmount.water(owned.growthMicroUnits))
                     PlantGrowthProgress(plant: owned)
                     if let progress = owned.growthProgress {
                         if let next = progress.nextStageMicroUnits {
@@ -104,10 +105,23 @@ struct PlantDetailScreen: View {
                         } else { Text("Fully grown").foregroundStyle(.secondary) }
                     }
                     if let attraction = owned.baseAttractionMicroUnits {
-                        DetailRow(title: "Base attraction", value: ExactAmount.water(attraction))
+                        QuantityDetailRow(metric: "attraction", title: "Base attraction", value: ExactAmount.water(attraction))
                     }
                     Text(owned.placement == nil ? "In storage · Progress is preserved; activity does not grow this copy." :
                          "Planted · Receives newly confirmed eligible activity.").font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+            if let reference = owned?.pinnedProfiles?.behaviour,
+               let multipliers = catalogue?.profiles?["behaviour"]?.first(where: {
+                   $0.id == reference.id && $0.version == reference.version
+               })?.metricMultipliers {
+                Section("Activity multipliers · this copy") {
+                    ForEach(multipliers.keys.sorted(), id: \.self) { key in
+                        QuantityDetailRow(metric: key, title: ActivityMetricLabel.title(key),
+                                          value: "\(multipliers[key]!.formatted())×")
+                    }
+                    Text("Recorded workouts use their listed multiplier, otherwise the recorded-workout default. Other unlisted activities contribute no growth. Stored copies do not grow.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
             if isSample {

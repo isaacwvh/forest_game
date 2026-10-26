@@ -26,6 +26,9 @@ final class CollectionCoordinator: ObservableObject {
     let id = UUID()
     @Published private(set) var offers: [APIExchangeOffer] = []
     @Published private(set) var milestones: [APIIntroMilestone] = []
+    @Published private(set) var milestonesConfirmedAt: Date?
+    @Published private(set) var refreshFailed = false
+    @Published private(set) var confirmedMilestoneIDs: Set<String> = []
     @Published private(set) var packs: [APIOwnedPack] = []
     @Published private(set) var history: [APICollectionReceipt] = []
     @Published private(set) var catalogue: APICatalogue?
@@ -56,6 +59,7 @@ final class CollectionCoordinator: ObservableObject {
             state = try resolved.load(server: service.serverID, user: userID) ?? CollectionJournalState()
             try state.pending?.validate()
             if state.result?.exchangeId != nil { confirmedExchange = state.result }
+            if let milestoneID = state.result?.milestoneId { confirmedMilestoneIDs.insert(milestoneID) }
         }
         catch { recoveryLocked = true; message = "The saved collection request needs attention. It has been retained." }
     }
@@ -84,7 +88,7 @@ final class CollectionCoordinator: ObservableObject {
             switch pending.kind {
             case .open: matchesOperation = receipt.ownedPackId == pending.target && receipt.plant != nil && receipt.openingId != nil
             case .exchange: matchesOperation = receipt.requestId == pending.id && receipt.exchangeId != nil && receipt.packs?.isEmpty == false
-            case .milestone: matchesOperation = receipt.milestoneId == pending.milestoneID && receipt.milestoneEventId != nil && receipt.tokensEarned != nil
+            case .milestone: matchesOperation = receipt.requestId == pending.id && receipt.milestoneId == pending.milestoneID && receipt.milestoneEventId != nil && receipt.tokensEarned != nil
             }
             guard receipt.economyVersion >= 0, ExactAmount.integer(receipt.tokenBalance) != nil,
                   matchesOperation else {
@@ -92,6 +96,7 @@ final class CollectionCoordinator: ObservableObject {
             }
             // Persist the result and removal together. A disk failure retains the request.
             try persist(CollectionJournalState(pending: nil, result: receipt))
+            if let milestoneID = receipt.milestoneId { confirmedMilestoneIDs.insert(milestoneID) }
             if pending.kind == .exchange {
                 confirmedExchange = receipt
                 exchangeOfferID = (try? ActivityWire.decoder().decode(CollectionExchangeBody.self, from: pending.body))?.offerId
@@ -114,6 +119,7 @@ final class CollectionCoordinator: ObservableObject {
         applyWallet(summary.tokenBalance, version: summary.economyVersion)
         offers = summary.offers
         milestones = summary.milestones ?? []
+        milestonesConfirmedAt = Date()
         for offer in offers { definitions[offer.pack.id] = offer.pack }
         let catalogue = try await service.catalogue()
         guard attached else { return }
@@ -136,9 +142,10 @@ final class CollectionCoordinator: ObservableObject {
     }
     func refresh() async {
         guard attached, !busy, !recoveryLocked else { return }
-        busy = true; defer { busy = false }
+        busy = true; refreshFailed = false; message = nil; defer { busy = false }
         do { try await recover(); guard attached else { return }; try await loadCurrent() }
         catch { if attached {
+            refreshFailed = true
             message = "\(error.localizedDescription)"
             if state.pending?.kind == .exchange { exchangeMessage = "Purchase confirmation interrupted. Retry the saved request to recover its result." }
             else if exchangeOfferID != nil && confirmedExchange == nil { exchangeMessage = message }
@@ -146,7 +153,7 @@ final class CollectionCoordinator: ObservableObject {
     }
     private func submit(_ operation: PendingCollectionOperation) async {
         guard canMutate else { return }
-        busy = true; defer { busy = false }
+        busy = true; refreshFailed = false; message = nil; defer { busy = false }
         do {
             try operation.validate()
             try persist(CollectionJournalState(pending: operation, result: state.result))
@@ -154,6 +161,7 @@ final class CollectionCoordinator: ObservableObject {
             guard attached else { return }
             try await loadCurrent()
         } catch { if attached {
+            refreshFailed = true
             message = error.localizedDescription
             if operation.kind == .exchange {
                 if confirmedExchange?.requestId == operation.id {
@@ -182,7 +190,8 @@ final class CollectionCoordinator: ObservableObject {
         } catch { message = error.localizedDescription }
     }
     func claim(_ milestone: APIIntroMilestone) async {
-        guard milestone.eligible, !milestone.claimed else { return }
+        guard canMutate, milestone.eligible, !milestone.claimed,
+              !confirmedMilestoneIDs.contains(milestone.id) else { return }
         let id = UUID()
         do {
             let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))

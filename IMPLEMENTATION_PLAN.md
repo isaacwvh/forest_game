@@ -305,12 +305,35 @@ Remaining scope after this increment:
 
 ## F8 presentation and collection polish — incremental
 
-### Top priority: app-resume lag, delayed recap and butterfly fallback — source implemented; native acceptance pending, 26 October 2026
+### F8.1 lifecycle and butterfly-loading follow-up — done, user accepted on iPhone, 26 October 2026
 
-Deliver this lifecycle investigation/fix before F8.2 presentation refinements or
-other remaining polishing work. This is an open F8.1 follow-up; the previously
-accepted Packs routing and Garden recap destination remain completed. No measured
-device performance result is established by source/portable validation alone.
+**Closure:** the user accepts these tickets as done after physical-iPhone
+play-testing. The first-return recap now behaves as expected; manual sync stays
+quiet. Cold-start butterfly artwork now loads without getting stuck and without
+manual artwork retry. This closes the priority follow-up and unblocks F8.2.
+The previously accepted Packs routing and Garden recap destination also remain
+done. This is user-reported functional acceptance, not an unrecorded XCTest,
+Release-build or Instruments result, nor proof of a particular memory-leak cause.
+
+| Ticket | Status / acceptance evidence |
+| --- | --- |
+| Resume lifecycle / accumulating return work | Done — included in the user's closure of the lifecycle follow-up; sustained resource profiling remains a separate F8 hardening gate |
+| Delayed first-return recap / quiet manual sync | Done — user confirmed expected recap behavior and no manual-sync recap |
+| Butterfly placeholder / cold-start loading and recovery | Done — user confirmed loading works, no stuck state and no manual artwork retry needed |
+
+**Final loading/recovery correction — `4d151a1`:** butterfly import retains an
+explicit cancellable Combine subscription, handles empty completion and bounds
+import time to ten seconds; failure releases the shared load so retry starts
+fresh. Renderer/controller binding follows the current visitor session, and a
+successful visitor reconciliation clears the stale network-timeout message while
+preserving the original pending request UUID/body. Four targeted native regression
+cases were added. The bundled asset does not depend on a backend download.
+Portable validation and Swift syntax checks passed; native automated execution
+remains unrecorded. The user subsequently accepted the resulting device behavior.
+
+The following investigation and delivery notes retain the history of the closed
+tickets. Unexecuted broader accessibility and performance checks remain in
+`frontend/F8_ACCEPTANCE.md`; they do not reopen these accepted functional fixes.
 
 **Source follow-up delivered, 26 October 2026:** one foreground resume owner;
 cancellation-responsive UI waiters around a shared durable sync; immediate
@@ -322,12 +345,12 @@ callbacks; renderer detachment and terminal session disposal; paused hidden
 visitor timelines; and Debug lifecycle/asset timing logs. Existing blocking flows
 consume the automatic entry without acknowledging unseen receipts. Interrupted
 mutations keep their original journals/UUIDs. Thirteen native regression cases
-were added and two existing recap cases updated. The requirements below remain
-the physical-device acceptance gate; this does not claim the lag is fixed on an
-iPhone or establish a memory-leak diagnosis. See `frontend/F8_ACCEPTANCE.md` and
+were added and two existing recap cases updated. At that delivery point, device
+acceptance was still pending; source checks did not establish a memory-leak
+diagnosis. See `frontend/F8_ACCEPTANCE.md` and
 `frontend/VALIDATION.md` for the exact test flow and executed checks.
 
-**Play-test follow-up — source corrected, native retest pending:** the first
+**Intermediate play-test follow-up — corrected in `03abe14`, now user accepted:** the first
 return still deferred the recap until a later Notification Centre interaction,
 and some old butterfly overlays remained. Root eligibility still reread an
 environment phase from within a transition callback. It now uses the event value
@@ -338,9 +361,9 @@ directly observes renderer readiness and resolves projection/readiness before
 layout. Normal import uses a loading indicator rather than the old butterfly;
 the accessible Welcome action remains available. Actual asset failure retains
 the explicit fallback/retry path. Four targeted native regression cases were
-added; source/portable checks do not establish a successful device retest.
+added. Device acceptance was reported subsequently, as recorded above.
 
-**Reported on iPhone 14 Pro:** lag accumulates after repeated Home/app switches
+**Original report on iPhone 14 Pro:** lag accumulates after repeated Home/app switches
 and Notification Centre interactions. The recap can arrive about 10 seconds after
 return, or around 30 seconds into the reported lag episode. The old butterfly
 fallback appears before the rendered model becomes available. Restarting clears
@@ -357,6 +380,8 @@ path also exists. There is no deliberate ten-second popup delay. The old butterf
 is an explicit asset-not-ready fallback; ordinary backgrounding does not reset
 renderer readiness. Renderer replacement/loading and incomplete teardown are
 investigation targets, not a confirmed memory leak or proven cause of the lag.
+
+**Original fix and diagnostic scope:**
 
 - **Measure the actual sequence:** add development diagnostics for scene-phase
   transitions, entry eligibility/presentation, resume/sync/Health-read timings,
@@ -382,7 +407,7 @@ investigation targets, not a confirmed memory leak or proven cause of the lag.
   verify released instances do not accumulate. Preserve camera state, visitor
   identity/expiry, modal eligibility and single-award accounting.
 
-**Acceptance:** compare a fresh uninterrupted session with a session of at least
+**Regression reference / broader F8 performance gate:** compare a fresh uninterrupted session with a session of at least
 10 minutes containing repeated Home/app switches, Notification/Control Centre
 interruptions, rapid leave/return cycles and recap dismissal while loading. Cover
 returns below/above the selected absence threshold, slow/offline reconciliation
@@ -391,10 +416,20 @@ feedback rather than surprising the player later; brief/transient interruptions
 and routine sync stay quiet. An already loaded butterfly does not unnecessarily
 revert to the old fallback. Frame time and memory remain stable across cycles,
 retired renderer instances are released, and no progress or rewards are duplicated
-or lost. Record iPhone traces and targeted regression results separately from CI;
-portable syntax checks alone cannot close this issue.
+or lost. Record iPhone traces and targeted regression results separately from CI.
+Functional closure above is based on user play-testing, not portable syntax
+checks. A sustained Instruments trace remains unrecorded and is not a prerequisite
+to the bounded F8.2 presentation batch.
 
 ### F8.1 first-release presentation — source implemented, 26 October 2026
+
+**Completed follow-up — user-confirmed on iPhone, 26 October 2026:** commit
+`dc392fd` separates the Packs page's contents/odds inspection from its Open pack
+action and presents the entry activity recap automatically over Garden without
+requiring a visit to Activity. The user confirmed these fixes work and accepted
+them as done. Routine sync remains excluded from entry presentation. This targeted
+acceptance does not establish the outstanding automated, accessibility or
+minimum-device measurements below.
 
 Scope: portrait-only play with a consistent light appearance; no Dark Mode or
 landscape support in this batch. App entry presents a dismissible, scrollable
@@ -425,11 +460,198 @@ Progress, metric labels, Health upload copy and screen-reader focus are refined.
 Portable assets/project/contracts and all 56 Swift syntax parses pass. The full
 PostgreSQL suite passes 454 tests and all four real HTTP walkthroughs pass.
 Ten native regression cases were added; Xcode/Apple SDK compilation, XCTest/UI,
-Release build, visual acceptance and physical minimum-device measurements remain
-pending. Follow [frontend/F8_ACCEPTANCE.md](frontend/F8_ACCEPTANCE.md). This closes
+Release build, broader visual acceptance and physical minimum-device measurements
+remain unrecorded here beyond the targeted iPhone acceptance above.
+Follow [frontend/F8_ACCEPTANCE.md](frontend/F8_ACCEPTANCE.md). This closes
 the source scope only, not all of F8 or deployment readiness. Catalogue discovery,
 the economy increment below, remote asset delivery, watering/swarm and elaborate
 effects remain separate increments.
+
+### F8.2 focused presentation refinements — source implemented, native acceptance pending
+
+**Bounded batch:** the F8.1 lifecycle/loading tickets are closed above.
+These four work items define F8.2; source implementation is complete. Preserve
+portrait-only play, the light appearance, accepted recap/loading behavior and the
+two deliberate pack taps. This batch uses existing assets, APIs and reward rules;
+it does not change backend schema, balance, prices, milestone rewards or Health
+collection/consent. If investigation reveals a missing backend requirement,
+record it separately rather than expanding this presentation batch silently.
+
+#### F8.2a — pack lighting from the torn opening
+
+- Replace the broad glow behind the wrapper with light anchored inside the torn
+  opening. Layer/mask it behind the opaque front of the opened wrapper; allow a
+  restrained upward spill from the rim. On the second tap, transition to the
+  matching halo behind the revealed sprout. Use the existing three Woodland PNGs
+  and an equivalent restrained treatment for the generic wrapper.
+- Keep rarity hidden while sealed. Once opened, derive light and text from the
+  confirmed receipt: Common grey, Rare blue, Epic purple, Legendary gold. Variant
+  names/art must not override rarity, including Common Golden Moonwillow.
+- Preserve confirmation, first tap to tear, indefinite wait for the second tap,
+  second tap to reveal and Continue. Keep Reduce Motion, accessible actions,
+  downsampling limits and saved-result recovery; no new particles, 3D wrapper,
+  asset generation, automatic reveal or reward requests.
+- **Primary surface:** `frontend/MovementForest/Features/PackOpeningScreen.swift`.
+  Extend existing pack fixtures/UI checks rather than introducing a second reveal
+  state machine.
+- **Done when:** all four receipt rarities visibly emit from the opening without
+  shining through the opaque wrapper, then produce the matching sprout halo;
+  both taps and the pause between them work with/without Reduce Motion. Generic
+  packs remain usable, and background/relaunch recovers exactly one saved sprout.
+
+#### F8.2b — reliable butterfly taps, including near the header
+
+- Reproduce missed taps near the menu/header and identify the actual cause:
+  compare the AR view projection with the overlay's coordinate space and viewport
+  insets, then check clipping, flight bounds, camera movement and overlapping
+  controls. Existing targets are 64 points; do not assume target size alone is
+  the fault or compensate by moving only an invisible hit target.
+- Keep the target aligned with the visible butterfly through orbit/pan/zoom and
+  supported portrait sizes. Reserve the header/menu's interaction area. If flight
+  must be lower or constrained, adjust the world-space path and projection
+  together; enlarge targets only where this does not intercept adjacent controls.
+  Fully offscreen/ineligible visitors must not leave active invisible buttons.
+- Preserve garden-relative depth, opportunity identity/time/expiry, camera state,
+  independent selection where multiple visitors are supported, the accessible
+  Welcome action, modal/editing eligibility and single-award accounting. Do not
+  change import ownership, resume work or backend visitor scheduling.
+- **Primary surfaces:** `Features/Garden/VisitorViews.swift` (including
+  `VisitorWorldPose`), `Rendering/GardenRenderer.swift` and
+  `Features/Garden/GardenViewportLayout.swift`, under `frontend/MovementForest`.
+  Confirm the actual layout owner before editing; no header redesign is included.
+- **Done when:** direct taps at the visible centre and edges of a butterfly work
+  near the upper boundary and at normal/minimum/maximum camera zoom, without
+  activating the menu or a different visitor. Test after camera gestures, sync,
+  sheet dismissal and background return. Rapid repeated taps grant one reward;
+  menu taps, garden gestures and VoiceOver Welcome remain usable.
+
+#### F8.2c — dedicated Milestones sidebar page
+
+- Add Milestones alongside Exchange, Packs and Catalog in the existing sidebar.
+  Move the current introductory milestone list/claims out of Exchange; Exchange
+  retains pack offers and purchase feedback. Navigating must preserve the mounted
+  Garden/camera and use the existing collection coordinator/account session.
+- Show each existing milestone's server title, requirement description and token
+  reward, including before it is eligible and after it is claimed. Render explicit
+  not-yet-eligible, ready-to-claim, confirming/recovering and claimed states, plus
+  loading, empty and failed-refresh feedback. Keep cached data distinguishable
+  from a freshly confirmed result.
+- **Contract boundary:** `APIIntroMilestone` currently supplies `eligible` and
+  `claimed`, not numeric progress counters. Use those authoritative states and
+  requirement text; do not invent a percentage or infer counts from local Health
+  totals. Numeric progress, lifetime-step rewards, recurring quests and events
+  are separate work. Do not present nonfunctional quest/event tabs in this batch.
+- Reuse the durable milestone claim operation and its original UUID/body on
+  retry, existing mutation lock and confirmed wallet updates. Repeated taps,
+  navigation and restart must not duplicate a reward. Token-only claims can
+  offer a link to Exchange; do not imply that claiming awards or opens a pack.
+- **Primary surfaces:** `Features/CollectionScreen.swift`, the existing sidebar
+  in `App/MovementForestApp.swift`, and `Services/CollectionCoordinator.swift`
+  under `frontend/MovementForest`, plus the existing collection tests in
+  `frontend/MovementForestTests`. Change coordinator behavior only if the new page
+  exposes a concrete gap in existing feedback or recovery.
+- **Done when:** all existing milestones are reachable on the new page and absent
+  from Exchange; locked/ready/claimed states match server data; a claim updates
+  the wallet once. Verify offline refresh, interrupted claim/retry, relaunch and
+  account switch. Existing Exchange/Packs/Catalog routes continue to work.
+
+#### F8.2d — consistent token and activity icons
+
+- Define shared icon/label components or mappings for visitor tokens, steps,
+  walking/running distance, active energy, flights climbed, supported workout
+  types and the default workout rule. Unknown workout types need a readable
+  generic fallback. Use the supplied `quantity-icons-v1/png-128` exports, with
+  system symbols for workout types without supplied art; originals are not bundled.
+- Apply the activity mapping to owned plant details, Catalog growth explanations
+  and existing Activity metric rows. Apply the same token icon to existing wallet,
+  visitor-token, Exchange, Milestones and receipt labels where tokens are shown.
+  Do not confuse spendable tokens with stored visits or visitor capacity.
+- Keep text labels, units, values and per-species/per-copy multipliers. An icon
+  must not imply growth for an unsupported input, obscure an unavailable metric,
+  or replace the distinction between a default workout rule and a specific type.
+  Decorative icons should not duplicate spoken labels in VoiceOver.
+- **Primary surfaces:** `Features/SharedViews.swift`, plant detail and Activity
+  views, `Features/CollectionScreen.swift` and `Features/Garden/VisitorViews.swift`
+  under `frontend/MovementForest`. No metric calculations, growth rules or Health
+  ingestion changes.
+- **Done when:** the same metric/token has a consistent icon across those screens;
+  labels and multipliers remain correct for differing species, zero/unavailable
+  inputs and unknown workouts. Largest accessibility text stays readable and
+  scrollable; VoiceOver announces meaningful labels/values without icon noise.
+
+**Implementation order:** fix butterfly hit geometry first, then pack lighting,
+then the Milestones route, then apply the shared icons across the final screens.
+Keep these as reviewable changes and run the combined regression flow afterwards.
+
+**Implementation notes:** model taps now use the ARView's existing tap recognizer
+and projected visual bounds at tap time, clipped to the scene viewport. SwiftUI
+fallback buttons remain available; model overlay buttons no longer intercept camera
+gestures. Loading/readiness observation, import ownership/cache, timeout recovery,
+flight motion and renderer/app-resume sequencing are unchanged. Pack light uses an
+aperture mask traced to the supplied opened PNG and transitions into the sprout
+halo within the existing reveal state machine. Milestones is a sidebar destination
+using the shared collection coordinator, original durable claim bytes, explicit
+freshness/retry feedback and confirmed claim guards. Shared icons retain labels,
+units and pinned per-copy multipliers. No backend or economy changes were made.
+
+Portable project/asset/contracts and all 59 Swift syntax parses pass locally.
+Native regression coverage was extended for boundary/overlapping targets, camera
+projection and one welcome, milestone refresh/claim recovery, icon resolution,
+Milestones navigation and both taps for all four rarities with/without Reduce
+Motion. These native tests, Apple SDK builds and physical-iPhone acceptance remain
+unexecuted on Windows; source validation does not establish visual/touch acceptance.
+No push or remote CI run was performed. See `frontend/F8_ACCEPTANCE.md`.
+
+**Validation and handoff:** run portable frontend project/asset/contract checks,
+Swift parsing and whitespace checks. On Mac, run
+`bash frontend/scripts/test-mac.sh` for Debug XCTest/UI and the Release build.
+Extend the existing native projection/visitor, collection and pack UI coverage
+only for changed behavior, including boundary taps, route/claim recovery and
+the two-tap rarity cases. Physical-iPhone acceptance covers the visible lighting,
+actual tap registration, milestone states/one reward and accessible icons.
+Regression-check first-return recap after 30 seconds, quiet manual/Notification
+Centre refresh and cold-start butterfly loading. Record executed checks separately
+from user play-test results; no unexecuted Apple check is a pass.
+
+**Outside F8.2:** the compact header, bottom navigation, read-only Storage/Edit
+Garden redesign and developer-output cleanup remain F8.3. New milestone rewards,
+lifetime steps and collection pacing retain their separate economy scope below.
+No catalogue stage-discovery system, watering/swarm effects, remote assets or
+deployment work is included.
+
+### F8.3 navigation and home cleanup — planned, gated on stability confirmation
+
+Keep this coordinated batch for after the user confirms development is stable
+enough to simplify the main interface. Do not remove development visibility as
+a side effect of F8.2.
+
+- **Compact Garden header:** replace the expanded development/status area with
+  tokens, attraction and stored visits/capacity. Distinguish stored visits from
+  the spendable token wallet and keep collection discoverable. Move detailed
+  explanations into secondary views while preserving the mounted garden/camera.
+- **Bottom navigation and editing:** provide Garden, Activity and Storage as
+  destinations, with an explicit Edit Garden mode action in the bottom controls
+  and a clear exit. Keep Exchange, Packs, Catalog and Milestones in the sidebar.
+  Friends and other future destinations remain outside this batch.
+- **Read-only Storage outside editing:** allow browsing owned copies and their
+  progress without starting placement. Placement, movement, rotation and storing
+  require Edit Garden; the editing flow retains access to placeable inventory.
+  Preserve copy identity, pagination and progress across both views.
+- **Developer-output cleanup across screens:** move request IDs, raw diagnostics,
+  fixture/balance verification and other development-only output into developer
+  tools. Keep useful loading, offline/cached, permission, error and recovery states
+  available to players. Retain technical diagnostics for development builds.
+
+**Acceptance:** browsing Storage cannot change placement; entering/exiting editing
+and switching destinations preserve camera, selection and pending-request safety.
+The entry recap still appears over Garden on return, ordinary sync stays quiet,
+and visitor eligibility correctly follows editing/navigation/modals. Validate the
+compact header, bottom controls and remaining sidebar on portrait iPhones with
+large text and VoiceOver. Recheck upper-boundary butterfly taps after layout changes.
+
+Catalogue stage discovery, watering animations, swarms and elaborate effects
+remain deferred to later increments. These two presentation batches do not
+implement or approve the separate economy/reward changes below.
 
 ### Early collection pacing and lifetime step rewards — planned, 26 October 2026
 

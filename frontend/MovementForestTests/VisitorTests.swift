@@ -78,6 +78,53 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testRenderedVisitorTapTracksCameraAndWelcomesOnlyOnce() async throws {
+        let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let installation = try XCTUnwrap(fixture.active.session?.installationId)
+        let store = VisitorCoordinator(userID: UUID(), installationID: installation, service: service,
+                                      journal: MemoryVisitorJournal(), uptime: { 0 })
+        store.apply(fixture.active); store.setEligible(true, reconcile: false)
+        let library = VisitorModelLibrary(importer: {
+            // Offset mesh exercises visible bounds rather than the entity origin.
+            let model = ModelEntity(mesh: .generateBox(size: 0.5), materials: [UnlitMaterial(color: .yellow)])
+            model.position = [0.4, 0.2, 0]
+            return model
+        })
+        let renderer = RealityGardenRenderer(visitorModels: library)
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        let controller = UIViewController()
+        controller.view.addSubview(renderer.view)
+        window.rootViewController = controller; window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; renderer.stop() }
+        renderer.view.frame = CGRect(x: 0, y: 0, width: 390, height: 600)
+        renderer.display(DevelopmentScene.single.garden(), catalog: try BundleAssetCatalog())
+        renderer.setMotionEnabled(false); renderer.setActive(true); renderer.setVisitors(store)
+        try await waitUntil { renderer.visitorAssetReady && renderer.modelLoadCount == 1 && !renderer.isLoading }
+        let visitor = try XCTUnwrap(store.visibleOpportunity)
+        var centres: [CGPoint] = []
+        for factor in [Float(1), 0.8, 1.4] {
+            renderer.zoom(by: factor)
+            renderer.handleSingleFingerPan(state: .began, translation: .zero, location: .zero)
+            renderer.handleSingleFingerPan(state: .ended, translation: CGPoint(x: 15, y: 0), location: .zero)
+            let target = try XCTUnwrap(renderer.visitorHitTarget(visitor.id))
+            let centre = CGPoint(x: target.artwork.midX, y: target.artwork.midY)
+            XCTAssertEqual(VisitorHitTarget.pick(at: centre, from: [target]), visitor.id)
+            centres.append(centre)
+        }
+        XCTAssertNotEqual(centres.first, centres.last)
+        XCTAssertFalse(renderer.welcomeVisitor(at: CGPoint(x: 100, y: -1)))
+        let centre = try XCTUnwrap(centres.last)
+        XCTAssertTrue(renderer.welcomeVisitor(at: centre))
+        _ = renderer.welcomeVisitor(at: centre)
+        try await waitUntil { store.tokenBalance == "1" }
+        XCTAssertEqual(service.operations.filter { $0.kind == .welcome }.count, 1)
+        store.setEligible(false, reconcile: false)
+        XCTAssertNil(renderer.visitorHitTarget(visitor.id))
+        XCTAssertFalse(renderer.welcomeVisitor(at: centre))
+        XCTAssertEqual(library.loadCount, 1)
+    }
+
     func testTimedOutAssetReleasesSharedImportAndRendererCanRetryWithoutAppSwitch() async throws {
         let subject = PassthroughSubject<Entity, Error>()
         var attempts = 0, cancelled = false

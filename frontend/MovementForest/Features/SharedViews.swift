@@ -1,4 +1,5 @@
 import SwiftUI
+import HealthKit
 
 /// Child sheets, confirmations and edits must not compete with the entry sheet.
 struct EntryPresentationBlocker: PreferenceKey {
@@ -18,6 +19,77 @@ enum ActivityMetricLabel {
             return key.replacingOccurrences(of: "workout_minutes.", with: "Workout: ")
                 .replacingOccurrences(of: "_", with: " ").capitalized
         }
+    }
+}
+
+enum QuantityArtwork {
+    static let keys = ["steps", "walking_running_distance_km", "active_energy_kcal", "flights_climbed",
+                       "workout_minutes.running", "workout_minutes.cycling", "workout_minutes.swimming",
+                       "workout_minutes.strength_training", "water", "attraction", "active_visitor_rate",
+                       "offline_visitor_rate", "offline_capacity", "tokens"]
+    static func path(_ key: String) -> String? {
+        keys.contains(key) ? "png-128/\(key).png" : nil
+    }
+    static func workoutKey(_ type: UInt) -> String {
+        switch HKWorkoutActivityType(rawValue: type) {
+        case .running?: return "workout_minutes.running"
+        case .cycling?: return "workout_minutes.cycling"
+        case .swimming?: return "workout_minutes.swimming"
+        case .traditionalStrengthTraining?, .functionalStrengthTraining?: return "workout_minutes.strength_training"
+        case .walking?: return "workout_minutes.walking"
+        case .hiking?: return "workout_minutes.hiking"
+        case .yoga?: return "workout_minutes.yoga"
+        default: return "workout_minutes.unknown"
+        }
+    }
+    static func symbol(_ key: String) -> String {
+        switch key {
+        case "workout_minutes.walking": return "figure.walk"
+        case "workout_minutes.hiking": return "figure.hiking"
+        case "workout_minutes.yoga": return "figure.yoga"
+        default: return key.hasPrefix("workout_minutes.") ? "figure.mixed.cardio" : "chart.bar"
+        }
+    }
+    // Decode small runtime exports once; original generation canvases are never bundled.
+    static let images: [String: UIImage] = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
+        guard let path = path(key), let image = PresentationAssets.image(path, maximumPixels: 128) else { return nil }
+        return (key, image)
+    })
+}
+
+struct QuantityIcon: View {
+    let metric: String
+    @ScaledMetric(relativeTo: .body) private var size = 24.0
+    var body: some View {
+        Group {
+            if let image = QuantityArtwork.images[metric] {
+                Image(uiImage: image).resizable().scaledToFit()
+            } else {
+                Image(systemName: QuantityArtwork.symbol(metric))
+                    .resizable().scaledToFit().padding(3).foregroundStyle(Color.forestTint)
+            }
+        }.frame(width: size, height: size).accessibilityHidden(true)
+    }
+}
+
+struct QuantityLabel: View {
+    let metric: String
+    let text: String
+    var body: some View {
+        Label { Text(text).fixedSize(horizontal: false, vertical: true) } icon: { QuantityIcon(metric: metric) }
+            .accessibilityElement(children: .combine)
+    }
+}
+
+struct QuantityDetailRow: View {
+    let metric: String
+    let title: String
+    let value: String
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            QuantityIcon(metric: metric)
+            DetailRow(title: title, value: value)
+        }.accessibilityElement(children: .combine)
     }
 }
 

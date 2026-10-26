@@ -1,10 +1,15 @@
 import SwiftUI
 
 enum CollectionDestination: String, CaseIterable, Identifiable {
-    case exchange = "Exchange", catalog = "Catalog", draws = "Packs"
+    case exchange = "Exchange", catalog = "Catalog", draws = "Packs", milestones = "Milestones"
     var id: String { rawValue }
     var symbol: String {
-        switch self { case .exchange: return "arrow.left.arrow.right"; case .catalog: return "books.vertical"; case .draws: return "shippingbox" }
+        switch self {
+        case .exchange: return "arrow.left.arrow.right"
+        case .catalog: return "books.vertical"
+        case .draws: return "shippingbox"
+        case .milestones: return "checkmark.seal"
+        }
     }
 }
 
@@ -21,7 +26,7 @@ struct CollectionHostScreen: View {
                 CollectionScreen(store: store, destination: destination, assets: assets, navigate: navigate,
                                  openingChanged: openingChanged).id(store.id)
             } else {
-                Text("Connect to your account in Settings to use Exchange, Catalog and Packs.")
+                Text("Connect to your account in Settings to use Exchange, Catalog, Packs and Milestones.")
                     .foregroundStyle(.secondary).padding()
             }
         }.navigationTitle(destination.rawValue).navigationBarTitleDisplayMode(.inline)
@@ -79,7 +84,7 @@ struct CollectionScreen: View {
     private var content: some View {
         List {
             Section {
-                if let balance = store.tokenBalance { Label("\(balance) visitor tokens", systemImage: "sparkles").monospacedDigit() }
+                if let balance = store.tokenBalance { QuantityLabel(metric: "tokens", text: "\(balance) visitor tokens").monospacedDigit() }
                 if store.offers.contains(where: { $0.pack.isFixture }) {
                     Text("Development prices and odds · provisional").font(.caption).foregroundStyle(.secondary)
                 }
@@ -91,24 +96,30 @@ struct CollectionScreen: View {
                 }
             }
             switch destination {
-            case .exchange:
-                if !store.milestones.isEmpty {
-                    Section("Your first garden") {
-                        ForEach(store.milestones) { milestone in
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(milestone.title).font(.headline)
-                                Text(milestone.description).font(.caption).foregroundStyle(.secondary)
-                                if milestone.claimed { Label("Claimed", systemImage: "checkmark.circle") }
-                                else {
-                                    Button("Claim \(milestone.rewardTokens) tokens") {
-                                        Task { await store.claim(milestone) }
-                                    }.disabled(!milestone.eligible || !store.canMutate)
-                                        .accessibilityIdentifier("milestone.\(milestone.id)")
-                                }
-                            }.padding(.vertical, 4)
-                        }
+            case .milestones:
+                Section("Your first garden") {
+                    if let confirmedAt = store.milestonesConfirmedAt {
+                        Text("\(store.refreshFailed ? "Cached milestones" : "Last confirmed") · \(confirmedAt.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    if store.refreshFailed {
+                        Text("Milestones couldn’t refresh. Previously confirmed rewards are retained.")
+                        Button("Retry refresh") { Task { await store.refresh() } }.disabled(store.busy)
+                    }
+                    if store.milestones.isEmpty && !store.busy && !store.refreshFailed && store.milestonesConfirmedAt != nil {
+                        Text("No milestones are currently available.")
+                    }
+                    ForEach(store.milestones) { milestone in
+                        milestoneRow(milestone)
+                    }
+                    if let receipt = store.state.result, receipt.milestoneId != nil {
+                        ReceiptRow(receipt: receipt, catalogue: store.catalogue, assets: assets)
+                    }
+                    if !store.confirmedMilestoneIDs.isEmpty {
+                        Button("Spend tokens in Exchange") { navigate?(.exchange) }.frame(minHeight: 44)
                     }
                 }
+            case .exchange:
                 Section("Exchange tokens for packs") {
                     if store.offers.isEmpty && !store.busy { Text("No exchange offers are currently available.") }
                     ForEach(store.offers) { offer in ExchangeOfferRow(store: store, offer: offer, navigate: navigate) }
@@ -185,6 +196,31 @@ struct CollectionScreen: View {
             }
         }
     }
+
+    private func milestoneRow(_ milestone: APIIntroMilestone) -> some View {
+        let claimed = milestone.claimed || store.confirmedMilestoneIDs.contains(milestone.id)
+        let pending = store.state.pending?.kind == .milestone && store.state.pending?.milestoneID == milestone.id
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(milestone.title).font(.headline)
+            Text(milestone.description).font(.callout).foregroundStyle(.secondary)
+            QuantityLabel(metric: "tokens", text: "Reward: \(milestone.rewardTokens) visitor tokens")
+            if pending {
+                Label(store.busy ? "Confirming claim…" : "Claim awaiting confirmation", systemImage: "clock")
+                if !store.busy {
+                    Button("Retry saved claim") { Task { await store.refresh() } }.frame(minHeight: 44)
+                }
+            } else if claimed {
+                Label("Claimed", systemImage: "checkmark.circle")
+            } else if milestone.eligible {
+                Text("Ready to claim").font(.caption).foregroundStyle(.secondary)
+                Button("Claim reward") { Task { await store.claim(milestone) } }
+                    .disabled(!store.canMutate).frame(minHeight: 44)
+                    .accessibilityIdentifier("milestone.\(milestone.id)")
+            } else {
+                Label("Not yet eligible", systemImage: "lock")
+            }
+        }.padding(.vertical, 4)
+    }
 }
 
 @MainActor
@@ -202,10 +238,10 @@ private struct ExchangeOfferRow: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(offer.pack.displayName).font(.headline)
             Text(offer.pack.description).font(.callout).foregroundStyle(.secondary)
-            Text("\(offer.tokenCost) tokens per pack")
+            QuantityLabel(metric: "tokens", text: "\(offer.tokenCost) tokens per pack")
             Stepper("Quantity: \(quantity)", value: $quantity, in: 1...20).disabled(store.busy || store.state.pending != nil)
             if let cost = ExactAmount.integer(offer.tokenCost) {
-                Text("Total: \((cost * Decimal(quantity)).formatted()) tokens").monospacedDigit()
+                QuantityLabel(metric: "tokens", text: "Total: \((cost * Decimal(quantity)).formatted()) tokens").monospacedDigit()
             }
             NavigationLink("View contents and odds") { PackContentsScreen(pack: offer.pack) }
                 .frame(minHeight: 44)
@@ -224,7 +260,7 @@ private struct ExchangeOfferRow: View {
             if let receipt = store.confirmedExchange, receipt.packs?.first?.packId == offer.pack.packId {
                 Label("\(receipt.quantity ?? 0) \(offer.pack.displayName) added", systemImage: "checkmark.circle.fill")
                     .accessibilityIdentifier("collection.exchangeSuccess")
-                Text("Confirmed purchase · Remaining balance: \(store.tokenBalance ?? receipt.tokenBalance) tokens")
+                QuantityLabel(metric: "tokens", text: "Confirmed purchase · Remaining balance: \(store.tokenBalance ?? receipt.tokenBalance) tokens")
                     .font(.caption).foregroundStyle(.secondary)
                 Button("Open packs") { navigate?(.draws) }.frame(minHeight: 44)
             }
@@ -372,8 +408,8 @@ private struct CatalogDetailScreen: View {
                         CatalogThumbnail(row: row, stage: stage, assets: assets)
                         VStack(alignment: .leading) {
                             Text(stage.title).font(.headline)
-                            Text("Cumulative growth: \(amount("growth", stage: stage))")
-                            Text("Attraction: \(amount("attraction", stage: stage))")
+                            QuantityLabel(metric: "water", text: "Cumulative growth: \(amount("growth", stage: stage))")
+                            QuantityLabel(metric: "attraction", text: "Attraction: \(amount("attraction", stage: stage))")
                         }.font(.callout)
                     }
                 }
@@ -381,7 +417,7 @@ private struct CatalogDetailScreen: View {
             Section("Activity multipliers") {
                 let multipliers = profile("behaviour")?.metricMultipliers ?? [:]
                 ForEach(multipliers.keys.sorted(), id: \.self) { key in
-                    LabeledContent(ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×")
+                    QuantityDetailRow(metric: key, title: ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×")
                 }
                 Text("Recorded workouts use their exact multiplier when listed, otherwise the recorded-workout default. Other unlisted activities contribute no growth.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -420,9 +456,9 @@ private struct ReceiptRow: View {
                 }
             }
         } else if receipt.milestoneId != nil {
-            Text("Milestone reward: +\(receipt.tokensEarned ?? "0") visitor tokens.")
+            QuantityLabel(metric: "tokens", text: "Milestone reward: +\(receipt.tokensEarned ?? "0") visitor tokens.")
         } else {
-            Text("Exchanged \(receipt.tokensSpent ?? "0") tokens for \(receipt.quantity ?? 0) packs.")
+            QuantityLabel(metric: "tokens", text: "Exchanged \(receipt.tokensSpent ?? "0") tokens for \(receipt.quantity ?? 0) packs.")
         }
     }
 }

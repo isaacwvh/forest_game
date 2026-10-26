@@ -4,6 +4,46 @@ import UIKit
 
 @MainActor
 final class F8PresentationTests: XCTestCase {
+    func testVisitorTargetsKeepVisibleEdgesAndExcludeHeaderAndOffscreenArtwork() throws {
+        let viewport = CGRect(x: 0, y: 0, width: 320, height: 400)
+        let id = UUID()
+        let edge = try XCTUnwrap(VisitorHitTarget(id: id, artwork: CGRect(x: 140, y: -8, width: 30, height: 30), viewport: viewport))
+        XCTAssertEqual(VisitorHitTarget.pick(at: CGPoint(x: 155, y: 2), from: [edge]), id)
+        XCTAssertNil(VisitorHitTarget.pick(at: CGPoint(x: 155, y: -1), from: [edge]))
+        XCTAssertNil(VisitorHitTarget(id: id, artwork: CGRect(x: 140, y: -50, width: 30, height: 30), viewport: viewport))
+        let centre = try XCTUnwrap(VisitorHitTarget(id: id, artwork: CGRect(x: 140, y: 120, width: 20, height: 20), viewport: viewport))
+        XCTAssertEqual(centre.touch.size, CGSize(width: 64, height: 64))
+        XCTAssertEqual(centre.touch.midX, centre.artwork.midX)
+        XCTAssertEqual(centre.touch.midY, centre.artwork.midY)
+    }
+
+    func testVisitorSelectionPrefersVisibleArtworkOverAnotherPaddedTarget() throws {
+        let viewport = CGRect(x: 0, y: 0, width: 320, height: 400)
+        let first = try XCTUnwrap(VisitorHitTarget(id: UUID(), artwork: CGRect(x: 100, y: 100, width: 20, height: 20), viewport: viewport))
+        let second = try XCTUnwrap(VisitorHitTarget(id: UUID(), artwork: CGRect(x: 125, y: 100, width: 20, height: 20), viewport: viewport))
+        let point = CGPoint(x: 126, y: 110)
+        XCTAssertTrue(first.touch.contains(point))
+        XCTAssertEqual(VisitorHitTarget.pick(at: point, from: [first, second]), second.id)
+        XCTAssertEqual(VisitorHitTarget.pick(at: point, from: [second, first]), second.id)
+    }
+
+    func testQuantityArtworkResolvesRuntimeExportsAndKeepsWorkoutFallbackDistinct() throws {
+        for key in QuantityArtwork.keys {
+            let path = try XCTUnwrap(QuantityArtwork.path(key))
+            let image = try XCTUnwrap(PresentationAssets.image(path, maximumPixels: 128))
+            let pixels = try XCTUnwrap(image.cgImage)
+            XCTAssertEqual(pixels.width, 128)
+            XCTAssertEqual(pixels.height, 128)
+        }
+        XCTAssertNil(QuantityArtwork.path("workout_minutes.*"))
+        XCTAssertNil(QuantityArtwork.path("../tokens"))
+        XCTAssertEqual(QuantityArtwork.workoutKey(37), "workout_minutes.running")
+        XCTAssertEqual(QuantityArtwork.workoutKey(20), "workout_minutes.strength_training")
+        XCTAssertEqual(QuantityArtwork.workoutKey(50), "workout_minutes.strength_training")
+        XCTAssertEqual(QuantityArtwork.workoutKey(10_000), "workout_minutes.unknown")
+        XCTAssertNotEqual(ActivityMetricLabel.title("workout_minutes.*"), ActivityMetricLabel.title("workout_minutes.unknown"))
+    }
+
     func testEntryGateSuppressesRoutineRefreshesAndRearmsAfterBackground() {
         var gate = AppEntryGate()
         let account = UUID()

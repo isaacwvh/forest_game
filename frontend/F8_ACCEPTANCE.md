@@ -3,7 +3,19 @@
 Source implementation: 26 October 2026. Native execution and device results must
 be recorded separately; portable parsing is not Apple SDK compilation.
 
-## Lifecycle follow-up — source implemented, iPhone acceptance pending
+## Lifecycle follow-up — done, user accepted on iPhone, 26 October 2026
+
+The user confirmed expected recap behavior, then confirmed that cold-start
+butterfly loading works without a stuck loading state or manual artwork retry.
+They accepted the lifecycle/loading tickets as done. This covers the follow-ups
+in `1d51fad`, `03abe14` and `4d151a1`; the earlier Packs routing/entry destination
+acceptance remains valid. No new XCTest, Release-build or Instruments execution
+is inferred from this report. The broader pending gates below remain separate
+from these closed functional tickets.
+
+The following procedures remain regression references, not an outstanding request
+to repeat accepted play-tests before beginning F8.2. See the exact four-item
+F8.2 scope in [the implementation plan](../IMPLEMENTATION_PLAN.md).
 
 **Cold-start import timeout / recovery retest:** kill the backgrounded app and
 reopen it at least five times. Artwork should load normally; a stalled import
@@ -80,12 +92,22 @@ credentials and Health payloads. A normal pause should reuse the renderer and
 loaded butterfly; repeated active/inactive transitions should not start new sync
 passes. A real scene replacement should dispose and then release the old renderer.
 
-The play-test establishes visible behavior. Use Instruments Allocations/Memory
+The accepted play-test establishes reported visible behavior. Use Instruments Allocations/Memory
 Graph and Time Profiler/animation traces for resource/performance acceptance:
 memory must settle after warm-up, retired instances and subscriptions must not
 accumulate, and frame time must not deteriorate across cycles. The existing
 provisional floor is 30 FPS. The iPhone 14 Pro reproduction and supported minimum
-device are separate evidence. No device trace or native build is claimed here.
+device are separate evidence. No device trace or automated native-build result
+is recorded here; these broader measurements do not reopen the closed tickets.
+
+## Targeted iPhone acceptance — completed, 26 October 2026
+
+The user confirmed commit `dc392fd` works on their native iPhone installation:
+Packs inspection and opening are separate actions, and the entry activity recap
+appears automatically over Garden without first visiting Activity. These two
+follow-up fixes are done. The later first-return recap and cold-start butterfly
+loading fixes are also user accepted, as recorded above. These confirmations do not record every walkthrough,
+accessibility, automated-build or performance gate below.
 
 ## Install and validate
 
@@ -180,9 +202,51 @@ limits do not establish total GPU memory or actual minimum-device performance.
 | --- | --- |
 | Apple SDK Debug + XCTest/UI | Pending |
 | Release simulator build | Pending |
-| Existing-account walkthrough | Pending |
+| Lifecycle / first-return recap / cold-start butterfly | Done — user accepted on iPhone, 26 October 2026; expected recap, no stuck artwork loading or manual artwork retry |
+| Existing-account walkthrough | Targeted Packs action routing, Garden entry recap and lifecycle/artwork follow-ups accepted by user on iPhone, 26 October 2026; remaining cases unrecorded |
 | Portrait / large text / VoiceOver / Reduce Motion | Pending |
 | Minimum-device frame time, memory, thermal session | Pending |
 
 Catalogue discovery, new milestone/step rewards, watering/swarm effects, remote
 asset delivery and deployment are separate work.
+
+## F8.2 local implementation and test flow
+
+Source implemented locally; Apple SDK build/XCTest/UI and iPhone acceptance are
+pending. No push or remote CI was run. On Mac, run `bash frontend/scripts/test-mac.sh`
+from the repository root before the device walkthrough.
+
+1. Cold-launch Garden and observe loading → model without an intermediate fallback
+   or manual retry. Orbit, two-finger pan and pinch; tap each visible butterfly's
+   centre and edges, especially the upper scene boundary. Repeat at minimum/maximum
+   zoom and after camera gestures. Menu/status taps must retain their own behavior;
+   offscreen visitors must not leave active targets. Repeated taps award once.
+   With multiple visitors, tap each independently. Check VoiceOver Welcome.
+2. Open a Woodland pack. Sealed art hides rarity. First tap tears; receipt-coloured
+   light stays inside the mouth with restrained upward spill, never across the
+   opaque front. Wait several seconds: no automatic reveal. Second tap shows the
+   matching sprout halo, then Continue. Cover Common grey (including Golden
+   Moonwillow), Rare blue, Epic purple and Legendary gold, with/without Reduce
+   Motion. Test generic packs and background/relaunch recovery of one saved sprout.
+3. Open sidebar → Milestones. Verify every existing title, requirement and token
+   reward, locked/ready/claimed states and that Exchange no longer lists milestones.
+   Claim a ready row repeatedly: one wallet award. Lose connectivity during claim,
+   navigate away, relaunch and retry the saved claim; the original result recovers.
+   Also test refresh failure before/after data loads, and successful retry clearing
+   stale errors. A confirmed reward survives a failed subsequent refresh. Switch
+   accounts and verify no other account's rows, pending claims or confirmation leaks.
+4. Compare token icons in Garden, Exchange, Milestones and receipts; compare metric
+   icons in owned-copy details, Catalog and Activity. Check differing pinned-copy
+   multipliers, supported/default/unknown workouts, zero/unavailable metrics, units,
+   largest accessibility text and VoiceOver without decorative icon announcements.
+5. Return to Garden after visiting every sidebar destination: camera remains intact.
+   Background for at least 30 seconds: recap appears once over Garden and loaded
+   butterfly artwork remains reusable. Brief Notification/Control Centre interruption,
+   manual refresh and ordinary sync stay quiet. Recheck tap alignment after sheet
+   dismissal, sync and resume.
+
+Automated additions cover geometry/boundary selection, rendered-camera targeting,
+one welcome, claim recovery/freshness, runtime icon resolution, Milestones routing
+and four receipt rarities with both motion settings. Existing preload/cache,
+loading-to-model, timeout and renderer-retention tests remain unchanged. Added
+native tests are not recorded as passing until run with Apple SDKs.
