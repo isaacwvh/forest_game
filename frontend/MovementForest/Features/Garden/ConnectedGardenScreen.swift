@@ -12,7 +12,8 @@ struct ConnectedGardenScreen: View {
     var active: Bool
     var activitySync: ActivitySyncCoordinator? = nil
     var visitors: VisitorCoordinator? = nil
-    @StateObject private var renderer = RealityGardenRenderer()
+    @StateObject private var renderSession = GardenRenderSession()
+    private var renderer: RealityGardenRenderer { renderSession.renderer }
     @State private var sheet: GardenEditorSheet?
     @State private var visible = false
     @Environment(\.scenePhase) private var phase
@@ -40,10 +41,12 @@ struct ConnectedGardenScreen: View {
                 GardenViewportLayout(compact: verticalSizeClass == .compact) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
                                     motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil,
-                                    editorPreview: preview, onSelect: { id in
+                                    editorPreview: preview, onSelect: { [weak store = store] id in
+                        guard let store = store else { return }
                         guard store.candidate == nil else { return }
                         store.selectedID = id
-                    }, onGroundDrag: { point, event in
+                    }, onGroundDrag: { [weak store = store] point, event in
+                        guard let store = store else { return }
                         guard store.canEdit else { return }
                         switch event {
                         case .began: break
@@ -75,6 +78,7 @@ struct ConnectedGardenScreen: View {
             }
         }
         .navigationTitle("Your forest").navigationBarTitleDisplayMode(.inline)
+        .preference(key: EntryPresentationBlocker.self, value: sheet != nil || (active && store.editing))
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(store.editing ? "Done" : "Edit") {
@@ -105,11 +109,9 @@ struct ConnectedGardenScreen: View {
         .onChange(of: store.canEdit) { if !$0 { store.cancelCandidate() } }
         .onChange(of: active) { value in
             if !value { store.cancelCandidate() }
-            else { Task { await store.reconcile() } }
         }
         .onChange(of: phase) { value in
             if value != .active { store.cancelCandidate() }
-            else { Task { await store.reconcile() } }
         }
         .onChange(of: visitorEligible) { visitors?.setEligible($0) }
         .onChange(of: visitors?.id) { _ in visitors?.setEligible(visitorEligible) }

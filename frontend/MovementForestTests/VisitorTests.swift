@@ -74,6 +74,35 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testLoadedButterflySurvivesPausesAndRendererReplacementWithoutAnotherImport() async throws {
+        let fixture = try VisitorContract.load()
+        let service = FakeVisitors(fixture)
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service, journal: MemoryVisitorJournal())
+        let renderer = RealityGardenRenderer()
+        defer { renderer.stop() }
+        renderer.setVisitors(store)
+        for _ in 0..<1500 {
+            if renderer.visitorAssetReady || renderer.visitorAssetIssue != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertTrue(renderer.visitorAssetReady, renderer.visitorAssetIssue ?? "Butterfly did not load")
+        let imports = VisitorModelLibrary.shared.loadCount
+        for _ in 0..<20 {
+            renderer.setActive(false); renderer.detachView()
+            renderer.setVisitors(store); renderer.setActive(true)
+            XCTAssertTrue(renderer.visitorAssetReady)
+        }
+        renderer.stop()
+        let replacement = RealityGardenRenderer()
+        defer { replacement.stop() }
+        replacement.setVisitors(store)
+        try await waitUntil { replacement.visitorAssetReady }
+        XCTAssertEqual(VisitorModelLibrary.shared.loadCount, imports)
+        XCTAssertTrue(service.operations.isEmpty)
+        XCTAssertEqual(store.tokenBalance, "0")
+        XCTAssertEqual(fixture.initial.tokenBalance, "0")
+    }
+
     func testScheduledVisitorsStayHiddenUntilDueAndAllowWelcomingAnyVisibleCopy() async throws {
         let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
         let session = try XCTUnwrap(f.active.session)

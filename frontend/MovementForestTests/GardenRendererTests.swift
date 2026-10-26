@@ -7,6 +7,55 @@ import UIKit
 
 @MainActor
 final class GardenRendererTests: XCTestCase {
+    func testViewDetachPreservesSceneAndCameraButTerminalStopReleasesScene() async throws {
+        let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
+        defer { renderer.stop() }
+        let garden = DevelopmentScene.single.garden()
+        renderer.display(garden, catalog: catalog)
+        try await waitUntil { renderer.modelLoadCount == 1 && !renderer.isLoading }
+        renderer.zoom(by: 0.8)
+        let plant = try XCTUnwrap(renderer.view.scene.anchors.first?.findEntity(named: garden.plants[0].id.uuidString))
+        let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
+        let position = camera.position
+        renderer.onSelect = { _ in }; renderer.onGroundDrag = { _, _ in }
+        renderer.setActive(true); renderer.detachView()
+        XCTAssertNil(renderer.onSelect); XCTAssertNil(renderer.onGroundDrag)
+        XCTAssertTrue(renderer.view.isHidden)
+        renderer.display(garden, catalog: catalog); renderer.setActive(true)
+        XCTAssertFalse(renderer.view.isHidden)
+        XCTAssertEqual(camera.position, position)
+        XCTAssertEqual(renderer.modelLoadCount, 1)
+        XCTAssertTrue(plant === renderer.view.scene.anchors.first?.findEntity(named: garden.plants[0].id.uuidString))
+        renderer.stop(); renderer.stop()
+        renderer.display(garden, catalog: catalog); renderer.setActive(true)
+        XCTAssertTrue(renderer.view.isHidden)
+        XCTAssertTrue(renderer.view.scene.anchors.isEmpty)
+        XCTAssertTrue(renderer.view.gestureRecognizers?.isEmpty ?? true)
+    }
+
+    func testRetiredGardenSessionReleasesRendererAndCallbacks() async throws {
+        var session: GardenRenderSession? = GardenRenderSession()
+        weak var renderer = session?.renderer
+        session?.renderer.onSelect = { _ in }
+        session = nil
+        try await waitUntil { renderer == nil }
+        XCTAssertNil(renderer)
+    }
+
+    func testButterflyLibraryCoalescesImportsAndReturnsIndependentClones() async throws {
+        let library = VisitorModelLibrary()
+        let first = Task { try await library.load() }
+        let second = Task { try await library.load() }
+        let a = try await first.value, b = try await second.value
+        XCTAssertEqual(library.loadCount, 1)
+        XCTAssertFalse(a === b)
+        a.position.x = 42
+        XCTAssertNotEqual(a.position.x, b.position.x)
+        let third = try await library.load()
+        XCTAssertEqual(library.loadCount, 1)
+        XCTAssertNotEqual(third.position.x, a.position.x)
+    }
+
     func testVersionRefreshPauseAndAssetRetryPreserveCamera() async throws {
         let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
         defer { renderer.stop() }

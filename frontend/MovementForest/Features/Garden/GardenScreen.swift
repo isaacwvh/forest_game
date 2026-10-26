@@ -4,7 +4,8 @@ struct GardenScreen: View {
     @ObservedObject var store: GardenStore
     let catalog: any AssetCatalogProviding
     var active: Bool
-    @StateObject private var renderer = RealityGardenRenderer()
+    @StateObject private var renderSession = GardenRenderSession()
+    private var renderer: RealityGardenRenderer { renderSession.renderer }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var phase
     @State private var visible = false

@@ -1,5 +1,11 @@
 import SwiftUI
 
+/// Child sheets, confirmations and edits must not compete with the entry sheet.
+struct EntryPresentationBlocker: PreferenceKey {
+    static var defaultValue = false
+    static func reduce(value: inout Bool, nextValue: () -> Bool) { value = value || nextValue() }
+}
+
 enum ActivityMetricLabel {
     static func title(_ key: String) -> String {
         switch key {

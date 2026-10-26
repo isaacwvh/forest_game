@@ -70,6 +70,7 @@ struct ActivityRecapScreen: View {
                 Button("Continue") { recap.showing = false }.frame(minHeight: 44)
                     .accessibilityIdentifier("recap.continue")
             } }
+            .onAppear { LifecycleDiagnostics.event("entry sheet appeared") }
             .task {
                 do { try await Task.sleep(nanoseconds: 300_000_000) } catch { return }
                 titleFocused = true

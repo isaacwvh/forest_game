@@ -80,6 +80,7 @@ struct ActivityScreen: View {
             }
         }
         .navigationTitle("Activity")
+        .task { if store.report == nil { await store.refresh() } }
         .refreshable { await store.refresh() }
     }
 

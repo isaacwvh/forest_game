@@ -97,6 +97,7 @@ struct ActivitySyncScreen: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }.navigationTitle("Activity")
+            .preference(key: EntryPresentationBlocker.self, value: showingConsent || replacing)
             .refreshable { _ = await sync.synchronize() }
             .alert("Upload activity to your garden?", isPresented: $showingConsent) {
                 Button("Enable activity sync") { Task { await sync.setEnabled(true) } }

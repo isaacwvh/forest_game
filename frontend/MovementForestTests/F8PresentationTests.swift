@@ -9,7 +9,8 @@ final class F8PresentationTests: XCTestCase {
         let account = UUID()
         XCTAssertTrue(gate.enter(account: account))
         for _ in 0..<20 { XCTAssertFalse(gate.enter(account: account)) }
-        gate.background()
+        gate.background(at: 100)
+        gate.foreground(at: 130)
         XCTAssertTrue(gate.enter(account: account))
         XCTAssertFalse(gate.enter(account: account))
         XCTAssertTrue(gate.enter(account: account, server: "https://second-environment.invalid"))

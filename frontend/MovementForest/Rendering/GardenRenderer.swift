@@ -2,7 +2,22 @@ import SwiftUI
 import RealityKit
 import Combine
 import UIKit
-import CryptoKit
+
+/// SwiftUI owns this session. Its destruction schedules terminal cleanup even if
+/// a renderer is temporarily retained by a model import or a UIKit callback.
+@MainActor
+final class GardenRenderSession: ObservableObject {
+    let objectWillChange = ObservableObjectPublisher()
+    let renderer = RealityGardenRenderer()
+    private var updates: AnyCancellable?
+    init() {
+        updates = renderer.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+    }
+    deinit {
+        let retired = renderer
+        Task { @MainActor in retired.stop() }
+    }
+}
 
 @MainActor
 protocol GardenRenderer: AnyObject {
@@ -34,6 +49,9 @@ struct EditorRenderPreview: Equatable {
 
 @MainActor
 final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, UIGestureRecognizerDelegate {
+    private let diagnosticID = UUID()
+    private var disposed = false
+    private var visitorGeneration = UUID()
     let view: ARView
     @Published private(set) var isLoading = false
     @Published private(set) var loadedCount = 0
@@ -80,7 +98,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var updateSubscription: Cancellable?
     private var selectionMarker: Entity?
     private var debugGeometry: Entity?
-    private var isActive = true
+    private var isActive = false
     private var wantsMotion = true
     private var groundPicking = false
     private var showBounds = false
@@ -94,6 +112,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     override init() {
         view = ARView(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
         super.init()
+        view.isHidden = true
+        LifecycleDiagnostics.event("renderer created id=\(diagnosticID)")
         view.environment.background = .color(UIColor(red: 0.90, green: 0.93, blue: 0.89, alpha: 1))
         view.renderOptions.insert(.disableMotionBlur)
         view.renderOptions.insert(.disableDepthOfField)
@@ -116,11 +136,12 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         rig.addChild(fill)
         configureGestures()
         updateCamera()
-        subscribeToUpdates()
     }
 
+    deinit { LifecycleDiagnostics.event("renderer destroyed id=\(diagnosticID)") }
+
     private func subscribeToUpdates() {
-        guard updateSubscription == nil else { return }
+        guard !disposed, isActive, updateSubscription == nil else { return }
         updateSubscription = view.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
             // RealityKit scene updates are delivered on the main thread.
             self?.recordFrame(event.deltaTime)
@@ -128,7 +149,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     func display(_ garden: GardenSnapshot, catalog: any AssetCatalogProviding) {
-        subscribeToUpdates()
+        guard !disposed else { return }
         guard snapshot != garden || needsAssetReload else { return }
         let dimensionsChanged = snapshot?.gardenId != garden.gardenId || snapshot?.width != garden.width ||
             snapshot?.depth != garden.depth || snapshot?.gardenUnitMetres != garden.gardenUnitMetres
@@ -211,6 +232,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                     self.loadedCount += 1
                 } catch is CancellationError { return }
                 catch {
+                    guard !Task.isCancelled, self.generation == token else { return }
                     self.errors.append("\(plant.speciesId) \(plant.growthStage.title): \(error.localizedDescription)")
                     if self.placements[plant.id] != nil { continue }
                     let placeholder = ModelEntity(mesh: .generateSphere(radius: 0.12), materials: [SimpleMaterial(color: .systemGray, isMetallic: false)])
@@ -287,15 +309,29 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         }
     }
     func setActive(_ active: Bool) {
+        guard !disposed else { return }
         guard isActive != active else { return }
         isActive = active
         view.isHidden = !active
         visitorRoot.isEnabled = active
         frameTime = 0
         frameCount = 0
+        if active { subscribeToUpdates() }
+        else { updateSubscription?.cancel(); updateSubscription = nil }
         applyMotion()
     }
+
+    func detachView() {
+        setActive(false)
+        onSelect = nil; onGroundDrag = nil
+        dragging = false; dragOffset = nil; oneFingerMovesPlant = nil
+        LifecycleDiagnostics.event("renderer detached id=\(diagnosticID)")
+    }
+
     func stop() {
+        guard !disposed else { return }
+        setActive(false); disposed = true; visitorGeneration = UUID()
+        LifecycleDiagnostics.event("renderer disposed id=\(diagnosticID)")
         visitorLoadTask?.cancel(); visitorLoadTask = nil
         visitorPlaybacks.values.flatMap { $0 }.forEach { $0.stop() }
         visitorPlaybacks.removeAll(); visitorEntities.removeAll()
@@ -313,6 +349,13 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         updateSubscription?.cancel()
         updateSubscription = nil
         snapshot = nil
+        placements.removeAll(); renderedPlants.removeAll(); diagnostics = []
+        previewAnchor = nil; clearanceGuide = nil; selectionMarker = nil; debugGeometry = nil; board = nil
+        loader.clear()
+        for child in Array(root.children) { child.removeFromParent() }
+        for anchor in Array(view.scene.anchors) { view.scene.removeAnchor(anchor) }
+        for gesture in view.gestureRecognizers ?? [] { view.removeGestureRecognizer(gesture) }
+        isLoading = false
         isActive = false
         view.isHidden = true
     }
@@ -385,6 +428,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     func setVisitors(_ store: VisitorCoordinator?) {
+        guard !disposed else { return }
         if visitorStore?.id != store?.id {
             visitorPlaybacks.values.flatMap { $0 }.forEach { $0.stop() }
             visitorPlaybacks.removeAll(); visitorEntities.removeAll()
@@ -392,38 +436,23 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         }
         visitorStore = store
         guard store != nil, visitorTemplate == nil, visitorLoadTask == nil else { return }
+        let token = UUID(); visitorGeneration = token
+        let rendererID = diagnosticID
         visitorLoadTask = Task { [weak self] in
-            guard let self = self else { return }
-            defer { self.visitorLoadTask = nil }
             do {
-                let (manifest, url) = try VisitorAssetManifest.load()
-                let asset = manifest.assets[0]
-                try await Task.detached(priority: .utility) {
-                    let data = try Data(contentsOf: url, options: .mappedIfSafe)
-                    guard data.count == asset.bytes,
-                          SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == asset.sha256 else {
-                        throw ForestError.invalidData("Butterfly checksum mismatch.")
-                    }
-                }.value
+                let adapter = try await VisitorModelLibrary.shared.load()
                 try Task.checkCancellation()
-                for try await imported in Entity.loadAsync(contentsOf: url).values {
-                    try Task.checkCancellation()
-                    func hasAnimation(_ node: Entity) -> Bool {
-                        !node.availableAnimations.isEmpty || node.children.contains { hasAnimation($0) }
-                    }
-                    guard hasAnimation(imported) else { throw ForestError.assetLoad("Butterfly wing animation is unavailable.") }
-                    let adapter = Entity(); adapter.addChild(imported)
-                    if AssetOrientation.needsZUpCorrection(imported: imported.visualBounds(relativeTo: adapter).extents,
-                                                          authored: asset.bounds.extents) {
-                        adapter.orientation = simd_quatf(angle: -.pi / 2, axis: [1, 0, 0])
-                    }
-                    self.visitorTemplate = adapter; self.visitorAssetReady = true; self.visitorAssetIssue = nil
-                    self.updateVisitors()
-                    return
-                }
-                throw ForestError.assetLoad("No butterfly model was imported.")
+                guard let self = self, !self.disposed, self.visitorGeneration == token else { return }
+                self.visitorTemplate = adapter; self.visitorAssetReady = true; self.visitorAssetIssue = nil
+                self.visitorLoadTask = nil; self.updateVisitors()
+                LifecycleDiagnostics.event("butterfly ready renderer=\(rendererID)")
             } catch is CancellationError { }
-            catch { self.visitorAssetIssue = "Visitor artwork is unavailable. You can still welcome visitors." }
+            catch {
+                guard let self = self, !self.disposed, self.visitorGeneration == token else { return }
+                self.visitorLoadTask = nil
+                self.visitorAssetIssue = "Visitor artwork is unavailable. You can still welcome visitors."
+                LifecycleDiagnostics.event("butterfly failed renderer=\(rendererID)")
+            }
         }
     }
 
@@ -583,6 +612,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     func updatePreview(_ value: EditorRenderPreview?, catalog: any AssetCatalogProviding) {
+        guard !disposed else { return }
         if let old = preview, old.plant.id != value?.plant.id || value == nil,
            let plant = snapshot?.plants.first(where: { $0.id == old.plant.id }), let garden = snapshot,
            let entity = placements[plant.id] {
@@ -645,7 +675,10 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                         anchor.addChild(loaded.entity)
                     }
                 } catch is CancellationError { return }
-                catch { self.errors.append("Preview: \(error.localizedDescription)") }
+                catch {
+                    guard !Task.isCancelled, self.previewKey == key else { return }
+                    self.errors.append("Preview: \(error.localizedDescription)")
+                }
             }
         }
         if let anchor = previewAnchor { transform(anchor, plant: value.plant, garden: garden) }
@@ -670,7 +703,15 @@ struct GardenSceneView: UIViewRepresentable {
     var onSelect: ((UUID?) -> Void)? = nil
     var onGroundDrag: ((SIMD2<Double>?, GardenDragPhase) -> Void)? = nil
 
+    final class Coordinator {
+        weak var renderer: RealityGardenRenderer?
+        init(renderer: RealityGardenRenderer) { self.renderer = renderer }
+    }
+    func makeCoordinator() -> Coordinator { Coordinator(renderer: renderer) }
     func makeUIView(context: Context) -> ARView { renderer.view }
+    static func dismantleUIView(_ uiView: ARView, coordinator: Coordinator) {
+        coordinator.renderer?.detachView()
+    }
     func updateUIView(_ uiView: ARView, context: Context) {
         renderer.display(garden, catalog: catalog)
         renderer.setMotionEnabled(motionEnabled)

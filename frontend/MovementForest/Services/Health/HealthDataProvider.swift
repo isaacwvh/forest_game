@@ -28,6 +28,12 @@ final class ActivityStore: ObservableObject {
     private(set) var timeZone: TimeZone
     private let defaults: UserDefaults
     private let requestKey = "health.readRequestAttempted.v1"
+    private struct ReadKey: Hashable {
+        let timeZone: String
+        let optional: Bool
+    }
+    private var reads: [ReadKey: (id: UUID, task: Task<ActivityReport, Never>)] = [:]
+    private var reportGeneration = UUID()
 
     init(provider: any HealthDataProviding, defaults: UserDefaults = .standard,
          timeZone: TimeZone = .current) {
@@ -47,7 +53,7 @@ final class ActivityStore: ObservableObject {
         do {
             try await provider.requestReadAccess()
             // Completing this request does not establish read authorization.
-            report = await provider.readActivity(now: Date(), timeZone: timeZone)
+            _ = await read(timeZone: timeZone, includingOptional: true)
         } catch {
             requestIssue = "The Health access request could not finish. Try again, or review this app’s access in Health."
         }
@@ -58,21 +64,46 @@ final class ActivityStore: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         requestIssue = nil
-        report = await provider.readActivity(now: Date(), timeZone: timeZone)
+        _ = await read(timeZone: timeZone, includingOptional: true)
     }
 
     func readForUpload(timeZone: TimeZone, includingOptional: Bool = false) async -> ActivityReport {
-        self.timeZone = timeZone
-        if includingOptional {
-            let result = await provider.readActivity(now: Date(), timeZone: timeZone)
-            report = result
-            return result
+        await read(timeZone: timeZone, includingOptional: includingOptional)
+    }
+
+    private func read(timeZone: TimeZone, includingOptional: Bool) async -> ActivityReport {
+        if self.timeZone.identifier != timeZone.identifier {
+            self.timeZone = timeZone; reportGeneration = UUID()
         }
-        let result = await provider.readStepObservation(now: Date(), timeZone: timeZone)
-        // Preserve workout diagnostics from a previous local read.
-        report = ActivityReport(observedAt: result.observedAt, timeZoneIdentifier: result.timeZoneIdentifier,
-                                days: result.days, workouts: report?.workouts ?? [], stepsIssue: result.stepsIssue,
-                                workoutsIssue: report?.workoutsIssue, isFixture: result.isFixture)
+        let generation = reportGeneration
+        let full = ReadKey(timeZone: timeZone.identifier, optional: true)
+        let key = !includingOptional && reads[full] != nil ? full :
+            ReadKey(timeZone: timeZone.identifier, optional: includingOptional)
+        let current: (id: UUID, task: Task<ActivityReport, Never>)
+        if let existing = reads[key] { current = existing }
+        else {
+            let id = UUID(), provider = provider
+            let task = Task {
+                LifecycleDiagnostics.event("health read started id=\(id) optional=\(key.optional)")
+                let result: ActivityReport
+                if key.optional { result = await provider.readActivity(now: Date(), timeZone: timeZone) }
+                else { result = await provider.readStepObservation(now: Date(), timeZone: timeZone) }
+                LifecycleDiagnostics.event("health read ended id=\(id)")
+                return result
+            }
+            current = (id, task); reads[key] = current
+        }
+        // Shared reads are owned by this store, rather than one presentation waiter.
+        let result = await current.task.value
+        if reads[key]?.id == current.id { reads.removeValue(forKey: key) }
+        guard !Task.isCancelled, reportGeneration == generation else { return result }
+        if key.optional { report = result }
+        else {
+            let previous = report?.timeZoneIdentifier == timeZone.identifier ? report : nil
+            report = ActivityReport(observedAt: result.observedAt, timeZoneIdentifier: result.timeZoneIdentifier,
+                                    days: result.days, workouts: previous?.workouts ?? [], stepsIssue: result.stepsIssue,
+                                    workoutsIssue: previous?.workoutsIssue, isFixture: result.isFixture)
+        }
         return result
     }
 }

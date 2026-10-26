@@ -3,9 +3,11 @@ import Combine
 
 /// Entry eligibility belongs to the app session, never to a sync notification.
 struct AppEntryGate {
+    static let minimumAbsence: TimeInterval = 30
     private(set) var account: UUID?
     private var server: String?
     private var consumed = false
+    private var backgroundUptime: TimeInterval?
     mutating func enter(account: UUID, server: String = "") -> Bool {
         if self.account != account || self.server != server {
             self.account = account; self.server = server; consumed = false
@@ -14,8 +16,15 @@ struct AppEntryGate {
         consumed = true
         return true
     }
-    mutating func background() { consumed = false }
-    mutating func signOut() { account = nil; server = nil; consumed = false }
+    mutating func background(at uptime: TimeInterval) {
+        if backgroundUptime == nil { backgroundUptime = uptime }
+    }
+    mutating func foreground(at uptime: TimeInterval) {
+        guard let start = backgroundUptime else { return }
+        backgroundUptime = nil
+        if uptime - start >= Self.minimumAbsence { consumed = false }
+    }
+    mutating func signOut() { self = AppEntryGate() }
 }
 
 struct ActivityRecapRow: Identifiable {
@@ -60,31 +69,51 @@ final class AppEntryRecapCoordinator: ObservableObject {
     private var generation = UUID()
     private var task: Task<Void, Never>?
     private weak var sync: ActivitySyncCoordinator?
+    private var syncID: UUID?
+    private let uptime: () -> TimeInterval
+
+    init(uptime: @escaping () -> TimeInterval = { LifecycleClock.elapsed }) {
+        self.uptime = uptime
+    }
+
+    func foreground() { gate.foreground(at: uptime()) }
+
+    func connectionChanged(to sync: ActivitySyncCoordinator) {
+        if let previous = syncID, previous != sync.id {
+            task?.cancel(); task = nil; generation = UUID()
+            showing = false; loading = false; receiptIDs = []; rows = []; activeSkills = []
+        }
+        syncID = sync.id
+    }
+
+    func skipEntry(editor: GardenEditorStore) {
+        if gate.enter(account: editor.profile.userId, server: editor.service.serverID) {
+            LifecycleDiagnostics.event("entry suppressed by an existing flow")
+        }
+    }
 
     @discardableResult
-    func begin(sync: ActivitySyncCoordinator, editor: GardenEditorStore) -> Bool {
-        guard gate.enter(account: editor.profile.userId, server: editor.service.serverID) else { return false }
+    func begin(sync: ActivitySyncCoordinator, editor: GardenEditorStore,
+               reconciliation: Task<Bool, Never>? = nil) -> Bool {
+        guard sync.isAttached(to: editor),
+              gate.enter(account: editor.profile.userId, server: editor.service.serverID) else { return false }
         task?.cancel()
         let token = UUID(); generation = token
         self.sync = sync
+        syncID = sync.id
         rows = []; receiptIDs = []; activeSkills = []
         loading = true; showing = true; status = "Checking activity…"
+        LifecycleDiagnostics.event("entry requested generation=\(token)")
         task = Task { [weak self] in
-            let confirmed = await sync.synchronize()
+            let confirmed: Bool
+            if let reconciliation = reconciliation { confirmed = await reconciliation.value }
+            else { confirmed = await sync.synchronize() }
             guard let self = self, !Task.isCancelled, self.generation == token,
                   self.showing, editor.isActive else { return }
             let recaps = sync.recaps
-            var copies = (editor.confirmed?.plants ?? []) + editor.inventory
-            var missing = Set(recaps.flatMap { $0.payload.plants.map(\.plantId) }).subtracting(copies.map(\.id))
-            var cursor = editor.nextCursor
-            var seen = Set<UUID>()
-            // Only read more storage pages when a historical credit needs its identity.
-            while !missing.isEmpty, let next = cursor, seen.insert(next).inserted {
-                guard let page = try? await editor.service.inventory(after: next) else { break }
-                guard !Task.isCancelled, self.generation == token, self.showing, editor.isActive else { return }
-                copies += page.plants
-                missing.subtract(page.plants.map(\.id)); cursor = page.nextCursor
-            }
+            let copies = (editor.confirmed?.plants ?? []) + editor.inventory
+            // Missing historical identities use the row's existing ID fallback.
+            // Storage pagination must not keep a confirmed recap in loading.
             self.receiptIDs = Set(recaps.map(\.id))
             let affected = Set(recaps.flatMap { $0.payload.plants.map(\.plantId) })
             self.rows = ActivityRecapRow.make(recaps: recaps, plants: copies.filter { $0.placement != nil || affected.contains($0.id) })
@@ -92,13 +121,15 @@ final class AppEntryRecapCoordinator: ObservableObject {
             self.status = confirmed ? (recaps.isEmpty ? "No new confirmed growth." : "Your growth is already saved.") :
                 "Activity could not be fully refreshed. Showing available confirmed progress. You can retry in Activity."
             self.loading = false
+            LifecycleDiagnostics.event("entry loaded generation=\(token) receipts=\(recaps.count)")
         }
         return true
     }
 
     func dismissed() {
         guard !showing else { return }
-        task?.cancel(); generation = UUID(); showing = false
+        task?.cancel(); task = nil; generation = UUID(); showing = false; loading = false
+        LifecycleDiagnostics.event("entry dismissed")
         let ids = receiptIDs
         receiptIDs = []
         // Keep acknowledgement independent of any later batch or account attachment.
@@ -106,11 +137,11 @@ final class AppEntryRecapCoordinator: ObservableObject {
     }
 
     func background() {
-        task?.cancel(); generation = UUID(); receiptIDs = []
-        showing = false; gate.background()
+        task?.cancel(); task = nil; generation = UUID(); receiptIDs = []
+        showing = false; loading = false; gate.background(at: uptime())
     }
 
     func signOut() {
-        background(); gate.signOut(); sync = nil; rows = []; activeSkills = []
+        background(); gate.signOut(); sync = nil; syncID = nil; rows = []; activeSkills = []
     }
 }

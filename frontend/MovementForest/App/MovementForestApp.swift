@@ -53,7 +53,9 @@ struct RootView: View {
     @State private var menuPresented = false
     @State private var collectionDestination: CollectionDestination?
     @State private var packOpeningPresented = false
+    @State private var childEntryBlocked = false
     @StateObject private var entryRecap = AppEntryRecapCoordinator()
+    @StateObject private var resume = AppResumeCoordinator()
 
     init(container: AppContainer) {
         self.container = container
@@ -61,12 +63,22 @@ struct RootView: View {
     }
 
     private var entryAllowed: Bool {
-        phase == .active && !settingsPresented && !menuPresented && !packOpeningPresented
+        phase == .active && !settingsPresented && !menuPresented && !packOpeningPresented && !childEntryBlocked
     }
     private func presentEntryIfReady() {
-        guard entryAllowed, let sync = connection.activitySync,
-              let editor = connection.editor else { return }
-        if entryRecap.begin(sync: sync, editor: editor) {
+        guard phase == .active else { return }
+        resume.activate(); entryRecap.foreground()
+        guard let sync = connection.activitySync,
+              let editor = connection.editor, sync.isAttached(to: editor) else {
+            if !connection.connecting, let catalog = container.catalog {
+                resume.connectIfNeeded { await connection.connectManaged(assets: catalog) }
+            }
+            return
+        }
+        entryRecap.connectionChanged(to: sync)
+        let reconciliation = resume.reconciliation(for: sync)
+        guard entryAllowed else { entryRecap.skipEntry(editor: editor); return }
+        if entryRecap.begin(sync: sync, editor: editor, reconciliation: reconciliation) {
             selectedTab = 0
             collectionDestination = nil
         }
@@ -153,27 +165,33 @@ struct RootView: View {
                 .sheet(isPresented: $entryRecap.showing, onDismiss: { entryRecap.dismissed() }) {
                     ActivityRecapScreen(recap: entryRecap, catalogue: container.connection.editor?.catalogue, assets: catalog)
                 }
-                .onChange(of: connection.activitySync?.id) { _ in presentEntryIfReady() }
+                .onChange(of: connection.activitySync?.id) { id in
+                    if id == nil { resume.resetConnection(); entryRecap.signOut() }
+                    else { presentEntryIfReady() }
+                }
+                .onChange(of: connection.connecting) { busy in if !busy { presentEntryIfReady() } }
                 .onChange(of: connection.editor?.profile.userId) { user in
                     if user == nil { entryRecap.signOut() }
                 }
-                .onChange(of: entryAllowed) { allowed in if allowed { presentEntryIfReady() } }
+                .onChange(of: entryAllowed) { _ in presentEntryIfReady() }
+                .onPreferenceChange(EntryPresentationBlocker.self) { childEntryBlocked = $0 }
+                .onChange(of: selectedTab) { _ in
+                    if !entryRecap.showing, let editor = connection.editor { entryRecap.skipEntry(editor: editor) }
+                }
                 .task {
                     if container.garden.garden == nil { await container.garden.load() }
                     if !ProcessInfo.processInfo.arguments.contains("--fixture-health") {
                         await container.connection.restore(assets: catalog)
                     }
-                    await container.activity.refresh()
                     presentEntryIfReady()
                 }
                 .onChange(of: phase) { value in
-                    if value == .background { entryRecap.background() }
-                    if value == .active { Task {
-                        await container.connection.connectManaged(assets: catalog)
-                        if let sync = container.connection.activitySync { _ = await sync.synchronize() }
-                        await container.activity.refresh()
-                        presentEntryIfReady()
-                    } }
+                    switch value {
+                    case .background: resume.background(); entryRecap.background()
+                    case .inactive: resume.inactive()
+                    case .active: presentEntryIfReady()
+                    @unknown default: break
+                    }
                 }
             } else {
                 RecoveryView(title: "Your forest couldn’t load", message: container.startupError ?? "Resources are unavailable.",

@@ -1,7 +1,7 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.22\
+Document version: 0.23\
 Date: 26 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
@@ -320,7 +320,7 @@ Calculate the day's cumulative eligible boosted entitlement and subtract already
 
 ### 4.4 Login watering and progress recap
 
-**F8.1 presentation:** on launch/login or a genuine background return, sync activity and show one dismissible, scrollable per-plant recap. Routine manual/observer/pre-edit syncs and transient inactive states do not reopen it. A return without new credits shows a quiet status and current progress. Acknowledgement covers only displayed receipt IDs. Garden-wide watering animation remains deferred. The recap includes:
+**F8.1 presentation:** on launch/login or a genuine background absence of at least 30 seconds, show one dismissible, scrollable per-plant recap over Garden as soon as the account is verified, with loading feedback while activity reconciles. Measure absence with a continuous monotonic clock that includes phone sleep. Shorter returns still reconcile activity without opening a recap. Routine manual/observer/pre-edit syncs and transient inactive states do not reopen it. An existing settings/menu/pack-opening flow suppresses that entry's automatic sheet; unseen receipts remain available in Activity. Dismissing while loading must not allow a late result to reopen it. A return without new credits shows a quiet status and current progress. Acknowledgement covers only displayed receipt IDs. Garden-wide watering animation remains deferred. The recap includes:
 
 - Newly credited activity, water/progress gained per affected garden plant, previous/current stages and any stage advances.
 - Newly available stored visits and capacity, shown separately from already claimed visitor tokens. After a confirmed welcome, claim, milestone or exchange, show its visitor-token/pack changes separately from water; a HealthKit sync itself earns no tickets.

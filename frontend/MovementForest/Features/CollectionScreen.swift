@@ -73,6 +73,7 @@ struct CollectionScreen: View {
             }
         }
         .onChange(of: hasPackModal) { openingChanged?($0) }
+        .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || hasPackModal }
         .onDisappear { openingChanged?(false) }
     }
     private var content: some View {
@@ -231,6 +232,7 @@ private struct ExchangeOfferRow: View {
                 Text("Earn more visitor tokens to exchange this quantity.").font(.caption).foregroundStyle(.secondary)
             }
         }.padding(.vertical, 4)
+            .preference(key: EntryPresentationBlocker.self, value: confirming)
             .alert("Exchange tokens?", isPresented: $confirming) {
                 Button("Cancel", role: .cancel) { }
                 Button("Exchange") { Task { await store.exchange(offer, quantity: quantity) } }

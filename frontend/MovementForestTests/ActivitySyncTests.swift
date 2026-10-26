@@ -138,7 +138,106 @@ private final class SyncTestService: GardenServing, ActivityServing {
 
 @MainActor
 final class ActivitySyncTests: XCTestCase {
-    func testDismissedLoadingEntryDoesNotReopenWhenSyncFinishes() async throws {
+    func testEntryJoinsResumeImmediatelyAndDismissalLeavesSharedSyncRunning() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        service.pauseNext = true
+        let resume = AppResumeCoordinator(), entry = AppEntryRecapCoordinator()
+        resume.activate()
+        let operation = try XCTUnwrap(resume.reconciliation(for: sync))
+        XCTAssertTrue(entry.begin(sync: sync, editor: editor, reconciliation: operation))
+        XCTAssertTrue(entry.showing)
+        XCTAssertTrue(entry.loading)
+        for _ in 0..<300 {
+            if service.gate != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let gate = try XCTUnwrap(service.gate)
+        entry.showing = false; entry.dismissed()
+        XCTAssertTrue(sync.busy)
+        gate.resume(); service.gate = nil
+        let confirmed = await operation.value
+        XCTAssertTrue(confirmed)
+        XCTAssertFalse(entry.showing)
+        XCTAssertTrue(entry.receiptIDs.isEmpty)
+        XCTAssertTrue(service.ackBodies.isEmpty)
+        XCTAssertFalse(entry.begin(sync: sync, editor: editor, reconciliation: operation))
+    }
+
+    func testBlockedEntryIsConsumedWithoutAcknowledgingUnseenReceipts() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        let entry = AppEntryRecapCoordinator()
+        let unrelatedEditor = try self.editor(service)
+        XCTAssertFalse(entry.begin(sync: sync, editor: unrelatedEditor))
+        entry.skipEntry(editor: editor)
+        XCTAssertFalse(entry.begin(sync: sync, editor: editor))
+        XCTAssertFalse(entry.showing)
+        XCTAssertFalse(sync.recaps.isEmpty)
+        XCTAssertTrue(service.ackBodies.isEmpty)
+    }
+
+    func testCancelledResumeReleasesWaiterAndPreservesInFlightRequestForNextReturn() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        let count = service.syncBodies.count
+        service.pauseNext = true
+        let resume = AppResumeCoordinator()
+        resume.activate()
+        let first = try XCTUnwrap(resume.reconciliation(for: sync))
+        for _ in 0..<300 {
+            if service.gate != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let gate = try XCTUnwrap(service.gate)
+        let ids = sync.requestIDs, body = journal.value?.operations.first?.body
+        XCTAssertFalse(ids.isEmpty)
+        var current = first
+        for _ in 0..<20 {
+            resume.background(); resume.activate()
+            current = try XCTUnwrap(resume.reconciliation(for: sync))
+            for _ in 0..<10 { await Task.yield() }
+        }
+        for _ in 0..<300 {
+            if sync.waitingCallerCount == 1 { break }
+            try await Task.sleep(nanoseconds: 1_000_000)
+        }
+        XCTAssertEqual(sync.requestIDs, ids)
+        XCTAssertEqual(journal.value?.operations.first?.body, body)
+        XCTAssertEqual(service.syncBodies.count, count + 1)
+        XCTAssertEqual(sync.waitingCallerCount, 1)
+        XCTAssertTrue(sync.busy)
+        // A cancelled UI waiter finishes even while the server is still suspended.
+        var firstReturned = false
+        let cancelled = Task { _ = await first.value; firstReturned = true }
+        for _ in 0..<100 {
+            if firstReturned { break }
+            try await Task.sleep(nanoseconds: 1_000_000)
+        }
+        XCTAssertTrue(firstReturned)
+        gate.resume(); service.gate = nil
+        let confirmed = await current.value
+        await cancelled.value
+        XCTAssertTrue(confirmed)
+        XCTAssertEqual(sync.waitingCallerCount, 0)
+        XCTAssertTrue(sync.requestIDs.isEmpty)
+        // Notification Centre and ordinary rendering activation reuse the result.
+        resume.inactive(); resume.activate()
+        let reused = try XCTUnwrap(resume.reconciliation(for: sync))
+        _ = await reused.value
+        XCTAssertEqual(service.syncBodies.count, count + 1)
+    }
+
+    func testAccountDeactivationPreventsDelayedRecapAndKeepsUnknownRequest() async throws {
         let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
         let editor = try editor(service), health = health(service.fixture)
         await editor.start()
@@ -146,6 +245,35 @@ final class ActivitySyncTests: XCTestCase {
         await sync.setEnabled(true)
         service.pauseNext = true
         let entry = AppEntryRecapCoordinator()
+        XCTAssertTrue(entry.begin(sync: sync, editor: editor))
+        XCTAssertTrue(entry.loading)
+        for _ in 0..<300 {
+            if service.gate != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let gate = try XCTUnwrap(service.gate), ids = sync.requestIDs
+        entry.signOut(); editor.deactivate(); sync.deactivate()
+        gate.resume(); service.gate = nil
+        for _ in 0..<300 {
+            if !sync.busy { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertFalse(entry.showing)
+        XCTAssertTrue(entry.rows.isEmpty)
+        XCTAssertTrue(entry.receiptIDs.isEmpty)
+        XCTAssertEqual(sync.requestIDs, ids)
+        XCTAssertTrue(service.ackBodies.isEmpty)
+    }
+
+    func testDismissedLoadingEntryDoesNotReopenWhenSyncFinishes() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        service.pauseNext = true
+        var uptime: TimeInterval = 100
+        let entry = AppEntryRecapCoordinator(uptime: { uptime })
         entry.begin(sync: sync, editor: editor)
         XCTAssertTrue(entry.showing)
         for _ in 0..<300 {
@@ -163,6 +291,7 @@ final class ActivitySyncTests: XCTestCase {
         entry.begin(sync: sync, editor: editor)
         XCTAssertFalse(entry.showing, "An ordinary in-session update must not rearm entry presentation")
         entry.background()
+        uptime += 30; entry.foreground()
         entry.begin(sync: sync, editor: editor)
         XCTAssertTrue(entry.showing)
         entry.background()

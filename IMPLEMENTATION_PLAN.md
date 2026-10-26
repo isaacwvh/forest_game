@@ -1,6 +1,6 @@
 # Movement Forest implementation plan
 
-Revised 24 October 2026 against `forest_game_v1_spec.md`, version 0.19.
+Revised 26 October 2026 against `forest_game_v1_spec.md`, version 0.23.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
 The first B8 skill/cap increment is now source-implemented below, including
@@ -305,13 +305,89 @@ Remaining scope after this increment:
 
 ## F8 presentation and collection polish — incremental
 
+### Top priority: app-resume lag, delayed recap and butterfly fallback — source implemented; native acceptance pending, 26 October 2026
+
+Deliver this lifecycle investigation/fix before F8.2 presentation refinements or
+other remaining polishing work. This is an open F8.1 follow-up; the previously
+accepted Packs routing and Garden recap destination remain completed. No measured
+device performance result is established by source/portable validation alone.
+
+**Source follow-up delivered, 26 October 2026:** one foreground resume owner;
+cancellation-responsive UI waiters around a shared durable sync; immediate
+loading recap without a post-sync Health read or historical identity pagination;
+an agreed 30-second continuous-clock absence threshold; no Garden activation or
+inactive/active sync trigger; compatible Health-read coalescing and structured
+Health query children; persistent butterfly template clones; weak editor
+callbacks; renderer detachment and terminal session disposal; paused hidden
+visitor timelines; and Debug lifecycle/asset timing logs. Existing blocking flows
+consume the automatic entry without acknowledging unseen receipts. Interrupted
+mutations keep their original journals/UUIDs. Thirteen native regression cases
+were added and two existing recap cases updated. The requirements below remain
+the physical-device acceptance gate; this does not claim the lag is fixed on an
+iPhone or establish a memory-leak diagnosis. See `frontend/F8_ACCEPTANCE.md` and
+`frontend/VALIDATION.md` for the exact test flow and executed checks.
+
+**Reported on iPhone 14 Pro:** lag accumulates after repeated Home/app switches
+and Notification Centre interactions. The recap can arrive about 10 seconds after
+return, or around 30 seconds into the reported lag episode. The old butterfly
+fallback appears before the rendered model becomes available. Restarting clears
+the accumulated lag but does not resolve the delayed recap. Treat delayed entry
+presentation and cumulative performance degradation as potentially separate issues.
+
+**Pre-fix source findings and uncertainty:** any genuine background transition
+rearmed the recap without an absence threshold. Transient inactive/active changes
+also started refresh work, although inactivity alone should not rearm the recap.
+The root, garden and recap have multiple reconciliation entry points; concurrent
+syncs are coalesced, but surrounding resume tasks are not cancelled on another
+exit. One presentation path awaits sync and another Health read, while an immediate
+path also exists. There is no deliberate ten-second popup delay. The old butterfly
+is an explicit asset-not-ready fallback; ordinary backgrounding does not reset
+renderer readiness. Renderer replacement/loading and incomplete teardown are
+investigation targets, not a confirmed memory leak or proven cause of the lag.
+
+- **Measure the actual sequence:** add development diagnostics for scene-phase
+  transitions, entry eligibility/presentation, resume/sync/Health-read timings,
+  renderer creation/destruction and butterfly-load counts/durations. Capture
+  memory and frame-time behaviour on the affected iPhone across repeated switches.
+  Correlate late presentation with those events before assigning a root cause;
+  avoid logging credentials or raw Health records.
+- **Own resume work in one place:** use one cancellable, generation-scoped resume
+  operation, coalesce redundant reconciliation/Health reads and prevent old return
+  tasks from presenting a recap during later play. Notification/Control Centre
+  interruptions must not create a new entry or accumulate duplicate work. Preserve
+  durable upload/reward requests and their recovery independently of UI cancellation.
+- **Present eligible recaps promptly:** for an authenticated, ready connection,
+  present over Garden immediately with a loading state while reconciliation runs.
+  Keep cold-login/account verification requirements intact. Add a short-absence
+  grace period so brief app switches do not repeatedly show the recap; select and
+  record its duration before implementation rather than silently choosing it.
+  Ordinary sync must never reopen the sheet, and unseen receipts remain pending.
+- **Preserve and release rendering resources correctly:** retain the loaded
+  butterfly template and garden renderer across ordinary pauses where appropriate.
+  Investigate why the fallback reappears on return. Explicitly release callbacks,
+  subscriptions, tasks and animation resources when a renderer is actually replaced;
+  verify released instances do not accumulate. Preserve camera state, visitor
+  identity/expiry, modal eligibility and single-award accounting.
+
+**Acceptance:** compare a fresh uninterrupted session with a session of at least
+10 minutes containing repeated Home/app switches, Notification/Control Centre
+interruptions, rapid leave/return cycles and recap dismissal while loading. Cover
+returns below/above the selected absence threshold, slow/offline reconciliation
+and account changes. Eligible recaps appear promptly over Garden with loading
+feedback rather than surprising the player later; brief/transient interruptions
+and routine sync stay quiet. An already loaded butterfly does not unnecessarily
+revert to the old fallback. Frame time and memory remain stable across cycles,
+retired renderer instances are released, and no progress or rewards are duplicated
+or lost. Record iPhone traces and targeted regression results separately from CI;
+portable syntax checks alone cannot close this issue.
+
 ### F8.1 first-release presentation — source implemented, 26 October 2026
 
 Scope: portrait-only play with a consistent light appearance; no Dark Mode or
 landscape support in this batch. App entry presents a dismissible, scrollable
 per-copy activity update after authentication, including saved water, skill
 contribution, stage changes and current progress. Fresh launches and genuine
-background returns rearm it; routine/manual/observer syncs and transient inactive
+background returns of at least 30 seconds rearm it; routine/manual/observer syncs and transient inactive
 states do not. Empty returns show a quiet status. A frozen receipt set is
 acknowledged durably on dismissal, including while another sync is running;
 dismissing a loading sheet cannot cause a later sync to reopen it.

@@ -46,20 +46,19 @@ final class HealthKitService: HealthDataProviding {
         var days = intervals.map { ActivityDay(start: $0.start, end: $0.end, steps: nil) }
         var workouts: [WorkoutObservation] = []
         var stepsIssue: String?
-        var workoutsIssue: String?
-        let distance = Task { await self.optionalQuantity(intervals: intervals, timeZone: timeZone, now: now,
-                                                          identifier: .distanceWalkingRunning, unit: .meter()) }
-        let energy = Task { await self.optionalQuantity(intervals: intervals, timeZone: timeZone, now: now,
-                                                        identifier: .activeEnergyBurned, unit: .kilocalorie()) }
-        let flights = Task { await self.optionalQuantity(intervals: intervals, timeZone: timeZone, now: now,
-                                                         identifier: .flightsClimbed, unit: .count()) }
-        let imported = Task { try await self.readWorkouts(now: now, timeZone: timeZone) }
-        defer { distance.cancel(); energy.cancel(); flights.cancel(); imported.cancel() }
+        var workoutsIssue: String? = nil
+        async let distance = optionalQuantity(intervals: intervals, timeZone: timeZone, now: now,
+                                              identifier: .distanceWalkingRunning, unit: .meter())
+        async let energy = optionalQuantity(intervals: intervals, timeZone: timeZone, now: now,
+                                            identifier: .activeEnergyBurned, unit: .kilocalorie())
+        async let flights = optionalQuantity(intervals: intervals, timeZone: timeZone, now: now,
+                                             identifier: .flightsClimbed, unit: .count())
+        async let imported = readWorkouts(now: now, timeZone: timeZone)
         do { days = try await readSteps(intervals: intervals, timeZone: timeZone, now: now) }
         catch { stepsIssue = "Steps could not be read. Unlock your iPhone and refresh. You can also review access in Health." }
-        do { workouts = try await imported.value }
+        do { workouts = try await imported }
         catch { workoutsIssue = "Workouts could not be read. Unlock your iPhone and refresh." }
-        let optional = await (distance.value, energy.value, flights.value)
+        let optional = await (distance, energy, flights)
         for index in days.indices {
             days[index].walkingRunningDistanceMetres = optional.0.0[index]
             days[index].activeEnergyKcal = optional.1.0[index]

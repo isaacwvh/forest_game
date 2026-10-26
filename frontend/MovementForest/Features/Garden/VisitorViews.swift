@@ -27,7 +27,7 @@ struct VisitorGardenOverlay: View {
     var reduceMotionOverride: Bool? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.2)) { _ in
+        TimelineView(.animation(minimumInterval: 0.2, paused: !store.eligible)) { _ in
             ZStack {
                 ForEach(store.visibleOpportunities) { visitor in
                     VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotionOverride ?? reduceMotion, renderer: renderer)
@@ -74,7 +74,7 @@ private struct VisitorFlightView: View {
     // Identity is the opportunity, so heartbeats do not restart its flight.
     @State private var appearedAt = Date()
     var body: some View {
-        TimelineView(.periodic(from: .now, by: reduceMotion ? 1 : 1.0 / 30)) { context in
+        TimelineView(.animation(minimumInterval: reduceMotion ? 1 : 1.0 / 30, paused: !store.eligible)) { context in
             // Compute changing frame inputs BEFORE GeometryReader. Its cached
             // layout closure must not be the only reader of the clock.
             if store.visibleOpportunities.contains(where: { $0.id == visitor.id }), let now = store.serverNow {

@@ -20,6 +20,7 @@ final class ActivitySyncCoordinator: ObservableObject {
     private var saved = ActivityJournalState()
     private var running: Task<Bool, Never>?
     private var runID: UUID?
+    private var waiters: [UUID: CheckedContinuation<Bool, Never>] = [:]
     private var active = true
 
     init(editor: GardenEditorStore, health: ActivityStore, service: any ActivityServing,
@@ -45,10 +46,13 @@ final class ActivitySyncCoordinator: ObservableObject {
     }
     var canUpload: Bool { !health.provider.isFixture && health.provider.isAvailable }
     var requestIDs: [UUID] { saved.operations.map(\.id) }
+    var waitingCallerCount: Int { waiters.count }
+    func isAttached(to editor: GardenEditorStore) -> Bool { active && self.editor.id == editor.id && editor.isActive }
 
     func deactivate() {
         active = false
         editor.prepareMembershipChange = nil; editor.reconcileActivity = nil
+        finishWaiters(false)
     }
 
     private func save(_ proposed: ActivityJournalState) throws {
@@ -89,18 +93,43 @@ final class ActivitySyncCoordinator: ObservableObject {
     /// existing pass, then takes a fresh observation before allowing the edit.
     @discardableResult
     func synchronize(beforeMembershipChange: Bool = false, replacingDevice: Bool = false) async -> Bool {
-        guard active, !recoveryLocked, !(busy && running == nil) else { return false }
-        if let running = running {
-            let result = await running.value
+        guard active, !Task.isCancelled, !recoveryLocked, !(busy && running == nil) else { return false }
+        while running != nil {
+            let result = await waitForRun()
             if !beforeMembershipChange { return result }
-            guard result, active else { return false }
+            guard result, active, !Task.isCancelled else { return false }
         }
         let id = UUID(); runID = id
-        let task = Task { await self.run(replacingDevice: replacingDevice) }
-        running = task
-        let result = await task.value
-        if runID == id { running = nil; runID = nil }
-        return result
+        LifecycleDiagnostics.event("sync started run=\(id)")
+        running = Task {
+            let result = await self.run(replacingDevice: replacingDevice)
+            if self.runID == id {
+                self.running = nil; self.runID = nil
+                self.finishWaiters(result)
+                LifecycleDiagnostics.event("sync ended run=\(id) confirmed=\(result)")
+            }
+            return result
+        }
+        return await waitForRun()
+    }
+
+    /// Cancellation releases a UI waiter immediately, while the one journalled
+    /// reconciliation remains owned here until it reaches a safe completion.
+    private func waitForRun() async -> Bool {
+        let id = UUID()
+        return await withTaskCancellationHandler(operation: {
+            await withCheckedContinuation { continuation in
+                guard !Task.isCancelled else { continuation.resume(returning: false); return }
+                waiters[id] = continuation
+            }
+        }, onCancel: { [weak self] in
+            Task { @MainActor in self?.waiters.removeValue(forKey: id)?.resume(returning: false) }
+        })
+    }
+
+    private func finishWaiters(_ result: Bool) {
+        let pending = Array(waiters.values); waiters.removeAll()
+        pending.forEach { $0.resume(returning: result) }
     }
 
     private func run(replacingDevice: Bool) async -> Bool {
@@ -113,6 +142,7 @@ final class ActivitySyncCoordinator: ObservableObject {
             return false
         }
         defer { editor.endActivityOperation() }
+        var observedActivity = false
         do {
             if !saved.operations.isEmpty {
                 guard enabled || saved.operations.allSatisfy({ $0.kind == .acknowledgement }) else {
@@ -133,6 +163,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                     await editor.refresh(); try await loadRecaps(); return false
                 }
                 let observation = try await observe()
+                observedActivity = true
                 if status?.device == nil || replacingDevice {
                     var request = ActivityEnrolmentRequest(requestId: UUID(), installationId: installationID,
                                                           observedAt: observation.observedAt,
@@ -167,6 +198,7 @@ final class ActivitySyncCoordinator: ObservableObject {
             return !editor.showingCached && editor.state == .ready
         } catch {
             guard active else { return false }
+            guard !(error is CancellationError), !Task.isCancelled else { return false }
             let issue = error as? APIError
             if issue?.status == 401 {
                 message = "Sign in again to the same account; saved requests will resume unchanged."
@@ -185,7 +217,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                 message = "Activity data could not be saved on this iPhone. Check available storage and retry; existing requests are retained."
             } else {
                 message = "Offline or confirmation interrupted. Saved requests will retry unchanged when you reconnect."
-                await captureOfflineObservation()
+                if !observedActivity { await captureOfflineObservation() }
             }
             await editor.refresh()
             // A recovered enrolment/sync receipt may describe an old device epoch.

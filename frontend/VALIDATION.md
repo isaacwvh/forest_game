@@ -406,6 +406,33 @@ workflow failure summaries were added to make future failures inspectable.
 Follow VISITOR_RESCALE_ACCEPTANCE.md after
 applying backend/VISITOR_RESCALE.md and installing the updated Mac-built app.
 
+## F8.1 lifecycle follow-up — 26 October 2026
+
+Source adds one foreground resume owner and cancellation-responsive sync waiters,
+30-second continuous-clock recap eligibility, immediate loading presentation,
+coalesced Health observations, structured Health query children, a single shared
+butterfly template and explicit renderer detachment/disposal. Garden/modal
+activation no longer independently triggers activity reconciliation. Durable
+request bodies/UUIDs and displayed-only recap acknowledgement remain intact.
+Debug lifecycle logs support the next physical-device investigation.
+
+Passed on Windows: deterministic generated-project check; full portable frontend
+asset/resource/fixture contracts (20 USDZs and thumbnails, butterfly archive and
+checksum, aligned pack artwork, portrait/light configuration); all **59 Swift
+source syntax parses**; and diff whitespace checks. Thirteen native regression
+cases were added for threshold/phase handling, suspended sync cancellation and
+recovery, shared loading/dismissal, blocked-entry receipts, account detachment,
+Health-read scope/timezone coalescing, renderer disposal/reattachment and butterfly
+template/renderer reuse. Two prior entry tests now exercise the 30-second rule.
+
+**Not executed on this Windows host:** XCTest/UI, Apple SDK typechecking, Debug
+or Release iOS builds, iPhone play-test or Instruments. These native tests are
+added, not recorded as passing. No backend code/configuration changed, no database
+was reset, and no push or remote CI run was performed. Run
+`bash frontend/scripts/test-mac.sh` on the Mac, then the lifecycle walkthrough in
+`F8_ACCEPTANCE.md`. Source checks do not establish the reported lag's root cause
+or a measured device-performance fix.
+
 ## F8.1 first-release presentation — 26 October 2026
 
 Source implements the app-entry recap with saved per-copy water/skill/stage

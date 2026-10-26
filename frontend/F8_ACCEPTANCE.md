@@ -3,6 +3,67 @@
 Source implementation: 26 October 2026. Native execution and device results must
 be recorded separately; portable parsing is not Apple SDK compilation.
 
+## Lifecycle follow-up — source implemented, iPhone acceptance pending
+
+Use the existing installation and account; do not uninstall, clear queues or
+reset Health consent. No backend migration or balance change is needed. Copy the
+updated frontend source and Xcode project to the Mac, keeping the existing local
+signing/Auth settings. From the repository root run
+`bash frontend/scripts/test-mac.sh`; require XCTest/UI and the Release build to
+pass before installing. Windows validation cannot execute these Apple checks.
+
+1. **Fresh launch:** expect one recap over Garden once identity is verified.
+   With a warm verified connection, the sheet should start appearing within
+   roughly 0.5 seconds of an eligible return, even if its contents still say
+   Checking activity. Slow cold authentication is a separate timing interval.
+2. **Normal play:** close the recap; orbit/pan/zoom, inspect plants/skills, move,
+   rotate, store and replant a copy. Open Activity and Sync now. Check current
+   progress, stable camera and no automatic recap during these actions.
+3. **Short interruptions:** leave for 5–10 seconds and return at least five times.
+   Expect no recap. Open/dismiss Notification Centre and Control Centre at least
+   five times each. Expect no new entry sheet or growing input lag.
+4. **Long return:** leave for 35–45 seconds, including a locked-phone trial, and
+   return from Garden, Activity and Packs. Expect exactly one loading recap over
+   Garden. A short trip immediately afterwards must stay quiet. An existing
+   settings/menu, Garden Storage/edit, Health consent, exchange confirmation or
+   pack modal that is still presented suppresses that return's automatic recap;
+   unseen receipts remain in Activity. The existing pack reveal closes on
+   backgrounding; its committed result remains recoverable in Packs.
+5. **Slow/offline:** enable Airplane Mode before a long absence. Return and close
+   the loading recap immediately. Reconnect and use Sync now. The sheet must not
+   reopen; no missing data should be presented as confirmed zero. Repeat rapid
+   leave/return while work is pending; saved requests should eventually resolve.
+6. **Visitors and economy:** check the actual butterfly, animation, projected taps
+   at different zooms, the accessible Welcome action and stored-visit collection.
+   An already loaded butterfly should not revert to the old fallback on ordinary
+   switches. Check one reward per welcome/claim. Exchange tokens, inspect Packs,
+   cancel an opening, then complete both taps of another opening. Interrupt once
+   and verify the saved result survives with one debit/pack/plant only.
+7. **Account and accessibility:** if another test account is available, switch
+   while a refresh is pending and confirm no old account recap/results appear.
+   Return to the original account and resolve its queue. Recheck Reduce Motion,
+   large text, VoiceOver and the fixed portrait/light appearance.
+8. **Sustained session:** play for at least ten minutes with at least twenty
+   Home/app switches interspersed with the normal functions above. Compare
+   responsiveness with the first minute. Check for progressive lag, delayed sheets,
+   camera jumps and warm artwork fallbacks. Record iOS version, build and the
+   exact action/time of any failure.
+
+For diagnosis, capture the Xcode console with subsystem `MovementForest`, category
+`Lifecycle`. Debug logs contain continuous elapsed timestamps, resume/sync IDs,
+Health-read boundaries, sheet request/appearance/loading/dismissal and renderer
+creation/detachment/disposal/destruction plus butterfly-import events. They omit
+credentials and Health payloads. A normal pause should reuse the renderer and
+loaded butterfly; repeated active/inactive transitions should not start new sync
+passes. A real scene replacement should dispose and then release the old renderer.
+
+The play-test establishes visible behavior. Use Instruments Allocations/Memory
+Graph and Time Profiler/animation traces for resource/performance acceptance:
+memory must settle after warm-up, retired instances and subscriptions must not
+accumulate, and frame time must not deteriorate across cycles. The existing
+provisional floor is 30 FPS. The iPhone 14 Pro reproduction and supported minimum
+device are separate evidence. No device trace or native build is claimed here.
+
 ## Install and validate
 
 Keep the existing app installation, account, API configuration, Health consent,
@@ -26,7 +87,7 @@ exercise both taps for all four rarity labels and the Reduce Motion sequence.
 2. While playing, use Activity → Sync now, pull to refresh and plant/store a copy.
    Ordinary sync must not reopen the sheet. Briefly opening Control Centre or a
    system permission sheet must not count as another app entry.
-3. Background the app, then return. Expect exactly one new sheet, including a
+3. Background the app for at least 30 seconds, then return. Expect exactly one new sheet, including a
    quiet no-new-growth state if appropriate. Repeat from Activity and Packs too.
    Close while it is loading: a delayed result must not reopen it during play.
 4. On Garden, open Storage directly. Choose a copy; the existing placement editor

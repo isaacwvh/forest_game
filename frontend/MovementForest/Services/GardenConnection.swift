@@ -124,9 +124,6 @@ final class GardenConnection: ObservableObject {
                     installActivity(client: client, store: store, visitorsEnabled: false)
                 }
                 await connect(url: savedURL, token: token, assets: assets)
-                if editor?.showingCached == true, let activitySync = activitySync {
-                    _ = await activitySync.synchronize()
-                }
             }
         } catch { status = error.localizedDescription }
         #endif
@@ -173,7 +170,6 @@ final class GardenConnection: ObservableObject {
                 await store.start()
                 installActivity(client: client, store: store)
             }
-            if let activitySync = activitySync { _ = await activitySync.synchronize() }
             status = "Authenticated as \(profile.displayName)."
         } catch let error as APIError where error.status == 401 {
             status = "The token is invalid or expired. Generate a new development token."
@@ -205,8 +201,12 @@ final class GardenConnection: ObservableObject {
            tokens.identity == auth.user?.identity, editor?.isActive == true,
            managedProfileVerified, !restoreCache { return }
         let operation = UUID(); managedGeneration = operation
+        LifecycleDiagnostics.event("connection started id=\(operation)")
         connecting = true; status = "Loading your account…"
-        defer { if managedGeneration == operation { connecting = false } }
+        defer {
+            if managedGeneration == operation { connecting = false }
+            LifecycleDiagnostics.event("connection ended id=\(operation)")
+        }
         do {
             let tokens = try auth.scopedTokens()
             managedTokens?.invalidate(); managedTokens = tokens
@@ -222,6 +222,7 @@ final class GardenConnection: ObservableObject {
                 // No queued mutations are sent until /me confirms the game identity.
             }
             let profile: APIProfile
+            LifecycleDiagnostics.event("account verification started id=\(operation)")
             do { profile = try await repository.profile() }
             catch let error as APIError where error.code == "account_required" {
                 guard managedGeneration == operation else { return }
@@ -233,6 +234,7 @@ final class GardenConnection: ObservableObject {
             }
             try tokens.validate()
             guard managedGeneration == operation else { return }
+            LifecycleDiagnostics.event("account verified id=\(operation)")
             defaults.set(try JSONEncoder().encode(ManagedProfile(identity: tokens.identity, server: repository.serverID, profile: profile)),
                          forKey: "supabase.gameProfile.v1")
             accountRequired = false; pendingIdentity = nil; pendingClient = nil
@@ -240,10 +242,11 @@ final class GardenConnection: ObservableObject {
             activitySync?.deactivate(); editor?.deactivate()
             let store = GardenEditorStore(profile: profile, service: repository, assets: assets, cache: disk)
             editor = store
+            LifecycleDiagnostics.event("garden bootstrap started id=\(operation)")
             await store.start()
+            LifecycleDiagnostics.event("garden bootstrap ended id=\(operation)")
             guard managedGeneration == operation else { store.deactivate(); return }
             installActivity(client: client, store: store)
-            if let activitySync = activitySync { _ = await activitySync.synchronize() }
             guard managedGeneration == operation else { return }
             status = "Signed in as \(profile.displayName)."
         } catch {

@@ -77,6 +77,84 @@ final class ActivityTests: XCTestCase {
         XCTAssertNotNil(report.workoutsIssue)
         XCTAssertNil(report.todaySteps)
     }
+
+    @MainActor
+    func testConcurrentUploadAndDiagnosticReadsShareCompatibleFullObservation() async throws {
+        let provider = PausedHealthProvider()
+        let store = ActivityStore(provider: provider)
+        let zone = TimeZone(secondsFromGMT: 0)!
+        let first = Task { await store.readForUpload(timeZone: zone, includingOptional: true) }
+        try await waitForReads(provider, count: 1)
+        let second = Task { await store.readForUpload(timeZone: zone, includingOptional: true) }
+        let steps = Task { await store.readForUpload(timeZone: zone) }
+        for _ in 0..<30 { await Task.yield() }
+        XCTAssertEqual(provider.fullReads, 1)
+        XCTAssertEqual(provider.stepReads, 0)
+        provider.finishReads()
+        let reports = await (first.value, second.value, steps.value)
+        XCTAssertEqual(reports.0.timeZoneIdentifier, zone.identifier)
+        XCTAssertEqual(reports.0.observedAt, reports.1.observedAt)
+        XCTAssertEqual(reports.0.observedAt, reports.2.observedAt)
+    }
+
+    @MainActor
+    func testStepsOnlyAndDifferentTimezoneReadsCannotReplaceRequiredFullRead() async throws {
+        let provider = PausedHealthProvider()
+        let store = ActivityStore(provider: provider)
+        let firstZone = TimeZone(secondsFromGMT: 0)!, nextZone = TimeZone(secondsFromGMT: 3600)!
+        let steps = Task { await store.readForUpload(timeZone: firstZone) }
+        try await waitForReads(provider, count: 1)
+        let full = Task { await store.readForUpload(timeZone: firstZone, includingOptional: true) }
+        try await waitForReads(provider, count: 2)
+        let next = Task { await store.readForUpload(timeZone: nextZone, includingOptional: true) }
+        try await waitForReads(provider, count: 3)
+        XCTAssertEqual(provider.stepReads, 1)
+        XCTAssertEqual(provider.fullReads, 2)
+        provider.finishReads()
+        let reports = await (steps.value, full.value, next.value)
+        XCTAssertEqual(reports.0.timeZoneIdentifier, firstZone.identifier)
+        XCTAssertEqual(reports.1.timeZoneIdentifier, firstZone.identifier)
+        XCTAssertEqual(reports.2.timeZoneIdentifier, nextZone.identifier)
+        XCTAssertEqual(store.report?.timeZoneIdentifier, nextZone.identifier)
+    }
+
+    @MainActor
+    private func waitForReads(_ provider: PausedHealthProvider, count: Int) async throws {
+        for _ in 0..<300 {
+            if provider.fullReads + provider.stepReads >= count { return }
+            try await Task.sleep(nanoseconds: 1_000_000)
+        }
+        XCTFail("Health reads did not start")
+        provider.finishReads()
+        throw URLError(.timedOut)
+    }
+}
+
+@MainActor
+private final class PausedHealthProvider: HealthDataProviding {
+    let isAvailable = true
+    let isFixture = false
+    var fullReads = 0
+    var stepReads = 0
+    private var pending: [CheckedContinuation<Void, Never>] = []
+    func requestReadAccess() async throws { }
+    func readActivity(now: Date, timeZone: TimeZone) async -> ActivityReport {
+        fullReads += 1
+        return await read(now: now, timeZone: timeZone)
+    }
+    func readStepObservation(now: Date, timeZone: TimeZone) async -> ActivityReport {
+        stepReads += 1
+        return await read(now: now, timeZone: timeZone)
+    }
+    private func read(now: Date, timeZone: TimeZone) async -> ActivityReport {
+        await withCheckedContinuation { pending.append($0) }
+        return ActivityReport(observedAt: now, timeZoneIdentifier: timeZone.identifier,
+                              days: [], workouts: [], stepsIssue: nil, workoutsIssue: nil, isFixture: false)
+    }
+    func finishReads() {
+        let current = pending; pending.removeAll()
+        current.forEach { $0.resume() }
+    }
 }
 
 @MainActor

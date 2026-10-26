@@ -36,7 +36,7 @@ final class VisitorCoordinator: ObservableObject {
 
     init(userID: UUID, installationID: UUID, service: any VisitorServing,
          journal: (any VisitorJournalPersisting)? = nil,
-         uptime: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+         uptime: @escaping () -> TimeInterval = { LifecycleClock.elapsed }) {
         self.userID = userID; self.installationID = installationID
         // Default arguments are evaluated outside this actor on the supported
         // toolchain. Construct the actor-isolated store inside the initializer.
