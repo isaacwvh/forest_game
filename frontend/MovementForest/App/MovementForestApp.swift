@@ -126,6 +126,9 @@ struct RootView: View {
     private var application: some View {
         Group {
             if let catalog = container.catalog {
+                // Reserve actual layout space so nested navigation stacks and
+                // scrollable pages cannot extend beneath the bottom navigation.
+                VStack(spacing: 0) {
                 ZStack(alignment: .leading) {
                 ZStack {
                     // Always mounted: browsing and Edit use this same renderer/camera.
@@ -193,10 +196,9 @@ struct RootView: View {
                     }.accessibilityElement(children: .contain)
                 }
                 }
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    if !focusedEditing {
-                        bottomNavigation
-                    }
+                if !focusedEditing {
+                    bottomNavigation
+                }
                 }
                 .environment(\.gardenBottomNavigationTop, bottomNavigationTop)
                 .onPreferenceChange(GardenBottomNavigationTop.self) { bottomNavigationTop = $0 }
