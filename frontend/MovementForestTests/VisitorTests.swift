@@ -388,10 +388,13 @@ final class VisitorTests: XCTestCase {
         XCTAssertEqual(store.visibleOpportunity?.id, visitor.id)
         XCTAssertTrue(store.canRequestReward)
         XCTAssertFalse(store.recoveringRequest)
+        XCTAssertFalse(store.needsRecoveryNotice)
         await store.welcome(visitor)
         let saved = try XCTUnwrap(journal.state.queuedReward)
         XCTAssertEqual(journal.value?.kind, .heartbeat)
         XCTAssertEqual(saved.kind, .welcome)
+        XCTAssertTrue(store.confirmingReward)
+        XCTAssertFalse(store.needsRecoveryNotice, "A routine tap queued behind a heartbeat must stay quiet")
         XCTAssertNil(store.visibleOpportunity)
         await store.welcome(visitor) // A second tap cannot overwrite the first.
         XCTAssertEqual(journal.state.queuedReward, saved)
@@ -417,6 +420,7 @@ final class VisitorTests: XCTestCase {
         let saved = journal.state
         service.offline = true; releaseHeartbeat(service); await task.value
         XCTAssertEqual(journal.state, saved)
+        XCTAssertTrue(store.needsRecoveryNotice, "An interrupted saved request must retain recovery feedback")
         store.deactivate()
         service.offline = false
         let relaunched = VisitorCoordinator(userID: user, installationID: installation, service: service, journal: journal)

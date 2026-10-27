@@ -9,6 +9,13 @@ private final class ViewportTestStatus: ObservableObject {
     @Published var expanded = false
 }
 
+private struct PopupTestBounds: PreferenceKey {
+    static var defaultValue: [String: CGRect] = [:]
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
+    }
+}
+
 @MainActor
 private struct ViewportTestScreen: View {
     @ObservedObject var status: ViewportTestStatus
@@ -46,6 +53,40 @@ private struct ViewportTestScreen: View {
 
 @MainActor
 final class GardenViewportTests: XCTestCase {
+    func testPopupStaysAboveNavigationEvenWhenTheSceneExtendsBehindIt() async throws {
+        var frames: [String: CGRect] = [:]
+        let overlap: CGFloat = 64
+        let content = GeometryReader { geometry in
+            GardenViewportLayout(compact: false) {
+                Color.clear.frame(maxWidth: .infinity, maxHeight: .infinity)
+            } status: {
+                EmptyView()
+            } controls: {
+                GardenSelectionPopup(name: "Oak", variant: "Standard", stage: "Young plant", close: {}, details: {})
+                    .background(GeometryReader { popup in
+                        Color.clear.preference(key: PopupTestBounds.self, value: ["popup": popup.frame(in: .global)])
+                    })
+            }
+            .environment(\.gardenBottomNavigationTop, geometry.frame(in: .global).maxY - overlap)
+            .background(Color.clear.preference(key: PopupTestBounds.self,
+                value: ["viewport": geometry.frame(in: .global)]))
+        }
+        .environment(\.dynamicTypeSize, .large)
+        .onPreferenceChange(PopupTestBounds.self) { frames = $0 }
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = UIHostingController(rootView: content)
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil }
+        for _ in 0..<100 {
+            if (frames["popup"]?.height ?? 0) > 0 { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let popup = try XCTUnwrap(frames["popup"]), viewport = try XCTUnwrap(frames["viewport"])
+        XCTAssertGreaterThan(popup.height, 44)
+        XCTAssertLessThanOrEqual(popup.maxY, viewport.maxY - overlap + 1)
+    }
+
     func testPortraitViewportDoesNotResizeForStatusOrInvalidPlacement() async throws {
         try await verifyStableViewport(compact: false)
     }

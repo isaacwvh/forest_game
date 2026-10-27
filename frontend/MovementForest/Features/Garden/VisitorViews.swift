@@ -326,11 +326,8 @@ struct VisitorSummaryHeader: View {
 struct VisitorRecoveryNotice: View {
     @ObservedObject var store: VisitorCoordinator
     var body: some View {
-        if store.confirmingReward || store.recoveringRequest || store.gardenMessage != nil || !store.connected {
+        if store.needsRecoveryNotice {
             VStack(alignment: .leading, spacing: 6) {
-                if store.confirmingReward || store.recoveringRequest {
-                    Label("Confirming saved visitor request…", systemImage: "clock").font(.caption)
-                }
                 if let message = store.gardenMessage {
                     Text(message).font(.caption).accessibilityIdentifier("visitors.status")
                 } else if !store.connected && store.summary == nil {

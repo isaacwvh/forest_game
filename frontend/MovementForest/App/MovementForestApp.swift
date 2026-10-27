@@ -71,6 +71,7 @@ struct RootView: View {
     @State private var collectionDestination: CollectionDestination?
     @State private var packOpeningPresented = false
     @State private var childEntryBlocked = false
+    @State private var bottomNavigationTop: CGFloat?
     @StateObject private var entryRecap = AppEntryRecapCoordinator()
     @StateObject private var resume = AppResumeCoordinator()
 
@@ -197,6 +198,8 @@ struct RootView: View {
                         bottomNavigation
                     }
                 }
+                .environment(\.gardenBottomNavigationTop, bottomNavigationTop)
+                .onPreferenceChange(GardenBottomNavigationTop.self) { bottomNavigationTop = $0 }
                 .sheet(isPresented: $settingsPresented) {
                     NavigationStack {
                         SettingsScreen(catalog: catalog, activity: container.activity, connection: container.connection)
@@ -274,6 +277,9 @@ struct RootView: View {
                 .accessibilityAddTraits(selectedTab == destination && collectionDestination == nil ? .isSelected : [])
             }
         }.padding(.horizontal, 8).padding(.top, 4)
+            .background(GeometryReader { geometry in
+                Color.clear.preference(key: GardenBottomNavigationTop.self, value: geometry.frame(in: .global).minY)
+            })
             .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
             .background(Color(uiColor: .systemBackground))
             .overlay(alignment: .top) { Divider() }

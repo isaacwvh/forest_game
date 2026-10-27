@@ -662,3 +662,22 @@ This Windows host has no Swift/Xcode/Apple SDK. Syntax parsing does not establis
 native type correctness or passing XCTest. Run `bash frontend/scripts/test-mac.sh`
 on Mac, then the F8.3b live-account walkthrough in F8_ACCEPTANCE.md. Backend/API,
 economy, assets, Health collection and recap/pack state machines are unchanged.
+
+
+## F8.3b small live-test fixes — 27 October 2026
+
+Following the user's live test, lift the selection popup above the custom bottom
+navigation using its measured global top edge. Only browsing overlays move; scene
+bounds, camera, render ownership and Edit allocation remain unchanged. Overlay
+accessibility clipping follows the adjusted visible region; no fixed bar-height
+assumption or duplicate safe-area padding is added.
+
+Remove the routine in-flight visitor confirmation notice. Normal welcome/claim
+requests remain journalled and repeat-safe; collection keeps its button progress.
+Connection failures, uncertain saved requests, retry and locked-recovery feedback
+remain visible. Added native regression coverage for an overlapping navigation
+bar and silent queued welcomes versus interrupted-request recovery.
+
+Passed on Windows: portable frontend project/assets/contracts validation, parsing
+all 64 Swift files, and git diff whitespace checks. Native XCTest and live iPhone
+verification are pending on Mac. No commit or push performed for these fixes.

@@ -11,6 +11,7 @@ final class VisitorCoordinator: ObservableObject {
     @Published private(set) var feedback: GardenFeedback?
     var message: String? { feedback?.text }
     var gardenMessage: String? { feedback?.visibleInGarden == true ? message : nil }
+    var needsRecoveryNotice: Bool { gardenMessage != nil || !connected || recoveryLocked }
     private func report(_ text: String, kind: GardenFeedback.Kind = .failure, source: GardenFeedback.Source = .visitorReward) {
         feedback = GardenFeedback(text: text, kind: kind, source: source)
     }

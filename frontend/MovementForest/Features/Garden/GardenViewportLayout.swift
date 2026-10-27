@@ -6,6 +6,7 @@ import SwiftUI
 struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
     let compact: Bool
     var editing = false
+    @Environment(\.gardenBottomNavigationTop) private var navigationTop
     @ViewBuilder let scene: () -> Scene
     @ViewBuilder let status: () -> Status
     @ViewBuilder let controls: () -> Controls
@@ -15,6 +16,8 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
             let top = editing && !compact ? min(260, geometry.size.height * 0.32) : 0
             let bottom = editing && !compact ? min(180, geometry.size.height * 0.24) : 0
             let side = editing && compact ? min(340, geometry.size.width * 0.42) : 0
+            let browsingHeight = editing ? geometry.size.height : min(geometry.size.height,
+                max(0, (navigationTop ?? geometry.frame(in: .global).maxY) - geometry.frame(in: .global).minY))
             scene()
                 .frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
                 .padding(.top, top).padding(.bottom, bottom).padding(.trailing, side)
@@ -23,9 +26,9 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                         ViewThatFits(in: .vertical) {
                             status()
                             ScrollView { status() }
-                        }.frame(maxHeight: geometry.size.height * 0.55, alignment: .top).clipped()
+                        }.frame(maxHeight: browsingHeight * 0.55, alignment: .top).clipped()
                             .transformPreference(GardenOverlayFrames.self) { frames in
-                                let visible = CGRect(x: 0, y: 0, width: geometry.size.width, height: geometry.size.height * 0.55)
+                                let visible = CGRect(x: 0, y: 0, width: geometry.size.width, height: browsingHeight * 0.55)
                                 frames = frames.map { $0.intersection(visible) }.filter { !$0.isNull && !$0.isEmpty }
                             }
                     } else if !compact {
@@ -38,12 +41,13 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                         ViewThatFits(in: .vertical) {
                             controls()
                             ScrollView { controls() }
-                        }.frame(maxHeight: geometry.size.height * 0.4, alignment: .bottom).clipped()
+                        }.frame(maxHeight: browsingHeight * 0.4, alignment: .bottom).clipped()
                             .transformPreference(GardenOverlayFrames.self) { frames in
-                                let visible = CGRect(x: 0, y: geometry.size.height * 0.6,
-                                                     width: geometry.size.width, height: geometry.size.height * 0.4)
+                                let visible = CGRect(x: 0, y: browsingHeight * 0.6,
+                                                     width: geometry.size.width, height: browsingHeight * 0.4)
                                 frames = frames.map { $0.intersection(visible) }.filter { !$0.isNull && !$0.isEmpty }
                             }
+                            .padding(.bottom, geometry.size.height - browsingHeight)
                     } else if !compact {
                         ScrollView { controls() }.frame(height: bottom)
                             .background(Color(uiColor: .systemBackground))
@@ -56,6 +60,24 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                     }
                 }
         }.coordinateSpace(name: "garden.viewport")
+    }
+}
+
+/// The custom navigation bar can overlap a NavigationStack's scene bounds.
+/// Pass its real top edge through so only browsing overlays avoid that overlap.
+struct GardenBottomNavigationTop: PreferenceKey {
+    static var defaultValue: CGFloat? = nil
+    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) { value = nextValue() ?? value }
+}
+
+private enum GardenBottomNavigationTopKey: EnvironmentKey {
+    static let defaultValue: CGFloat? = nil
+}
+
+extension EnvironmentValues {
+    var gardenBottomNavigationTop: CGFloat? {
+        get { self[GardenBottomNavigationTopKey.self] }
+        set { self[GardenBottomNavigationTopKey.self] = newValue }
     }
 }
 
