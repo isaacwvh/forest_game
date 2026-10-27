@@ -6,7 +6,7 @@ final class ForestUITests: XCTestCase {
     func testFourEntryNavigationStartsOnGardenAndSampleOwnershipIsTruthful() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]; app.launch()
-        XCTAssertTrue(app.buttons["garden.plants"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 15))
         let labels = ["My plants", "Garden", "Edit", "Activity"]
         let buttons = labels.map { app.buttons["navigation." + $0] }
         for button in buttons { XCTAssertTrue(button.exists) }
@@ -16,7 +16,22 @@ final class ForestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Your plants belong here"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["editor.place"].exists)
         app.buttons["navigation.Garden"].tap()
-        XCTAssertTrue(app.buttons["garden.plants"].exists)
+        XCTAssertTrue(app.buttons["garden.info"].exists)
+    }
+
+    func testGardenHeaderRetainsInfoAndDisablesUnavailableCollectionWithoutPermanentControls() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()
+        XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["visitors.claim"].exists)
+        XCTAssertFalse(app.buttons["visitors.claim"].isEnabled)
+        XCTAssertFalse(app.buttons["garden.plants"].exists)
+        XCTAssertFalse(app.buttons["Zoom in"].exists); XCTAssertFalse(app.buttons["Zoom out"].exists)
+        XCTAssertFalse(app.buttons["Reset garden view"].exists)
+        XCTAssertFalse(app.buttons["visitors.welcome"].exists)
+        app.buttons["garden.info"].tap()
+        XCTAssertTrue(app.navigationBars["Garden information"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Garden controls"].exists)
     }
 
     func testOwnedBrowsingIsReadOnlyAndStorageOpensDetailsBeforePlace() {
@@ -46,6 +61,7 @@ final class ForestUITests: XCTestCase {
         app.buttons["editor.apply"].tap()
         XCTAssertTrue(app.buttons["editor.done"].exists); app.buttons["editor.done"].tap()
         XCTAssertTrue(app.buttons["navigation.My plants"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Saved."].exists)
         app.buttons["navigation.My plants"].tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "myplants.planted.")).firstMatch.waitForExistence(timeout: 5))
     }
@@ -61,8 +77,7 @@ final class ForestUITests: XCTestCase {
     func testBrowsingRetainsTheMountedGardenCameraAndModelImports() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]; app.launch()
-        XCTAssertTrue(app.buttons["garden.plants"].waitForExistence(timeout: 15))
-        app.buttons["Zoom in"].tap()
+        XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 15))
         func inspect() throws -> [String] {
             app.buttons["Settings"].tap(); app.buttons["settings.developer"].tap(); app.buttons["developer.diagnostics.link"].tap()
             let loading = app.descendants(matching: .any).matching(identifier: "diagnostic.renderer.loading").firstMatch
@@ -78,6 +93,12 @@ final class ForestUITests: XCTestCase {
             app.navigationBars.buttons["Done"].firstMatch.tap()
             return values
         }
+        _ = try inspect() // Wait for initial artwork before moving the camera.
+        let scene = app.descendants(matching: .any).matching(identifier: "garden.scene").firstMatch
+        XCTAssertTrue(scene.waitForExistence(timeout: 15))
+        let start = scene.coordinate(withNormalizedOffset: CGVector(dx: 0.65, dy: 0.65))
+        let end = scene.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.7))
+        start.press(forDuration: 0.05, thenDragTo: end)
         let initial = try inspect()
         for destination in ["My plants", "Activity", "Garden"] { app.buttons["navigation." + destination].tap() }
         XCTAssertEqual(try inspect(), initial)
@@ -158,7 +179,7 @@ final class ForestUITests: XCTestCase {
             XCTAssertTrue(app.navigationBars[destination].waitForExistence(timeout: 5))
         }
         app.buttons["Garden"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["garden.plants"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 10))
     }
 
     func testGenericPackKeepsTwoTapOpening() {
@@ -192,9 +213,10 @@ final class ForestUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]
         app.launch()
-        let plants = app.buttons["garden.plants"]
-        XCTAssertTrue(plants.waitForExistence(timeout: 15))
-        plants.tap()
+        let information = app.buttons["garden.info"]
+        XCTAssertTrue(information.waitForExistence(timeout: 15))
+        information.tap()
+        app.buttons["garden.samplePlants"].tap()
         XCTAssertTrue(app.navigationBars["Garden plants"].waitForExistence(timeout: 5))
         let firstPlant = app.cells.firstMatch
         XCTAssertTrue(firstPlant.waitForExistence(timeout: 5))

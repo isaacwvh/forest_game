@@ -4,6 +4,17 @@ import Combine
 
 @MainActor
 final class DiagnosticsTests: XCTestCase {
+    func testGardenFeedbackVisibilityUsesCategoryInsteadOfMessageText() {
+        let success = GardenFeedback(text: "Any translated confirmation", kind: .success, source: .gardenEdit)
+        let failure = GardenFeedback(text: "Saved.", kind: .failure, source: .gardenRead)
+        XCTAssertFalse(success.visibleInGarden)
+        XCTAssertTrue(failure.visibleInGarden)
+        let kinds: [GardenFeedback.Kind] = [.pending, .failure, .uncertain, .offline, .locked, .information]
+        for kind in kinds {
+            XCTAssertTrue(GardenFeedback(text: "", kind: kind, source: .visitorReward).visibleInGarden)
+        }
+    }
+
     func testHistoryBoundsCountAgeAndEncodedBytes() throws {
         let now = Date(), session = UUID()
         func event(_ date: Date, _ text: String = "confirmed") -> DiagnosticEvent {

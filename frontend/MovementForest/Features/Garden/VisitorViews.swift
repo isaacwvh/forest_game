@@ -199,6 +199,24 @@ struct VisitorHitTarget {
             return aDistance == bDistance ? a.id.uuidString < b.id.uuidString : aDistance < bDistance
         }.first?.id
     }
+
+    /// A VoiceOver frame must describe visible artwork, never an occluding control.
+    /// Splitting rather than taking a union avoids bridging across a popup/button.
+    func accessibleRect(excluding overlays: [CGRect]) -> CGRect? {
+        var pieces = [artwork.intersection(touch)]
+        for overlay in overlays {
+            pieces = pieces.flatMap { rect -> [CGRect] in
+                let cut = rect.intersection(overlay)
+                guard !cut.isNull, !cut.isEmpty else { return [rect] }
+                return [CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: cut.minY - rect.minY),
+                        CGRect(x: rect.minX, y: cut.maxY, width: rect.width, height: rect.maxY - cut.maxY),
+                        CGRect(x: rect.minX, y: cut.minY, width: cut.minX - rect.minX, height: cut.height),
+                        CGRect(x: cut.maxX, y: cut.minY, width: rect.maxX - cut.maxX, height: cut.height)]
+                    .filter { !$0.isEmpty && !$0.isNull }
+            }
+        }
+        return pieces.filter { !$0.isEmpty && !$0.isNull }.max { $0.width * $0.height < $1.width * $1.height }
+    }
 }
 
 /// Board-local flight; server-issued identity/time keeps motion stable across refreshes.
@@ -223,57 +241,115 @@ struct VisitorWorldPose {
     }
 }
 
-@MainActor
-struct VisitorStatusPanel: View {
-    @ObservedObject var store: VisitorCoordinator
+struct GardenSummaryHeader: View {
+    var tokens: String? = nil
+    var attraction: String? = nil
+    var stored: String? = nil
+    var storedAccessibility: String? = nil
+    var canCollect = false
+    var collecting = false
+    let information: () -> Void
+    let collect: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let value = store.summary {
-                ViewThatFits(in: .horizontal) {
-                    HStack {
-                        QuantityLabel(metric: "tokens", text: "\(store.tokenBalance) tokens")
-                        Spacer()
-                        QuantityLabel(metric: "offline_capacity", text: "Stored visits \(value.claimableVisits)/\(value.capacity)")
-                    }
-                    VStack(alignment: .leading) {
-                        QuantityLabel(metric: "tokens", text: "\(store.tokenBalance) visitor tokens")
-                        QuantityLabel(metric: "offline_capacity", text: "Stored visits: \(value.claimableVisits) · Capacity \(value.capacity)")
-                    }
-                }.font(.subheadline).monospacedDigit()
-                if !store.eligible {
-                    Text("Active visitors paused · Stored visits accumulate while away.").font(.caption).foregroundStyle(.secondary)
-                } else if value.sources.isEmpty {
-                    Text("Plant a copy to attract visitors.").font(.caption)
-                } else {
-                    Text("Watch for a butterfly, then tap to welcome it.").font(.caption)
+        VStack(spacing: 6) {
+            if textSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 6) {
+                    metric("Tokens", key: "tokens", value: tokens)
+                    metric("Attraction", key: "attraction", value: attraction)
+                    metric("Stored visits", key: "offline_capacity", value: stored)
                 }
-                actionLayout {
-                    Button("Collect stored visits") { Task { await store.claim() } }
-                        .disabled(!store.canRequestReward || value.claimableVisits == "0")
-                        .accessibilityIdentifier("visitors.claim")
-                    if !textSize.isAccessibilitySize { Spacer(minLength: 4) }
-                    if let opportunity = store.visibleOpportunity {
-                        Button("Welcome visitor") { Task { await store.welcome(opportunity) } }
-                            .disabled(!store.canRequestReward)
-                            .accessibilityIdentifier("visitors.welcome")
-                    }
-                }.font(.callout).frame(minHeight: 44)
-            } else { Text("Connecting visitors…").font(.caption) }
-            if store.recoveringRequest || store.confirmingReward {
-                Label("Confirming saved visitor request…", systemImage: "clock").font(.caption)
+                ViewThatFits(in: .horizontal) {
+                    HStack { infoButton; Spacer(minLength: 8); collectButton }
+                    VStack(alignment: .leading, spacing: 6) { infoButton; collectButton }
+                }
+            } else {
+                HStack(alignment: .top, spacing: 6) {
+                    metric("Tokens", key: "tokens", value: tokens)
+                    metric("Attraction", key: "attraction", value: attraction)
+                    metric("Stored visits", key: "offline_capacity", value: stored)
+                }
+                HStack(spacing: 6) {
+                    infoButton.frame(maxWidth: .infinity)
+                    Color.clear.frame(maxWidth: .infinity).frame(height: 0).allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                    collectButton.frame(maxWidth: .infinity)
+                }
             }
-            if let message = store.message { Text(message).font(.caption).accessibilityIdentifier("visitors.status") }
-            if !store.connected || store.recoveringRequest {
-                Button("Retry visitors") { Task { await store.tick(force: true) } }
-                    .disabled(store.busy || store.recoveryLocked).font(.callout).frame(minHeight: 44)
-                    .accessibilityIdentifier("visitors.retry")
-            }
-        }
+        }.padding(.horizontal, 12).padding(.top, 8)
     }
 
-    private var actionLayout: AnyLayout {
-        textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
+    private func metric(_ title: String, key: String, value: String?) -> some View {
+        VStack(spacing: 2) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            QuantityLabel(metric: key, text: value ?? "Unavailable").font(.subheadline).monospacedDigit()
+        }.frame(maxWidth: .infinity, alignment: textSize.isAccessibilitySize ? .leading : .center)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(key == "offline_capacity" ? (storedAccessibility ?? "Stored visits, Unavailable") :
+                "\(key == "tokens" ? "Visitor tokens" : title), \(value ?? "Unavailable")")
+    }
+    private var infoButton: some View {
+        Button("Garden info", action: information).buttonStyle(GardenOutlineButtonStyle())
+            .font(.callout).accessibilityIdentifier("garden.info").gardenOverlayTarget()
+    }
+    private var collectButton: some View {
+        Button(action: collect) {
+            HStack(spacing: 4) {
+                if collecting { ProgressView().controlSize(.small) }
+                Text("Collect")
+            }
+        }.buttonStyle(GardenOutlineButtonStyle()).font(.callout)
+            .disabled(!canCollect).foregroundStyle(canCollect ? Color.forestTint : .secondary)
+            .accessibilityLabel("Collect stored visits")
+            .accessibilityValue(collecting ? "Confirming collection" : "")
+            .accessibilityIdentifier("visitors.claim").gardenOverlayTarget()
+    }
+}
+
+@MainActor
+struct VisitorSummaryHeader: View {
+    @ObservedObject var store: VisitorCoordinator
+    let attraction: String?
+    let information: () -> Void
+    var body: some View {
+        GardenSummaryHeader(tokens: store.summary == nil && store.confirmedTokenBalance == nil ? nil : store.tokenBalance,
+            attraction: attraction,
+            stored: store.summary.map { "\($0.claimableVisits)/\($0.capacity)" },
+            storedAccessibility: store.summary.map { "\($0.claimableVisits) stored visits, capacity \($0.capacity)" },
+            canCollect: store.canCollect, collecting: store.collecting, information: information,
+            collect: { Task { await store.claim() } })
+    }
+}
+
+@MainActor
+struct VisitorRecoveryNotice: View {
+    @ObservedObject var store: VisitorCoordinator
+    var body: some View {
+        if store.confirmingReward || store.recoveringRequest || store.gardenMessage != nil || !store.connected {
+            VStack(alignment: .leading, spacing: 6) {
+                if store.confirmingReward || store.recoveringRequest {
+                    Label("Confirming saved visitor request…", systemImage: "clock").font(.caption)
+                }
+                if let message = store.gardenMessage {
+                    Text(message).font(.caption).accessibilityIdentifier("visitors.status")
+                } else if !store.connected && store.summary == nil {
+                    Text("Connecting visitors…").font(.caption)
+                }
+                if !store.connected && store.summary != nil {
+                    Text("Visitor values are last confirmed.").font(.caption)
+                }
+                if !store.connected || store.recoveringRequest {
+                    if store.recoveryLocked {
+                        Text("Sign in again through Settings → Account and sign-in. Your saved request is retained.").font(.caption)
+                    } else {
+                        Button("Retry visitors") { Task { await store.tick(force: true) } }
+                            .disabled(store.busy).frame(minHeight: 44).accessibilityIdentifier("visitors.retry")
+                    }
+                }
+            }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                .modifier(GardenOutline()).gardenOverlayTarget().padding(.horizontal, 12)
+        }
     }
 }
 

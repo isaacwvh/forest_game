@@ -16,8 +16,9 @@ private struct ViewportTestScreen: View {
     let garden: GardenSnapshot
     let catalog: BundleAssetCatalog
     let compact: Bool
+    let editing: Bool
     var body: some View {
-        GardenViewportLayout(compact: compact) {
+        GardenViewportLayout(compact: compact, editing: editing) {
             GardenSceneView(renderer: renderer, garden: garden, catalog: catalog)
         } status: {
             VStack {
@@ -51,13 +52,19 @@ final class GardenViewportTests: XCTestCase {
     func testCompactViewportDoesNotResizeForStatusOrInvalidPlacement() async throws {
         try await verifyStableViewport(compact: true)
     }
-    private func verifyStableViewport(compact: Bool) async throws {
+    func testPortraitEditingPanelsRemainStable() async throws {
+        try await verifyStableViewport(compact: false, editing: true)
+    }
+    func testCompactEditingPanelsRemainStable() async throws {
+        try await verifyStableViewport(compact: true, editing: true)
+    }
+    private func verifyStableViewport(compact: Bool, editing: Bool = false) async throws {
         let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
         let status = ViewportTestStatus(), garden = DevelopmentScene.single.garden()
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
         window.rootViewController = UIHostingController(rootView: ViewportTestScreen(status: status,
-            renderer: renderer, garden: garden, catalog: catalog, compact: compact))
+            renderer: renderer, garden: garden, catalog: catalog, compact: compact, editing: editing))
         window.makeKeyAndVisible()
         defer { window.isHidden = true; window.rootViewController = nil; renderer.stop() }
         for _ in 0..<1500 {
@@ -67,6 +74,9 @@ final class GardenViewportTests: XCTestCase {
         XCTAssertEqual(renderer.modelLoadCount, 1)
         let bounds = renderer.view.bounds
         XCTAssertGreaterThan(bounds.height, 0); XCTAssertGreaterThan(bounds.width, 0)
+        if !editing {
+            XCTAssertGreaterThan(bounds.height, window.bounds.height * 0.65, "Browsing must recover the reserved panel space")
+        }
         renderer.zoom(by: 0.8)
         let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
         let position = camera.position, rotation = camera.orientation.vector

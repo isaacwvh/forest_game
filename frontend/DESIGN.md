@@ -10,24 +10,31 @@ specification. Preserve their calm, stylized miniature-world appearance.
 - Interactive tint is forest green: light RGB 0.20/0.39/0.25; dark RGB 0.56/0.80/0.59.
 - Garden scene background RGB 0.90/0.93/0.89; temporary board RGB 0.45/0.57/0.36.
 - Shared warm directional lighting with cooler fill; materials remain asset-authored.
-- Explicit camera buttons use 44-point targets; ordinary content uses native spacing.
+- Actions use 44-point targets; browsing camera commands live in the Garden scene accessibility Actions menu. Edit retains its explicit camera controls.
 - World ground is Y=0, assets retain metre scale and fixed ground anchors.
 - Plant selection uses a small yellow marker, independent of gameplay clearance.
 - Embedded wind respects Reduce Motion and inactive views. Scene changes preserve identity.
-- A native Plants list provides access to details without precise 3D touch selection.
+- My plants provides read-only owned-copy inspection without precise 3D touch selection. Sample Garden info retains an accessible sample plant list.
 - Detailed inspection and synthetic fixtures are under developer tools in Debug and explicitly internal Release builds; public Release excludes their routes.
-- Visitor controls extend the existing native garden status area with confirmed
-  tokens, stored visits, one collection action and a collapsed explanation.
+- Garden browsing fills the navigation-bounded viewport. Tokens, attraction and
+  stored visits/capacity share one ordinary-size row. Garden info and outlined
+  Collect sit beneath the first/last columns; accessibility text sizes reflow.
+- Transparent forest-green outlines surround browsing actions, selection and
+  exceptional notices. Reduce Transparency/increased contrast adds local backing.
+  Only real overlay targets occlude visitor accessibility; empty space passes gestures.
 - The bundled butterfly USDZ uses a shared template, embedded wing animation and
   board-relative flight with camera perspective. Projected 64-point touch targets
-  and a separate accessible Welcome action preserve access. A temporary native
-  fallback remains usable during missing/loading artwork. Reduce Motion keeps
+  preserve direct touch access. The rendered butterfly itself has a native
+  accessibility element keyed by opportunity ID, with current projected bounds
+  and the same welcome operation. There is no standalone Welcome button. A native
+  fallback remains usable after artwork failure; loading feedback remains visible. Reduce Motion keeps
   flight stationary and wing animation paused; server expiry ends presentation.
 - Visitor UI exposes pending/confirmed status and recovery without optimistically
   adding tokens. Development balance is labelled. B7 exchanges visitor tokens directly for packs.
-- Garden panel regions depend on available screen size and orientation. Status,
-  progress and validation text scroll within those regions; they never resize the
-  camera viewport. Compact height places status and controls beside the scene.
+- Browsing header/notices and the selected-copy popup overlay a stable full scene;
+  their appearance never changes camera bounds or renderer identity. Tall overlays
+  scroll within bounded areas. Edit retains geometry-reserved status/controls panels
+  and its compact-height side panel on the same mounted scene bridge.
 - Butterfly flight uses its own frame clock and retains its phase for each
   opportunity. A routine heartbeat keeps the visitor visible and accepts a saved
   tap; a read-only activity refresh does not end the foreground visitor session.
@@ -75,9 +82,13 @@ native validation. No HTML/CSS detector or browser screenshot substitutes for it
 - My plants combines confirmed Planted copies above paginated Stored copies. Rows
   open read-only copy details. Storage inside Edit opens the same details with a
   bottom Place action. Details resolve current copy identity from the account store.
-- Garden prioritizes tokens, attraction and stored visits/capacity, with Collect
-  and accessible Welcome. Visitor explanations and active skills are secondary.
-  Status text scrolls within geometry-reserved regions; it does not move tap targets.
+- Selected planted copies appear in a compact outlined popup above bottom navigation.
+  Close/empty ground dismisses it; explicit Plant details opens read-only current-copy
+  inspection. Selection resolves by account-bound UUID and clears after storage/removal.
+- Routine Garden success messages are classified explicitly and hidden without
+  clearing service state. Pending, uncertain, offline and recovery notices remain
+  actionable overlays. Confirmed rewards/request outcomes remain in local diagnostics.
+  Visitor explanations and active skills remain in Garden info.
 - Settings → Developer tools → Diagnostics shows the real connected state and
   live Garden renderer, plus bounded local events with manual copy/export. It does
   not create a renderer, own requests, upload logs or capture credentials/Health bodies.

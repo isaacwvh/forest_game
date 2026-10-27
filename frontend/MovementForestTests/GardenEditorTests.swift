@@ -1,5 +1,8 @@
 import XCTest
 import Foundation
+import SwiftUI
+import UIKit
+import RealityKit
 @testable import MovementForest
 
 private struct EditorContract: Decodable {
@@ -150,6 +153,95 @@ private final class EditorTestService: GardenServing {
 
 @MainActor
 final class GardenEditorTests: XCTestCase {
+    func testConnectedPopupAttractionAndRecoveryPreserveViewportCameraAndImports() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        service.current = fixture.plantResult.garden
+        let store = try makeStore(service), catalog = try BundleAssetCatalog()
+        await store.start()
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = UIHostingController(rootView: ConnectedGardenScreen(store: store, catalog: catalog, active: true))
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil }
+        for _ in 0..<1500 {
+            if let renderer = LiveGardenDiagnostics.shared.renderer, renderer.view.window === window,
+               renderer.modelLoadCount == 1, !renderer.isLoading { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let renderer = try XCTUnwrap(LiveGardenDiagnostics.shared.renderer)
+        XCTAssertTrue(renderer.view.window === window)
+        XCTAssertEqual(renderer.modelLoadCount, 1)
+        renderer.zoom(by: 0.8)
+        let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
+        let bounds = renderer.view.bounds, position = camera.position, rotation = camera.orientation.vector
+        let id = try XCTUnwrap(store.confirmed?.plants.first?.id)
+        for selected in [id, nil, id] {
+            store.selectedID = selected
+            service.current.totalAttractionMicroUnits = selected == nil ? "0" : "123000000"
+            try store.applyConfirmed(service.current)
+            try await Task.sleep(nanoseconds: 150_000_000)
+            XCTAssertEqual(renderer.view.bounds, bounds)
+            XCTAssertEqual(camera.position, position); XCTAssertEqual(camera.orientation.vector, rotation)
+            XCTAssertEqual(renderer.modelLoadCount, 1)
+            XCTAssertNil(store.candidate); XCTAssertTrue(service.bodies.isEmpty)
+        }
+        service.failReads = true; await store.refresh()
+        XCTAssertNotNil(store.gardenMessage)
+        try await Task.sleep(nanoseconds: 150_000_000)
+        XCTAssertEqual(renderer.view.bounds, bounds); XCTAssertEqual(camera.position, position)
+        service.failReads = false; await store.refresh()
+        try await Task.sleep(nanoseconds: 150_000_000)
+        XCTAssertNil(store.gardenMessage)
+        XCTAssertEqual(renderer.view.bounds, bounds); XCTAssertEqual(camera.orientation.vector, rotation)
+        XCTAssertEqual(renderer.modelLoadCount, 1)
+        renderer.stop()
+    }
+
+    func testConfirmedStorageClearsGardenSelectionEvenWhileTheCopyRemainsOwned() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        service.current = fixture.plantResult.garden
+        let store = try makeStore(service)
+        await store.start()
+        let id = try XCTUnwrap(store.confirmed?.plants.first?.id)
+        store.selectedID = id
+        XCTAssertEqual(store.selectedPlanted?.id, id)
+        let current = service.current
+        service.current = APIGarden(gardenId: current.gardenId, width: current.width, depth: current.depth,
+            coordinateUnit: current.coordinateUnit, gardenUnitMetres: current.gardenUnitMetres,
+            catalogVersion: current.catalogVersion, layoutVersion: current.layoutVersion + 1,
+            stateVersion: current.stateVersion + 1, plants: [])
+        await store.refresh()
+        XCTAssertNil(store.selectedID); XCTAssertNil(store.selectedPlanted)
+        XCTAssertNotNil(store.ownedCopy(id)); XCTAssertNil(store.candidate)
+        XCTAssertTrue(service.bodies.isEmpty)
+    }
+
+    func testGardenSelectionResolvesDuplicateCopiesByIdentityWithoutEditing() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let first = try XCTUnwrap(fixture.plantResult.garden.plants.first)
+        let placement = try XCTUnwrap(first.placement)
+        let second = APIOwnedPlant(plantId: UUID(), speciesId: first.speciesId, variantId: first.variantId,
+            growthMicroUnits: "1", growthStage: first.growthStage, modelKey: first.modelKey,
+            thumbnailKey: first.thumbnailKey, placement: APIPlacement(gardenId: placement.gardenId,
+                x: placement.x + 3, y: placement.y, rotationDegrees: placement.rotationDegrees))
+        let garden = fixture.plantResult.garden
+        service.current = APIGarden(gardenId: garden.gardenId, width: garden.width, depth: garden.depth,
+            coordinateUnit: garden.coordinateUnit, gardenUnitMetres: garden.gardenUnitMetres,
+            catalogVersion: garden.catalogVersion, layoutVersion: garden.layoutVersion,
+            stateVersion: garden.stateVersion, plants: [first, second])
+        let store = try makeStore(service)
+        await store.start()
+        for copy in [first, second] {
+            store.selectedID = copy.id
+            XCTAssertEqual(store.selectedPlanted?.id, copy.id)
+            XCTAssertEqual(store.ownedCopy(copy.id)?.growthMicroUnits, copy.growthMicroUnits)
+            XCTAssertEqual(store.render(try XCTUnwrap(store.selectedPlanted))?.id, copy.id)
+        }
+        XCTAssertFalse(store.editing); XCTAssertNil(store.candidate); XCTAssertTrue(service.bodies.isEmpty)
+        store.deactivate()
+        XCTAssertNil(store.selectedID)
+    }
+
     func testConfirmedGardenRemainsVisitorEligibleDuringReadOnlyRefresh() async throws {
         let fixture = try EditorContract.load(), service = EditorTestService(fixture)
         let store = try makeStore(service)
@@ -214,6 +306,9 @@ final class GardenEditorTests: XCTestCase {
         store.updatePosition(x: 3.201, y: 4.609)
         await store.releaseCandidate()
         XCTAssertEqual(store.confirmed?.plants.first?.id, copy.id)
+        XCTAssertEqual(store.feedback?.kind, .success)
+        XCTAssertNil(store.gardenMessage)
+        XCTAssertEqual(store.message, "Saved.")
         XCTAssertTrue(store.inventory.isEmpty)
         store.begin(try XCTUnwrap(store.confirmed?.plants.first), kind: .move)
         store.updatePosition(x: 5.001, y: 6.002)
@@ -256,6 +351,8 @@ final class GardenEditorTests: XCTestCase {
         original.begin(try XCTUnwrap(original.inventory.first), kind: .plant)
         await original.releaseCandidate()
         XCTAssertEqual(original.state, .unknown)
+        XCTAssertEqual(original.feedback?.kind, .uncertain)
+        XCTAssertNotNil(original.gardenMessage)
         XCTAssertFalse(original.canEdit)
         XCTAssertEqual(service.current.layoutVersion, 1)
         let restored = try makeStore(service, journal: journal)

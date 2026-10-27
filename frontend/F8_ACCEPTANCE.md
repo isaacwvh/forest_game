@@ -256,10 +256,19 @@ loading-to-model, timeout and renderer-retention tests remain unchanged. Added
 native tests are not recorded as passing until run with Apple SDKs.
 
 
-## F8.3 first-version frontend — source handoff, 27 October 2026
+## F8.3 first-version frontend — completed, user accepted 27 October 2026
 
-Source is implemented locally. Native builds/XCTest and physical-device acceptance
-are pending; portable checks are recorded in VALIDATION.md. No push or CI was run.
+Commit `219381b` was pushed to GitHub `main`. The user confirmed live testing
+works as planned and accepted F8.3 as complete. Portable checks are recorded in
+VALIDATION.md; no unrecorded XCTest, Release-build or CI result is inferred from
+that acceptance. The walkthrough below remains the regression reference for the
+accepted baseline; it does not reopen this batch.
+
+The follow-up batch is **F8.3b — Garden viewport and layout refinement** in
+[the implementation plan](../IMPLEMENTATION_PLAN.md). It replaces the browsing
+panel/Plants controls, visible Welcome and routine success text described below;
+these describe the historical F8.3 behavior. F8.3b source now supersedes those controls;
+its native/device acceptance is pending.
 
 Use the existing account/backend installation. Debug includes tools. For optimized
 internal device testing select **MovementForest-Internal** (InternalRelease).
@@ -314,3 +323,70 @@ Run `bash frontend/scripts/test-mac.sh` on Mac for Debug XCTest/UI plus public
 Release and InternalRelease builds. Debug `--fixture-health --fixture-garden`
 provides an in-memory edit journey without network, disk journals or Health uploads;
 use live accounts for recovery/relaunch, visitor and reward acceptance.
+
+## F8.3b Garden viewport and layout refinement — source implemented; device acceptance pending
+
+Scope confirmed by the user on 27 October 2026. Source is implemented locally;
+portable checks pass. Native XCTest/builds and physical iPhone acceptance remain
+pending; this Windows handoff does not record them as passing. No push/CI run.
+The detailed scope is in IMPLEMENTATION_PLAN.md.
+
+- Verify the continuous Garden between existing top/bottom navigation, with no
+  permanent white status/controls panels. Selection, balance updates and notices
+  never resize the scene, reimport models or reset the camera.
+- At ordinary text sizes, verify tokens / attraction / stored visits-capacity in
+  one row; Garden info left and green-outlined Collect beneath stored visits on
+  the right. Collect greys out with no whole visits; pending requests block repeats.
+  Unknown values remain unavailable, not zero; cached values remain identified.
+- Verify no browsing Plants strip or permanent visible zoom/reset buttons. Tap
+  each planted copy: a transparent green-outlined popup above the bottom navigation
+  shows name, variant, stage and read-only Plant details. Another selection updates
+  it; close/empty-ground tap dismisses it. Test duplicate identities, account changes
+  and confirmed removals, with camera gestures working outside the popup.
+- Verify direct butterfly taps at centres/edges through orbit/pan/zoom, new header
+  and popup boundaries, cold/warm loading and resume. No standalone Welcome button;
+  VoiceOver activates the butterfly itself. Controls retain their own touch areas,
+  no offscreen target remains active and repeated taps award once.
+- Verify routine Saved/welcome +1 success text is absent while confirmed balances
+  update. Interrupt requests: compact pending/failure/retry/offline feedback remains
+  useful, and diagnostics retain original request outcomes. Do not require Developer
+  tools for recovery. No token shimmer/floating +1 or other new animation is expected.
+- Recheck My plants, focused Edit/Storage/Done/placement, navigation, cold/warm
+  artwork loading, 30-second recap versus brief interruptions, pack ceremony and
+  Milestones. Cover small screens, large text, VoiceOver, camera accessibility
+  actions, Reduce Motion and contrast/Reduce Transparency needs.
+- Run portable validation and updated native viewport/navigation/selection/
+  accessibility tests, then `bash frontend/scripts/test-mac.sh` on Mac and live
+  iPhone testing. Record actual checks separately from user acceptance.
+
+Token/reward/watering/stage-transition animations, workout eligibility,
+pack-opening cleanup (including removing Continue later), new assets and cloud
+delivery remain separate work.
+
+### F8.3b live-account walkthrough
+
+1. Open Garden and dismiss any legitimate entry recap. Check the continuous scene,
+   three summary metrics, Garden info left and Collect right; no browsing Plants,
+   Welcome or zoom/reset strip. Orbit, pan and pinch to a recognisable perspective.
+2. Select plant A, then B (including duplicate species/variants). Check popup name,
+   variant and stage. Open Plant details and verify the exact copy and read-only
+   context. Close details, close the popup, select again and tap empty ground.
+   None of these actions should shift the camera. Gesture outside the popup.
+3. Open Garden info: rates, hosted totals, active skills and gesture help remain.
+   Return and check camera retention. Switch My plants → Activity → Garden.
+4. With whole stored visits, tap Collect repeatedly, including during a heartbeat.
+   Progress appears, repeats disable, one confirmed reward updates the counters.
+   With zero visits Collect is grey/disabled. No welcome/+1 success text appears.
+5. Tap butterfly centres/edges after orbit/pan/pinch and beside header/popup controls.
+   Check one award per visitor and that controls still work. With VoiceOver, focus
+   the butterfly and double-tap; use Garden scene Actions for camera commands.
+6. Interrupt connectivity during a claim or edit; return to Garden. Check concise
+   last-confirmed/pending/retry feedback, then reconnect and retry. Confirm one
+   reward/edit and unchanged camera. Inspect Diagnostics for original request outcomes.
+7. Edit → Storage → copy details → Place → Cancel. Repeat and Apply; select the
+   planted copy for Details/Move/Rotate/Store, then Done. My plants stays read-only;
+   storing/removing a selected copy clears the browsing popup.
+8. Repeat with largest text, VoiceOver, Reduce Motion, Reduce Transparency/increased
+   contrast, cold/warm artwork and background returns below/above 30 seconds.
+   Sample mode: Garden info → Explore sample plants stays read-only, with no invented
+   wallet/ownership. Spot-check pack opening and Milestones.

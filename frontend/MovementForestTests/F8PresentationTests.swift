@@ -4,6 +4,17 @@ import UIKit
 
 @MainActor
 final class F8PresentationTests: XCTestCase {
+    func testVisitorAccessibilityFramesExcludeOverlayControlsAndFullyCoveredArtwork() throws {
+        let target = try XCTUnwrap(VisitorHitTarget(id: UUID(), artwork: CGRect(x: 100, y: 100, width: 80, height: 60),
+            viewport: CGRect(x: 0, y: 0, width: 320, height: 400)))
+        let button = CGRect(x: 135, y: 90, width: 80, height: 80)
+        let visible = try XCTUnwrap(target.accessibleRect(excluding: [button]))
+        XCTAssertEqual(visible, CGRect(x: 100, y: 100, width: 35, height: 60))
+        XCTAssertFalse(visible.intersects(button))
+        XCTAssertNil(target.accessibleRect(excluding: [target.artwork]))
+        XCTAssertEqual(target.accessibleRect(excluding: []), target.artwork)
+    }
+
     func testVisitorTargetsKeepVisibleEdgesAndExcludeHeaderAndOffscreenArtwork() throws {
         let viewport = CGRect(x: 0, y: 0, width: 320, height: 400)
         let id = UUID()

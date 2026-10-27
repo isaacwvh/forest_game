@@ -15,6 +15,7 @@ struct ConnectedGardenScreen: View {
     @StateObject private var renderSession = GardenRenderSession()
     private var renderer: RealityGardenRenderer { renderSession.renderer }
     @State private var sheet: GardenEditorSheet?
+    @State private var detailCopyID: UUID?
     @State private var visible = false
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -39,7 +40,7 @@ struct ConnectedGardenScreen: View {
     var body: some View {
         Group {
             if let garden = store.rendered {
-                GardenViewportLayout(compact: verticalSizeClass == .compact) {
+                GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
                                     motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil,
                                     editorPreview: preview, onSelect: { [weak store = store] id in
@@ -58,11 +59,22 @@ struct ConnectedGardenScreen: View {
                             if event == .ended { Task { await store.releaseCandidate() } }
                         }
                     })
-                    .accessibilityHidden(true)
                     .overlay {
                         if let visitors = visitors { VisitorGardenOverlay(store: visitors, renderer: renderer) }
                     }
-                } status: { statusPanel } controls: { controls }
+                } status: {
+                    if store.editing { statusPanel }
+                    else { browsingStatus }
+                } controls: {
+                    if store.editing { controls }
+                    else if let selected = store.selectedPlanted {
+                        GardenSelectionPopup(name: selected.speciesId.capitalized, variant: selected.variantId.capitalized,
+                            stage: selected.growthStage.title,
+                            close: { renderer.dismissSelection() },
+                            details: { detailCopyID = selected.id; sheet = .details })
+                    }
+                }
+                .onPreferenceChange(GardenOverlayFrames.self) { renderer.setOverlayFrames($0) }
             } else if store.state.busy {
                 ProgressView("Opening your forest…").frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if store.recoveryLocked {
@@ -95,7 +107,7 @@ struct ConnectedGardenScreen: View {
                 case .plants: plantsList
                 case .storage: storageList
                 case .details:
-                    if let id = store.selectedID { OwnedPlantDetailScreen(store: store, copyID: id, catalog: catalog) }
+                    if let id = detailCopyID { OwnedPlantDetailScreen(store: store, copyID: id, catalog: catalog) }
                 case .information: gardenInformation
                 case .position, .rotation:
                     CandidateControlsScreen(store: store, rotationOnly: item == .rotation)
@@ -132,16 +144,54 @@ struct ConnectedGardenScreen: View {
         .onDisappear { visible = false; visitors?.setEligible(false); store.cancelCandidate(); renderer.setActive(false) }
     }
 
+    private var browsingStatus: some View {
+        VStack(spacing: 8) {
+            if let visitors = visitors {
+                VisitorSummaryHeader(store: visitors,
+                    attraction: (store.confirmed?.totalAttractionMicroUnits).map { ExactAmount.water($0) },
+                    information: { sheet = .information })
+                VisitorRecoveryNotice(store: visitors)
+            } else {
+                GardenSummaryHeader(attraction: (store.confirmed?.totalAttractionMicroUnits).map { ExactAmount.water($0) },
+                    information: { sheet = .information }, collect: {})
+            }
+            if store.showingCached || store.gardenMessage != nil || store.state.busy ||
+                store.state == .unknown || store.state == .authenticationRequired || store.recoveryLocked ||
+                !renderer.errors.isEmpty || renderer.isLoading || renderer.visitorAssetIssue != nil {
+                VStack(alignment: .leading, spacing: 6) {
+                    if store.showingCached {
+                        Label("Saved garden · Values last confirmed", systemImage: "wifi.slash").font(.caption)
+                    }
+                    if let message = store.gardenMessage {
+                        Text(message).font(.callout).accessibilityIdentifier("editor.status")
+                    }
+                    if store.state.busy { ProgressView(store.state == .saving ? "Saving edit…" : "Refreshing garden…") }
+                    if store.state == .unknown {
+                        Button("Retry saved edit") { Task { await store.retryPending() } }
+                            .frame(minHeight: 44).accessibilityIdentifier("editor.retry")
+                    } else if store.state == .blocked && !store.recoveryLocked && store.pending == nil {
+                        Button("Refresh garden") { Task { await store.refresh() } }.frame(minHeight: 44)
+                    }
+                    if store.state == .authenticationRequired || store.recoveryLocked {
+                        Text("Sign in again through Settings → Account and sign-in. Your saved requests are retained.").font(.caption)
+                    }
+                    if renderer.isLoading { ProgressView("Loading plants…") }
+                    if renderer.visitorAssetIssue != nil {
+                        Text("Butterfly artwork is unavailable. You can still welcome visitors.").font(.caption)
+                        Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.frame(minHeight: 44)
+                    }
+                    if !renderer.errors.isEmpty {
+                        Button("Some plants couldn’t load") { sheet = .errors }.frame(minHeight: 44)
+                    }
+                }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                    .modifier(GardenOutline()).gardenOverlayTarget().padding(.horizontal, 12)
+            }
+        }.padding(.bottom, 8)
+    }
+
     private var statusPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if store.editing {
-                Label("Editing garden", systemImage: "pencil").font(.headline)
-            } else {
-                if let visitors = visitors { VisitorStatusPanel(store: visitors) }
-                if let attraction = store.confirmed?.totalAttractionMicroUnits {
-                    QuantityLabel(metric: "attraction", text: "\(ExactAmount.water(attraction)) attraction").font(.subheadline)
-                }
-            }
+            Label("Editing garden", systemImage: "pencil").font(.headline)
             if store.showingCached { Label("Saved garden · Connect to refresh", systemImage: "wifi.slash").font(.caption) }
             if let candidate = store.candidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
@@ -149,11 +199,11 @@ struct ConnectedGardenScreen: View {
                 Text(candidate.kind == .rotate ? "Adjust the angle, then apply." : "Drag or tap the ground. A valid release saves your edit.")
                     .font(.caption).foregroundStyle(.secondary)
                 if store.adultPreview { Text("Adult preview · Clearance stays the same").font(.caption) }
-            } else if let message = store.message {
+            } else if let message = store.gardenMessage {
                 Text(message).font(.callout).accessibilityIdentifier("editor.status")
             } else if store.confirmed?.plants.isEmpty == true {
-                Text(store.editing ? "Open Storage and choose a plant to inspect, then Place." : "Use Edit → Storage to plant your first copy.").font(.callout)
-            } else if store.editing {
+                Text("Open Storage and choose a plant to inspect, then Place.").font(.callout)
+            } else {
                 Text("Select a plant to move, rotate, store or inspect.").font(.caption).foregroundStyle(.secondary)
             }
             if store.state.busy { ProgressView(store.state == .saving ? "Saving edit…" : "Refreshing garden…") }
@@ -226,7 +276,7 @@ struct ConnectedGardenScreen: View {
                     }.buttonStyle(.bordered).controlSize(.large).disabled(!store.canEdit || renderer.isLoading)
                 }
                 if store.candidate == nil {
-                    Button("Plant details") { sheet = .details }.frame(minHeight: 44)
+                    Button("Plant details") { detailCopyID = selected.id; sheet = .details }.frame(minHeight: 44)
                         .accessibilityIdentifier("garden.details")
                 }
             }
@@ -244,15 +294,10 @@ struct ConnectedGardenScreen: View {
             }
             VStack(spacing: 0) {
                 HStack {
-                    Button { sheet = .plants } label: { Label(store.editing ? "Select plant" : "Plants", systemImage: "leaf").frame(minHeight: 44) }
+                    Button { sheet = .plants } label: { Label("Select plant", systemImage: "leaf").frame(minHeight: 44) }
                         .accessibilityIdentifier("garden.plants")
-                    if store.editing {
-                        Button { sheet = .storage } label: { Label("Storage", systemImage: "tray").frame(minHeight: 44) }
-                            .accessibilityIdentifier("editor.storage")
-                    } else {
-                        Button { sheet = .information } label: { Label("Garden info", systemImage: "info.circle").frame(minHeight: 44) }
-                            .accessibilityIdentifier("garden.info")
-                    }
+                    Button { sheet = .storage } label: { Label("Storage", systemImage: "tray").frame(minHeight: 44) }
+                        .accessibilityIdentifier("editor.storage")
                     Spacer(minLength: 0)
                 }
                 HStack {

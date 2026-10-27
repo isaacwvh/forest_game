@@ -3,14 +3,18 @@
 Revised 27 October 2026 against `forest_game_v1_spec.md`, version 0.23.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
-**Current presentation handoff — 27 October 2026:** F8.2 is completed and user
-accepted. The next presentation increment is **F8.3 first-version frontend presentation**
-below (source implemented; native/device acceptance pending): My plants / Garden / Edit / Activity; details-first focused editing; compact
-Garden; frontend-wide developer-output cleanup with retained internal diagnostics;
-and consistent presentation. Implementation is now recorded in the F8.3 source handoff below.
-Workout eligibility and pack-opening cleanup are explicitly deferred. Asset
-delivery and later custom page designs remain separate decisions. This checkpoint
-supersedes earlier F8.3 Storage-tab proposals, not the historical backend gates.
+**Current presentation handoff — 27 October 2026:** F8.3 is completed and
+user-accepted after live testing of commit `219381b`, pushed to GitHub `main`.
+My plants / Garden / Edit / Activity, details-first focused editing, frontend-wide
+developer-output cleanup and retained internal diagnostics form the accepted
+baseline. The follow-up batch is **F8.3b — Garden viewport and layout refinement** below:
+a continuous scene, transparent compact header and plant-selection popup, direct
+visitor interaction and quieter routine feedback. Source is implemented locally;
+portable validation passes. Mac/native and iPhone acceptance remain pending.
+Token shimmer/floating +1 and other animations,
+workout eligibility, pack-opening cleanup, asset delivery and later custom designs
+remain separate. User acceptance does not establish unrecorded native automated
+test or CI results; executed checks remain in `frontend/VALIDATION.md`.
 
 The first B8 skill/cap increment is now source-implemented below, including
 Sleeping Dew and the native Active skills disclosure. Its selected provisional
@@ -636,14 +640,19 @@ lifetime steps and collection pacing retain their separate economy scope below.
 No catalogue stage-discovery system, watering/swarm effects, remote assets or
 deployment work is included.
 
-### F8.3 first-version frontend presentation — confirmed scope, 27 October 2026
+### F8.3 first-version frontend presentation — completed, user accepted 27 October 2026
 
-**Handoff / status:** source implemented locally on 27 October 2026; native
-Xcode/XCTest and iPhone acceptance remain pending. Portable validation is recorded
-in frontend/VALIDATION.md. No push or CI was requested or run. This section supersedes the earlier three-tab
-Garden/Activity/Storage
-proposal and its immediate-placement inventory picker. F8.2 is completed and user
-accepted; preserve it as the baseline rather than reopening accepted work.
+**Handoff / status:** completed and user-accepted. Commit `219381b` was pushed to
+GitHub `main`; the user subsequently confirmed live testing works as planned and
+closed this batch. Portable validation is recorded in `frontend/VALIDATION.md`;
+no additional XCTest, Release-build or CI result is inferred from that acceptance.
+The delivered scope below superseded the earlier three-tab Garden/Activity/Storage
+proposal and immediate-placement inventory picker. Preserve the accepted behavior
+as the baseline for F8.3b.
+
+The completed work packages below retain their original scope and acceptance
+criteria; pre-implementation descriptions are historical. Their former a–f
+sublabels are now numbered so **F8.3b** uniquely identifies the new follow-up batch.
 
 **Goal:** deliver a clean, coherent, usable first version of the entire frontend
 using its current native visual style, fonts, shared icons and existing artwork.
@@ -653,7 +662,7 @@ baseline before later custom page designs, backgrounds or new visual assets.
 Preserve portrait-only play, light appearance, APIs, economy, ownership and Health
 collection/consent rules. No new gameplay, reward rules or asset-delivery system.
 
-#### F8.3a — bottom navigation and shared scene ownership
+#### Completed F8.3 work package 1 — bottom navigation and shared scene ownership
 
 - Bottom menu, in this order: **My plants, Garden, Edit, Activity**. My plants,
   Garden and Activity are browsing destinations; Edit explicitly enters focused
@@ -674,7 +683,7 @@ collection/consent rules. No new gameplay, reward rules or asset-delivery system
 - **Done when:** all four menu entries and sidebar destinations work, share the
   same account state, and preserve the mounted Garden/camera without browse edits.
 
-#### F8.3b — My plants: all owned copies, read-only
+#### Completed F8.3 work package 2 — My plants: all owned copies, read-only
 
 - Provide one scrollable overview with clearly labelled **Planted** at the top
   and **Stored** below. Combine confirmed placed copies and paginated stored
@@ -701,7 +710,7 @@ collection/consent rules. No new gameplay, reward rules or asset-delivery system
 - **Done when:** both sections and per-copy details work through pagination,
   offline viewing and account switches; browsing issues zero garden mutations.
 
-#### F8.3c — focused Edit mode and details-first placement
+#### Completed F8.3 work package 3 — focused Edit mode and details-first placement
 
 - Enter from the bottom **Edit** action. While editing, hide the ordinary bottom
   menu and sidebar entry points. Keep the scene, an obvious mode indication,
@@ -734,7 +743,7 @@ collection/consent rules. No new gameplay, reward rules or asset-delivery system
   actions include details; Done and interruptions safely preserve confirmed edits,
   the camera and exactly one original pending operation.
 
-#### F8.3d — compact Garden and secondary game information
+#### Completed F8.3 work package 4 — compact Garden and secondary game information
 
 - Replace expanded routine status text with **visitor tokens, attraction, stored
   visits/capacity**, using F8.2 icons and readable labels. Distinguish spendable
@@ -759,7 +768,7 @@ collection/consent rules. No new gameplay, reward rules or asset-delivery system
 - **Done when:** Garden has a compact, understandable summary and clear primary
   actions; taps still align at the new boundaries through orbit, pan and zoom.
 
-#### F8.3e — frontend-wide developer-output cleanup and retained diagnostics
+#### Completed F8.3 work package 5 — frontend-wide developer-output cleanup and retained diagnostics
 
 - Audit every player-facing page and reachable secondary view: Garden, My plants,
   copy details, editing, Activity/Health views, Exchange, Packs/results/history,
@@ -797,7 +806,7 @@ collection/consent rules. No new gameplay, reward rules or asset-delivery system
   states, while useful events and live diagnostic state remain accessible during
   internal iPhone testing, including an internal Release configuration.
 
-#### F8.3f — consistent first-version presentation and copy
+#### Completed F8.3 work package 6 — consistent first-version presentation and copy
 
 - Review the complete frontend for consistent native typography, spacing, section
   hierarchy, readable labels/units, shared icons and accessible touch targets.
@@ -846,7 +855,193 @@ onboarding/auth redesign; Dark Mode/landscape; general renderer rewrites and
 deployment. This polish does not itself establish production/release readiness;
 existing provider, deployment and minimum-device evidence gates still apply.
 
-### Later polish — pack-opening interruption cleanup (deferred; not F8.3)
+### F8.3b — Garden viewport and layout refinement — source implemented, native acceptance pending
+
+**Status / authority — 27 October 2026:** user-confirmed follow-up to completed
+F8.3. Source implementation is complete locally, with portable project/asset/contract
+validation, all-Swift syntax parsing and whitespace checks passing. Native XCTest,
+Apple SDK builds and physical-device acceptance have not run on this Windows host.
+No push or CI run was requested. The delivered scope supersedes the completed batch's permanent browsing Plants/controls strip,
+separate visible Welcome button and routine Garden success-text presentation.
+Other accepted navigation, editing, recovery and gameplay behavior remains the
+baseline. The former F8.3b My plants subtask is preserved above as completed work
+package 2; it is not reopened by this new batch identifier.
+
+**Goal:** the Garden itself occupies most of the screen as one continuous scene
+between the existing top navigation and bottom My plants / Garden / Edit / Activity
+navigation. Remove the large opaque white browsing panels. Use the current assets,
+native typography, icons and forest-green accent, with compact transparent overlays.
+No new backgrounds, artwork or gameplay/economy work is required.
+
+**Target browsing composition:**
+
+```text
+            Existing top navigation
+
+ Tokens          Attraction          Stored visits
+ [Garden info]                           [Collect]
+
+                    Garden scene
+                Orbit / Pan / Pinch
+
+      +---------------------------------------+
+      | Oak / Standard                      x |
+      | Young plant             Plant details |
+      +---------------------------------------+
+             Only after selecting a plant
+
+      My plants / Garden / Edit / Activity
+```
+
+#### Continuous scene and transparent overlays
+
+- Replace the browsing layout's fixed top/bottom panel allocations with a scene
+  filling the available space, plus compact overlays. The current portrait layout
+  reserves up to 32% for status and 24% for controls even when little content is
+  present; remove that permanent reservation rather than merely shrinking labels.
+- Keep the existing top navigation controls, sidebar/Settings access and bottom
+  navigation. Avoid duplicate titles, explanatory blocks or additional status rows
+  in the routine Garden header.
+- Selection, balance changes and temporary notices must not resize the ARView,
+  reimport models, reset the camera or change its framing. Geometry may adapt to
+  actual viewport/safe-area/text-size changes; do not force a camera reset to fit
+  the new layout.
+- The overlays use transparent fill and a thin forest-green outline where a box
+  or button is specified. Preserve readable contrast over the scene; respect
+  accessibility contrast/Reduce Transparency needs without restoring a permanent
+  opaque browsing slab. Keep controls clear of device safe areas and navigation.
+- Transparent container areas must not intercept scene gestures. Only real
+  controls/popup content consume their own touch area. Navigation, header controls,
+  selection and visitors must keep correct hit-test precedence at their boundaries.
+
+#### Two-row Garden header
+
+- At ordinary text sizes, show **visitor tokens, attraction, stored visits /
+  capacity** together in one row, using existing icons, confirmed amounts and
+  readable labels/units. Never substitute zero for unavailable or unconfirmed data.
+- Directly below, place **Garden info** on the left and **Collect stored visits**
+  on the right, aligned beneath the stored-visits value. Both use the transparent,
+  green-outlined treatment; Collect greys out when no whole visits are available.
+- Preserve existing request-safety gates. Disable repeated collection while a
+  request is pending and provide a compact progress indication. The counter changes
+  only through confirmed state; a tap must not optimistically award tokens.
+- Remove routine visitor instructions and explanations from the header. Rates,
+  time/capacity explanations, hosted totals and active skills stay in Garden info.
+  Keep Activity history/sync and Health consent in their accepted destinations.
+- Allow sensible reflow at accessibility text sizes rather than clipping three
+  metrics into a single unreadable row. Maintain accessible labels and 44-point
+  action targets while keeping ordinary-size presentation compact.
+
+#### Selected-copy popup instead of the bottom browsing strip
+
+- Remove the normal Garden **Plants** button, bottom Garden info button and
+  permanent white controls panel. My plants remains the comprehensive read-only
+  owned-copy overview, with Planted above Stored.
+- Tapping a planted copy shows a small transparent, green-outlined popup immediately
+  above the bottom navigation, over the scene. Show that exact copy's **plant name,
+  variant, growth stage and Plant details** action. Do not show the popup permanently
+  when no copy has been selected.
+- Plant details opens the existing read-only owned-copy view. It does not enable
+  editing, create a preview or send a mutation. Duplicate copies remain distinct;
+  resolve the popup/details against current account-bound ownership by copy ID.
+- Selecting another plant replaces the popup content. A close control or tap on
+  empty ground dismisses it. Camera gestures outside the popup continue to work;
+  showing, replacing or dismissing it must not move the camera or scene bounds.
+- Clear stale popup content after confirmed removal or account changes. My plants
+  browsing must not create a Garden placement preview or automatically open this
+  popup as a side effect.
+- Remove the permanent visible zoom-in, zoom-out and reset-perspective buttons
+  from the browsing interface. Preserve orbit, pan and pinch, and expose camera
+  accessibility actions without recreating a visible button strip.
+- Keep focused Edit's accepted Storage, Done, Move/Rotate/Store/Plant details,
+  precise positioning/rotation, validation and preview/cancellation behavior.
+  Adapt shared layout only as necessary; this is not a redesign of editing.
+
+#### Direct visitor interaction and accessibility
+
+- Remove the standalone visible **Welcome visitor** button. Visitors are welcomed
+  through the butterfly itself, with the same server-authoritative welcome request,
+  expiry, repeat-tap safety and durable recovery as before.
+- Make the butterfly itself an accessible element/action so VoiceOver activation
+  invokes that same welcome operation. Do not replace the removed button with a
+  displaced invisible SwiftUI touch target that interferes with orbit/pan/pinch.
+- Preserve ARView-local visual-bound targeting, shared preload/cache, readiness
+  observation outside GeometryReader, accepted loading/fallback/retry sequence,
+  embedded animation, flight phase/clocks and eligibility/session behavior.
+- Any renderer/UIView integration change must be narrowly justified by direct
+  visitor accessibility or the new viewport/overlay bounds. No general renderer,
+  scheduling, model-loading or visitor-accounting rewrite belongs in this batch.
+
+#### Quiet routine feedback; retain recovery
+
+- Stop presenting routine **Saved** and **Welcomed 1 / +1 visitor tokens** messages
+  in the normal Garden. Keep operation outcomes/request IDs available through
+  Developer tools and retain any meaningful history in its existing destination.
+- Separate routine success from pending/failure/recovery presentation explicitly;
+  do not hide messages using brittle string-prefix matching or clear shared service
+  state that another screen or diagnostics needs.
+- Preserve concise offline/cached, unavailable-data, uncertain-request and failure
+  indications with useful Retry/Reconnect actions. Exceptional notices overlay the
+  scene without reintroducing a permanent status panel or resizing the viewport.
+  Never make internal tools the only route to recover a pending operation.
+- Do not suppress required artwork-loading feedback or change the accepted recap
+  presentation/dismissal/acknowledgement behavior while removing routine success text.
+- **Later animation batch:** token shimmer, floating/direct +1 feedback, watering,
+  growth-stage transitions and other reward effects. None is implemented in F8.3b;
+  confirmed counter updates remain visible without a replacement reward animation.
+
+#### Implementation sequence and likely files
+
+1. Establish the continuous browsing scene and overlay geometry in
+   `Features/Garden/GardenViewportLayout.swift`, preserving one mounted render session.
+2. Build the compact two-row header and move Garden info in
+   `ConnectedGardenScreen.swift` / `VisitorViews.swift`; retain collection gating.
+3. Replace the browsing controls strip with the current-copy selection popup;
+   retain read-only details and the accepted Edit flow. Update `GardenScreen.swift`
+   to use a coherent sample layout without inventing player ownership/balances.
+4. Remove visible Welcome and implement/verify direct visitor accessibility.
+   Limit any `Rendering/GardenRenderer.swift` / GardenSceneView bridge changes to
+   that accessibility or a demonstrated overlay/bounds defect.
+5. Separate routine-success presentation from exceptional states, preserving
+   service/journal behavior and diagnostics. Update relevant display models and
+   shared views only where needed; keep API/endpoint/payload contracts unchanged.
+6. Update affected native tests, current design notes and acceptance instructions;
+   run portable checks, then Mac/native and device checks with actual results recorded.
+
+#### Completion and validation
+
+- Normal Garden has no permanent white top/bottom slabs, browsing Plants strip,
+  visible zoom/reset buttons or standalone Welcome button. The scene occupies most
+  of the available screen; top/bottom navigation remains usable.
+- Metrics share one ordinary-size row; Garden info and correctly enabled/greyed
+  Collect sit beneath it. Unknown/cached values remain truthful, and collection
+  produces exactly one confirmed reward through interruption/retry.
+- Plant selection shows the specified popup; changing/dismissing selection neither
+  moves the camera nor changes scene bounds. Details open the correct duplicate
+  copy, remain read-only and clear safely across removal/account switches.
+- Butterfly centres/edges remain tappable through orbit, pan, zoom and the new
+  overlay boundaries, including near the header/popup. Real controls keep their
+  own touch areas; offscreen visitors do not leave active targets. Repeated taps
+  award once; VoiceOver can activate the visitor itself without a visible Welcome.
+- Routine success text stays quiet; pending failure/recovery, cached viewing and
+  loading remain understandable. Diagnostics/history retain useful operation outcomes.
+- Recheck My plants, focused Edit, sidebar/Settings, cold/warm artwork readiness,
+  background/resume, 30-second entry recap versus quiet brief interruptions,
+  pack ceremony/Milestones and camera retention across navigation. Cover small
+  screens, largest text, VoiceOver, Reduce Motion and Reduce Transparency/contrast.
+- Run project/assets/contracts validation, Swift syntax and whitespace checks;
+  update native viewport/navigation/selection/accessibility tests. On Mac run
+  `bash frontend/scripts/test-mac.sh`, followed by the updated iPhone walkthrough.
+  Keep executed automated results separate from subsequent user acceptance.
+
+**Outside F8.3b:** token/reward/watering/stage-transition animations; workout
+eligibility/anti-idle work; pack-opening cleanup (including removing Continue
+later); backend/schema/API/economy changes; new assets/backgrounds; cloud delivery;
+My plants search/filter/bulk actions; placement-rule changes; auth/onboarding redesign;
+Dark Mode/landscape and general renderer rewrites. F8.3b source is implemented;
+Mac/native and user/device acceptance remain pending. See frontend/VALIDATION.md.
+
+### Later polish — pack-opening interruption cleanup (deferred; not F8.3/F8.3b)
 
 - Remove **Continue later** from the ceremony in a separate future increment.
   Preserve Cancel before opening confirmation, the two deliberate taps during an
@@ -991,7 +1186,7 @@ when implemented; this documentation update does not establish those tests.
 
 **Historical presentation brief:** the butterfly asset/depth, Exchange feedback
 and two-tap lighting items below were subsequently delivered in F8.1/F8.2. Use the
-accepted F8.2 baseline and current F8.3 handoff above for next work; do not reimplement
+accepted F8.2/F8.3 baseline and confirmed F8.3b scope above for next work; do not reimplement
 these historical items. Catalogue discovery and other explicit deferrals remain
 future scopes. The later pack-interruption scope above adds a separate behavior
 refinement and is not included in F8.3.

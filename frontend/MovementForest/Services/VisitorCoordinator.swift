@@ -8,7 +8,12 @@ final class VisitorCoordinator: ObservableObject {
     @Published private(set) var summary: APIVisitorSummary?
     @Published private(set) var pending: PendingVisitorOperation?
     @Published private(set) var queuedReward: PendingVisitorOperation?
-    @Published private(set) var message: String?
+    @Published private(set) var feedback: GardenFeedback?
+    var message: String? { feedback?.text }
+    var gardenMessage: String? { feedback?.visibleInGarden == true ? message : nil }
+    private func report(_ text: String, kind: GardenFeedback.Kind = .failure, source: GardenFeedback.Source = .visitorReward) {
+        feedback = GardenFeedback(text: text, kind: kind, source: source)
+    }
     @Published private(set) var busy = false
     @Published private(set) var eligible = false
     @Published private(set) var connected = false
@@ -24,7 +29,7 @@ final class VisitorCoordinator: ObservableObject {
     private var worker: Task<Void, Never>?
     private var attached = true
     private var needsRead = true
-    private var lastConnectionIssue: String?
+    private var lastConnectionIssue: UUID?
     @Published private(set) var confirmedTokenBalance: String?
     private var economyVersion: Int64 = -1
     var onWallet: ((String, Int64) -> Void)?
@@ -48,7 +53,7 @@ final class VisitorCoordinator: ObservableObject {
             try saved?.validate()
             pending = saved?.pending; queuedReward = saved?.queuedReward
         }
-        catch { recoveryLocked = true; message = "The saved visitor request needs attention. It has been retained." }
+        catch { recoveryLocked = true; report("The saved visitor request needs attention. It has been retained.", kind: .locked) }
     }
 
     var serverNow: Date? { receivedServerTime.map { $0.addingTimeInterval(max(0, uptime() - receivedUptime)) } }
@@ -56,6 +61,10 @@ final class VisitorCoordinator: ObservableObject {
         attached && connected && !recoveryLocked && queuedReward == nil &&
             ((!busy && pending == nil) || pending?.kind == .heartbeat)
     }
+    var canCollect: Bool {
+        canRequestReward && (summary.flatMap { ExactAmount.integer($0.claimableVisits) } ?? 0) > 0
+    }
+    var collecting: Bool { queuedReward?.kind == .claim || pending?.kind == .claim }
     var recoveringRequest: Bool { pending != nil && !busy }
     var confirmingReward: Bool {
         queuedReward != nil || pending?.kind == .welcome || pending?.kind == .claim
@@ -118,8 +127,10 @@ final class VisitorCoordinator: ObservableObject {
                 DiagnosticHistory.shared.record("Visitors", "confirmed \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: scope)
                 try persist(VisitorJournalState(pending: queuedReward))
                 if let reward = reward {
-                    message = reward.visits == "0" ? "No whole stored visits to collect yet." :
-                        "Welcomed \(reward.visits) · +\(reward.tokens) visitor tokens"
+                    report(reward.visits == "0" ? "No whole stored visits to collect yet." :
+                        "Welcomed \(reward.visits) · +\(reward.tokens) visitor tokens", kind: .success)
+                    DiagnosticHistory.shared.record("Visitors", "reward visits=\(reward.visits) tokens=\(reward.tokens)",
+                        requestID: operation.id.uuidString, scope: scope)
                 }
             } catch let error as APIError where (400..<500).contains(error.status) &&
                         ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
@@ -166,7 +177,7 @@ final class VisitorCoordinator: ObservableObject {
             if eligible {
                 if let session = summary?.session, session.leaseExpiresAt > (serverNow ?? .distantFuture) {
                     guard session.installationId == installationID else {
-                        message = "Visitors are active on another device. They will resume here after that session ends."
+                        report("Visitors are active on another device. They will resume here after that session ends.", kind: .information, source: .visitorSession)
                         needsRead = true; return
                     }
                     try await submit(.heartbeat, target: session.sessionId)
@@ -178,7 +189,8 @@ final class VisitorCoordinator: ObservableObject {
             if attached, !eligible, let session = summary?.session, session.installationId == installationID {
                 try await submit(.end, target: session.sessionId)
             }
-            if let issue = lastConnectionIssue, message == issue { message = nil }
+            if let issue = lastConnectionIssue, feedback?.id == issue { feedback = nil }
+            if feedback?.source == .visitorSession { feedback = nil }
             lastConnectionIssue = nil
         } catch {
             guard attached else { return }
@@ -186,7 +198,7 @@ final class VisitorCoordinator: ObservableObject {
             PlayerMessage.recordFailure("Visitors", error, requestID: pending?.id.uuidString,
                 scope: DiagnosticHistory.scope(server: service.serverID, user: userID))
             let issue = "Visitors paused. " + PlayerMessage.failure(error, fallback: "Retry to confirm any saved request.")
-            lastConnectionIssue = issue; message = issue
+            report(issue, source: .visitorConnection); lastConnectionIssue = feedback?.id
             let failure = error as NSError
             LifecycleDiagnostics.event("visitor request failed domain=\(failure.domain) code=\(failure.code)")
         }
@@ -198,7 +210,7 @@ final class VisitorCoordinator: ObservableObject {
     }
 
     func claim() async {
-        guard canRequestReward, (Int64(summary?.claimableVisits ?? "0") ?? 0) > 0 else { return }
+        guard canCollect else { return }
         await reward(.claim)
     }
 
@@ -208,7 +220,9 @@ final class VisitorCoordinator: ObservableObject {
                 try persist(VisitorJournalState(pending: pending, queuedReward: operation(kind, target: target)))
                 if !busy { await tick(force: true) }
             } catch {
-                message = "The visitor tap could not be saved. Please try again."
+                PlayerMessage.recordFailure("Visitors", error,
+                    scope: DiagnosticHistory.scope(server: service.serverID, user: userID))
+                report("The visitor tap could not be saved. Please try again.")
             }
             return
         }
@@ -218,7 +232,9 @@ final class VisitorCoordinator: ObservableObject {
         catch {
             guard attached else { return }
             connected = false; needsRead = true
-            message = "Reward not yet confirmed. Retry to recover the saved request."
+            PlayerMessage.recordFailure("Visitors", error, requestID: pending?.id.uuidString,
+                scope: DiagnosticHistory.scope(server: service.serverID, user: userID))
+            report("Reward not yet confirmed. Retry to recover the saved request.", kind: .uncertain)
         }
     }
 }

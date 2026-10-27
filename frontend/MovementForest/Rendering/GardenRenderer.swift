@@ -39,6 +39,18 @@ struct PlantRenderDiagnostic: Identifiable {
 
 enum GardenDragPhase: Equatable { case began, changed, ended, cancelled }
 
+@MainActor
+private final class GardenAccessibilityElement: UIAccessibilityElement {
+    var activate: (() -> Bool)?
+    override func accessibilityActivate() -> Bool { activate?() ?? false }
+}
+
+enum GardenCameraAction: String, CaseIterable {
+    case zoomIn = "Zoom in", zoomOut = "Zoom out", reset = "Reset garden view"
+    case orbitLeft = "Orbit left", orbitRight = "Orbit right", tiltUp = "Tilt up", tiltDown = "Tilt down"
+    case panLeft = "Pan left", panRight = "Pan right", panForward = "Pan forward", panBack = "Pan back"
+}
+
 struct EditorRenderPreview: Equatable {
     var plant: GardenPlant
     var radius: Double?
@@ -77,6 +89,10 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var visitorTemplate: Entity?
     private var visitorLoadTask: Task<Void, Never>?
     private var visitorEntities: [UUID: Entity] = [:]
+    private var overlayFrames: [CGRect] = []
+    private var visitorAccessibility: [UUID: GardenAccessibilityElement] = [:]
+    private var accessibilityIDs: [UUID]?
+    private var cameraAccessibility: UIAccessibilityElement?
     private var visitorPlaybacks: [UUID: [AnimationPlaybackController]] = [:]
     private var snapshot: GardenSnapshot?
     private var loadTask: Task<Void, Never>?
@@ -139,6 +155,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         fill.look(at: [5, 0, 5], from: [12, 8, -4], relativeTo: nil)
         rig.addChild(fill)
         configureGestures()
+        configureAccessibility()
         updateCamera()
     }
 
@@ -303,6 +320,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         guard wantsMotion != enabled else { return }
         wantsMotion = enabled
         applyMotion()
+        updateAccessibility()
     }
     private func applyMotion() {
         for controller in playbacks {
@@ -323,6 +341,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         if active { subscribeToUpdates() }
         else { updateSubscription?.cancel(); updateSubscription = nil }
         applyMotion()
+        updateAccessibility()
     }
 
     func detachView() {
@@ -339,6 +358,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         visitorLoadTask?.cancel(); visitorLoadTask = nil
         visitorPlaybacks.values.flatMap { $0 }.forEach { $0.stop() }
         visitorPlaybacks.removeAll(); visitorEntities.removeAll()
+        visitorAccessibility.removeAll(); view.accessibilityElements = []; cameraAccessibility = nil
         for child in Array(visitorRoot.children) { child.removeFromParent() }
         visitorTemplate = nil; visitorStore = nil; visitorAssetReady = false
         loadTask?.cancel()
@@ -374,9 +394,93 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         updateCamera()
     }
     func zoom(by factor: Float) { distance = min(max(distance * factor, 4), 60); updateCamera() }
+    func dismissSelection() {
+        selectedPlantID = nil; onSelect?(nil)
+        if UIAccessibility.isVoiceOverRunning {
+            UIAccessibility.post(notification: .layoutChanged, argument: cameraAccessibility)
+        }
+    }
     private func updateCamera() {
         let offset = SIMD3<Float>(sin(yaw) * cos(elevation), sin(elevation), cos(yaw) * cos(elevation)) * distance
         camera.look(at: target, from: target + offset, relativeTo: nil)
+        updateAccessibility()
+    }
+
+    func setOverlayFrames(_ frames: [CGRect]) {
+        guard overlayFrames != frames else { return }
+        overlayFrames = frames.filter { $0.minX.isFinite && $0.minY.isFinite && $0.width.isFinite && $0.height.isFinite }
+        updateAccessibility()
+    }
+
+    private func configureAccessibility() {
+        view.isAccessibilityElement = false
+        let element = UIAccessibilityElement(accessibilityContainer: view)
+        element.accessibilityLabel = "Garden scene"
+        element.accessibilityIdentifier = "garden.scene"
+        element.accessibilityTraits = .image
+        element.accessibilityHint = "Use Actions to orbit, pan, zoom or reset the camera. Inspect owned plants in My plants."
+        element.accessibilityCustomActions = GardenCameraAction.allCases.map { action in
+            UIAccessibilityCustomAction(name: action.rawValue) { [weak self] _ in
+                self?.performCameraAction(action) ?? false
+            }
+        }
+        cameraAccessibility = element
+    }
+
+    @discardableResult
+    func performCameraAction(_ action: GardenCameraAction) -> Bool {
+        guard isActive, !disposed else { return false }
+        switch action {
+        case .zoomIn: zoom(by: 0.8)
+        case .zoomOut: zoom(by: 1.2)
+        case .reset: resetCamera()
+        case .orbitLeft: yaw -= 0.2; updateCamera()
+        case .orbitRight: yaw += 0.2; updateCamera()
+        case .tiltUp: elevation = min(elevation + 0.15, 1.35); updateCamera()
+        case .tiltDown: elevation = max(elevation - 0.15, 0.25); updateCamera()
+        case .panLeft: panCamera(CGPoint(x: 60, y: 0))
+        case .panRight: panCamera(CGPoint(x: -60, y: 0))
+        case .panForward: panCamera(CGPoint(x: 0, y: 60))
+        case .panBack: panCamera(CGPoint(x: 0, y: -60))
+        }
+        return true
+    }
+
+    private func updateAccessibility() {
+        guard isActive, !disposed, let cameraElement = cameraAccessibility else {
+            view.accessibilityElements = []; accessibilityIDs = nil
+            visitorAccessibility.removeAll()
+            return
+        }
+        cameraElement.accessibilityFrameInContainerSpace = view.bounds
+        var ids: [UUID] = []
+        for visitor in visitorStore?.visibleOpportunities ?? [] {
+            guard let rect = visitorHitTarget(visitor.id)?.accessibleRect(excluding: overlayFrames) else { continue }
+            let element = visitorAccessibility[visitor.id] ?? GardenAccessibilityElement(accessibilityContainer: view)
+            element.accessibilityLabel = "Welcome visitor"
+            element.accessibilityHint = "Earn \(visitor.tokens) visitor tokens after server confirmation"
+            element.accessibilityIdentifier = "visitors.butterfly.\(visitor.id.uuidString)"
+            element.accessibilityTraits = visitorStore?.canRequestReward == true ? .button : [.button, .notEnabled]
+            element.accessibilityFrameInContainerSpace = rect
+            let id = visitor.id
+            element.activate = { [weak self] in self?.activateVisitor(id) ?? false }
+            visitorAccessibility[id] = element; ids.append(id)
+        }
+        visitorAccessibility = visitorAccessibility.filter { ids.contains($0.key) }
+        if accessibilityIDs != ids {
+            let elements: [UIAccessibilityElement] = ids.compactMap { visitorAccessibility[$0] }
+            view.accessibilityElements = elements + [cameraElement]
+            accessibilityIDs = ids
+        }
+    }
+
+    @discardableResult
+    func activateVisitor(_ id: UUID) -> Bool {
+        guard isActive, let store = visitorStore, store.canRequestReward,
+              let visitor = store.visibleOpportunities.first(where: { $0.id == id }),
+              visitorHitTarget(id)?.accessibleRect(excluding: overlayFrames) != nil else { return false }
+        Task { await store.welcome(visitor) }
+        return true
     }
 
     func setDebugOptions(bounds: Bool, groundPicking: Bool) {
@@ -439,6 +543,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
             for child in Array(visitorRoot.children) { child.removeFromParent() }
         }
         visitorStore = store
+        updateAccessibility()
         guard store != nil, visitorTemplate == nil, visitorLoadTask == nil else { return }
         if let cached = visitorModels.cachedClone() {
             visitorTemplate = cached; visitorAssetReady = true; visitorAssetIssue = nil
@@ -501,7 +606,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
 
     @discardableResult
     func welcomeVisitor(at point: CGPoint) -> Bool {
-        guard let store = visitorStore, store.canRequestReward else { return false }
+        guard !overlayFrames.contains(where: { $0.contains(point) }),
+              let store = visitorStore, store.canRequestReward else { return false }
         let visitors = store.visibleOpportunities
         let targets = visitors.compactMap { visitorHitTarget($0.id) }
         guard let id = VisitorHitTarget.pick(at: point, from: targets),
@@ -511,6 +617,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     private func updateVisitors() {
+        defer { updateAccessibility() }
         guard let store = visitorStore, let garden = snapshot, let now = store.serverNow else { return }
         let visitors = store.eligible ? store.visibleOpportunities : []
         let wanted = Set(visitors.map(\.id))
@@ -590,6 +697,10 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     @objc private func panGesture(_ gesture: UIPanGestureRecognizer) {
         if dragging { dragging = false; onGroundDrag?(nil, .cancelled) }
         let change = gesture.translation(in: view)
+        panCamera(change)
+        gesture.setTranslation(.zero, in: view)
+    }
+    private func panCamera(_ change: CGPoint) {
         let right = SIMD3<Float>(cos(yaw), 0, -sin(yaw))
         let forward = SIMD3<Float>(sin(yaw), 0, cos(yaw))
         target += (-right * Float(change.x) - forward * Float(change.y)) * distance * 0.0015
@@ -597,7 +708,6 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
             target.x = min(max(target.x, 0), Float(garden.width * garden.gardenUnitMetres))
             target.z = min(max(target.z, 0), Float(garden.depth * garden.gardenUnitMetres))
         }
-        gesture.setTranslation(.zero, in: view)
         updateCamera()
     }
     @objc private func pinchGesture(_ gesture: UIPinchGestureRecognizer) {

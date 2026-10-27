@@ -38,7 +38,12 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     @Published private(set) var candidate: GardenCandidate?
     @Published private(set) var pending: PendingGardenEdit?
     @Published private(set) var state: GardenSaveState = .loading
-    @Published private(set) var message: String?
+    @Published private(set) var feedback: GardenFeedback?
+    var message: String? { feedback?.text }
+    var gardenMessage: String? { feedback?.visibleInGarden == true ? message : nil }
+    private func report(_ text: String, kind: GardenFeedback.Kind = .failure, source: GardenFeedback.Source = .gardenEdit) {
+        feedback = GardenFeedback(text: text, kind: kind, source: source)
+    }
     @Published private(set) var inventoryLoading = false
     @Published private(set) var recoveryLocked = false
     @Published var selectedID: UUID?
@@ -48,7 +53,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private var refreshInFlight = false
     private var inventoryGeneration = UUID()
     private var started = false
-    private var lastReadIssue: String?
+    private var lastReadIssue: UUID?
     private var editGeneration = UUID()
     var diagnosticScope: String { DiagnosticHistory.scope(server: service.serverID, user: profile.userId) }
     var canReadInventory: Bool {
@@ -77,6 +82,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         isActive && state == .ready && pending == nil && !needsRefresh && !recoveryLocked && confirmed != nil && catalogue != nil
     }
     var connectionBusy: Bool { state.busy || activityBusy || preparingMembership }
+    var selectedPlanted: APIOwnedPlant? { confirmed?.plants.first { $0.id == selectedID } }
     var selected: APIOwnedPlant? { confirmed?.plants.first { $0.id == selectedID } ?? inventory.first { $0.id == selectedID } }
     var pendingRequestID: String? {
         guard let pending = pending else { return nil }
@@ -93,7 +99,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             pending = try journal.load(server: service.serverID, user: profile.userId)
         } catch {
             recoveryLocked = true
-            state = .blocked; message = "The saved edit could not be read. Editing is paused to protect that operation."
+            state = .blocked; report("The saved edit could not be read. Editing is paused to protect that operation.", kind: .locked)
             return
         }
         if !refreshRemote {
@@ -114,8 +120,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             inventory = filtered(value.inventory, garden: value.garden); nextCursor = value.nextCursor
             confirmedAt = value.confirmedAt; showingCached = true
         } catch {
-            message = "The cached garden could not be read. Reconnect to refresh it."
-            lastReadIssue = message
+            report("The cached garden could not be read. Reconnect to refresh it.", source: .gardenRead)
+            lastReadIssue = feedback?.id
         }
     }
 
@@ -140,6 +146,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         confirmed = garden; rendered = snapshot
         inventory = filtered(inventory.filter { old in !updatedPlants.contains(where: { $0.id == old.id }) } + updatedPlants, garden: garden)
         confirmedAt = date; showingCached = false
+        if selectedPlanted == nil && (!editing || candidate == nil) { selectedID = nil }
         try persistConfirmed()
     }
 
@@ -192,9 +199,9 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 confirmedAt = Date(); showingCached = false
                 try persistConfirmed()
                 needsRefresh = false; state = .ready
-                if message == lastReadIssue { message = nil }
+                if feedback?.id == lastReadIssue { feedback = nil }
                 lastReadIssue = nil
-                if !allOwnedIDs.contains(selectedID ?? UUID()) { selectedID = nil }
+                if selectedPlanted == nil { selectedID = nil }
                 return
             }
             throw ForestError.invalidData("Your garden changed while loading. Refresh to try again.")
@@ -203,12 +210,11 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             showingCached = confirmed != nil
             state = (error as? APIError)?.status == 401 ? .authenticationRequired : .blocked
             PlayerMessage.recordFailure("Garden", error, scope: diagnosticScope)
-            message = PlayerMessage.failure(error, fallback: "Your garden couldn’t refresh. Try again when connected.")
-            lastReadIssue = message
+            report(PlayerMessage.failure(error, fallback: "Your garden couldn’t refresh. Try again when connected."), source: .gardenRead)
+            lastReadIssue = feedback?.id
         }
     }
 
-    private var allOwnedIDs: Set<UUID> { Set((confirmed?.plants ?? []).map(\.id) + inventory.map(\.id)) }
     private func filtered(_ plants: [APIOwnedPlant], garden: APIGarden) -> [APIOwnedPlant] {
         let placed = Set(garden.plants.map(\.id))
         var seen = Set<UUID>()
@@ -229,7 +235,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         } catch {
             guard isActive, generation == inventoryGeneration else { return }
             PlayerMessage.recordFailure("Inventory", error, scope: diagnosticScope)
-            message = "Stored plants couldn’t load. Try Load more again when connected."
+            report("Stored plants couldn’t load. Try Load more again when connected.", source: .inventory)
         }
     }
 
@@ -239,12 +245,12 @@ final class GardenEditorStore: ObservableObject, Identifiable {
               let garden = confirmed, let catalogue = catalogue else { return }
         let plant = current
         cancelCandidate()
-        selectedID = plant.id; message = nil; adultPreview = false
+        selectedID = plant.id; feedback = nil; adultPreview = false
         if kind != .rotate {
             do { _ = try catalogue.radius(for: plant) }
             catch {
                 PlayerMessage.recordFailure("Placement", error, scope: diagnosticScope)
-                message = "This plant’s placement information is unavailable. Refresh your garden."; return
+                report("This plant’s placement information is unavailable. Refresh your garden."); return
             }
         }
         let x = plant.placement?.x ?? garden.width / 2
@@ -305,7 +311,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
 
     func releaseCandidate() async {
         guard let candidate = candidate else { return }
-        guard candidate.validity == .valid else { message = candidate.validity.message; cancelCandidate(); return }
+        guard candidate.validity == .valid else { report(candidate.validity.message); cancelCandidate(); return }
         await submit(GardenEditAction(action: candidate.kind, plantId: candidate.plant.id,
                                      x: candidate.kind == .rotate ? nil : candidate.x,
                                      y: candidate.kind == .rotate ? nil : candidate.y,
@@ -325,7 +331,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         defer { preparingMembership = false }
         if (action.action == .plant || action.action == .store), let prepare = prepareMembershipChange {
             guard await prepare() else {
-                message = "Activity could not be confirmed before changing planted plants. Retry sync, then try this edit again."
+                report("Activity could not be confirmed before changing planted plants. Retry sync, then try this edit again.")
                 cancelCandidate(); return
             }
         }
@@ -340,7 +346,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             pending = edit
             DiagnosticHistory.shared.record("Garden edit", "journalled \(action.action.rawValue)",
                 requestID: request.requestId.uuidString, scope: diagnosticScope)
-        } catch { message = "Your edit could not be saved on this device. Nothing was sent."; cancelCandidate(); return }
+        } catch { report("Your edit could not be saved on this device. Nothing was sent."); cancelCandidate(); return }
         cancelCandidate()
         await retryPending()
     }
@@ -348,7 +354,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     func retryPending() async {
         guard isActive, (!state.busy || state == .loading), !refreshInFlight, !recoveryLocked, let edit = pending else { return }
         guard state != .saving, edit.serverID == service.serverID, edit.userID == profile.userId else { return }
-        state = .saving; message = "Saving…"; inventoryGeneration = UUID()
+        state = .saving; report("Saving…", kind: .pending); inventoryGeneration = UUID()
         do {
             let request = try edit.request
             DiagnosticHistory.shared.record("Garden edit", "sending saved operation", requestID: request.requestId.uuidString, scope: diagnosticScope)
@@ -365,29 +371,29 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             }
             try journal.remove(server: edit.serverID, user: edit.userID)
             pending = nil; needsRefresh = true; state = .ready
-            message = "Saved."
+            report("Saved.", kind: .success)
             DiagnosticHistory.shared.record("Garden edit", "confirmed", requestID: request.requestId.uuidString, scope: diagnosticScope)
             await refresh()
         } catch let error as APIError where (400..<500).contains(error.status) && error.status != 408 && error.status != 429 {
             PlayerMessage.recordFailure("Garden edit", error, requestID: pendingRequestID, scope: diagnosticScope)
             if error.status == 401 {
-                state = .authenticationRequired; message = "Sign in again to finish confirming this edit. Your saved request is retained."
+                state = .authenticationRequired; report("Sign in again to finish confirming this edit. Your saved request is retained.")
                 return
             }
             if error.code == "idempotency_conflict" {
                 recoveryLocked = true
-                state = .blocked; message = "Your saved edit couldn’t be matched to its confirmation. Editing is paused to protect it. Sign in again to reconnect; the saved edit will be retained."
+                state = .blocked; report("Your saved edit couldn’t be matched to its confirmation. Editing is paused to protect it. Sign in again to reconnect; the saved edit will be retained.")
                 return
             }
             do { try journal.remove(server: edit.serverID, user: edit.userID); pending = nil }
-            catch { state = .blocked; message = "The rejected edit could not be cleared on this device."; return }
-            message = PlayerMessage.failure(error, fallback: "The edit wasn’t accepted. Refresh your garden and try again."); state = .ready; needsRefresh = true
+            catch { state = .blocked; report("The rejected edit could not be cleared on this device."); return }
+            report(PlayerMessage.failure(error, fallback: "The edit wasn’t accepted. Refresh your garden and try again.")); state = .ready; needsRefresh = true
             await refresh()
         } catch {
             state = .unknown
             PlayerMessage.recordFailure("Garden edit", error, requestID: pendingRequestID, scope: diagnosticScope)
             DiagnosticHistory.shared.record("Garden edit", "confirmation unknown", requestID: pendingRequestID, scope: diagnosticScope)
-            message = "Save not confirmed. The server may have saved it. Retry this edit before making another change."
+            report("Save not confirmed. The server may have saved it. Retry this edit before making another change.", kind: .uncertain)
         }
     }
 }

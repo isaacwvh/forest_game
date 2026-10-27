@@ -1,6 +1,17 @@
 import Foundation
 import Combine
 
+/// Presentation metadata only; journals and confirmed state remain authoritative.
+struct GardenFeedback: Equatable {
+    enum Kind: Equatable { case success, pending, failure, uncertain, offline, locked, information }
+    enum Source: Equatable { case gardenRead, gardenEdit, inventory, visitorConnection, visitorReward, visitorSession }
+    let id = UUID()
+    let text: String
+    let kind: Kind
+    let source: Source
+    var visibleInGarden: Bool { kind != .success }
+}
+
 enum InternalTools {
     static var enabled: Bool {
         #if DEBUG || INTERNAL_TOOLS

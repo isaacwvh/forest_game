@@ -10,56 +10,56 @@ struct GardenScreen: View {
     @Environment(\.scenePhase) private var phase
     @State private var visible = false
     @State private var selectedPlant: GardenPlant?
-    @State private var plantListPresented = false
+    @State private var informationPresented = false
     @State private var errorsPresented = false
+    private var presenting: Bool { selectedPlant != nil || informationPresented || errorsPresented }
 
     var body: some View {
         Group {
             if let garden = store.garden {
-                ZStack(alignment: .topLeading) {
+                GardenViewportLayout(compact: false) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
-                                    motionEnabled: !reduceMotion, active: active && visible && phase == .active)
-                        .accessibilityHidden(true)
-                    if renderer.isLoading {
-                        ProgressView("Loading plants…")
-                            .padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12)).padding()
+                        motionEnabled: !reduceMotion, active: active && visible && phase == .active && !presenting)
+                } status: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(garden.isSample ? "Sample garden" : garden.title).font(.subheadline)
+                            Spacer(minLength: 8)
+                            Button("Garden info") { informationPresented = true }
+                                .buttonStyle(GardenOutlineButtonStyle()).accessibilityIdentifier("garden.info")
+                                .gardenOverlayTarget()
+                        }
+                        if renderer.isLoading { ProgressView("Loading plants…").allowsHitTesting(false) }
+                        if !renderer.errors.isEmpty {
+                            Button { errorsPresented = true } label: {
+                                Label("Some plants need attention", systemImage: "exclamationmark.triangle").frame(minHeight: 44)
+                            }.gardenOverlayTarget()
+                        }
+                    }.padding(12)
+                } controls: {
+                    if let selected = garden.plants.first(where: { $0.id == renderer.selectedPlantID }) {
+                        GardenSelectionPopup(name: selected.speciesId.capitalized, variant: selected.variantId.capitalized,
+                            stage: selected.growthStage.title, close: { renderer.dismissSelection() },
+                            details: { selectedPlant = selected })
                     }
                 }
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(garden.isSample ? "A little forest to explore" : garden.title).font(.headline)
-                        Text(garden.isSample ? "Sample garden · Your activity won’t change these plants yet." : "Tap a plant to take a closer look.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal).padding(.vertical, 12)
-                        .background(Color(uiColor: .systemBackground))
-                }
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    VStack(spacing: 8) {
-                        if !renderer.errors.isEmpty {
-                            Button { errorsPresented = true } label: { Label("Some plants need attention", systemImage: "exclamationmark.triangle") }
-                                .font(.subheadline)
-                        }
-                        HStack {
-                            Button { plantListPresented = true } label: { Label("Plants", systemImage: "leaf").frame(minHeight: 44) }
-                                .accessibilityIdentifier("garden.plants")
-                            Spacer()
-                            Button { renderer.zoom(by: 1.2) } label: { Image(systemName: "minus.magnifyingglass").frame(width: 44, height: 44) }
-                                .accessibilityLabel("Zoom out")
-                            Button { renderer.zoom(by: 0.8) } label: { Image(systemName: "plus.magnifyingglass").frame(width: 44, height: 44) }
-                                .accessibilityLabel("Zoom in")
-                            Button { renderer.resetCamera() } label: { Image(systemName: "arrow.counterclockwise").frame(width: 44, height: 44) }
-                                .accessibilityLabel("Reset garden view")
-                        }
-                        Text("Drag to orbit · Pinch to zoom · Two fingers to pan")
-                            .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                    }.padding(.horizontal).padding(.bottom, 8).background(.regularMaterial)
-                }
-                .sheet(item: $selectedPlant, onDismiss: { renderer.selectedPlantID = nil }) { plant in
+                .onPreferenceChange(GardenOverlayFrames.self) { renderer.setOverlayFrames($0) }
+                .sheet(item: $selectedPlant) { plant in
                     NavigationStack { PlantDetailScreen(plant: plant, catalog: catalog, isSample: garden.isSample) }
                         .presentationDetents([.medium, .large])
                 }
-                .sheet(isPresented: $plantListPresented) {
-                    NavigationStack { GardenPlantList(garden: garden, catalog: catalog) }
+                .sheet(isPresented: $informationPresented) {
+                    NavigationStack {
+                        List {
+                            if garden.isSample {
+                                Text("Sample garden · Your activity won’t change these plants yet. Sign in to see your own plants.")
+                            }
+                            Section("Garden controls") { Text("Drag to orbit · Pinch to zoom · Two fingers to pan") }
+                            NavigationLink("Explore sample plants") { GardenPlantList(garden: garden, catalog: catalog) }
+                                .accessibilityIdentifier("garden.samplePlants")
+                        }.navigationTitle("Garden information")
+                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { informationPresented = false } } }
+                    }
                 }
                 .sheet(isPresented: $errorsPresented) {
                     NavigationStack {
@@ -70,7 +70,6 @@ struct GardenScreen: View {
                             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { errorsPresented = false } } }
                     }
                 }
-                .onChange(of: renderer.selectedPlantID) { id in selectedPlant = garden.plants.first { $0.id == id } }
             } else if store.error != nil {
                 RecoveryView(title: "Your garden couldn’t load", message: "Your garden couldn’t load. Please try again.", actionTitle: "Try again") { Task { await store.load() } }
             } else {
@@ -78,6 +77,7 @@ struct GardenScreen: View {
             }
         }
         .navigationTitle("Your forest").navigationBarTitleDisplayMode(.inline)
+        .preference(key: EntryPresentationBlocker.self, value: presenting)
         .onAppear { visible = true; LiveGardenDiagnostics.shared.renderer = renderer }
         .onDisappear { visible = false; renderer.setActive(false) }
     }

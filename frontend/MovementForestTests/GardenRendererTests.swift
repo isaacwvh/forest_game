@@ -60,6 +60,25 @@ final class GardenRendererTests: XCTestCase {
         XCTAssertTrue(renderer.view.gestureRecognizers?.isEmpty ?? true)
     }
 
+    func testAccessibleCameraActionsPreserveModelsAndExplicitResetRestoresPerspective() async throws {
+        let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
+        defer { renderer.stop() }
+        renderer.display(DevelopmentScene.single.garden(), catalog: catalog)
+        try await waitUntil { renderer.modelLoadCount == 1 && !renderer.isLoading }
+        renderer.setActive(true)
+        let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
+        let position = camera.position, rotation = camera.orientation.vector
+        for action in GardenCameraAction.allCases where action != .reset {
+            XCTAssertTrue(renderer.performCameraAction(action))
+            XCTAssertEqual(renderer.modelLoadCount, 1)
+        }
+        XCTAssertTrue(renderer.performCameraAction(.reset))
+        XCTAssertEqual(camera.position, position); XCTAssertEqual(camera.orientation.vector, rotation)
+        renderer.detachView()
+        XCTAssertFalse(renderer.performCameraAction(.zoomIn))
+        XCTAssertEqual(camera.position, position)
+    }
+
     func testRetiredGardenSessionReleasesRendererAndCallbacks() async throws {
         var session: GardenRenderSession? = GardenRenderSession()
         weak var renderer = session?.renderer

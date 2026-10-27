@@ -78,6 +78,22 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testCollectionRequiresKnownPositiveWholeVisits() async throws {
+        let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service, journal: MemoryVisitorJournal())
+        XCTAssertFalse(store.canCollect)
+        for amount in ["0", "-1", "0.5", "unknown", "9223372036854775808"] {
+            store.apply(try changed(fixture.initial, ["claimableVisits": amount]))
+            XCTAssertFalse(store.canCollect, amount)
+            await store.claim()
+        }
+        XCTAssertTrue(service.operations.isEmpty)
+        store.apply(try changed(fixture.initial, ["claimableVisits": "1"]))
+        XCTAssertTrue(store.canCollect)
+        store.deactivate()
+        XCTAssertFalse(store.canCollect)
+    }
+
     func testRenderedVisitorTapTracksCameraAndWelcomesOnlyOnce() async throws {
         let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
         let installation = try XCTUnwrap(fixture.active.session?.installationId)
@@ -113,16 +129,40 @@ final class VisitorTests: XCTestCase {
             centres.append(centre)
         }
         XCTAssertNotEqual(centres.first, centres.last)
+        let native = try XCTUnwrap(renderer.view.accessibilityElements as? [UIAccessibilityElement])
+        let accessibleVisitor = try XCTUnwrap(native.first { $0.accessibilityIdentifier == "visitors.butterfly.\(visitor.id.uuidString)" })
+        XCTAssertEqual(accessibleVisitor.accessibilityFrameInContainerSpace,
+                       renderer.visitorHitTarget(visitor.id)?.accessibleRect(excluding: []))
+        XCTAssertTrue(native.contains { $0.accessibilityIdentifier == "garden.scene" &&
+            $0.accessibilityCustomActions?.count == GardenCameraAction.allCases.count })
+        renderer.setOverlayFrames([renderer.view.bounds])
+        XCTAssertFalse(renderer.activateVisitor(visitor.id))
+        XCTAssertFalse(renderer.welcomeVisitor(at: try XCTUnwrap(centres.last)))
+        XCTAssertFalse((renderer.view.accessibilityElements as? [UIAccessibilityElement] ?? []).contains {
+            $0.accessibilityIdentifier == accessibleVisitor.accessibilityIdentifier
+        })
+        renderer.setOverlayFrames([])
         XCTAssertFalse(renderer.welcomeVisitor(at: CGPoint(x: 100, y: -1)))
         let centre = try XCTUnwrap(centres.last)
+        let currentElement = try XCTUnwrap((renderer.view.accessibilityElements as? [UIAccessibilityElement])?.first {
+            $0.accessibilityIdentifier == accessibleVisitor.accessibilityIdentifier
+        })
+        XCTAssertTrue(currentElement.accessibilityActivate())
         XCTAssertTrue(renderer.welcomeVisitor(at: centre))
         _ = renderer.welcomeVisitor(at: centre)
         try await waitUntil { store.tokenBalance == "1" }
         XCTAssertEqual(service.operations.filter { $0.kind == .welcome }.count, 1)
+        XCTAssertEqual(store.feedback?.kind, .success)
+        XCTAssertNil(store.gardenMessage)
+        XCTAssertNotNil(store.message)
+        XCTAssertFalse(accessibleVisitor.accessibilityActivate(), "A removed opportunity cannot be activated through a retained element")
         store.setEligible(false, reconcile: false)
         XCTAssertNil(renderer.visitorHitTarget(visitor.id))
         XCTAssertFalse(renderer.welcomeVisitor(at: centre))
         XCTAssertEqual(library.loadCount, 1)
+        renderer.setActive(false)
+        XCTAssertTrue(renderer.view.accessibilityElements?.isEmpty == true)
+        XCTAssertFalse(renderer.performCameraAction(.zoomIn))
     }
 
     func testTimedOutAssetReleasesSharedImportAndRendererCanRetryWithoutAppSwitch() async throws {
@@ -432,15 +472,21 @@ final class VisitorTests: XCTestCase {
         defer { releaseHeartbeat(service) }
         let task = Task { await store.tick(force: true) }
         try await waitUntil { service.heartbeatContinuation != nil }
+        XCTAssertTrue(store.canCollect)
+        XCTAssertFalse(store.collecting)
         await store.claim()
         let saved = try XCTUnwrap(journal.state.queuedReward)
         XCTAssertEqual(saved.kind, .claim)
+        XCTAssertFalse(store.canCollect)
+        XCTAssertTrue(store.collecting)
         await store.claim()
         XCTAssertEqual(journal.state.queuedReward, saved)
         releaseHeartbeat(service); await task.value
         XCTAssertEqual(service.operations.map(\.kind), [.heartbeat, .claim])
         XCTAssertEqual(service.operations.last, saved)
         XCTAssertEqual(store.summary?.tokenBalance, "3")
+        XCTAssertFalse(store.collecting)
+        XCTAssertNil(store.gardenMessage)
     }
 
     func testQueuedRewardRemainsScopedWhenAccountDetachesDuringHeartbeat() async throws {

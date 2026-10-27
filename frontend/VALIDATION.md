@@ -559,6 +559,14 @@ walkthrough in `F8_ACCEPTANCE.md`.
 
 ## F8.3 first-version frontend — 27 October 2026
 
+**Subsequent handoff and user acceptance:** commit `219381b` was pushed to GitHub
+`main`. The user confirmed live testing works as planned and accepted F8.3 as
+completed on 27 October 2026. CI was not checked. The implementation/check record
+below describes the original Windows source handoff; this acceptance does not
+invent additional XCTest, Release-build or Instruments results. F8.3b Garden
+viewport/layout refinement was planned separately at that checkpoint; its subsequent
+source handoff is recorded below.
+
 Source implemented locally:
 
 - Shared mounted Garden with My plants / Garden / Edit / Activity navigation,
@@ -601,11 +609,56 @@ Place, preview cancellation/background exit and mounted renderer/camera/import
 retention. Debug UI tests use a synthetic in-memory garden route with no network,
 disk edit journal or Health upload. These tests are added, not recorded as passing.
 
-Not executed: Apple SDK typechecking/builds, Debug XCTest/UI, public Release or
-InternalRelease builds, physical iPhone visual/touch/accessibility acceptance,
+At the original source handoff, not executed: Apple SDK typechecking/builds,
+Debug XCTest/UI, public Release or InternalRelease builds, physical iPhone acceptance,
 Instruments or CI. This host has no Xcode/Apple SDK. Run
 `bash frontend/scripts/test-mac.sh` on Mac, then the F8.3 walkthrough in
 F8_ACCEPTANCE.md, including live-account interrupted requests/relaunch and accepted
-F8.2 loading/taps/rewards/recap/pack/Milestones regressions. No push was performed.
+F8.2 loading/taps/rewards/recap/pack/Milestones regressions. No push had been performed
+at that handoff; the subsequent push and live-test acceptance are recorded above.
 Backend, renderer, Health collection, recap coordinator, assets, economy and durable
 request payload/endpoint contracts were not changed by this increment.
+
+
+## F8.3b Garden viewport/layout — 27 October 2026 source handoff
+
+Implemented locally; no commit/push or CI run was performed for this batch.
+Existing unrelated documentation/asset work in the workspace was retained.
+
+- Browsing uses one continuous scene with a two-row metrics/Info/Collect header,
+  bounded exceptional notices and a selected-planted-copy popup. Edit retains its
+  reserved panels, Storage/Done, precise controls and accepted request behavior.
+- Transparent green outlines use local backing for Reduce Transparency/increased
+  contrast. Real overlay frames exclude covered artwork from visitor accessibility.
+  Scene identity/bounds do not depend on selection, balances or notice content.
+- Exact-copy details capture the UUID when opened and remain read-only; confirmed
+  storage/removal/account detachment clears browsing selection. Sample browsing
+  uses the same popup, with accessible sample inspection through Garden info.
+- Removed browsing Plants/zoom/reset and standalone Welcome controls. Native
+  per-opportunity accessibility elements use projected model artwork bounds and
+  the existing welcome operation; camera Actions cover orbit/pan/zoom/reset.
+  No invisible touch view was added. Existing fallback/readiness/import paths remain.
+- Explicit feedback categories hide routine Garden success while keeping messages
+  available to other consumers. Recovery clears matching feedback identity rather
+  than matching strings. Diagnostics retain request outcomes and reward amounts.
+- Added/extended native coverage for browsing versus Edit viewport stability, the
+  actual connected popup/attraction/offline composition, stored/duplicate selection,
+  accessibility clipping/activation/camera actions, numeric claim gating, queued
+  claim progress and typed feedback visibility. UI tests now use Garden info and
+  real camera gestures in place of removed browsing controls.
+
+Passed on Windows:
+
+- `python frontend/scripts/validate_frontend.py`: current generated project,
+  50 app source references, 20 USDZ/checksum/archive and alpha-thumbnail pairs,
+  sample plants, plists/schemes, editor/collection/skills contracts, butterfly,
+  pack artwork, public Release/InternalRelease configuration.
+- `python frontend/scripts/check_swift_syntax.py`: all 64 Swift files parse.
+- UTF-8/source-text and `git diff --check` checks.
+
+Not executed: Apple SDK typechecking, Debug XCTest/UI, public Release and
+InternalRelease builds, physical iPhone/VoiceOver/visual/performance acceptance.
+This Windows host has no Swift/Xcode/Apple SDK. Syntax parsing does not establish
+native type correctness or passing XCTest. Run `bash frontend/scripts/test-mac.sh`
+on Mac, then the F8.3b live-account walkthrough in F8_ACCEPTANCE.md. Backend/API,
+economy, assets, Health collection and recap/pack state machines are unchanged.
