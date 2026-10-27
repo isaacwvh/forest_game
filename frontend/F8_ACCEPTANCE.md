@@ -268,7 +268,7 @@ The follow-up batch is **F8.3b — Garden viewport and layout refinement** in
 [the implementation plan](../IMPLEMENTATION_PLAN.md). It replaces the browsing
 panel/Plants controls, visible Welcome and routine success text described below;
 these describe the historical F8.3 behavior. F8.3b source now supersedes those controls;
-its native/device acceptance is pending.
+its user acceptance is recorded below.
 
 Use the existing account/backend installation. Debug includes tools. For optimized
 internal device testing select **MovementForest-Internal** (InternalRelease).
@@ -324,12 +324,11 @@ Release and InternalRelease builds. Debug `--fixture-health --fixture-garden`
 provides an in-memory edit journey without network, disk journals or Health uploads;
 use live accounts for recovery/relaunch, visitor and reward acceptance.
 
-## F8.3b Garden viewport and layout refinement — source implemented; device acceptance pending
+## F8.3b Garden viewport and layout refinement — completed, user accepted 27 October 2026
 
-Scope confirmed by the user on 27 October 2026. Source is implemented locally;
-portable checks pass. Native XCTest/builds and physical iPhone acceptance remain
-pending; this Windows handoff does not record them as passing. No push/CI run.
-The detailed scope is in IMPLEMENTATION_PLAN.md.
+Completed and user-accepted following live testing, including `70ab8e9`'s popup
+position and quiet-welcome fixes. The checks below remain the regression reference;
+user acceptance does not establish unrecorded XCTest/build/CI results.
 
 - Verify the continuous Garden between existing top/bottom navigation, with no
   permanent white status/controls panels. Selection, balance updates and notices
@@ -390,3 +389,38 @@ delivery remain separate work.
    contrast, cold/warm artwork and background returns below/above 30 seconds.
    Sample mode: Garden info → Explore sample plants stays read-only, with no invented
    wallet/ownership. Spot-check pack opening and Milestones.
+
+
+## F8.4 pack recovery and rarity-coloured names — source implemented; native acceptance pending
+
+1. Open Packs. Cancel an Open confirmation: no pack consumption. Confirm a fresh
+   opening: no Continue later; tear tap, reveal tap and final Continue still work.
+   Waiting alone must never reveal. Repeat Woodland/generic and Reduce Motion.
+2. Background during confirmation, sealed, tearing, opened wait, reveal and result.
+   Return: a confirmed result remains in Packs/history and its plant is in Storage;
+   the ceremony never replays automatically. Unknown requests retain Retry and
+   recover the same UUID/body. Repeated taps/returns must consume one pack only.
+3. Repeat network loss, relaunch and account changes, including a result confirmed
+   before the follow-up collection refresh fails. Confirmed ownership must survive.
+   Opening presentation must never show another account's result.
+4. Inspect plant names in Garden popup, Edit, My plants, Storage, plant details and
+   titles, Catalog, pack contents/odds, reveal, latest result/history, recap/Activity
+   and Garden skill sources. Common grey / Rare blue / Epic purple / Legendary gold.
+   Variant/stage metadata and buttons retain normal styling. Historical results use
+   their saved rarity even if current catalogue metadata differs.
+5. Check sample Garden/list/details and Developer tools; approved sample Oak is
+   Common and Moonwillow Epic. Missing/unrecognised/legacy rarity stays neutral,
+   never inferred from variant names, artwork or growth stage.
+6. Repeat largest text, VoiceOver and increased contrast on light screens and dark
+   reveal. Text gold must remain readable. The glow palette is unchanged. Spot-check
+   F8.3b popup placement, quiet visitors, scene/camera retention and focused Edit.
+
+Run `bash frontend/scripts/test-mac.sh` for XCTest and Release/InternalRelease builds,
+then perform this live-account walkthrough. Record actual automated results and
+subsequent user acceptance separately. No F8.4 native/CI pass is claimed here.
+
+For all-four-rarity visual checks without changing live game data, use Debug launch
+arguments `--fixture-pack --fixture-common` (or `--fixture-rare`, `--fixture-epic`,
+`--fixture-legendary`). After Continue, the fixture host shows the saved name on a
+light background. View saved result returns directly to the dark result without
+another opening. Add `--fixture-reduce-motion` for the reduced-motion variant.

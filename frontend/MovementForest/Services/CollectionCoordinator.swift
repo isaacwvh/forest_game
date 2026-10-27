@@ -189,7 +189,18 @@ final class CollectionCoordinator: ObservableObject {
             await submit(PendingCollectionOperation(id: id, kind: .exchange, target: nil, body: body))
         } catch { message = displayFailure(error) }
     }
+    func confirmedOpening(for packID: UUID) -> APICollectionReceipt? {
+        ([state.result].compactMap { $0 } + history).first {
+            $0.ownedPackId == packID && $0.openingId != nil && $0.plant != nil
+        }
+    }
     func open(_ pack: APIOwnedPack) async {
+        guard attached, confirmedOpening(for: pack.id) == nil else { return }
+        if let pending = state.pending {
+            // A reopened/restarted presentation recovers the original operation.
+            if pending.kind == .open && pending.target == pack.id { await refresh() }
+            return
+        }
         let id = UUID()
         do {
             let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))

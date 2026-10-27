@@ -69,6 +69,7 @@ struct ConnectedGardenScreen: View {
                     if store.editing { controls }
                     else if let selected = store.selectedPlanted {
                         GardenSelectionPopup(name: selected.speciesId.capitalized, variant: selected.variantId.capitalized,
+                            rarity: store.catalogue?.rarity(for: selected.speciesId),
                             stage: selected.growthStage.title,
                             close: { renderer.dismissSelection() },
                             details: { detailCopyID = selected.id; sheet = .details })
@@ -230,7 +231,8 @@ struct ConnectedGardenScreen: View {
                             Text(skill.bonusText).font(.subheadline)
                             Text(skill.description).foregroundStyle(.secondary)
                             if let source = store.ownedCopy(skill.sourcePlantId) {
-                                Text(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []) + " · Fully grown source")
+                                PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []),
+                                    rarity: store.catalogue?.rarity(for: source.speciesId), suffix: " · Fully grown source")
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                             if skill.eligibleSourcePlantIds.count > 1 {
@@ -259,7 +261,8 @@ struct ConnectedGardenScreen: View {
             }
             if !renderer.errors.isEmpty { Button("Some plants couldn’t load") { sheet = .errors }.font(.caption) }
             if let selected = store.selected {
-                Text("\(selected.speciesId.capitalized) · \(selected.variantId.capitalized) · \(selected.growthStage.title)")
+                PlantNameText("\(selected.speciesId.capitalized) · \(selected.variantId.capitalized)",
+                    rarity: store.catalogue?.rarity(for: selected.speciesId), suffix: " · \(selected.growthStage.title)")
                     .font(.subheadline)
                 if store.editing && store.candidate == nil && selected.placement != nil {
                     editingLayout {

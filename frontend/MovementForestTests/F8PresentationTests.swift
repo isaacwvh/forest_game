@@ -1,9 +1,41 @@
 import XCTest
+import Foundation
 import UIKit
 @testable import MovementForest
 
 @MainActor
 final class F8PresentationTests: XCTestCase {
+    func testRarityTextColoursRemainReadableOnLightGardenAndDarkReveal() {
+        func luminance(_ rgb: [Double]) -> Double {
+            let linear = rgb.map { $0 <= 0.04045 ? $0 / 12.92 : pow(($0 + 0.055) / 1.055, 2.4) }
+            return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722
+        }
+        for rarity in PlantRarity.allCases {
+            for increased in [false, true] {
+                for background in [[1.0, 1, 1], [0.90, 0.93, 0.89], [0.08, 0.08, 0.08]] {
+                    let foreground = rarity.textRGB(dark: background[0] < 0.1, increasedContrast: increased)
+                    XCTAssertTrue(foreground.allSatisfy { $0.isFinite && (0...1).contains($0) })
+                    let first = luminance(foreground), second = luminance(background)
+                    XCTAssertGreaterThanOrEqual((max(first, second) + 0.05) / (min(first, second) + 0.05), 4.5)
+                }
+            }
+        }
+        XCTAssertEqual(PlantRarity(label: " LEGENDARY "), .legendary)
+        XCTAssertNil(PlantRarity(label: "development_unbalanced"))
+        XCTAssertNil(PlantRarity(label: nil))
+    }
+
+    func testPlantNamesUseSpeciesRarityInsteadOfLegacyVariantRarity() throws {
+        let variant = APIVariant(variantId: "standard", displayName: "Standard", assetCatalogVersion: "1.0.0",
+            stages: [:], rarity: "common")
+        let species = APISpecies(speciesId: "fixture", displayName: "Fixture", clearanceRadius: 1,
+            variants: [variant], rarity: "legendary")
+        let catalogue = APICatalogue(catalogVersion: "fixture", isFixture: true, coordinateUnit: "garden_unit",
+            gardenUnitMetres: 1, coordinateDecimalPlaces: 3, rotationDecimalPlaces: 2, species: [species])
+        XCTAssertEqual(catalogue.rarity(for: "fixture"), "legendary")
+        XCTAssertNil(catalogue.rarity(for: "missing"))
+    }
+
     func testVisitorAccessibilityFramesExcludeOverlayControlsAndFullyCoveredArtwork() throws {
         let target = try XCTUnwrap(VisitorHitTarget(id: UUID(), artwork: CGRect(x: 100, y: 100, width: 80, height: 60),
             viewport: CGRect(x: 0, y: 0, width: 320, height: 400)))

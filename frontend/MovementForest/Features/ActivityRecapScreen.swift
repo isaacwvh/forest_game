@@ -27,7 +27,8 @@ struct ActivityRecapScreen: View {
                                         .frame(width: 48, height: 64).accessibilityHidden(true)
                                 }
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text(OwnedCopyLabel.title(row.id, in: recap.rows.compactMap(\.plant)))
+                                    PlantNameText(OwnedCopyLabel.title(row.id, in: recap.rows.compactMap(\.plant)),
+                                        rarity: row.plant.flatMap { catalogue?.rarity(for: $0.speciesId) })
                                         .font(.headline)
                                     if row.water != "0" {
                                         Text("+\(ExactAmount.water(row.water)) water")

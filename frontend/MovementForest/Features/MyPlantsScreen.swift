@@ -82,7 +82,7 @@ struct OwnedPlantRow: View {
                 PlantThumbnail(plant: rendered, catalog: catalog).frame(width: 48, height: 56)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(plant.speciesId.capitalized).font(.headline)
+                PlantNameText(plant.speciesId.capitalized, rarity: store.catalogue?.rarity(for: plant.speciesId)).font(.headline)
                 Text("\(plant.variantId.capitalized) · \(plant.growthStage.title)")
                     .font(.subheadline).foregroundStyle(.secondary)
                 PlantGrowthProgress(plant: plant)

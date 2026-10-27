@@ -184,7 +184,7 @@ struct CollectionScreen: View {
                                     CatalogThumbnail(row: CatalogRow(species: species, variant: variant), stage: .sprout, assets: assets)
                                 }
                                 VStack(alignment: .leading) {
-                                    Text(species.displayName)
+                                    PlantNameText(species.displayName, rarity: species.rarity, announcesRarity: false)
                                     Text("\(species.rarity?.capitalized ?? "Rarity unavailable") · \(species.variants.count) variants")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
@@ -316,7 +316,7 @@ struct SpeciesOddsView: View {
     private func percent(_ value: Double) -> String { value.formatted(.percent.precision(.fractionLength(0...4))) }
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(odds.speciesId.capitalized).font(.headline)
+            PlantNameText(odds.speciesId.capitalized, rarity: odds.rarity, announcesRarity: false).font(.headline)
             Text("Species: \(percent(odds.withinRarity)) within \(odds.rarity.capitalized) · \(percent(odds.overall)) overall")
                 .font(.callout)
             ForEach(odds.variants) { variant in
@@ -355,6 +355,7 @@ private struct CatalogSpeciesScreen: View {
             CatalogDetailScreen(row: CatalogRow(species: species, variant: variant), catalogue: catalogue,
                                 offers: offers, assets: assets, variantID: $variantID)
                 .navigationTitle(species.displayName)
+                .toolbar { ToolbarItem(placement: .principal) { PlantNameText(species.displayName, rarity: species.rarity).font(.headline) } }
         } else { Text("No variants available.") }
     }
 }
@@ -448,7 +449,8 @@ private struct ReceiptRow: View {
                     PlantThumbnail(plant: plant.rendered(catalogue: catalogue, assets: assets), catalog: assets).frame(width: 48, height: 56)
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)").font(.headline)
+                    PlantNameText("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)",
+                        rarity: receipt.rarity, announcesRarity: false).font(.headline)
                     Text("\(receipt.rarity?.capitalized ?? "Plant") · Awarded as a sprout").font(.caption)
                     if let date = receipt.openedAt { Text(date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }
                     Text("Place new plants from Edit → Storage → plant details → Place.").font(.caption).foregroundStyle(.secondary)

@@ -5,7 +5,8 @@ struct ConnectedActivityScreen: View {
     @ObservedObject var store: ActivityStore
     var body: some View {
         if let sync = connection.activitySync {
-            ActivitySyncScreen(sync: sync, health: store, plants: (connection.editor?.confirmed?.plants ?? []) + (connection.editor?.inventory ?? []))
+            ActivitySyncScreen(sync: sync, health: store, plants: (connection.editor?.confirmed?.plants ?? []) + (connection.editor?.inventory ?? []),
+                               catalogue: connection.editor?.catalogue)
         } else {
             ActivityScreen(store: store)
         }
@@ -16,6 +17,7 @@ struct ActivitySyncScreen: View {
     @ObservedObject var sync: ActivitySyncCoordinator
     @ObservedObject var health: ActivityStore
     var plants: [APIOwnedPlant] = []
+    var catalogue: APICatalogue? = nil
     @State private var showingConsent = false
     @State private var replacing = false
     var body: some View {
@@ -72,7 +74,8 @@ struct ActivitySyncScreen: View {
                                     Text(plant.beforeStage == plant.afterStage ? plant.afterStage.title :
                                          "\(plant.beforeStage.title) → \(plant.afterStage.title)")
                                         .font(.caption).foregroundStyle(.secondary)
-                                    Text(OwnedCopyLabel.title(plant.plantId, in: plants)).font(.caption).foregroundStyle(.secondary)
+                                    PlantNameText(OwnedCopyLabel.title(plant.plantId, in: plants),
+                                        rarity: plants.first { $0.id == plant.plantId }.flatMap { catalogue?.rarity(for: $0.speciesId) }).font(.caption)
                                 }.accessibilityElement(children: .combine)
                             }
                         }.padding(.vertical, 4)

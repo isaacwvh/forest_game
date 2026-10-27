@@ -130,11 +130,13 @@ final class ForestUITests: XCTestCase {
             app.launch()
             let tear = app.buttons["pack.tear"]
             XCTAssertTrue(tear.waitForExistence(timeout: 15))
+            XCTAssertFalse(app.buttons["Continue later"].exists)
             XCTAssertFalse(app.staticTexts[rarity.capitalized].exists)
             XCTAssertFalse(app.buttons["pack.continue"].exists)
             tear.tap()
             let reveal = app.buttons["pack.reveal"]
             XCTAssertTrue(reveal.waitForExistence(timeout: 5))
+            XCTAssertFalse(app.buttons["Continue later"].exists)
             XCTAssertTrue(app.staticTexts[rarity.capitalized].exists)
             XCTAssertFalse(app.buttons["pack.continue"].exists)
             // Waiting in the opened state must never trigger the second tap.
@@ -161,6 +163,38 @@ final class ForestUITests: XCTestCase {
             XCTAssertFalse(app.buttons["pack.continue"].exists)
             app.buttons["pack.reveal"].tap()
             XCTAssertTrue(app.buttons["pack.continue"].waitForExistence(timeout: 5))
+            app.terminate()
+        }
+    }
+
+    func testInterruptedConfirmedPackKeepsResultWithoutReplayingOrOpeningAgain() {
+        let app = XCUIApplication()
+        for stage in ["sealed", "tearing", "opened", "revealing", "result"] {
+            app.launchArguments = ["--fixture-health", "--fixture-pack", "--fixture-legendary"]
+            app.launch()
+            XCTAssertTrue(app.buttons["pack.tear"].waitForExistence(timeout: 15))
+            if stage != "sealed" {
+                app.buttons["pack.tear"].tap()
+            }
+            if stage == "opened" || stage == "revealing" || stage == "result" {
+                XCTAssertTrue(app.buttons["pack.reveal"].waitForExistence(timeout: 5))
+            }
+            if stage == "revealing" || stage == "result" {
+                app.buttons["pack.reveal"].tap()
+            }
+            if stage == "result" {
+                XCTAssertTrue(app.buttons["pack.continue"].waitForExistence(timeout: 5))
+            }
+            XCUIDevice.shared.press(.home); app.activate()
+            XCTAssertTrue(app.staticTexts["fixture.savedOpening"].waitForExistence(timeout: 10))
+            XCTAssertFalse(app.buttons["pack.tear"].exists); XCTAssertFalse(app.buttons["pack.reveal"].exists)
+            XCTAssertEqual(app.staticTexts["fixture.openingCount"].value as? String, "1")
+            app.buttons["fixture.viewResult"].tap()
+            XCTAssertTrue(app.buttons["pack.continue"].waitForExistence(timeout: 5))
+            XCTAssertFalse(app.buttons["pack.tear"].exists); XCTAssertFalse(app.buttons["pack.reveal"].exists)
+            app.buttons["pack.continue"].tap()
+            XCTAssertTrue(app.staticTexts["fixture.savedOpening"].waitForExistence(timeout: 5))
+            XCTAssertEqual(app.staticTexts["fixture.openingCount"].value as? String, "1")
             app.terminate()
         }
     }

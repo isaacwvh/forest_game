@@ -7,6 +7,66 @@ struct EntryPresentationBlocker: PreferenceKey {
     static func reduce(value: inout Bool, nextValue: () -> Bool) { value = value || nextValue() }
 }
 
+enum PlantRarity: String, CaseIterable {
+    case common, rare, epic, legendary
+    init?(label: String?) {
+        guard let value = label?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() else { return nil }
+        self.init(rawValue: value)
+    }
+    var title: String { rawValue.capitalized }
+
+    /// Text colours are deliberately separate from the brighter pack-light palette.
+    func textRGB(dark: Bool, increasedContrast: Bool = false) -> [Double] {
+        let base: [Double]
+        switch (self, dark) {
+        case (.common, false): base = [0.36, 0.36, 0.36]
+        case (.rare, false): base = [0.08, 0.32, 0.70]
+        case (.epic, false): base = [0.46, 0.20, 0.66]
+        case (.legendary, false): base = [0.48, 0.32, 0.02]
+        case (.common, true): base = [0.78, 0.78, 0.78]
+        case (.rare, true): base = [0.40, 0.70, 1]
+        case (.epic, true): base = [0.80, 0.60, 1]
+        case (.legendary, true): base = [1, 0.80, 0.30]
+        }
+        return increasedContrast ? base.map { dark ? $0 + (1 - $0) * 0.15 : $0 * 0.82 } : base
+    }
+}
+
+extension APICatalogue {
+    func rarity(for speciesID: String) -> String? { species.first { $0.speciesId == speciesID }?.rarity }
+}
+
+/// Display metadata for bundled sample/asset views only; approved launch_balance.PLANTS.
+/// Connected names always use their actual catalogue, including legacy/unknown values.
+enum SamplePlantPresentation {
+    static let rarities = ["oak": "common", "moonwillow": "epic"]
+}
+
+struct PlantNameText: View {
+    let name: String
+    let rarity: String?
+    var onDarkBackground = false
+    var announcesRarity = true
+    var suffix = ""
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    init(_ name: String, rarity: String?, onDarkBackground: Bool = false, announcesRarity: Bool = true, suffix: String = "") {
+        self.name = name; self.rarity = rarity; self.onDarkBackground = onDarkBackground
+        self.announcesRarity = announcesRarity; self.suffix = suffix
+    }
+    private var colour: Color {
+        let dark = onDarkBackground || scheme == .dark
+        guard let value = PlantRarity(label: rarity) else { return dark ? .white : .primary }
+        let rgb = value.textRGB(dark: dark, increasedContrast: contrast == .increased)
+        return Color(red: rgb[0], green: rgb[1], blue: rgb[2])
+    }
+    var body: some View {
+        (Text(name).foregroundColor(colour) + Text(suffix))
+            .accessibilityLabel(name + suffix + (announcesRarity ? PlantRarity(label: rarity).map { ", " + $0.title } ?? "" : ""))
+    }
+}
+
 enum OwnedCopyLabel {
     static func title(_ id: UUID, in plants: [APIOwnedPlant]) -> String {
         guard let plant = plants.first(where: { $0.id == id }) else { return "Plant progress" }

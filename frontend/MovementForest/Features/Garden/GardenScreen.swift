@@ -39,6 +39,7 @@ struct GardenScreen: View {
                 } controls: {
                     if let selected = garden.plants.first(where: { $0.id == renderer.selectedPlantID }) {
                         GardenSelectionPopup(name: selected.speciesId.capitalized, variant: selected.variantId.capitalized,
+                            rarity: SamplePlantPresentation.rarities[selected.speciesId],
                             stage: selected.growthStage.title, close: { renderer.dismissSelection() },
                             details: { selectedPlant = selected })
                     }
@@ -90,6 +91,7 @@ struct PlantDetailScreen: View {
     var owned: APIOwnedPlant? = nil
     var catalogue: APICatalogue? = nil
     @Environment(\.dismiss) private var dismiss
+    private var rarity: String? { isSample ? SamplePlantPresentation.rarities[plant.speciesId] : catalogue?.rarity(for: plant.speciesId) }
     var body: some View {
         List {
             PlantThumbnail(plant: plant, catalog: catalog).frame(height: 180).frame(maxWidth: .infinity)
@@ -143,7 +145,10 @@ struct PlantDetailScreen: View {
             }
         }
         .navigationTitle(plant.speciesId.capitalized).navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        .toolbar {
+            ToolbarItem(placement: .principal) { PlantNameText(plant.speciesId.capitalized, rarity: rarity).font(.headline) }
+            ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+        }
     }
 }
 
@@ -159,7 +164,8 @@ struct GardenPlantList: View {
                 HStack(spacing: 12) {
                     PlantThumbnail(plant: plant, catalog: catalog).frame(width: 48, height: 56)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(plant.speciesId.capitalized).font(.headline)
+                        PlantNameText(plant.speciesId.capitalized,
+                            rarity: garden.isSample ? SamplePlantPresentation.rarities[plant.speciesId] : nil).font(.headline)
                         Text("\(plant.variantId.capitalized) · \(plant.growthStage.title)").font(.subheadline).foregroundStyle(.secondary)
                     }
                 }.accessibilityElement(children: .combine)

@@ -11,6 +11,8 @@ import uuid
 import zipfile
 import xml.etree.ElementTree as ET
 import argparse
+import ast
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parent
@@ -200,6 +202,33 @@ def main():
         require("import SwiftData" not in text and "RealityView {" not in text, f"Check iOS16 availability: {source}")
         if "Services/Health" in source.as_posix():
             require("print(" not in text and "NSLog(" not in text, f"Health logging found: {source}")
+    # Validate the actual shared text palette independently of SwiftUI rendering.
+    shared = (ROOT / "MovementForest/Features/SharedViews.swift").read_text(encoding="utf-8")
+    palette = re.findall(r"case \(\.(common|rare|epic|legendary), (false|true)\): base = \[([^]]+)\]", shared)
+    require(len(palette) == 8, "Incomplete rarity text palette")
+    def luminance(rgb):
+        linear = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in rgb]
+        return sum(v * weight for v, weight in zip(linear, [0.2126, 0.7152, 0.0722]))
+    for rarity, dark, raw in palette:
+        rgb = [float(value.strip()) for value in raw.split(",")]
+        backgrounds = [[0.08] * 3] if dark == "true" else [[1] * 3, [0.90, 0.93, 0.89]]
+        for increased in [False, True]:
+            foreground = ([v + (1 - v) * 0.15 if dark == "true" else v * 0.82 for v in rgb]
+                          if increased else rgb)
+            require(len(foreground) == 3 and all(0 <= v <= 1 for v in foreground), "Invalid rarity text RGB")
+            for background in backgrounds:
+                low, high = sorted([luminance(foreground), luminance(background)])
+                require((high + 0.05) / (low + 0.05) >= 4.5, f"Insufficient {rarity} text contrast")
+    launch = ast.parse((REPO / "backend/src/forest_api/launch_balance.py").read_text(encoding="utf-8"))
+    plants = next(ast.literal_eval(node.value) for node in launch.body if isinstance(node, ast.Assign)
+                  and any(isinstance(target, ast.Name) and target.id == "PLANTS" for target in node.targets))
+    samples = re.search(r"static let rarities = \[([^]]+)\]", shared)
+    require(samples is not None, "Sample rarity metadata missing")
+    sample_rarities = dict(re.findall(r'"([a-z_]+)": "([a-z]+)"', samples.group(1)))
+    require(set(sample_rarities) == set(asset_ids), "Bundled sample species rarity metadata is incomplete")
+    for species, rarity in sample_rarities.items():
+        require(plants[species]["rarity"] == rarity, f"Sample rarity differs from approved launch data: {species}")
+    print("PASS: all four rarity text palettes/contrast and approved sample rarity metadata.")
     print(f"PASS: {models} USDZs/checksums/archives, {models} alpha PNGs, 15 fixture plants, plists, shared scheme, {len(sources)} Swift source references.")
     print("PASS: synthetic B3 editor contract, owned-copy identity, bundled API asset keys and shared geometry resource.")
     print("PASS: real synthetic collection exchange/opening accounting, pack consumption, probabilities and bundled award thumbnail.")

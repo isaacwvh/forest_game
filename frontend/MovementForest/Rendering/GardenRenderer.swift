@@ -30,6 +30,7 @@ protocol GardenRenderer: AnyObject {
 
 struct PlantRenderDiagnostic: Identifiable {
     let id: UUID
+    let speciesId: String
     let label: String
     let orientation: String
     let animationCount: Int
@@ -245,7 +246,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                     proxy.components.set(CollisionComponent(shapes: [.generateBox(size: size)]))
                     placement.addChild(proxy)
                     let clips = self.playWind(in: model.entity, plantID: plant.id)
-                    self.diagnostics.append(PlantRenderDiagnostic(id: plant.id,
+                    self.diagnostics.append(PlantRenderDiagnostic(id: plant.id, speciesId: plant.speciesId,
                         label: "\(plant.speciesId) · \(plant.growthStage.rawValue) · \(plant.variantId)",
                         orientation: model.orientationNote, animationCount: clips,
                         bounds: bounds.extents, minimumY: bounds.min.y))

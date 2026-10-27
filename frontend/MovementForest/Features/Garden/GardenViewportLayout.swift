@@ -120,6 +120,7 @@ struct GardenOutlineButtonStyle: ButtonStyle {
 struct GardenSelectionPopup: View {
     let name: String
     let variant: String
+    var rarity: String? = nil
     let stage: String
     let close: () -> Void
     let details: () -> Void
@@ -127,7 +128,7 @@ struct GardenSelectionPopup: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 8) {
-                Text("\(name) · \(variant)").font(.headline).fixedSize(horizontal: false, vertical: true)
+                PlantNameText("\(name) · \(variant)", rarity: rarity).font(.headline).fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 10)
                 Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
                     .accessibilityLabel("Close plant selection").accessibilityIdentifier("garden.selection.close")

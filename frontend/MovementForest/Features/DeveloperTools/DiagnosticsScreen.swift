@@ -101,7 +101,9 @@ struct DiagnosticsScreen: View {
             Section("Live account state") {
                 ForEach(snapshot.keys.sorted(), id: \.self) { key in DetailRow(title: key, value: snapshot[key] ?? "unavailable") }
             }
-            if let renderer = LiveGardenDiagnostics.shared.renderer { RenderDiagnostics(renderer: renderer) }
+            if let renderer = LiveGardenDiagnostics.shared.renderer {
+                RenderDiagnostics(renderer: renderer, catalogue: connection.editor?.catalogue, isSample: connection.editor == nil)
+            }
             Section("Recent events") {
                 Picker("Category", selection: $category) { ForEach(categories, id: \.self) { Text($0).tag($0) } }
                 if filtered.isEmpty { Text("No matching events. Reproduce the issue, then return here.") }

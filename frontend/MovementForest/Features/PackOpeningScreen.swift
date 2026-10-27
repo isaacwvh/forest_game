@@ -5,13 +5,7 @@ enum PackRevealStep: Equatable {
     var canTear: Bool { self == .sealed }
     var canReveal: Bool { self == .opened }
     static func rarityName(_ rarity: String?) -> String {
-        switch rarity?.lowercased() {
-        case "common": return "Common"
-        case "rare": return "Rare"
-        case "epic": return "Epic"
-        case "legendary": return "Legendary"
-        default: return "Rarity unavailable"
-        }
+        PlantRarity(label: rarity)?.title ?? "Rarity unavailable"
     }
 }
 
@@ -35,6 +29,8 @@ struct PackOpeningScreen: View {
     @State private var torn = false
     @State private var lifted = false
     @State private var submitted = false
+    @State private var submissionStarted = false
+    @State private var interrupted = false
 
     private var rarityColour: Color {
         switch receipt?.rarity?.lowercased() {
@@ -110,48 +106,65 @@ struct PackOpeningScreen: View {
                             .accessibilityIdentifier(step == .sealed ? "pack.tear" : "pack.reveal")
                         if step == .opened { Text(PackRevealStep.rarityName(receipt?.rarity)).font(.headline) }
                     } else if step == .result, let result = receipt, let plant = result.plant {
-                        Text("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)").font(.title2.bold()).multilineTextAlignment(.center)
+                        PlantNameText("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)", rarity: result.rarity,
+                            onDarkBackground: true, announcesRarity: false).font(.title2.bold()).multilineTextAlignment(.center)
                         Text(PackRevealStep.rarityName(result.rarity)).font(.headline)
                         Text("Your sprout is saved in Storage. Plant it from Edit → Storage → plant details → Place.").multilineTextAlignment(.center)
                         Button("Continue") { dismiss() }.buttonStyle(.borderedProminent).controlSize(.large)
                             .frame(minHeight: 44).accessibilityFocused($actionFocused).accessibilityIdentifier("pack.continue")
                     } else { ProgressView().tint(.white).accessibilityLabel("Opening pack") }
-                    if step != .result {
-                        Button(step == .waiting ? "Return to Packs" : "Continue later") { dismiss() }
+                    if step == .waiting {
+                        Button("Return to Packs") { interrupt() }
                             .frame(minHeight: 44)
                     }
                 }.padding(24).foregroundStyle(.white)
             }
         }
         .task {
+            guard !submissionStarted, !interrupted else { return }
+            submissionStarted = true
+            if store.confirmedOpening(for: pack.id) != nil {
+                submitted = true; acceptResult(recovered: true); return
+            }
+            let recovering = store.state.pending != nil
             if let path = PresentationAssets.packPath(packID: pack.packId, part: "sealed") { sealed = PresentationAssets.image(path) }
             if let path = PresentationAssets.packPath(packID: pack.packId, part: "opened") { opened = PresentationAssets.image(path) }
             if let path = PresentationAssets.packPath(packID: pack.packId, part: "top-strip") { strip = PresentationAssets.image(path) }
             await store.open(pack)
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, !interrupted else { return }
             submitted = true
-            acceptResult()
+            acceptResult(recovered: recovering)
         }
-        .onChange(of: phase) { if $0 == .background { dismiss() } }
-        .onDisappear { transition?.cancel(); sealed = nil; opened = nil; strip = nil }
+        .onChange(of: store.state.result?.openingId) { _ in
+            // A request owned by an earlier presentation may finish after this
+            // screen has reattached. Its saved result must not start a ceremony.
+            if submitted && step == .waiting { acceptResult(recovered: true) }
+        }
+        .onChange(of: phase) { if $0 == .background { interrupt() } }
+        .onDisappear { interrupted = true; transition?.cancel(); sealed = nil; opened = nil; strip = nil }
     }
 
+    private func interrupt() {
+        interrupted = true; transition?.cancel(); dismiss()
+    }
     private func acceptResult(recovered: Bool = false) {
-        guard let result = store.state.result, result.ownedPackId == pack.id, result.plant != nil else { return }
+        guard !interrupted, let result = store.confirmedOpening(for: pack.id) else { return }
         receipt = result
         if recovered { lifted = true; torn = true; step = .result }
         else { step = .sealed }
         actionFocused = true
     }
     private func advance() {
-        guard receipt != nil else { return }
+        guard !interrupted, phase != .background, receipt != nil else { return }
         if step.canTear {
             actionFocused = false
             step = .tearing
             transition = Task { @MainActor in
                 do { try await Task.sleep(nanoseconds: reduceMotion ? 1 : 150_000_000) } catch { return }
+                guard !interrupted, !Task.isCancelled else { return }
                 withAnimation(.easeOut(duration: reduceMotion ? 0.1 : 0.35)) { torn = true }
                 do { try await Task.sleep(nanoseconds: reduceMotion ? 100_000_000 : 350_000_000) } catch { return }
+                guard !interrupted, !Task.isCancelled else { return }
                 step = .opened
                 actionFocused = true
             }
@@ -160,8 +173,10 @@ struct PackOpeningScreen: View {
             step = .revealing
             transition = Task { @MainActor in
                 do { try await Task.sleep(nanoseconds: reduceMotion ? 1 : 50_000_000) } catch { return }
+                guard !interrupted, !Task.isCancelled else { return }
                 withAnimation(.easeOut(duration: reduceMotion ? 0.1 : 0.5)) { lifted = true }
                 do { try await Task.sleep(nanoseconds: reduceMotion ? 100_000_000 : 500_000_000) } catch { return }
+                guard !interrupted, !Task.isCancelled else { return }
                 step = .result
                 actionFocused = true
             }

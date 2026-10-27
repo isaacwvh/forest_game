@@ -92,3 +92,14 @@ native validation. No HTML/CSS detector or browser screenshot substitutes for it
 - Settings → Developer tools → Diagnostics shows the real connected state and
   live Garden renderer, plus bounded local events with manual copy/export. It does
   not create a renderer, own requests, upload logs or capture credentials/Health bodies.
+
+- F8.4 plant names share Common grey / Rare blue / Epic purple / Legendary gold
+  text colours, with brighter variants on dark reveal and stronger increased
+  contrast variants. Preserve readable text separately from the existing glow.
+  Current names use species rarity, odds use pinned pool rarity and historical
+  awards use saved receipt rarity; never use legacy variant rarity or guess.
+  Unknown names stay neutral. Sample/asset names use approved display-only metadata.
+- Pack opening has no Continue later. Preserve Cancel before submission, the two
+  taps for a fresh uninterrupted ceremony, and final Continue. Known/recovered
+  results bypass animation and never create a second opening. Presentation
+  interruptions cancel transitions without discarding journals/ownership/history.

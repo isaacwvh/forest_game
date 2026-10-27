@@ -681,3 +681,35 @@ bar and silent queued welcomes versus interrupted-request recovery.
 Passed on Windows: portable frontend project/assets/contracts validation, parsing
 all 64 Swift files, and git diff whitespace checks. Native XCTest and live iPhone
 verification are pending on Mac. No commit or push performed for these fixes.
+
+
+## F8.3b user acceptance and F8.4 source handoff — 27 October 2026
+
+The user accepted F8.3b as completed after the live popup/quiet-welcome follow-up
+pushed as `70ab8e9`. This acceptance does not imply unrecorded XCTest/build/CI passes.
+
+F8.4 source implemented locally; no commit/push/CI run:
+
+- Pack submission is guarded before awaiting. Confirmed per-pack results/history
+  bypass resubmission and ceremony; pending openings recover original UUID/body.
+  Removed Continue later, retained Cancel/two uninterrupted taps/final Continue and
+  error navigation. Background/departure cancels presentation transitions and late
+  callbacks; durable results and requests remain authoritative.
+- Shared rarity text styling covers current species names, pinned odds, historical
+  receipt names, Garden popup/Edit/ownership/details/titles, recap/activity/skills
+  and sample/developer labels. Unknown/legacy rarity remains neutral. Approved
+  sample display metadata matches launch_balance.PLANTS; no backend/asset changes.
+- Native regression coverage added for pending and in-flight duplicate opens,
+  known history/results, species-versus-variant rarity, palette contrast and actual
+  cover dismissal/re-entry. Existing all-rarity/generic/Reduce Motion two-tap cases
+  remain. Fixtures use no authentication/network/Health uploads or disk journal.
+
+Passed on Windows: frontend project/assets/contracts validation, all four actual
+rarity text palettes at normal/increased contrast on white/Garden/dark reveal
+backgrounds, sample metadata consistency, all 64 Swift syntax parses, whitespace
+and UTF-8/source checks. All palette/background combinations exceed 4.5:1.
+
+Not executed on Windows: Apple SDK typechecking, XCTest/UI, Release/InternalRelease
+builds, native screenshots, VoiceOver and physical iPhone/account interruption tests.
+Run frontend/scripts/test-mac.sh on Mac and the F8.4 walkthrough in F8_ACCEPTANCE.md.
+These remain pending; source parsing and portable validation are not native passes.

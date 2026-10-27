@@ -44,6 +44,8 @@ struct ActivityFixtureScreen: View {
 
 struct RenderDiagnostics: View {
     @ObservedObject var renderer: RealityGardenRenderer
+    var catalogue: APICatalogue? = nil
+    var isSample = true
     var body: some View {
         Section("Renderer") {
             DetailRow(title: "Models loaded", value: "\(renderer.loadedCount)")
@@ -59,7 +61,8 @@ struct RenderDiagnostics: View {
         Section("Imported plants") {
             ForEach(renderer.diagnostics) { item in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(item.label).font(.headline)
+                    PlantNameText(item.label, rarity: isSample ? SamplePlantPresentation.rarities[item.speciesId] :
+                        catalogue?.rarity(for: item.speciesId)).font(.headline)
                     Text(item.orientation)
                     Text("Playable clips: \(item.animationCount)")
                     Text(String(format: "Bounds X/Y/Z: %.3f / %.3f / %.3f m", item.bounds.x, item.bounds.y, item.bounds.z))
@@ -131,7 +134,7 @@ struct AssetInspectorScreen: View {
                             showBounds: bounds).frame(height: 300).accessibilityHidden(true)
             Form {
                 Section("Asset") {
-                    Picker("Species", selection: $species) { ForEach(catalog.species, id: \.speciesId) { Text($0.displayName).tag($0.speciesId) } }
+                    Picker("Species", selection: $species) { ForEach(catalog.species, id: \.speciesId) { PlantNameText($0.displayName, rarity: SamplePlantPresentation.rarities[$0.speciesId]).tag($0.speciesId) } }
                     Picker("Variant", selection: $variant) { ForEach(variants, id: \.self) { Text($0.capitalized).tag($0) } }
                     Picker("Stage", selection: $stage) { ForEach(GrowthStage.allCases) { Text($0.title).tag($0) } }
                     Toggle("Wind", isOn: $wind)

@@ -18,9 +18,11 @@ private struct PackFixtureContract: Decodable {
 }
 
 @MainActor
-private struct PackFixtureService: CollectionServing {
+private final class PackFixtureService: CollectionServing {
     let contract: PackFixtureContract
     let rarity: String
+    private(set) var openingCount = 0
+    init(contract: PackFixtureContract, rarity: String) { self.contract = contract; self.rarity = rarity }
     let serverID = "https://presentation-fixture.invalid"
     func summary() async throws -> APICollectionSummary { contract.summary }
     func catalogue() async throws -> APICatalogue { contract.catalogue }
@@ -34,6 +36,7 @@ private struct PackFixtureService: CollectionServing {
     }
     func mutate(_ operation: PendingCollectionOperation) async throws -> APICollectionReceipt {
         guard operation.kind == .open else { throw ForestError.invalidData("Presentation fixture only opens packs.") }
+        openingCount += 1
         let result = contract.opening
         return APICollectionReceipt(requestId: operation.id, tokenBalance: result.tokenBalance, economyVersion: result.economyVersion,
             openingId: result.openingId, ownedPackId: operation.target, packId: result.packId, packVersion: result.packVersion,
@@ -47,11 +50,11 @@ struct PackOpeningFixtureScreen: View {
     @State private var pack: APIOwnedPack?
     @State private var assets: BundleAssetCatalog?
     @State private var error: String?
+    @State private var service: PackFixtureService?
     var body: some View {
         Group {
-            if let store = store, let pack = pack, let assets = assets {
-                PackOpeningScreen(store: store, pack: pack, assets: assets,
-                                  reduceMotionOverride: ProcessInfo.processInfo.arguments.contains("--fixture-reduce-motion"))
+            if let store = store, let pack = pack, let assets = assets, let service = service {
+                PackFixtureHost(store: store, service: service, pack: pack, assets: assets)
             } else if let error = error { Text(error) }
             else { ProgressView("Loading presentation fixture…") }
         }.task {
@@ -63,7 +66,8 @@ struct PackOpeningFixtureScreen: View {
                 let contract = try ActivityWire.decoder().decode(PackFixtureContract.self, from: Data(contentsOf: url))
                 let arguments = ProcessInfo.processInfo.arguments
                 let rarity = ["rare", "epic", "legendary"].first { arguments.contains("--fixture-" + $0) } ?? "common"
-                let coordinator = CollectionCoordinator(userID: UUID(), service: PackFixtureService(contract: contract, rarity: rarity),
+                let service = PackFixtureService(contract: contract, rarity: rarity)
+                let coordinator = CollectionCoordinator(userID: UUID(), service: service,
                                                         journal: PackFixtureJournal())
                 await coordinator.refresh()
                 assets = try BundleAssetCatalog()
@@ -71,8 +75,33 @@ struct PackOpeningFixtureScreen: View {
                     pack = APIOwnedPack(ownedPackId: original.id, packId: "generic", version: original.version,
                                         acquiredAt: original.acquiredAt)
                 } else { pack = contract.exchange.packs?.first }
-                store = coordinator
+                self.service = service; store = coordinator
             } catch { self.error = error.localizedDescription }
+        }
+    }
+}
+
+@MainActor
+private struct PackFixtureHost: View {
+    @ObservedObject var store: CollectionCoordinator
+    let service: PackFixtureService
+    let pack: APIOwnedPack
+    let assets: BundleAssetCatalog
+    @State private var showing = true
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                if let result = store.confirmedOpening(for: pack.id), let plant = result.plant {
+                    Text("Saved opening").accessibilityIdentifier("fixture.savedOpening")
+                    PlantNameText(plant.speciesId.capitalized, rarity: result.rarity)
+                    Button("View saved result") { showing = true }.accessibilityIdentifier("fixture.viewResult")
+                }
+                Text("Opening requests: \(service.openingCount)")
+                    .accessibilityValue(String(service.openingCount)).accessibilityIdentifier("fixture.openingCount")
+            }.navigationTitle("Packs")
+        }.fullScreenCover(isPresented: $showing) {
+            PackOpeningScreen(store: store, pack: pack, assets: assets,
+                reduceMotionOverride: ProcessInfo.processInfo.arguments.contains("--fixture-reduce-motion"))
         }
     }
 }

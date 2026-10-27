@@ -39,6 +39,8 @@ private final class FakeCollection: CollectionServing {
     var milestones: [APIIntroMilestone] = []
     var failSummaryAfterMutation = false
     var failSummary = false
+    var blockOpening = false
+    var openingContinuation: CheckedContinuation<Void, Never>?
     init(_ contract: CollectionContract) { self.contract = contract }
     func summary() async throws -> APICollectionSummary {
         if failSummary { throw URLError(.notConnectedToInternet) }
@@ -53,6 +55,9 @@ private final class FakeCollection: CollectionServing {
     }
     func mutate(_ operation: PendingCollectionOperation) async throws -> APICollectionReceipt {
         try operation.validate(); operations.append(operation); onMutation?()
+        if operation.kind == .open && blockOpening {
+            await withCheckedContinuation { openingContinuation = $0 }
+        }
         if let reject = reject { throw reject }
         if loseResponse { throw URLError(.networkConnectionLost) }
         if operation.kind == .milestone {
@@ -71,6 +76,64 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testRepeatedOpenWhileOriginalRequestIsInFlightKeepsOneOperation() async throws {
+        let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: journal)
+        await store.refresh()
+        let pack = try XCTUnwrap(store.packs.first)
+        service.blockOpening = true
+        let first = Task { await store.open(pack) }
+        defer {
+            service.blockOpening = false; first.cancel()
+            service.openingContinuation?.resume(); service.openingContinuation = nil
+        }
+        for _ in 0..<100 {
+            if service.openingContinuation != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let original = try XCTUnwrap(store.state.pending)
+        await store.open(pack)
+        XCTAssertEqual(service.operations, [original])
+        XCTAssertEqual(store.state.pending, original)
+        service.blockOpening = false
+        service.openingContinuation?.resume(); service.openingContinuation = nil
+        await first.value
+        XCTAssertNotNil(store.confirmedOpening(for: pack.id))
+        await store.open(pack)
+        XCTAssertEqual(service.operations, [original])
+    }
+
+    func testKnownOpeningFromHistoryNeverSubmitsAnotherRequest() async throws {
+        let fixture = try CollectionContract.load(), service = FakeCollection(try CollectionContract.load())
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+        await store.refresh()
+        let pack = try XCTUnwrap(fixture.exchange.packs?.first)
+        XCTAssertNotNil(store.confirmedOpening(for: pack.id))
+        await store.open(pack)
+        XCTAssertTrue(service.operations.isEmpty)
+        XCTAssertNil(store.state.pending)
+    }
+
+    func testReopenedUnknownOpeningRecoversOriginalUUIDAndBody() async throws {
+        let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
+        let user = UUID(), store = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await store.refresh()
+        let pack = try XCTUnwrap(store.packs.first)
+        service.loseResponse = true; await store.open(pack)
+        let pending = try XCTUnwrap(store.state.pending)
+        let reopened = CollectionCoordinator(userID: user, service: service, journal: journal)
+        service.loseResponse = false
+        await reopened.open(pack)
+        XCTAssertEqual(service.operations.count, 2)
+        XCTAssertEqual(service.operations[0], pending); XCTAssertEqual(service.operations[1], pending)
+        XCTAssertNil(reopened.state.pending)
+        let result = try XCTUnwrap(reopened.confirmedOpening(for: pack.id))
+        XCTAssertNotNil(result.plant)
+        await reopened.open(pack)
+        XCTAssertEqual(service.operations.count, 2)
+        XCTAssertEqual(reopened.confirmedOpening(for: pack.id)?.openingId, result.openingId)
+    }
+
     func testMilestoneConfirmationSurvivesRefreshFailureAndStaleRepeatedClaim() async throws {
         let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
         let milestone = APIIntroMilestone(milestoneId: "first_movement", title: "First movement",

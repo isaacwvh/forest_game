@@ -3,18 +3,15 @@
 Revised 27 October 2026 against `forest_game_v1_spec.md`, version 0.23.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
-**Current presentation handoff — 27 October 2026:** F8.3 is completed and
-user-accepted after live testing of commit `219381b`, pushed to GitHub `main`.
-My plants / Garden / Edit / Activity, details-first focused editing, frontend-wide
-developer-output cleanup and retained internal diagnostics form the accepted
-baseline. The follow-up batch is **F8.3b — Garden viewport and layout refinement** below:
-a continuous scene, transparent compact header and plant-selection popup, direct
-visitor interaction and quieter routine feedback. Source is implemented locally;
-portable validation passes. Mac/native and iPhone acceptance remain pending.
-Token shimmer/floating +1 and other animations,
-workout eligibility, pack-opening cleanup, asset delivery and later custom designs
-remain separate. User acceptance does not establish unrecorded native automated
-test or CI results; executed checks remain in `frontend/VALIDATION.md`.
+**Current presentation handoff — 27 October 2026:** F8.3 and F8.3b are completed
+and user-accepted after live testing. F8.3b includes the popup/navigation overlap
+and quiet-welcome follow-up pushed as `70ab8e9`; the user subsequently closed it.
+The next accepted scope is **F8.4 — Pack-opening recovery polish and rarity-coloured
+plant names**. Source is implemented locally with portable checks passing; native
+XCTest/builds and F8.4 iPhone acceptance remain pending. No F8.4 push/CI run.
+Token shimmer/floating +1, watering/stage effects, workout eligibility, gameplay
+rewards, asset delivery and later custom designs remain separate. User acceptance
+does not establish unrecorded automated test or CI results; see frontend/VALIDATION.md.
 
 The first B8 skill/cap increment is now source-implemented below, including
 Sleeping Dew and the native Active skills disclosure. Its selected provisional
@@ -855,13 +852,12 @@ onboarding/auth redesign; Dark Mode/landscape; general renderer rewrites and
 deployment. This polish does not itself establish production/release readiness;
 existing provider, deployment and minimum-device evidence gates still apply.
 
-### F8.3b — Garden viewport and layout refinement — source implemented, native acceptance pending
+### F8.3b — Garden viewport and layout refinement — completed, user accepted 27 October 2026
 
-**Status / authority — 27 October 2026:** user-confirmed follow-up to completed
-F8.3. Source implementation is complete locally, with portable project/asset/contract
-validation, all-Swift syntax parsing and whitespace checks passing. Native XCTest,
-Apple SDK builds and physical-device acceptance have not run on this Windows host.
-No push or CI run was requested. The delivered scope supersedes the completed batch's permanent browsing Plants/controls strip,
+**Status / authority — 27 October 2026:** completed and user-accepted after live
+testing, including the popup-above-navigation and quiet-welcome fixes in `70ab8e9`.
+Portable checks are recorded separately from native/CI evidence in frontend/VALIDATION.md.
+The delivered scope supersedes F8.3's permanent browsing Plants/controls strip,
 separate visible Welcome button and routine Garden success-text presentation.
 Other accepted navigation, editing, recovery and gameplay behavior remains the
 baseline. The former F8.3b My plants subtask is preserved above as completed work
@@ -1038,12 +1034,46 @@ No new backgrounds, artwork or gameplay/economy work is required.
 eligibility/anti-idle work; pack-opening cleanup (including removing Continue
 later); backend/schema/API/economy changes; new assets/backgrounds; cloud delivery;
 My plants search/filter/bulk actions; placement-rule changes; auth/onboarding redesign;
-Dark Mode/landscape and general renderer rewrites. F8.3b source is implemented;
-Mac/native and user/device acceptance remain pending. See frontend/VALIDATION.md.
+Dark Mode/landscape and general renderer rewrites. F8.3b is completed and
+user-accepted; this does not imply unrecorded native automated/CI results.
 
-### Later polish — pack-opening interruption cleanup (deferred; not F8.3/F8.3b)
+### F8.4 — Pack-opening recovery polish and rarity-coloured plant names
 
-- Remove **Continue later** from the ceremony in a separate future increment.
+**Status:** user-approved scope; source implemented locally on 27 October 2026.
+Portable validation passes. Native build/XCTest, visual/VoiceOver and physical
+account interruption acceptance remain pending; no commit/push or CI run.
+
+**F8.4a — pack presentation/recovery:** remove Continue later, retain pre-opening
+Cancel, two deliberate uninterrupted taps and final Continue. Set a submission
+guard before awaiting; known receipts/history display directly without another
+opening, while a saved pending opening recovers its original UUID/body. Background
+or departure cancels transitions and late presentation callbacks without clearing
+journals, saved ownership or results. A confirmed interrupted opening is available
+in Packs/history and never automatically replays. Preserve temporary inactive
+behavior, account isolation, Reduce Motion and usable error/retry navigation.
+
+**F8.4b — shared rarity name styling:** Common grey, Rare blue, Epic purple and
+Legendary gold across Garden browsing/editing, owned/storage details, catalogue,
+pack odds, reveal/latest/history, recap/activity, skill-source and human-readable
+developer/sample displays, including plant navigation titles. Use species rarity
+for current names, pinned pool rarity for odds and saved receipt rarity for
+historical awards. Ignore legacy variant rarity; unknown data remains neutral.
+Use one shared text component with readable light/dark/increased-contrast colours,
+separate from glow colours, and accessible rarity labels. Sample/asset names use
+explicit display-only Oak/Moonwillow metadata checked against approved launch data;
+no runtime ownership, asset, API, schema, rarity assignment or draw-rule changes.
+
+**Validation:** portable project/asset/contract, actual palette contrast and sample
+metadata checks; Swift syntax and whitespace. Native tests extend same-request
+recovery, repeated openings, saved history and real-sheet background interruption;
+retain both taps for every rarity, generic packs and Reduce Motion. Check all name
+surfaces including duplicate copies, offline/cache/legacy data, principal titles,
+large text and VoiceOver on iPhone. Tests added are not recorded as executed.
+
+#### F8.4a retained interruption acceptance scope
+
+
+- Remove **Continue later** from the ceremony in this increment.
   Preserve Cancel before opening confirmation, the two deliberate taps during an
   uninterrupted ceremony, receipt-derived lighting and final Continue.
 - If interrupted after a confirmed server opening, treat presentation as complete:
@@ -1056,8 +1086,8 @@ Mac/native and user/device acceptance remain pending. See frontend/VALIDATION.md
   cover network loss, background, relaunch, account switch, repeated taps and
   Reduce Motion. Exactly one pack consumption and saved sprout; no replay.
 - Primary surfaces: `PackOpeningScreen.swift`, collection coordinator/journal only
-  if a concrete gap exists, fixtures and opening/recovery tests. This is deferred
-  behavior work; F8.3 only updates navigation text on these surfaces.
+  if a concrete gap exists, fixtures and opening/recovery tests. This behavior
+  work is delivered in F8.4; F8.3 changed navigation text only.
 
 ### Later activity integrity — workout eligibility and idle sessions (deferred)
 
