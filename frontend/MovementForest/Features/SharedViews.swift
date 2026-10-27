@@ -202,3 +202,13 @@ struct DetailRow: View {
         }.padding(.vertical, 3).accessibilityElement(children: .combine)
     }
 }
+
+struct SkillSummaryLabel: View {
+    let skill: APISkillSummary.Effect
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(skill.name).font(.headline)
+            Text(skill.bonusText).font(.subheadline).foregroundStyle(.secondary)
+        }.accessibilityElement(children: .combine)
+    }
+}

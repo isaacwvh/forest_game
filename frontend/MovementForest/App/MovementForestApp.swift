@@ -115,7 +115,9 @@ struct RootView: View {
 
     var body: some View {
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("--fixture-pack") {
+        if ProcessInfo.processInfo.arguments.contains("--fixture-collection") {
+            CollectionCleanupFixtureScreen()
+        } else if ProcessInfo.processInfo.arguments.contains("--fixture-pack") {
             PackOpeningFixtureScreen()
         } else { application }
         #else
@@ -204,7 +206,8 @@ struct RootView: View {
                 .onPreferenceChange(GardenBottomNavigationTop.self) { bottomNavigationTop = $0 }
                 .sheet(isPresented: $settingsPresented) {
                     NavigationStack {
-                        SettingsScreen(catalog: catalog, activity: container.activity, connection: container.connection)
+                        SettingsScreen(catalog: catalog, activity: container.activity, connection: container.connection,
+                                       sampleGarden: container.garden.garden)
                             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { settingsPresented = false } } }
                     }
                 }

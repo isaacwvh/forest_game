@@ -11,12 +11,10 @@ struct ActivityRecapScreen: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Your garden update").font(.title2.bold())
+                    Text("Garden update").font(.title2.bold())
                         .accessibilityAddTraits(.isHeader).accessibilityFocused($titleFocused)
                     if recap.loading { ProgressView("Checking activity…") }
                     else { Text(recap.status).accessibilityIdentifier("recap.status") }
-                    Text("Activity waters planted copies. Stored plants keep their progress without growing.")
-                        .font(.footnote).foregroundStyle(.secondary)
                 }
                 if !recap.rows.isEmpty {
                     Section("Plant progress") {
@@ -33,8 +31,9 @@ struct ActivityRecapScreen: View {
                                     if row.water != "0" {
                                         Text("+\(ExactAmount.water(row.water)) water")
                                         if row.skillWater != "0" {
-                                            Text("Includes +\(ExactAmount.water(row.skillWater)) from garden skills")
-                                                .font(.subheadline).foregroundStyle(.secondary)
+                                            DisclosureGroup("Skill bonus: +\(ExactAmount.water(row.skillWater)) water") {
+                                                Text("Included in this saved growth reward.").foregroundStyle(.secondary)
+                                            }.font(.subheadline)
                                         }
                                     } else { Text(row.plant?.growthStage == .adult ? "Fully grown" : "No new confirmed growth").foregroundStyle(.secondary) }
                                     if let before = row.beforeStage, let after = row.afterStage, before != after {
@@ -45,20 +44,21 @@ struct ActivityRecapScreen: View {
                                         if plant.placement == nil { Text("Now in Storage").font(.caption).foregroundStyle(.secondary) }
                                     }
                                 }
-                            }.padding(.vertical, 4).accessibilityElement(children: .combine)
+                            }.padding(.vertical, 4)
                         }
                     }
-                } else if !recap.loading { Text("No plant progress is available yet. Open Edit → Storage → plant details → Place to plant a copy.") }
+                } else if !recap.loading { Text("No plant progress yet. Plant a copy from Edit → Storage.") }
                 if !recap.activeSkills.isEmpty {
                     Section("Skills active now") {
                         ForEach(recap.activeSkills) { skill in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(skill.name).font(.headline)
+                            DisclosureGroup {
                                 Text(skill.description).font(.subheadline)
-                            }.accessibilityElement(children: .combine)
+                            } label: { SkillSummaryLabel(skill: skill) }
                         }
-                        Text("These are your current skills. Water above includes only bonuses saved with those rewards. A newly adult source affects later uploads.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                        DisclosureGroup("About these bonuses") {
+                            Text("These are current skills. Growth above includes only bonuses saved with those rewards; newly adult sources affect later uploads.")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -86,7 +86,7 @@ struct PlantGrowthProgress: View {
                     .accessibilityValue(fraction.formatted(.percent.precision(.fractionLength(0))))
                 Text("\(ExactAmount.water(NSDecimalNumber(decimal: max(0, target - current)).stringValue)) water to \(plant.growthStage.next?.title ?? "next stage")")
                     .font(.caption).foregroundStyle(.secondary)
-            } else { Text("Fully grown · Still contributes attraction while planted").font(.caption).foregroundStyle(.secondary) }
+            } else { Text("Fully grown").font(.caption).foregroundStyle(.secondary) }
         }
     }
 }

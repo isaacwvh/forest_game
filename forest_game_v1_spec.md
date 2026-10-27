@@ -1,10 +1,29 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.23\
-Date: 26 October 2026\
+Document version: 0.24\
+Date: 28 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
+
+**F8.5 minimal UI cleanup, 28 October 2026 — source implemented; native acceptance
+pending:** this is the highest-priority presentation batch, ahead of proposed
+token-reward effects. Exchange and Packs use compact icon/name/action rows with
+an upper-right information button; Exchange includes token price and a purchase
+confirmation sheet with the existing quantity range. Both keep tokens at the top.
+Pack contents initially show rarity-coloured tier names, their actual percentages
+and plant names; species/variant probabilities expand on demand using the selected
+pack's pinned definition. Packs shows unopened packs before one last confirmed
+opening, without a visible history list. Historical receipts, journals, API reads,
+ownership and repeat-safe recovery remain intact. Garden info contains only active
+skills: name/effect first, description/source/caps on expansion. Visitor mechanics,
+current visitor details, controls and accessible sample-plant browsing move to
+Settings → Game help. Other pages collapse supporting detail and shorten copy;
+Health consent, recovery and player actions remain accessible. This supersedes
+earlier requirements for visible opening history and visitor/controls sections in
+Garden info, not the requirement to preserve historical data or recovery. Game
+rules, calculations, economy, APIs and the two-tap opening ceremony are unchanged.
+See [F8 acceptance](frontend/F8_ACCEPTANCE.md) and [validation](frontend/VALIDATION.md).
 
 **F8.1 presentation update, 26 October 2026:** source integrates the app-entry
 scrollable plant/skill recap, explicit exchange feedback, agreed two-tap bundled

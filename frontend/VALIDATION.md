@@ -2,6 +2,74 @@
 
 Prepared on Windows; native acceptance is pending.
 
+## F8.5 minimal UI cleanup — 28 October 2026
+
+Source implemented locally at the user's request. The user subsequently requested
+commit/push for Mac testing without waiting for CI. Native results remain pending.
+
+- Compact shared Exchange/Packs rows with information buttons; Exchange confirmation
+  sheet retains quantity 1–20, exact total, affordability and explicit Purchase.
+- Pinned pack contents show rarity-coloured tiers/percentages and plant names;
+  existing species/variant odds expand on demand. Packs places unopened packs above
+  one last confirmed opening and removes only the visible history list.
+- Presentation chooses the newest saved opening, ignoring purchase/milestone results
+  and handling a newly confirmed result before history refresh completes. Journals,
+  historical reads and opening/recovery operations remain unchanged.
+- Garden info contains expandable active skills. Settings → Game help contains
+  controls, visitor explanations/current values and accessible sample browsing.
+  Other pages collapse supporting details while retaining actions/consent/recovery.
+- Added native result-selection tests and UI coverage for Game help, relocated sample
+  browsing, read-only odds, cancelled purchase/open confirmations, purchase quantity
+  and affordability. A Debug-only in-memory collection fixture exercises actual views
+  without account/network/Health uploads or disk journals. These tests are added,
+  not recorded as executed on this Windows host.
+
+Executed and passed on Windows after the source changes:
+
+- `python -X utf8 frontend/scripts/validate_frontend.py`: generated project current,
+  all assets/checksums/contracts, actual rarity palettes/contrast, sample metadata,
+  portrait/light configuration and public/internal build configuration checks.
+- `python -X utf8 frontend/scripts/check_swift_syntax.py`: all 64 Swift files parse.
+- `git diff --check`: no whitespace errors.
+- UTF-8/source-text check across all 21 changed tracked files, and diff boundary
+  verification: no backend, production services/models/renderer, assets or
+  `PackOpeningScreen.swift` changes. Pre-existing untracked assets are untouched.
+
+Not executed: Apple SDK compilation/typechecking, Debug XCTest/UI, public Release
+and InternalRelease builds, native screenshots, VoiceOver and physical iPhone
+acceptance. Windows has no Swift/Xcode/Apple SDK. Do not describe portable parsing
+as passing native tests. Run `bash frontend/scripts/test-mac.sh` on Mac, then the
+current F8.5 walkthrough at the top of F8_ACCEPTANCE.md. Native visual inspection
+cannot be replaced by a web UI detector. The shared navigation-overlap device
+retest is included in that walkthrough.
+
+## Current presentation status — 28 October 2026
+
+- F8.3/F8.3b were previously user-accepted, including popup/quiet-welcome fixes
+  pushed as `70ab8e9`. Their source-handoff records below are historical.
+- F8.4 pack-opening recovery and shared rarity-coloured plant names were pushed
+  to GitHub `main` as `4f6e1f4`. The user confirmed expected behavior on 28 October
+  and the bounded batch is complete. Its earlier local-only handoff below is
+  historical. User acceptance is distinct from automated/native test evidence.
+- The minimal shared page/navigation overlap fix was pushed as `11040d2` on
+  28 October. Only `App/MovementForestApp.swift` changed: page content and bottom
+  navigation occupy separate zero-spacing vertical layout rows, replacing the
+  enclosing safe-area inset. No fixed per-page bottom padding was added. Device
+  retest has not been reported; use the follow-up in F8_ACCEPTANCE.md.
+
+Executed for `11040d2` on Windows:
+
+- `python -X utf8 frontend/scripts/validate_frontend.py`: passed project/resource,
+  assets/checksums, contract, rarity palette/metadata and configuration checks.
+- `python -X utf8 frontend/scripts/check_swift_syntax.py`: all 64 Swift files parse.
+- `git diff --check`: passed.
+
+GitHub push succeeded for both commits. CI was not awaited and its result is
+unrecorded. Apple SDK compilation, XCTest/UI, Release/InternalRelease builds and
+unreported device/VoiceOver/performance cases remain separate outstanding checks;
+portable parsing does not establish them. The documentation-only status update
+does not implement the proposed F8.5 token-feedback or later effects scope.
+
 ## F6 initializer actor-isolation correction — 23 October 2026
 
 The user's Xcode build reported that the `VisitorJournalStore()` default argument

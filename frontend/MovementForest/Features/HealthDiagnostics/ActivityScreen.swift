@@ -5,8 +5,7 @@ struct ActivityScreen: View {
     var body: some View {
         List {
             Section {
-                Text("Everyday movement, a growing forest.").font(.title2).fontWeight(.semibold)
-                Text("Read steps, walking/running distance, active energy, flights climbed and recorded workouts from Apple Health. Enable activity uploads separately to grow your planted plants.")
+                Text("Activity from Apple Health. Garden uploads are controlled separately in Activity sync.")
                     .foregroundStyle(.secondary)
             }
             if store.provider.isFixture {
@@ -47,35 +46,41 @@ struct ActivityScreen: View {
                         Text("Last checked \(report.observedAt.formatted(date: .omitted, time: .shortened)) · \(report.timeZoneIdentifier)")
                             .font(.caption).foregroundStyle(.secondary)
                     }
-                    Section("Recent days") {
-                        ForEach(report.days.reversed()) { day in
-                            HStack {
-                                QuantityLabel(metric: "steps", text: ActivityCalendar.dayLabel(day.start, timeZoneIdentifier: report.timeZoneIdentifier))
-                                Spacer()
-                                Text(day.steps.map { $0.formatted(.number.precision(.fractionLength(0))) } ?? "No readable data")
-                                    .foregroundStyle(.secondary).multilineTextAlignment(.trailing)
-                            }.accessibilityElement(children: .combine)
+                    Section {
+                        DisclosureGroup("Recent days") {
+                            ForEach(report.days.reversed()) { day in
+                                HStack {
+                                    QuantityLabel(metric: "steps", text: ActivityCalendar.dayLabel(day.start, timeZoneIdentifier: report.timeZoneIdentifier))
+                                    Spacer()
+                                    Text(day.steps.map { $0.formatted(.number.precision(.fractionLength(0))) } ?? "No readable data")
+                                        .foregroundStyle(.secondary).multilineTextAlignment(.trailing)
+                                }.accessibilityElement(children: .combine)
+                            }
                         }
                     }
-                    Section("Recorded workouts · recent 7 days") {
+                    Section {
                         if let issue = report.workoutsIssue { Text(issue) }
-                        if report.workouts.isEmpty { Text("No readable workouts for this period.").foregroundStyle(.secondary) }
-                        ForEach(report.workouts) { workout in
-                            VStack(alignment: .leading, spacing: 4) {
-                                QuantityLabel(metric: QuantityArtwork.workoutKey(workout.activityType), text: workout.title)
-                                Text("\(workout.start.formatted(date: .abbreviated, time: .shortened)) · \(Int(workout.durationSeconds / 60)) min")
-                                    .font(.subheadline).foregroundStyle(.secondary)
-                            }.accessibilityElement(children: .combine)
+                        DisclosureGroup("Recorded workouts · recent 7 days") {
+                            if report.workouts.isEmpty { Text("No readable workouts for this period.").foregroundStyle(.secondary) }
+                            ForEach(report.workouts) { workout in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    QuantityLabel(metric: QuantityArtwork.workoutKey(workout.activityType), text: workout.title)
+                                    Text("\(workout.start.formatted(date: .abbreviated, time: .shortened)) · \(Int(workout.durationSeconds / 60)) min")
+                                        .font(.subheadline).foregroundStyle(.secondary)
+                                }.accessibilityElement(children: .combine)
+                            }
+                            Text("Manually entered workouts are excluded. Supported workout types earn additional water from eligible duration.").font(.caption).foregroundStyle(.secondary)
                         }
-                        Text("Manually entered workouts are excluded. Supported workout types earn additional water from eligible duration.").font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 if store.hasRequestedAccess {
                     Section {
                         Button("Refresh activity") { Task { await store.refresh() } }.disabled(store.isLoading)
                         Button("Review Health access") { Task { await store.connect() } }.disabled(store.isLoading)
-                        Text("An empty result can mean there is no data or it isn’t shared with this app. To change access, open Health, tap your profile, then Apps and Movement Forest. Recorded workouts may arrive after your tracker syncs.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                        DisclosureGroup("Health access help") {
+                            Text("An empty result can mean there is no data or it isn’t shared with this app. Change access in Health → profile → Apps → Movement Forest. Workouts may arrive after your tracker syncs.")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

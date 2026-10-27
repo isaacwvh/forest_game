@@ -76,6 +76,32 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testLatestPackResultIgnoresPurchasesAndMilestonesAndUsesSavedHistory() throws {
+        let contract = try CollectionContract.load()
+        let opening = contract.opening
+        let milestone = APICollectionReceipt(requestId: UUID(), tokenBalance: "30", economyVersion: 100,
+            milestoneId: "first_visit", milestoneEventId: UUID(), tokensEarned: "30")
+        for other in [contract.exchange, milestone] {
+            XCTAssertEqual(PackResultPresentation.latestOpening(result: other, history: [opening])?.id, opening.id)
+        }
+        XCTAssertEqual(PackResultPresentation.latestOpening(result: nil, history: [opening])?.id, opening.id)
+        XCTAssertNil(PackResultPresentation.latestOpening(result: milestone, history: []))
+    }
+
+    func testLatestPackResultKeepsNewlyConfirmedOpeningWhenHistoryRefreshIsStale() throws {
+        let contract = try CollectionContract.load()
+        let previous = contract.opening
+        let fresh = APICollectionReceipt(requestId: UUID(), tokenBalance: previous.tokenBalance,
+            economyVersion: previous.economyVersion + 1, openingId: UUID(), ownedPackId: UUID(),
+            rarity: "rare", openedAt: previous.openedAt, plant: previous.plant)
+        XCTAssertEqual(PackResultPresentation.latestOpening(result: fresh, history: [previous])?.id, fresh.id)
+        XCTAssertEqual(PackResultPresentation.latestOpening(result: previous, history: [fresh])?.id, fresh.id)
+        // An incomplete response must not replace a verified saved plant.
+        let incomplete = APICollectionReceipt(requestId: UUID(), tokenBalance: "0", economyVersion: 100,
+            openingId: UUID(), ownedPackId: UUID())
+        XCTAssertEqual(PackResultPresentation.latestOpening(result: incomplete, history: [fresh])?.id, fresh.id)
+    }
+
     func testRepeatedOpenWhileOriginalRequestIsInFlightKeepsOneOperation() async throws {
         let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
         let store = CollectionCoordinator(userID: UUID(), service: service, journal: journal)

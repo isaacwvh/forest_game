@@ -354,21 +354,22 @@ struct VisitorRecoveryNotice: View {
 struct VisitorInformationSection: View {
     @ObservedObject var store: VisitorCoordinator
     var body: some View {
-        Section("Visitors") {
-            if let value = store.summary {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Placed plants contribute \(ExactAmount.water(value.totalAttractionMicroUnits)) attraction. Higher stages attract more; stored plants contribute none.")
-                    Text("Away rate: \(value.offlineVisitsPerHour) visits/hour. Only collected whole visits become tokens.")
+        Section {
+            DisclosureGroup("Current visitor details") {
+                if let value = store.summary {
+                    Text("Last confirmed values").font(.caption).foregroundStyle(.secondary)
+                    QuantityDetailRow(metric: "attraction", title: "Garden attraction", value: ExactAmount.water(value.totalAttractionMicroUnits))
+                    QuantityDetailRow(metric: "offline_visitor_rate", title: "Away rate", value: "\(value.offlineVisitsPerHour) visits/hour")
                     if let activeRate = value.activeVisitsPerHour {
-                        Text("Active arrival target: \(activeRate) visitors/hour while this garden is open. Tap butterflies to welcome them.")
+                        QuantityDetailRow(metric: "active_visitor_rate", title: "Active arrival target", value: "\(activeRate) visitors/hour")
                     }
                     if let seconds = value.secondsUntilFull {
-                        Text(seconds == 0 ? "Storage is full. Earned visits stay until collected." : "About \(max(1, (seconds + 59) / 60)) minutes until full while away.")
-                    } else { Text("Time to full is shown while inactive and producing visits.") }
+                        Text(seconds == 0 ? "Storage is full" : "About \(max(1, (seconds + 59) / 60)) minutes until full while away")
+                    } else { Text("Time to full is available while away and producing visits.") }
                     Text("Hosted: \(value.hostedTotal) · Active \(value.hostedActive) · Collected \(value.hostedOffline)")
-                    if value.isFixture { Text("Development rates and rewards · Balance is provisional.") }
-                }.font(.caption).foregroundStyle(.secondary).padding(.top, 4)
-            } else { Text("Visitor information is unavailable. Return to Garden and retry visitors.") }
+                    if value.isFixture { Text("Development rates and rewards · provisional").font(.caption).foregroundStyle(.secondary) }
+                } else { Text("Visitor information is unavailable. Return to Garden and retry visitors.") }
+            }
         }
     }
 }

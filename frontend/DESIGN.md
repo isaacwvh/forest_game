@@ -14,7 +14,7 @@ specification. Preserve their calm, stylized miniature-world appearance.
 - World ground is Y=0, assets retain metre scale and fixed ground anchors.
 - Plant selection uses a small yellow marker, independent of gameplay clearance.
 - Embedded wind respects Reduce Motion and inactive views. Scene changes preserve identity.
-- My plants provides read-only owned-copy inspection without precise 3D touch selection. Sample Garden info retains an accessible sample plant list.
+- My plants provides read-only owned-copy inspection without precise 3D touch selection. Settings → Game help retains an accessible sample plant list.
 - Detailed inspection and synthetic fixtures are under developer tools in Debug and explicitly internal Release builds; public Release excludes their routes.
 - Garden browsing fills the navigation-bounded viewport. Tokens, attraction and
   stored visits/capacity share one ordinary-size row. Garden info and outlined
@@ -43,7 +43,10 @@ Evidence is source inspection only. Light appearance, Dynamic Type, portrait lay
 VoiceOver, touch interaction, lighting, imported orientation and performance need
 native validation. No HTML/CSS detector or browser screenshot substitutes for it.
 
-- Garden skills live under Garden info → Active skills.
+- Garden info contains only Active skills. Each row shows its name/effect and
+  expands for description/source/duplicate explanations. Caps expand when reached.
+  Visitor mechanics, read-only current visitor details and controls live under
+  Settings → Game help. Settings → Your data holds Health/upload/cache guidance.
   Preserve the mounted scene and fixed viewport while presenting secondary information. Show confirmed
   effective water, source/duplicate explanations and capped-state text; cached
   summaries are explicitly last confirmed. Pending placement never activates a
@@ -54,7 +57,10 @@ native validation. No HTML/CSS detector or browser screenshot substitutes for it
   active visitors. Browsing and settings retain their native navigation. Editing hides the bottom navigation and sidebar, with Storage and Done editing always clear.
 - Exchange separates read-only contents from explicit purchase confirmation,
   with inline pending/success/recovery feedback and a route to Packs. Packs
-  separates unopened packs, the persisted confirmed result and history.
+  shows tokens, unopened packs, then one last confirmed opening. The visible
+  history list is removed; saved receipts/history and recovery are retained.
+  Exchange/Packs share compact icon/name/action rows and upper-right information
+  buttons. Exchange adds price; quantity and total live in its purchase sheet.
   Catalogue inspection is independent of ownership. Use native lists, text
   styles, SF Symbols, 44-point actions and explicit pending/error/empty states.
 - Wallet presentation accepts newer server economy versions only. A durable
@@ -65,7 +71,9 @@ native validation. No HTML/CSS detector or browser screenshot substitutes for it
   species detail, alongside current-pack conditional and overall draw odds. Rarity
   belongs to the species; legacy variant rarity is not used for new catalogue UI.
 - Pack contents distinguish schema-2 rarity → equal species → weighted variant
-  from legacy flat outcomes. Stage artwork remains visible; silhouettes and
+  from legacy flat outcomes inside expandable plant entries. The initial view
+  shows only rarity-coloured tier names/percentages and plant names from the pinned
+  pack. Stage artwork remains visible; silhouettes and
   permanent account-scoped discovery are deferred polish in IMPLEMENTATION_PLAN.
 
 - An app-entry sheet shows a frozen batch of saved growth per owned copy,
@@ -88,7 +96,7 @@ native validation. No HTML/CSS detector or browser screenshot substitutes for it
 - Routine Garden success messages are classified explicitly and hidden without
   clearing service state. Pending, uncertain, offline and recovery notices remain
   actionable overlays. Confirmed rewards/request outcomes remain in local diagnostics.
-  Visitor explanations and active skills remain in Garden info.
+  Active skills remain in Garden info; visitor explanations move to Game help.
 - Settings → Developer tools → Diagnostics shows the real connected state and
   live Garden renderer, plus bounded local events with manual copy/export. It does
   not create a renderer, own requests, upload logs or capture credentials/Health bodies.

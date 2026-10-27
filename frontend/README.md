@@ -206,7 +206,8 @@ performance, full minimum-device coverage and App Store preparation remain open.
 Bottom navigation is My plants / Garden / Edit / Activity. Garden remains mounted
 through browsing and focused editing. My plants is read-only; placement starts at
 Edit → Storage → copy details → Place. Done cancels previews and retains submitted
-requests. Garden info holds visitor explanations and active skills.
+requests. Garden info holds expandable active skills; Settings → Game help holds
+visitor explanations, current visitor details, controls and sample-plant browsing.
 
 Internal diagnostics: Settings → Developer tools → Diagnostics in Debug or the
 MovementForest-Internal scheme (InternalRelease). The normal MovementForest

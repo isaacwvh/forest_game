@@ -1,17 +1,23 @@
 # Movement Forest implementation plan
 
-Revised 27 October 2026 against `forest_game_v1_spec.md`, version 0.23.
+Revised 28 October 2026 against `forest_game_v1_spec.md`, version 0.24.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
-**Current presentation handoff — 27 October 2026:** F8.3 and F8.3b are completed
-and user-accepted after live testing. F8.3b includes the popup/navigation overlap
-and quiet-welcome follow-up pushed as `70ab8e9`; the user subsequently closed it.
-The next accepted scope is **F8.4 — Pack-opening recovery polish and rarity-coloured
-plant names**. Source is implemented locally with portable checks passing; native
-XCTest/builds and F8.4 iPhone acceptance remain pending. No F8.4 push/CI run.
-Token shimmer/floating +1, watering/stage effects, workout eligibility, gameplay
-rewards, asset delivery and later custom designs remain separate. User acceptance
-does not establish unrecorded automated test or CI results; see frontend/VALIDATION.md.
+**Current presentation handoff — 28 October 2026:** F8.3, F8.3b and F8.4 are
+completed and user-accepted after live testing. F8.3b includes the popup/navigation
+overlap and quiet-welcome follow-up pushed as `70ab8e9`. F8.4 pack-opening recovery
+and rarity-coloured plant names were pushed as `4f6e1f4`; the user confirmed they
+work as expected. The separate minimal page/navigation overlap fix was pushed as
+`11040d2`: the shared shell reserves a layout row for the bottom bar, including
+on Packs. Its device retest has not been reported. Portable checks pass; native
+XCTest/build and CI results remain unrecorded. CI was not awaited for either push.
+**F8.5 — minimal UI and page cleanup** is now the user-approved highest-priority
+scope and is source-implemented locally, with native build/device acceptance
+pending. The previously proposed token-reward feedback is deferred below.
+Watering/stage effects, catalogue
+discovery, workout eligibility, gameplay rewards, asset delivery and later custom
+designs remain separate. User acceptance does not establish unrecorded automated
+test or CI results; see frontend/VALIDATION.md.
 
 The first B8 skill/cap increment is now source-implemented below, including
 Sleeping Dew and the native Active skills disclosure. Its selected provisional
@@ -1037,11 +1043,13 @@ My plants search/filter/bulk actions; placement-rule changes; auth/onboarding re
 Dark Mode/landscape and general renderer rewrites. F8.3b is completed and
 user-accepted; this does not imply unrecorded native automated/CI results.
 
-### F8.4 — Pack-opening recovery polish and rarity-coloured plant names
+### F8.4 — Pack-opening recovery polish and rarity-coloured plant names — completed, user accepted 28 October 2026
 
-**Status:** user-approved scope; source implemented locally on 27 October 2026.
-Portable validation passes. Native build/XCTest, visual/VoiceOver and physical
-account interruption acceptance remain pending; no commit/push or CI run.
+**Status:** implemented on 27 October 2026 and pushed to GitHub `main` as
+`4f6e1f4`. On 28 October the user confirmed the changes work as expected, closing
+this bounded batch. Portable validation passes. Native build/XCTest, detailed
+visual/VoiceOver and account-interruption test results remain unrecorded; user
+acceptance does not certify every walkthrough case. CI was not awaited.
 
 **F8.4a — pack presentation/recovery:** remove Continue later, retain pre-opening
 Cancel, two deliberate uninterrupted taps and final Continue. Set a submission
@@ -1070,6 +1078,17 @@ retain both taps for every rarity, generic packs and Reduce Motion. Check all na
 surfaces including duplicate copies, offline/cache/legacy data, principal titles,
 large text and VoiceOver on iPhone. Tests added are not recorded as executed.
 
+**Minimal navigation follow-up — pushed 28 October 2026:** `11040d2` changes only
+`frontend/MovementForest/App/MovementForestApp.swift`. Replace the shared bottom
+safe-area inset with a zero-spacing vertical layout containing page content and
+the bottom navigation as siblings. This reserves actual space above the bar for
+Packs and other nested navigation/scrolling pages, using the bar's natural height
+rather than fixed per-page padding. Keep the mounted Garden and existing focused
+Edit behavior. Portable frontend validation, all 64 Swift syntax parses and
+whitespace checks passed. Device retest is unreported: scroll Packs and other
+pages to their last rows, inspect pushed details, then verify Garden popup/camera
+and Edit/Done on a small screen and with large text. CI was not awaited.
+
 #### F8.4a retained interruption acceptance scope
 
 
@@ -1088,6 +1107,84 @@ large text and VoiceOver on iPhone. Tests added are not recorded as executed.
 - Primary surfaces: `PackOpeningScreen.swift`, collection coordinator/journal only
   if a concrete gap exists, fixtures and opening/recovery tests. This behavior
   work is delivered in F8.4; F8.3 changed navigation text only.
+
+### F8.5 — minimal UI and page cleanup — source implemented, 28 October 2026
+
+The user approved implementation of this UI-only cleanup as top priority, then
+requested a GitHub push for Mac testing without waiting for CI.
+Native build, XCTest and device acceptance remain pending;
+do not equate portable parsing with Apple SDK compilation or visual acceptance.
+
+- Exchange: compact shared pack row with icon, name, token price, upper-right
+  44-point information action and Purchase pack. Quantity (unchanged 1–20), total
+  cost, affordability and Cancel/Purchase live in a confirmation sheet. Only the
+  final Purchase action calls the existing coordinator; read-only inspection and
+  cancellation do not mutate. Retain concise confirmed purchase and recovery UI.
+- Contents: the selected offer/owned version supplies rarity-coloured tier names,
+  actual percentages and plant names. Conditional/overall species/variant odds
+  expand per plant, retaining legacy schema support and immutable owned pools.
+- Packs: token balance, paginated individual unopened packs, then one last confirmed
+  opening. Remove acquisition text and visible opening history. The presentation
+  selects the newest verified opening from the durable result and existing history
+  by economy version/date; purchases/milestones cannot replace the displayed plant.
+  Historical receipt storage, loading and coordinator recovery are unchanged.
+- Garden info: active skills only. Collapsed name/effect rows expand for description,
+  source and duplicate explanations; cap details expand separately when applicable.
+  Cached/unavailable states remain explicit. No skill calculations are changed.
+- Settings → Game help: expandable controls, placement/storage, visitors, packs and
+  growth/skills topics, existing read-only current visitor details and accessible
+  sample-plant browsing. Settings → Your data retains Health/upload/cache guidance.
+- Catalog, plant details, milestones, Activity/Health and entry recap now collapse
+  supporting descriptions/statistics and reduce repeated copy. Preserve search,
+  filters, pagination, read-only versus contextual Place, permissions/consent,
+  account actions, receipt acknowledgement, missing-data and actionable failures.
+- No production services, wire/domain models, backend, journals, economy, assets,
+  renderer, visitor scheduling or pack ceremony state machine changed. The only
+  app-shell changes pass sample data to help and expose a Debug-only test route.
+- Native regression coverage: latest-opening selection during stale refresh and
+  non-opening receipts; Game help disclosure and relocated sample access; actual
+  collection inspection, purchase/open cancellation, quantity and affordability.
+  The new `--fixture-health --fixture-collection` route is in-memory and Debug-only;
+  it never contacts an account, writes a journal or uploads Health data.
+
+This presentation supersedes older visible-history and Garden info layout clauses
+without discarding saved data or reopening accepted F8.3/F8.4 mechanics. Use the
+F8.5 walkthrough in frontend/F8_ACCEPTANCE.md and record executed validation in
+frontend/VALIDATION.md. The shared bottom-navigation overlap fix still needs its
+device retest as part of the scrolling checks.
+
+### Later polish sequence — proposed after F8.5, 28 October 2026
+
+These are recommendations from the remaining F8 scope, not approval to implement
+or change gameplay. First spot-check `11040d2` on iPhone; keep broad native
+build/accessibility/performance evidence separate from accepted functional work.
+
+1. **Confirmed token reward feedback (deferred; formerly proposed as F8.5):** add a
+   brief counter shimmer and floating confirmed reward amount for a welcomed
+   visitor or Collect. Show the actual receipt amount, not a hard-coded +1 for
+   bulk claims. Present only after server confirmation, once per operation; retries,
+   recovery, ordinary refresh and account changes must not replay an old reward.
+   Preserve quiet routine messages, existing counters/journals, failure/retry
+   feedback, touch/VoiceOver targets and the stable scene/camera. Reduce Motion
+   uses a restrained alternative; feedback must not be required to understand or
+   receive the reward. No new assets, reward rules or endpoint changes. Review
+   confirmed receipt identity/event delivery before deciding the minimal design.
+2. **Shared growth-stage transition effect (separate next batch):** prototype one
+   reusable, bounded leaf/sparkle effect around a confirmed stage-model change,
+   following spec section 12's shared-runtime-effects direction. Preserve copy
+   identity, anchors, camera and authoritative progress; handle multi-stage credits,
+   retries and Reduce Motion without replaying rewards. Scope watering recap
+   animation separately after this prototype; no per-plant effect asset expansion.
+3. **Catalogue stage discovery (larger cross-stack batch):** permanent account/
+   species/stage discovery, silhouettes and accessible Not discovered text, with
+   authoritative transactional updates and existing-account backfill. Storing a
+   plant must not relock a discovered stage. Retain the detailed backlog below;
+   this is not a frontend-only hiding change.
+
+Early collection/lifetime-step rewards remain a separate gameplay option after a
+combined pacing review and explicit reward/previous-claim compensation decisions.
+Workout eligibility needs evidence/protocol planning; asset delivery needs a
+bundled/remote/hybrid decision. Neither belongs in the UI-only F8.5 cleanup.
 
 ### Later activity integrity — workout eligibility and idle sessions (deferred)
 
@@ -1216,10 +1313,10 @@ when implemented; this documentation update does not establish those tests.
 
 **Historical presentation brief:** the butterfly asset/depth, Exchange feedback
 and two-tap lighting items below were subsequently delivered in F8.1/F8.2. Use the
-accepted F8.2/F8.3 baseline and confirmed F8.3b scope above for next work; do not reimplement
-these historical items. Catalogue discovery and other explicit deferrals remain
-future scopes. The later pack-interruption scope above adds a separate behavior
-refinement and is not included in F8.3.
+accepted F8.2/F8.3/F8.3b/F8.4 baseline and proposed next sequence above for next
+work; do not reimplement these historical items. Catalogue discovery and other
+explicit deferrals remain future scopes. Pack-interruption recovery was delivered
+in F8.4; it is no longer an outstanding next increment.
 
 The current functional B6/F6 experience is accepted. Schedule these visual changes
 in the existing final hardening/polish milestone, after the remaining gameplay:
@@ -1317,7 +1414,9 @@ Handle missing artwork/loading, block background interactions, and preserve
 visitor modal/session lifecycle behaviour. Validate all four rarity colours with
 presentation fixtures, both taps, cancellation, failure/retry/recovery, VoiceOver,
 Reduce Motion, large text, portrait/landscape and minimum-device performance.
-Assets and frontend presentation are integrated in F8.1; native acceptance remains pending.
+Assets and frontend presentation were integrated in F8.1 and refined through
+F8.2/F8.4. Those bounded presentation batches are user-accepted; native automated
+and full device-test evidence remains separate, as recorded above.
 
 Cosmetic watering, swarm and elaborate effects remain in later F8 increments.
 These presentation improvements do not block B7/F7 or reopen completed B6/F6 logic.

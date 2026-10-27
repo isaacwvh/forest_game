@@ -3,6 +3,56 @@
 Source implementation: 26 October 2026. Native execution and device results must
 be recorded separately; portable parsing is not Apple SDK compilation.
 
+## F8.5 minimal UI cleanup — source implemented, native acceptance pending, 28 October 2026
+
+This is the current highest-priority presentation batch. It supersedes historical
+walkthrough instructions below that expect opening history or controls/visitor
+details inside Garden info. Saved history and the accepted opening/recovery
+mechanics remain. The user requested a GitHub push for Mac testing without waiting
+for CI; native build and device acceptance remain separate gates.
+
+On Mac first run `bash frontend/scripts/test-mac.sh`: Debug XCTest/UI, public
+Release and InternalRelease builds. Newly added native tests have not run on
+Windows. Debug launch arguments `--fixture-health --fixture-collection` provide
+the actual compact collection views with synthetic in-memory data and counters;
+no account/network/Health upload or disk journal is involved.
+
+Live-account/device walkthrough:
+
+1. Open Exchange. Confirm token balance at the top and compact pack rows with icon,
+   name, price, information icon and Purchase pack. Tap information: only tier
+   names/percentages and plants initially appear. Expand a plant for detailed odds.
+   Close: wallet and owned packs are unchanged. Repeat with an older owned pack and
+   verify its frozen contents, not the current offer's definition.
+2. Tap Purchase pack. Change quantity; check total and affordability. Cancel once
+   with no spend. Confirm an affordable purchase: one debit, correct pack count,
+   updated wallet and concise success/Open packs. Tap repeatedly and test a lost
+   response/relaunch/retry: recover the original request and quantity, never buy twice.
+3. Open Packs: tokens → unopened packs → last confirmed opening. No opening history
+   or acquisition-date text. Load additional pack pages if present. Information is
+   read-only. Cancel an Open confirmation: nothing consumed. Complete a fresh
+   confirmation → tear tap → reveal tap → Continue: one consumed pack, one saved
+   sprout, updated last result. Buy another pack or claim a milestone; the latest
+   opening remains the displayed result. Relaunch and verify it is still available.
+4. Interrupt opening at confirmation, tear, reveal and final result; try network
+   loss, relaunch and account switch. Retain original request recovery and one saved
+   plant. Known confirmed results do not replay the ceremony. No cross-account data.
+5. Garden info shows only active skills or a concise empty/unavailable state. Skill
+   name/effect is visible; description/source appears only after expansion. Check
+   source duplicates, cap detail and last-confirmed cached data where applicable.
+6. Settings → Game help: expand controls, visitors and other topics. Current visitor
+   values are read-only and labelled last confirmed. Sample accounts can browse
+   sample plants here. Return to Garden: camera/selection and butterfly hit targets
+   are preserved; visitors resume normally. Verify Edit → Storage → details → Place,
+   cancel/confirm and Done still work, including accessible camera controls.
+7. Inspect Catalog, My plants/details, Milestones, Activity/Health, recap and account.
+   Supporting information expands, while search/filter/pagination, claim, Place,
+   consent, sync, recovery and account actions remain available. Missing data never
+   appears as zero. Dismissing recap does not award growth again.
+8. On a small screen and at accessibility text sizes, scroll every page to its final
+   row above bottom navigation. Check readable rarity colours, 44-point information
+   targets, VoiceOver disclosure/actions and Reduce Motion's unchanged pack flow.
+
 ## Lifecycle follow-up — done, user accepted on iPhone, 26 October 2026
 
 The user confirmed expected recap behavior, then confirmed that cold-start
@@ -391,7 +441,12 @@ delivery remain separate work.
    wallet/ownership. Spot-check pack opening and Milestones.
 
 
-## F8.4 pack recovery and rarity-coloured names — source implemented; native acceptance pending
+## F8.4 pack recovery and rarity-coloured names — completed, user accepted 28 October 2026
+
+Pushed to GitHub `main` as `4f6e1f4`. The user confirmed the changes work as
+expected. This closes the bounded functional batch; the walkthrough remains a
+regression reference. No unreported native build/XCTest, VoiceOver, detailed
+interruption-case or CI result is inferred from that acceptance.
 
 1. Open Packs. Cancel an Open confirmation: no pack consumption. Confirm a fresh
    opening: no Continue later; tear tap, reveal tap and final Continue still work.
@@ -417,10 +472,27 @@ delivery remain separate work.
 
 Run `bash frontend/scripts/test-mac.sh` for XCTest and Release/InternalRelease builds,
 then perform this live-account walkthrough. Record actual automated results and
-subsequent user acceptance separately. No F8.4 native/CI pass is claimed here.
+user acceptance separately. No F8.4 native automated/CI pass is claimed here.
 
 For all-four-rarity visual checks without changing live game data, use Debug launch
 arguments `--fixture-pack --fixture-common` (or `--fixture-rare`, `--fixture-epic`,
 `--fixture-legendary`). After Continue, the fixture host shows the saved name on a
 light background. View saved result returns directly to the dark result without
 another opening. Add `--fixture-reduce-motion` for the reduced-motion variant.
+
+## Shared bottom navigation follow-up — pushed 28 October 2026; device retest unreported
+
+Commit `11040d2` reserves a separate layout row for the bottom navigation rather
+than applying a safe-area inset around nested navigation stacks. One shared-shell
+file changed; no per-page hard-coded bar padding was introduced. Portable frontend
+validation, all 64 Swift syntax parses and whitespace checks passed. CI was not
+awaited; native layout verification remains a device check.
+
+1. Open Packs and scroll to the final opening-history row, including long content
+   and pagination when available. It must be fully reachable above the bottom bar.
+2. Check Exchange, Catalog, Milestones, My plants and Activity, including pushed
+   plant/catalogue details. Last rows and bottom actions must remain reachable.
+3. Return to Garden: popup stays above navigation, gestures work, camera is retained.
+   Edit hides navigation; Storage/Place/Cancel/Apply and Done remain usable.
+4. Repeat on a small screen with largest text. Check sidebar and Settings sheets
+   still present/dismiss normally, and VoiceOver can reach final rows and navigation.

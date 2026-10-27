@@ -14,7 +14,7 @@ struct MyPlantsHostScreen: View {
                 VStack(spacing: 12) {
                     Image(systemName: "leaf").font(.largeTitle).foregroundStyle(Color.forestTint)
                     Text("Your plants belong here").font(.title2.bold())
-                    Text("Sign in through Settings → Account and sign-in to see your planted and stored copies. The sample garden is for exploring.")
+                    Text("Sign in through Settings → Account and sign-in.")
                         .foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }.padding(24)
             }
@@ -42,7 +42,7 @@ struct MyPlantsScreen: View {
             }
             Section("Planted") {
                 if let garden = store.confirmed {
-                    if garden.plants.isEmpty { Text("No planted copies. Use Edit → Storage to place a plant.").foregroundStyle(.secondary) }
+                    if garden.plants.isEmpty { Text("No planted plants. Place one from Edit → Storage.").foregroundStyle(.secondary) }
                     ForEach(garden.plants) { plant in
                         NavigationLink {
                             OwnedPlantDetailScreen(store: store, copyID: plant.id, catalog: catalog)
@@ -56,7 +56,7 @@ struct MyPlantsScreen: View {
                     Text("Your stored copies will appear when your garden loads.").foregroundStyle(.secondary)
                 }
                 if store.confirmed != nil && store.inventory.isEmpty && !store.state.busy {
-                    Text(store.nextCursor == nil ? "No stored copies in the saved inventory." : "Load more to see your stored copies.")
+                    Text(store.nextCursor == nil ? "No stored plants." : "Load more to see stored plants.")
                         .foregroundStyle(.secondary)
                 }
                 ForEach(store.inventory) { plant in

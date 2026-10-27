@@ -221,14 +221,11 @@ struct ConnectedGardenScreen: View {
 
     private var gardenInformation: some View {
         List {
-            if let visitors = visitors { VisitorInformationSection(store: visitors) }
             Section("Active skills") {
                 if let summary = store.confirmed?.skillSummary {
-                    if summary.activeSkills.isEmpty { Text("No active skills. Fully grown planted sources activate their garden skills.") }
+                    if summary.activeSkills.isEmpty { Text("No active skills").foregroundStyle(.secondary) }
                     ForEach(summary.activeSkills) { skill in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(skill.name).font(.headline)
-                            Text(skill.bonusText).font(.subheadline)
+                        DisclosureGroup {
                             Text(skill.description).foregroundStyle(.secondary)
                             if let source = store.ownedCopy(skill.sourcePlantId) {
                                 PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []),
@@ -238,15 +235,15 @@ struct ConnectedGardenScreen: View {
                             if skill.eligibleSourcePlantIds.count > 1 {
                                 Text("\(skill.eligibleSourcePlantIds.count) sources share this bonus.").font(.caption)
                             }
-                        }.padding(.vertical, 4)
+                        } label: {
+                            SkillSummaryLabel(skill: skill)
+                        }.padding(.vertical, 4).accessibilityIdentifier("garden.skill.\(skill.skillId)")
                     }
-                    if summary.capReached { Text(summary.caps.description).font(.footnote) }
+                    if summary.capReached {
+                        DisclosureGroup("Boost cap reached") { Text(summary.caps.description).font(.footnote) }
+                    }
                 } else { Text("Skill information is unavailable. Refresh your garden to try again.") }
                 if store.showingCached { Text("Last confirmed skills").font(.caption).foregroundStyle(.secondary) }
-            }
-            Section("Garden controls") {
-                Text("Drag to orbit · Pinch to zoom · Two fingers to pan")
-                Text("Inspect owned copies in My plants. Arrange them through Edit → Storage → plant details → Place.")
             }
         }.navigationTitle("Garden information")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }

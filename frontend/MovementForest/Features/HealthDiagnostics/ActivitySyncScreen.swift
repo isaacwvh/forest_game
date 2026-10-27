@@ -22,30 +22,20 @@ struct ActivitySyncScreen: View {
     @State private var replacing = false
     var body: some View {
         List {
-            Section("Movement grows your planted forest") {
-                Text("Each planted copy converts its supported activities into water. Plants in storage keep their progress and do not grow.")
-                Toggle("Sync activity with my garden", isOn: Binding(get: { sync.enabled }, set: { value in
-                    if value { showingConsent = true }
-                    else { Task { await sync.setEnabled(false) } }
-                })).disabled(sync.busy || sync.recoveryLocked || !sync.canUpload)
-                    .accessibilityIdentifier("sync.enabled")
-                if sync.enabled && !sync.includesOptionalActivity {
-                    Text("Your existing permission uploads steps only.")
-                    Button("Enable optional quantities and workouts") { showingConsent = true }
-                }
-                Text("With full activity sync enabled, daily steps, distance, active energy, flights and recorded workout identity, type, source, timestamps and eligible segments are queued on this iPhone and uploaded for growth. You can pause future uploads here.")
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
             Section("Sync status") {
                 if sync.busy { ProgressView("Confirming activity…") }
                 Text(sync.message).accessibilityIdentifier("sync.status")
                 if let status = sync.status {
-                    DetailRow(title: "Game timezone", value: status.gameTimezone)
                     DetailRow(title: "Last confirmed sync", value: status.lastSyncAt.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "Not yet synced")
-                    DetailRow(title: "Lifetime eligible steps", value: status.activitySteps)
-                    DetailRow(title: "First maturities", value: String(status.firstMaturityCount))
+                    DisclosureGroup("Sync details") {
+                        DetailRow(title: "Game timezone", value: status.gameTimezone)
+                        DetailRow(title: "Lifetime eligible steps", value: status.activitySteps)
+                        DetailRow(title: "First maturities", value: String(status.firstMaturityCount))
+                    }
                 }
-                DetailRow(title: "Saved requests awaiting confirmation", value: String(sync.pendingCount))
+                if sync.pendingCount > 0 {
+                    DetailRow(title: "Awaiting confirmation", value: String(sync.pendingCount))
+                }
                 Button("Sync now") { Task { _ = await sync.synchronize() } }
                     .disabled(sync.busy || sync.recoveryLocked).accessibilityIdentifier("sync.now")
                 if sync.otherDeviceActive {
@@ -58,11 +48,25 @@ struct ActivitySyncScreen: View {
                 }
 
             }
+            Section("Activity sync") {
+                Toggle("Sync activity with my garden", isOn: Binding(get: { sync.enabled }, set: { value in
+                    if value { showingConsent = true }
+                    else { Task { await sync.setEnabled(false) } }
+                })).disabled(sync.busy || sync.recoveryLocked || !sync.canUpload)
+                    .accessibilityIdentifier("sync.enabled")
+                if sync.enabled && !sync.includesOptionalActivity {
+                    Text("Steps-only sync").font(.caption).foregroundStyle(.secondary)
+                    Button("Enable optional quantities and workouts") { showingConsent = true }
+                }
+                DisclosureGroup("About activity sync") {
+                    Text("Supported activity waters planted copies. Stored plants keep their progress without growing. Only new activity after enabling sync earns growth; activity does not award visitor tokens.")
+                    Text("Full sync queues daily steps, distance, active energy, flights and recorded workout identity, type, source, timestamps and eligible segments on this iPhone, then uploads them for growth. Pause future uploads with the switch above.")
+                }
+            }
             if !sync.recaps.isEmpty {
                 Section("Confirmed growth") {
                     ForEach(sync.recaps) { recap in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(recap.createdAt.formatted(date: .abbreviated, time: .shortened)).font(.subheadline)
+                        DisclosureGroup(recap.createdAt.formatted(date: .abbreviated, time: .shortened)) {
                             ForEach(recap.payload.plants) { plant in
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("+\(ExactAmount.water(plant.awardedGrowthMicroUnits)) water")
@@ -80,16 +84,14 @@ struct ActivitySyncScreen: View {
                             }
                         }.padding(.vertical, 4)
                     }
-                    Button("Done / skip recap") { Task { await sync.dismissRecaps() } }
+                    Button("Dismiss growth recap") { Task { await sync.dismissRecaps() } }
                         .disabled(sync.busy).accessibilityIdentifier("sync.recapDone")
-                    Text("Growth is already saved. Viewing or skipping this recap never grants another reward.")
+                    Text("Growth is already saved.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
             Section {
                 NavigationLink("Health activity on this iPhone") { ActivityScreen(store: health) }
-                Text("Growth starts with new movement after you enable sync. Only planted copies grow. Activity does not award visitor tokens.")
-                    .font(.footnote).foregroundStyle(.secondary)
             }
         }.navigationTitle("Activity")
             .preference(key: EntryPresentationBlocker.self, value: showingConsent || replacing)

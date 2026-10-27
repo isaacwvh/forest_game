@@ -31,7 +31,9 @@ final class ForestUITests: XCTestCase {
         XCTAssertFalse(app.buttons["visitors.welcome"].exists)
         app.buttons["garden.info"].tap()
         XCTAssertTrue(app.navigationBars["Garden information"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Garden controls"].exists)
+        XCTAssertTrue(app.staticTexts["Active skills"].exists)
+        XCTAssertFalse(app.staticTexts["Garden controls"].exists)
+        XCTAssertFalse(app.staticTexts["Visitors"].exists)
     }
 
     func testOwnedBrowsingIsReadOnlyAndStorageOpensDetailsBeforePlace() {
@@ -247,15 +249,81 @@ final class ForestUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]
         app.launch()
-        let information = app.buttons["garden.info"]
-        XCTAssertTrue(information.waitForExistence(timeout: 15))
-        information.tap()
+        XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 15))
+        app.buttons["Settings"].tap()
+        app.buttons["settings.gameHelp"].tap()
         app.buttons["garden.samplePlants"].tap()
         XCTAssertTrue(app.navigationBars["Garden plants"].waitForExistence(timeout: 5))
         let firstPlant = app.cells.firstMatch
         XCTAssertTrue(firstPlant.waitForExistence(timeout: 5))
         firstPlant.tap()
         XCTAssertTrue(app.staticTexts["Growth stage"].waitForExistence(timeout: 5))
+    }
+
+    func testGameHelpKeepsControlsOutOfGardenInfoAndRevealsThemOnDemand() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()
+        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 15))
+        app.buttons["Settings"].tap()
+        app.buttons["settings.gameHelp"].tap()
+        XCTAssertTrue(app.navigationBars["Game help"].waitForExistence(timeout: 5))
+        let instructions = app.staticTexts["Drag to orbit · Pinch to zoom · Two fingers to pan"]
+        XCTAssertFalse(instructions.exists)
+        app.buttons["help.controls"].tap()
+        XCTAssertTrue(instructions.waitForExistence(timeout: 5))
+        app.buttons["help.controls"].tap()
+        XCTAssertFalse(instructions.exists)
+    }
+
+    func testPackInspectionAndCancelledConfirmationsNeverMutateAndPurchaseKeepsQuantity() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-collection"]; app.launch()
+        let purchase = app.buttons["collection.exchange.woodland"]
+        XCTAssertTrue(purchase.waitForExistence(timeout: 15))
+        let requests = app.staticTexts["fixture.collectionRequests"]
+        let tokens = app.staticTexts["fixture.collectionTokens"]
+        let packs = app.staticTexts["fixture.collectionPacks"]
+        XCTAssertEqual(requests.value as? String, "0")
+        XCTAssertEqual(tokens.value as? String, "14")
+        app.buttons["collection.offerContents.woodland"].tap()
+        let odds = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Species:")).firstMatch
+        XCTAssertFalse(odds.exists)
+        app.buttons["pack.species.common.oak"].tap()
+        XCTAssertTrue(odds.waitForExistence(timeout: 5))
+        app.navigationBars.buttons["Done"].tap()
+        XCTAssertEqual(requests.value as? String, "0")
+
+        purchase.tap()
+        XCTAssertTrue(app.buttons["purchase.confirm"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons["Cancel"].tap()
+        XCTAssertEqual(requests.value as? String, "0")
+        XCTAssertEqual(tokens.value as? String, "14")
+        purchase.tap()
+        let quantity = app.steppers["purchase.quantity"]
+        XCTAssertTrue(quantity.waitForExistence(timeout: 5))
+        quantity.buttons["Increment"].tap() // Two Woodland packs cost ten tokens.
+        quantity.buttons["Increment"].tap() // Three are unaffordable.
+        XCTAssertFalse(app.buttons["purchase.confirm"].isEnabled)
+        quantity.buttons["Decrement"].tap()
+        XCTAssertTrue(app.buttons["purchase.confirm"].isEnabled)
+        app.buttons["purchase.confirm"].tap()
+        expectation(for: NSPredicate(format: "value == %@", "1"), evaluatedWith: requests)
+        expectation(for: NSPredicate(format: "value == %@", "3"), evaluatedWith: packs)
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(tokens.value as? String, "4")
+        XCTAssertEqual(packs.value as? String, "3")
+
+        app.segmentedControls.buttons["Packs"].tap()
+        let open = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "collection.open.")).firstMatch
+        XCTAssertTrue(open.waitForExistence(timeout: 5))
+        open.tap()
+        XCTAssertTrue(app.alerts["Open pack?"].waitForExistence(timeout: 5))
+        app.alerts.buttons["Cancel"].tap()
+        XCTAssertEqual(requests.value as? String, "1")
+        XCTAssertEqual(packs.value as? String, "3")
+        XCTAssertFalse(app.staticTexts["Opening history"].exists)
+        app.swipeUp()
+        XCTAssertTrue(app.staticTexts["Last confirmed result"].exists)
     }
 
     func testFixtureActivityWorksWithoutSystemPermissionSheet() {

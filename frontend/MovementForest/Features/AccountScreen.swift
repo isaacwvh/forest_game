@@ -12,9 +12,8 @@ struct AccountScreen: View {
                 ManagedAccountScreen(auth: auth, connection: connection, catalog: catalog)
             } else {
                 List {
-                    Text("Account sign-in is not configured in this build.").font(.headline)
-                    Text("Sign-in is unavailable in this version. You can try again after installing an updated build.")
-                    Text("You can continue exploring the sample garden.").foregroundStyle(.secondary)
+                    Text("Sign-in is unavailable in this build.").font(.headline)
+                    Text("Explore the sample garden, or install an updated build to sign in.").foregroundStyle(.secondary)
                 }
             }
         }.navigationTitle("Account")
@@ -137,7 +136,7 @@ private struct ManagedAccountScreen: View {
                 Section {
                     Button("Sign out", role: .destructive) { Task { await connection.signOut(); clearPasswords() } }
                         .disabled(auth.busy).accessibilityIdentifier("account.signOut")
-                    Text("Saved garden and activity requests remain attached to this account and resume after you sign back in.")
+                    Text("Saved requests resume when you sign back into this account.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
