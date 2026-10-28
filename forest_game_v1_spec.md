@@ -1,14 +1,24 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.24\
-Date: 28 October 2026\
+Document version: 0.25\
+Date: 29 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
 
+**F8.6 reward and growth effects, 29 October 2026 — source implemented locally;
+native acceptance pending:** exact confirmed visitor-token awards shimmer the counter
+and show +1/+N. Shared runtime leaf/light transitions reveal confirmed stage models.
+A loaded entry recap's dismissal waters and shimmers only still-planted owned copies
+with positive saved growth awards; all-zero and loading-dismissed recaps never water.
+Cosmetic receipt/stage history is account/server-scoped and independent of settlement
+and acknowledgement. Backgrounding/navigation/account changes cancel effects and
+restore materials without changing growth or tokens. No Blender/per-species effect
+assets or backend/economy changes. Catalogue discovery remains deferred. See
+[F8 acceptance](frontend/F8_ACCEPTANCE.md) and [validation](frontend/VALIDATION.md).
+
 **F8.5 minimal UI cleanup, 28 October 2026 — source implemented; native acceptance
-pending:** this is the highest-priority presentation batch, ahead of proposed
-token-reward effects. Exchange and Packs use compact icon/name/action rows with
+pending:** this cleanup preceded the F8.6 effects above. Exchange and Packs use compact icon/name/action rows with
 an upper-right information button; Exchange includes token price and a purchase
 confirmation sheet with the existing quantity range. Both keep tokens at the top.
 Pack contents initially show rarity-coloured tier names, their actual percentages
@@ -339,7 +349,7 @@ Calculate the day's cumulative eligible boosted entitlement and subtract already
 
 ### 4.4 Login watering and progress recap
 
-**F8.1 presentation:** on launch/login or a genuine background absence of at least 30 seconds, show one dismissible, scrollable per-plant recap over Garden as soon as the account is verified, with loading feedback while activity reconciles. Measure absence with a continuous monotonic clock that includes phone sleep. Shorter returns still reconcile activity without opening a recap. Routine manual/observer/pre-edit syncs and transient inactive states do not reopen it. An existing settings/menu/pack-opening flow suppresses that entry's automatic sheet; unseen receipts remain available in Activity. Dismissing while loading must not allow a late result to reopen it. A return without new credits shows a quiet status and current progress. Acknowledgement covers only displayed receipt IDs. Garden-wide watering animation remains deferred. The recap includes:
+**F8.1 recap, extended by F8.6 effects:** on launch/login or a genuine background absence of at least 30 seconds, show one dismissible, scrollable per-plant recap over Garden as soon as the account is verified, with loading feedback while activity reconciles. Measure absence with a continuous monotonic clock that includes phone sleep. Shorter returns still reconcile activity without opening a recap. Routine manual/observer/pre-edit syncs and transient inactive states do not reopen it. An existing settings/menu/pack-opening flow suppresses that entry's automatic sheet; unseen receipts remain available in Activity. Dismissing while loading must not allow a late result to reopen it or trigger a late ceremony. A return without new credits shows a quiet status and current progress. Acknowledgement covers only displayed receipt IDs. After a loaded recap dismisses, shared watering and plant shimmer use only its positive saved per-copy growth awards and current placement. The recap includes:
 
 - Newly credited activity, water/progress gained per affected garden plant, previous/current stages and any stage advances.
 - Newly available stored visits and capacity, shown separately from already claimed visitor tokens. After a confirmed welcome, claim, milestone or exchange, show its visitor-token/pack changes separately from water; a HealthKit sync itself earns no tickets.
@@ -1142,11 +1152,27 @@ All operations verify idempotency and use the common account/garden/wallet lock 
 - Each model record maps species/stage/variant to model and thumbnail paths and records bounds, size/checksum and animation. Growth thresholds, rarity odds and individual plant progress belong to game configuration/state.
 - Current oak delivery: `assets/oak/v1/`, archive `assets/oak-v1.zip`; editable source `art/oak-production/oak-master.blend`. See [PLANT_ASSET_WORKFLOW.md](PLANT_ASSET_WORKFLOW.md) for production and validation instructions.
 
-### 12.4 Effects: deferred work
+### 12.4 Shared runtime effects and deferred work
 
-**Later, not implemented:** login watering animation, elaborate stage transition effects, tap/selection responses, drag/placement effects and storage return effects. The recap sheet and core two-tap unboxing presentation are source-implemented in F8.1. Existing oak models contain wind sway only. Do not add effect files or extra transition renders to each plant package now.
+**F8.6 source implementation, 29 October 2026:** shared recap watering and stage
+transitions now run in the iOS app using reusable geometry and temporary material
+shimmer. Stage models preload behind the recap and reveal after dismissal. Only
+positive saved per-copy growth awards receive watering; ordinary sync does not
+open a watering ceremony. No-growth or loading-dismissed recaps do not animate.
+Stage advancement from a confirmed live sync can use the shared transition once.
+Native visual/performance acceptance is still pending. Existing oak models contain
+wind sway only; no Blender animation or per-plant effect package expansion is needed.
+Tap/selection responses, drag/placement effects and storage return effects remain
+later work. The recap sheet and core pack presentation were implemented in F8.1.
 
-When effects work is resumed, prototype one shared runtime effects controller in the iOS app: a brief leaf/sparkle burst masks the stage-model swap, selection uses a small pulse/ring, dragging shows placement validity, placement settles gently, and storage return uses shared presentation. Pack opening follows the agreed image-layer sequence in section 3.4 and the asset scope below. Keep the garden anchor separate from temporary visual motion. Reuse a small set of shared sprites/emitters, tint/scale by variant/bounds, preload required assets, avoid replay on retries, limit simultaneous effects and support reduced motion. Final appearance, timing, platform availability and performance remain to be validated. Quick Look previews embedded USDZ animation, not these app-controlled effects.
+The shared runtime effects controller keeps garden anchors separate from temporary
+visual motion and reuses a small set of geometry/emitters scaled by plant bounds.
+Preload stage replacements, avoid replay on retries, bound simultaneous effects
+and support Reduce Motion. Final appearance, timing and performance require native
+validation. Future selection pulses, drag validity, placement settling and storage
+return may reuse this controller in separately scoped work. Pack opening retains
+section 3.4's image-layer sequence. Quick Look previews embedded USDZ animation,
+not these app-controlled effects.
 
 **Pack-opening assets and implementation — source integrated in F8.1:**
 

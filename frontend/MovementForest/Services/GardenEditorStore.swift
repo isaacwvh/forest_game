@@ -19,6 +19,7 @@ enum GardenSaveState: Equatable {
 final class GardenEditorStore: ObservableObject, Identifiable {
     let id = UUID()
     let profile: APIProfile
+    let effects: GardenEffectsCoordinator
     private(set) var service: any GardenServing
     private let assets: any AssetCatalogProviding
     private let journal: any PendingEditPersisting
@@ -62,15 +63,18 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private(set) var isActive = true
 
     func deactivate() {
+        effects.cancel()
         isActive = false; inventoryGeneration = UUID(); endEditing(); selectedID = nil
         prepareMembershipChange = nil; reconcileActivity = nil
         state = .blocked
     }
 
     init(profile: APIProfile, service: any GardenServing, assets: any AssetCatalogProviding,
-         journal: any PendingEditPersisting = PendingGardenEditStore(), cache: AccountDiskStore? = nil) {
+         journal: any PendingEditPersisting = PendingGardenEditStore(), cache: AccountDiskStore? = nil,
+         effectHistory: AccountDiskStore? = AccountDiskStore()) {
         self.profile = profile; self.service = service; self.assets = assets; self.journal = journal
         self.cache = cache
+        effects = GardenEffectsCoordinator(server: service.serverID, user: profile.userId, disk: effectHistory)
     }
 
     var canEdit: Bool { readyForMutation && !activityBusy && !preparingMembership && !activityBlocked }
@@ -135,7 +139,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
 
     /// All editor and activity receipts meet here. Historical receipts can never
     /// replace newer confirmed state, even when they arrive after a relaunch.
-    func applyConfirmed(_ garden: APIGarden, at date: Date = Date(), updatedPlants: [APIOwnedPlant] = []) throws {
+    func applyConfirmed(_ garden: APIGarden, at date: Date = Date(), updatedPlants: [APIOwnedPlant] = [],
+                        activityRequestID: UUID? = nil) throws {
         guard isActive else { throw CancellationError() }
         guard let catalogue = catalogue, garden.catalogVersion == catalogue.catalogVersion else { return }
         if let current = confirmed {
@@ -143,6 +148,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             guard garden.stateVersion >= current.stateVersion, garden.layoutVersion >= current.layoutVersion else { return }
         }
         let snapshot = try garden.rendered(catalogue: catalogue, assets: assets)
+        if let requestID = activityRequestID { effects.recordActivity(requestID: requestID, before: confirmed, after: garden) }
         confirmed = garden; rendered = snapshot
         inventory = filtered(inventory.filter { old in !updatedPlants.contains(where: { $0.id == old.id }) } + updatedPlants, garden: garden)
         confirmedAt = date; showingCached = false

@@ -248,6 +248,9 @@ struct GardenSummaryHeader: View {
     var storedAccessibility: String? = nil
     var canCollect = false
     var collecting = false
+    var tokenReward: ConfirmedTokenReward? = nil
+    var tokenRewardFinished: (UUID) -> Void = { _ in }
+    var tokenReduceMotion = false
     let information: () -> Void
     let collect: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
@@ -283,7 +286,12 @@ struct GardenSummaryHeader: View {
     private func metric(_ title: String, key: String, value: String?) -> some View {
         VStack(spacing: 2) {
             Text(title).font(.caption).foregroundStyle(.secondary)
-            QuantityLabel(metric: key, text: value ?? "Unavailable").font(.subheadline).monospacedDigit()
+            if key == "tokens" {
+                TokenRewardCounter(balance: value ?? "Unavailable", reward: tokenReward, finished: tokenRewardFinished,
+                                   reduceMotionOverride: tokenReduceMotion)
+            } else {
+                QuantityLabel(metric: key, text: value ?? "Unavailable").font(.subheadline).monospacedDigit()
+            }
         }.frame(maxWidth: .infinity, alignment: textSize.isAccessibilitySize ? .leading : .center)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(key == "offline_capacity" ? (storedAccessibility ?? "Stored visits, Unavailable") :
@@ -317,7 +325,8 @@ struct VisitorSummaryHeader: View {
             attraction: attraction,
             stored: store.summary.map { "\($0.claimableVisits)/\($0.capacity)" },
             storedAccessibility: store.summary.map { "\($0.claimableVisits) stored visits, capacity \($0.capacity)" },
-            canCollect: store.canCollect, collecting: store.collecting, information: information,
+            canCollect: store.canCollect, collecting: store.collecting,
+            tokenReward: store.tokenRewards.first, tokenRewardFinished: { store.finishTokenFeedback($0) }, information: information,
             collect: { Task { await store.claim() } })
     }
 }

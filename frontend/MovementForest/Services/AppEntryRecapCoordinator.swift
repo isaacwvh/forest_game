@@ -69,6 +69,8 @@ final class AppEntryRecapCoordinator: ObservableObject {
     private var generation = UUID()
     private var task: Task<Void, Never>?
     private weak var sync: ActivitySyncCoordinator?
+    private weak var editor: GardenEditorStore?
+    private var displayedRecaps: [APIRewardRecap] = []
     private var syncID: UUID?
     private let uptime: () -> TimeInterval
 
@@ -80,6 +82,7 @@ final class AppEntryRecapCoordinator: ObservableObject {
 
     func connectionChanged(to sync: ActivitySyncCoordinator) {
         if let previous = syncID, previous != sync.id {
+            editor?.effects.cancel(); displayedRecaps = []; editor = nil
             task?.cancel(); task = nil; generation = UUID()
             showing = false; loading = false; receiptIDs = []; rows = []; activeSkills = []
         }
@@ -100,6 +103,9 @@ final class AppEntryRecapCoordinator: ObservableObject {
         task?.cancel()
         let token = UUID(); generation = token
         self.sync = sync
+        self.editor = editor
+        displayedRecaps = []
+        editor.effects.beginRecap()
         syncID = sync.id
         rows = []; receiptIDs = []; activeSkills = []
         loading = true; showing = true; status = "Checking activity…"
@@ -115,6 +121,7 @@ final class AppEntryRecapCoordinator: ObservableObject {
             // Missing historical identities use the row's existing ID fallback.
             // Storage pagination must not keep a confirmed recap in loading.
             self.receiptIDs = Set(recaps.map(\.id))
+            self.displayedRecaps = recaps
             let affected = Set(recaps.flatMap { $0.payload.plants.map(\.plantId) })
             self.rows = ActivityRecapRow.make(recaps: recaps, plants: copies.filter { $0.placement != nil || affected.contains($0.id) })
             self.activeSkills = editor.confirmed?.skillSummary?.activeSkills ?? []
@@ -126,22 +133,31 @@ final class AppEntryRecapCoordinator: ObservableObject {
         return true
     }
 
-    func dismissed() {
+    func dismissed(allowEffects: Bool = true) {
         guard !showing else { return }
+        let loaded = !loading
+        if !loaded { sync?.suppressCurrentGrowthPresentation() }
         task?.cancel(); task = nil; generation = UUID(); showing = false; loading = false
         LifecycleDiagnostics.event("entry dismissed")
         let ids = receiptIDs
         receiptIDs = []
+        if let editor = editor, editor.isActive, let sync = sync, sync.isAttached(to: editor) {
+            editor.effects.finishRecap(displayedRecaps, garden: editor.confirmed,
+                                       allowPresentation: loaded && allowEffects)
+        }
+        displayedRecaps = []
         // Keep acknowledgement independent of any later batch or account attachment.
         if !ids.isEmpty, let sync = sync { Task { await sync.dismissRecaps(ids: ids) } }
     }
 
     func background() {
+        if loading { sync?.suppressCurrentGrowthPresentation() }
+        editor?.effects.cancel(); displayedRecaps = []
         task?.cancel(); task = nil; generation = UUID(); receiptIDs = []
         showing = false; loading = false; gate.background(at: uptime())
     }
 
     func signOut() {
-        background(); gate.signOut(); sync = nil; syncID = nil; rows = []; activeSkills = []
+        background(); gate.signOut(); sync = nil; editor = nil; syncID = nil; rows = []; activeSkills = []
     }
 }

@@ -20,6 +20,7 @@ final class ActivitySyncCoordinator: ObservableObject {
     private var saved = ActivityJournalState()
     private var running: Task<Bool, Never>?
     private var runID: UUID?
+    private var presentationSuppressedRun: UUID?
     private var waiters: [UUID: CheckedContinuation<Bool, Never>] = [:]
     private var active = true
 
@@ -48,6 +49,12 @@ final class ActivitySyncCoordinator: ObservableObject {
     var requestIDs: [UUID] { saved.operations.map(\.id) }
     var waitingCallerCount: Int { waiters.count }
     func isAttached(to editor: GardenEditorStore) -> Bool { active && self.editor.id == editor.id && editor.isActive }
+
+    /// A dismissed loading recap must not cause a late stage celebration. The
+    /// in-flight sync still commits normally; a later independent sync is unaffected.
+    func suppressCurrentGrowthPresentation() {
+        if let runID = runID { presentationSuppressedRun = runID }
+    }
 
     func deactivate() {
         active = false
@@ -338,7 +345,8 @@ final class ActivitySyncCoordinator: ObservableObject {
                     guard result.requestId == operation.id, result.garden.gardenId == editor.confirmed?.gardenId else {
                         throw ForestError.invalidData("Unexpected activity receipt.")
                     }
-                    try editor.applyConfirmed(result.garden, at: result.acceptedAt)
+                    try editor.applyConfirmed(result.garden, at: result.acceptedAt,
+                        activityRequestID: runID != nil && runID == presentationSuppressedRun ? nil : operation.id)
                 case .acknowledgement:
                     guard let recap = operation.recapID else { throw ForestError.invalidData("Invalid recap request.") }
                     let result = try await service.acknowledge(recap: recap, body: operation.body)

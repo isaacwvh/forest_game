@@ -32,6 +32,8 @@ final class VisitorCoordinator: ObservableObject {
     private var needsRead = true
     private var lastConnectionIssue: UUID?
     @Published private(set) var confirmedTokenBalance: String?
+    @Published private(set) var tokenRewards: [ConfirmedTokenReward] = []
+    private var liveRewardIDs = Set<UUID>()
     private var economyVersion: Int64 = -1
     var onWallet: ((String, Int64) -> Void)?
     var tokenBalance: String { confirmedTokenBalance ?? summary?.tokenBalance ?? "0" }
@@ -95,13 +97,15 @@ final class VisitorCoordinator: ObservableObject {
     func setEligible(_ value: Bool, reconcile: Bool = true) {
         guard attached else { return }
         guard eligible != value else { return }
+        if !value { clearTokenFeedback() }
         eligible = value; needsRead = true; nextPoll = 0
         if reconcile { Task { [weak self] in await self?.tick(force: true) } }
     }
 
-    func pause() async { eligible = false; nextPoll = 0; await tick(force: true) }
+    func pause() async { clearTokenFeedback(); eligible = false; nextPoll = 0; await tick(force: true) }
 
     func deactivate() {
+        clearTokenFeedback()
         attached = false; eligible = false; connected = false
         worker?.cancel(); worker = nil
         // An in-flight result remains journalled for this account. The lease bounds
@@ -128,6 +132,14 @@ final class VisitorCoordinator: ObservableObject {
                 DiagnosticHistory.shared.record("Visitors", "confirmed \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: scope)
                 try persist(VisitorJournalState(pending: queuedReward))
                 if let reward = reward {
+                    // Only operations initiated in this visible session may celebrate.
+                    // Recovered journal entries and ordinary wallet refreshes stay quiet.
+                    let live = liveRewardIDs.remove(operation.id) != nil
+                    if live, eligible, reward.requestId == operation.id,
+                       let amount = ExactAmount.integer(reward.tokens), amount > 0,
+                       tokenRewards.count < 4 {
+                        tokenRewards.append(.init(id: operation.id, amount: NSDecimalNumber(decimal: amount).stringValue))
+                    }
                     report(reward.visits == "0" ? "No whole stored visits to collect yet." :
                         "Welcomed \(reward.visits) · +\(reward.tokens) visitor tokens", kind: .success)
                     DiagnosticHistory.shared.record("Visitors", "reward visits=\(reward.visits) tokens=\(reward.tokens)",
@@ -137,6 +149,7 @@ final class VisitorCoordinator: ObservableObject {
                         ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
                 guard attached else { return }
                 try persist(VisitorJournalState(pending: queuedReward))
+                liveRewardIDs.remove(operation.id)
                 needsRead = true; connected = false
                 throw error
             }
@@ -159,8 +172,18 @@ final class VisitorCoordinator: ObservableObject {
 
     private func submit(_ kind: PendingVisitorOperation.Kind, target: UUID? = nil) async throws {
         guard pending == nil, attached else { return }
-        try persist(VisitorJournalState(pending: operation(kind, target: target)))
+        let request = try operation(kind, target: target)
+        try persist(VisitorJournalState(pending: request))
+        if eligible && (kind == .welcome || kind == .claim) { liveRewardIDs.insert(request.id) }
         try await recover()
+    }
+
+    func finishTokenFeedback(_ id: UUID) {
+        tokenRewards.removeAll { $0.id == id }
+    }
+
+    func clearTokenFeedback() {
+        tokenRewards = []; liveRewardIDs = []
     }
 
     func tick(force: Bool = false) async {
@@ -218,7 +241,9 @@ final class VisitorCoordinator: ObservableObject {
     private func reward(_ kind: PendingVisitorOperation.Kind, target: UUID? = nil) async {
         if pending?.kind == .heartbeat {
             do {
-                try persist(VisitorJournalState(pending: pending, queuedReward: operation(kind, target: target)))
+                let request = try operation(kind, target: target)
+                try persist(VisitorJournalState(pending: pending, queuedReward: request))
+                if eligible { liveRewardIDs.insert(request.id) }
                 if !busy { await tick(force: true) }
             } catch {
                 PlayerMessage.recordFailure("Visitors", error,

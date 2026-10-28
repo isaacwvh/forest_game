@@ -43,7 +43,7 @@ struct ConnectedGardenScreen: View {
                 GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
                                     motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil,
-                                    editorPreview: preview, onSelect: { [weak store = store] id in
+                                    editorPreview: preview, growthEffects: store.effects, onSelect: { [weak store = store] id in
                         guard let store = store else { return }
                         guard store.candidate == nil else { return }
                         store.selectedID = id

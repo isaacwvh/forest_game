@@ -115,7 +115,9 @@ struct RootView: View {
 
     var body: some View {
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("--fixture-collection") {
+        if ProcessInfo.processInfo.arguments.contains("--fixture-effects") {
+            RewardEffectsFixtureScreen()
+        } else if ProcessInfo.processInfo.arguments.contains("--fixture-collection") {
             CollectionCleanupFixtureScreen()
         } else if ProcessInfo.processInfo.arguments.contains("--fixture-pack") {
             PackOpeningFixtureScreen()
@@ -211,7 +213,9 @@ struct RootView: View {
                             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { settingsPresented = false } } }
                     }
                 }
-                .sheet(isPresented: $entryRecap.showing, onDismiss: { entryRecap.dismissed() }) {
+                .sheet(isPresented: $entryRecap.showing, onDismiss: {
+                    entryRecap.dismissed(allowEffects: entryAllowed && selectedTab == .garden && collectionDestination == nil)
+                }) {
                     ActivityRecapScreen(recap: entryRecap, catalogue: container.connection.editor?.catalogue, assets: catalog)
                 }
                 .onChange(of: connection.activitySync?.id) { id in

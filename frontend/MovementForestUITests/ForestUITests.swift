@@ -3,6 +3,31 @@ import XCTest
 final class ForestUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    func testRewardEffectsFixtureFiltersRecapsAndUpdatesConfirmedCounter() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-effects"]; app.launch()
+        XCTAssertTrue(app.buttons["effects.rewardOne"].waitForExistence(timeout: 15))
+        app.buttons["effects.rewardOne"].tap()
+        let ready = NSPredicate(format: "enabled == true")
+        expectation(for: ready, evaluatedWith: app.buttons["effects.rewardOne"])
+        waitForExpectations(timeout: 5)
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Visitor tokens, 101")).firstMatch.exists)
+        app.buttons["visitors.claim"].tap()
+        expectation(for: ready, evaluatedWith: app.buttons["effects.rewardOne"])
+        waitForExpectations(timeout: 5)
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Visitor tokens, 113")).firstMatch.exists)
+        for (button, count) in [("effects.zero", "0"), ("effects.growth", "5"), ("effects.stage", "3"), ("effects.fifteen", "15")] {
+            app.buttons[button].tap()
+            XCTAssertTrue(app.buttons["effects.continue"].waitForExistence(timeout: 5))
+            if count == "0" { XCTAssertTrue(app.staticTexts["No new confirmed growth."].exists) }
+            app.buttons["effects.continue"].tap()
+            let recipients = app.staticTexts["effects.recipients"]
+            expectation(for: NSPredicate(format: "value == %@", count), evaluatedWith: recipients)
+            waitForExpectations(timeout: 5)
+        }
+    }
+
+
     func testFourEntryNavigationStartsOnGardenAndSampleOwnershipIsTruthful() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]; app.launch()

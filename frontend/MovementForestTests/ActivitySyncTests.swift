@@ -71,6 +71,7 @@ private final class SyncTestService: GardenServing, ActivityServing {
     var syncError: APIError?
     var pauseNext = false
     var gate: CheckedContinuation<Void, Never>?
+    var resultGardenOverride: APIGarden?
 
     init(_ fixture: ActivityContract) {
         self.fixture = fixture; current = fixture.gardenBeforeSync; statusValue = fixture.status
@@ -117,7 +118,7 @@ private final class SyncTestService: GardenServing, ActivityServing {
         if let receipt = receipts[request.requestId] { return receipt }
         let template = fixture.syncResult
         let result = APIActivitySyncResult(requestId: request.requestId, acceptedAt: template.acceptedAt,
-                                           device: template.device, days: template.days, garden: template.garden,
+                                           device: template.device, days: template.days, garden: resultGardenOverride ?? template.garden,
                                            activitySteps: template.activitySteps, firstMaturityCount: template.firstMaturityCount,
                                            recapId: template.recapId)
         receipts[request.requestId] = result; current = result.garden
@@ -138,6 +139,84 @@ private final class SyncTestService: GardenServing, ActivityServing {
 
 @MainActor
 final class ActivitySyncTests: XCTestCase {
+    func testDismissedLoadingRecapSuppressesOnlyItsInflightStageEffect() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        @MainActor func advance(_ stage: GrowthStage, growth: String) throws -> APIGarden {
+            let current = try XCTUnwrap(editor.confirmed), old = try XCTUnwrap(current.plants.first)
+            let copy = APIOwnedPlant(plantId: old.id, speciesId: old.speciesId, variantId: old.variantId,
+                growthMicroUnits: growth, growthStage: stage, modelKey: old.modelKey, thumbnailKey: old.thumbnailKey,
+                placement: old.placement)
+            return .init(gardenId: current.gardenId, width: current.width, depth: current.depth,
+                coordinateUnit: current.coordinateUnit, gardenUnitMetres: current.gardenUnitMetres,
+                catalogVersion: current.catalogVersion, layoutVersion: current.layoutVersion,
+                stateVersion: current.stateVersion + 1, plants: [copy])
+        }
+        service.resultGardenOverride = try advance(.young, growth: "300000000")
+        service.pauseNext = true
+        let entry = AppEntryRecapCoordinator()
+        defer { service.gate?.resume(); service.gate = nil; entry.background() }
+        XCTAssertTrue(entry.begin(sync: sync, editor: editor))
+        for _ in 0..<300 {
+            if service.gate != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let gate = try XCTUnwrap(service.gate)
+        entry.showing = false; entry.dismissed()
+        gate.resume(); service.gate = nil
+        for _ in 0..<300 {
+            if !sync.busy { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertEqual(editor.confirmed?.plants.first?.growthStage, .young)
+        XCTAssertTrue(editor.effects.targets.isEmpty)
+        service.resultGardenOverride = try advance(.adult, growth: "1000000000")
+        _ = await sync.synchronize()
+        XCTAssertEqual(editor.effects.targets.values.first?.after, .adult)
+        XCTAssertFalse(editor.effects.targets.values.first?.water ?? true)
+    }
+
+    func testLoadedRecapReleasesOnlyDisplayedConfirmedGrowthOnDismissal() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let editor = try editor(service), health = health(service.fixture)
+        await editor.start()
+        let sync = coordinator(service, editor: editor, health: health, journal: journal)
+        await sync.setEnabled(true)
+        let entry = AppEntryRecapCoordinator()
+        XCTAssertTrue(entry.begin(sync: sync, editor: editor, reconciliation: Task { true }))
+        for _ in 0..<100 { if !entry.loading { break }; await Task.yield() }
+        XCTAssertFalse(entry.loading)
+        XCTAssertTrue(editor.effects.holdingRecap)
+        XCTAssertFalse(entry.receiptIDs.isEmpty)
+        let displayed = Set(entry.rows.filter { (ExactAmount.integer($0.water) ?? 0) > 0 }.map(\.id))
+        entry.showing = false; entry.dismissed()
+        XCTAssertFalse(editor.effects.holdingRecap)
+        XCTAssertEqual(Set(editor.effects.targets.keys), displayed)
+        XCTAssertTrue(editor.effects.targets.values.allSatisfy(\.water))
+        editor.effects.cancel()
+    }
+
+    func testRecapDismissalAfterNavigationAndBackgroundCannotWater() async throws {
+        for background in [false, true] {
+            let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+            let editor = try editor(service), health = health(service.fixture)
+            await editor.start()
+            let sync = coordinator(service, editor: editor, health: health, journal: journal)
+            await sync.setEnabled(true)
+            let entry = AppEntryRecapCoordinator()
+            XCTAssertTrue(entry.begin(sync: sync, editor: editor, reconciliation: Task { true }))
+            for _ in 0..<100 { if !entry.loading { break }; await Task.yield() }
+            XCTAssertFalse(entry.loading)
+            if background { entry.background() }
+            entry.showing = false; entry.dismissed(allowEffects: false)
+            XCTAssertFalse(editor.effects.holdingRecap)
+            XCTAssertTrue(editor.effects.targets.isEmpty)
+        }
+    }
+
     func testFirstActiveEventAfterAbsencePresentsRecapWithoutNotificationCentreRoundTrip() async throws {
         let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
         let editor = try editor(service), health = health(service.fixture)
@@ -199,6 +278,8 @@ final class ActivitySyncTests: XCTestCase {
         XCTAssertTrue(confirmed)
         XCTAssertFalse(entry.showing)
         XCTAssertTrue(entry.receiptIDs.isEmpty)
+        XCTAssertFalse(editor.effects.holdingRecap)
+        XCTAssertFalse(editor.effects.targets.values.contains(where: { $0.water }))
         XCTAssertTrue(service.ackBodies.isEmpty)
         XCTAssertFalse(entry.begin(sync: sync, editor: editor, reconciliation: operation))
     }
@@ -378,7 +459,7 @@ final class ActivitySyncTests: XCTestCase {
         ActivityStore(provider: SyncHealthProvider(fixture), defaults: UserDefaults(suiteName: "f5-" + UUID().uuidString)!)
     }
     private func editor(_ service: SyncTestService, disk: AccountDiskStore? = nil) throws -> GardenEditorStore {
-        GardenEditorStore(profile: service.fixture.profile, service: service, assets: try BundleAssetCatalog(), cache: disk)
+        GardenEditorStore(profile: service.fixture.profile, service: service, assets: try BundleAssetCatalog(), cache: disk, effectHistory: disk)
     }
     private func coordinator(_ service: SyncTestService, editor: GardenEditorStore, health: ActivityStore,
                              journal: MemoryActivityJournal) -> ActivitySyncCoordinator {

@@ -52,6 +52,7 @@ private final class FakeVisitors: VisitorServing {
     var heartbeatContinuation: CheckedContinuation<Void, Never>?
     var onMutation: (() -> Void)?
     var nextMutationError: Error?
+    var rewardTokensOverride: String?
     init(_ contract: VisitorContract) { self.contract = contract; current = contract.initial }
     func read() async throws -> APIVisitorSummary {
         if offline { throw URLError(.notConnectedToInternet) }
@@ -70,14 +71,86 @@ private final class FakeVisitors: VisitorServing {
         case .end:
             current = try changed(current, ["session": NSNull(), "opportunities": [], "version": current.version + 1])
             return (current, nil)
-        case .welcome: current = contract.welcome.summary; return (current, contract.welcome)
-        case .claim: current = contract.claim.summary; return (current, contract.claim)
+        case .welcome:
+            current = contract.welcome.summary
+            let value = contract.welcome
+            return (current, APIVisitorReward(requestId: operation.id, eventId: value.eventId,
+                visits: value.visits, tokens: rewardTokensOverride ?? value.tokens, summary: current))
+        case .claim:
+            current = contract.claim.summary
+            let value = contract.claim
+            return (current, APIVisitorReward(requestId: operation.id, eventId: value.eventId,
+                visits: value.visits, tokens: rewardTokensOverride ?? value.tokens, summary: current))
         }
     }
 }
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testZeroOrInvalidConfirmedTokenAmountsNeverCelebrate() async throws {
+        for amount in ["0", "-1", "unknown", "0.5"] {
+            let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+            service.rewardTokensOverride = amount
+            let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service,
+                                          journal: MemoryVisitorJournal(), uptime: { 0 })
+            store.apply(fixture.stored); store.setEligible(true, reconcile: false)
+            await store.claim()
+            XCTAssertTrue(store.tokenRewards.isEmpty, amount)
+        }
+    }
+
+    func testConfirmedTokenFeedbackUsesExactReceiptAndNeverBalanceRefresh() async throws {
+        let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service,
+                                      journal: MemoryVisitorJournal(), uptime: { 0 })
+        store.apply(fixture.stored); store.setEligible(true, reconcile: false)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
+        await store.claim()
+        let event = try XCTUnwrap(store.tokenRewards.first)
+        XCTAssertEqual(event.amount, fixture.claim.tokens)
+        XCTAssertEqual(event.id, service.operations.first(where: { $0.kind == .claim })?.id)
+        store.apply(fixture.claim.summary)
+        XCTAssertEqual(store.tokenRewards, [event])
+        store.finishTokenFeedback(event.id)
+        store.apply(fixture.claim.summary)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
+    }
+
+    func testLostRewardResponseCelebratesOnlyItsFirstLiveConfirmation() async throws {
+        let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let journal = MemoryVisitorJournal()
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service, journal: journal, uptime: { 0 })
+        store.apply(fixture.stored); store.setEligible(true, reconcile: false)
+        service.offline = true
+        await store.claim()
+        let id = try XCTUnwrap(store.pending?.id)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
+        service.offline = false
+        await store.tick(force: true)
+        XCTAssertEqual(store.tokenRewards.map(\.id), [id])
+        store.finishTokenFeedback(id)
+        await store.tick(force: true)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
+    }
+
+    func testRecoveredAndHiddenRewardOperationsDoNotReplayTokenFeedback() async throws {
+        let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let journal = MemoryVisitorJournal(), id = UUID()
+        journal.value = PendingVisitorOperation(id: id, kind: .claim, target: nil,
+            body: try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: nil)))
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service, journal: journal, uptime: { 0 })
+        store.apply(fixture.stored); store.setEligible(true, reconcile: false)
+        await store.tick(force: true)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
+        store.apply(try changed(fixture.stored, ["version": fixture.claim.summary.version + 1]))
+        service.offline = true
+        await store.claim()
+        store.setEligible(false, reconcile: false)
+        service.offline = false
+        await store.tick(force: true)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
+    }
+
     func testCollectionRequiresKnownPositiveWholeVisits() async throws {
         let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
         let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service, journal: MemoryVisitorJournal())
@@ -404,6 +477,7 @@ final class VisitorTests: XCTestCase {
         XCTAssertEqual(service.operations.last, saved)
         XCTAssertNil(journal.state.pending); XCTAssertNil(journal.state.queuedReward)
         XCTAssertEqual(store.summary?.tokenBalance, "1")
+        XCTAssertEqual(store.tokenRewards.map(\.id), [saved.id])
     }
 
     func testQueuedTapSurvivesLostHeartbeatAndRelaunch() async throws {
@@ -429,6 +503,7 @@ final class VisitorTests: XCTestCase {
         XCTAssertEqual(heartbeats.count, 2); XCTAssertEqual(heartbeats[0], heartbeats[1])
         XCTAssertEqual(service.operations.first { $0.kind == .welcome }, saved.queuedReward)
         XCTAssertEqual(relaunched.summary?.tokenBalance, "1")
+        XCTAssertTrue(relaunched.tokenRewards.isEmpty)
         XCTAssertNil(journal.value)
     }
 

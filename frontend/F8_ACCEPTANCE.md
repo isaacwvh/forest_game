@@ -3,6 +3,68 @@
 Source implementation: 26 October 2026. Native execution and device results must
 be recorded separately; portable parsing is not Apple SDK compilation.
 
+## F8.6 reward and growth effects — local source, 29 October 2026
+
+The user requested a GitHub push for Mac testing without waiting for CI. Run on Mac:
+`bash frontend/scripts/test-mac.sh` (Debug XCTest/UI plus public Release and
+InternalRelease builds). Record results separately from the Windows checks.
+
+Fast deterministic visual flow: Xcode → Product → Scheme → Edit Scheme → Run →
+Arguments Passed On Launch: add `--fixture-health` and `--fixture-effects`.
+This Debug-only screen never signs in, uploads Health, contacts an API or writes
+an account journal. Remove the arguments to test the live account afterward.
+
+1. Tap **Reward +1**. The balance changes 100 → 101, the token icon/count shimmers
+   once and a readable +1 briefly floats beneath it. Tap **Collect** after it
+   finishes: balance 101 → 113, with one +12. Nothing moves the camera or header
+   during playback. Repeat at large accessibility text size; amounts remain clear.
+2. Tap **Growth recap**, then **Continue**. Only five recipients receive descending
+   droplets and foliage shimmer; the other ten stay quiet. The fixture's recipient
+   counter reads 5. Repeat using swipe dismissal. Each fresh recap may water again.
+3. Tap **No growth**, then Continue. Recipient counter reads 0: no droplets, shimmer
+   or stage burst. Repeat after the positive-growth scenario has finished.
+4. Tap **Reset**, then **Stage recap**. While the sheet is open, replacements may
+   load but do not visibly reveal. Continue: three recipients receive water, an
+   upward shimmer and a leaf/light burst; stage models switch at its peak. Repeat
+   to test later stages, then Reset. Plants remain grounded with the same yaw and
+   camera. **Water 15** exercises the bounded concurrent-effect queue.
+5. During effects, background the app and return. No old ceremony resumes. Pan,
+   zoom and select before/after effects; hit targets and controls remain usable.
+   Repeat with **Reduce Motion** enabled in iOS Settings. The fixture also accepts
+   `--fixture-reduce-motion`: no falling particles/spatial token motion; stationary
+   amount, gentle plant highlight and a short stage fade remain.
+6. Check VoiceOver: one token reward announcement and a readable current balance;
+   cosmetic particles never become accessibility/touch targets. Confirm increased
+   contrast/Reduce Transparency, small portrait screens and the 15-plant case.
+   Inspect native captures and measure performance on the minimum supported device.
+
+Live-account regression flow:
+
+1. Welcome one real butterfly and Collect multiple stored visits. Wait for server
+   confirmation before any +N; the amount matches the actual receipt. Pending and
+   failed requests retain existing recovery feedback, with no optimistic reward.
+2. Lose a reward response, then retry the same request. Its first confirmation in
+   the current visible session may celebrate once. Further retries/refreshes and
+   relaunch recovery do not repeat it. Navigate away or switch accounts while pending:
+   old feedback must not appear in the new view/account.
+3. With a planted, non-mature copy, record real activity, leave for at least 30
+   seconds, return, wait for the recap, and dismiss it. Only positive saved growth
+   recipients water/shimmer, including copies that did not advance a stage. A
+   mature copy with a zero capped award and any now-stored copy stay quiet.
+4. Return without new credits: the quiet recap produces no effect. Manual/observer
+   sync never opens a watering ceremony. Test a multi-stage credit: one transition
+   from the prior to final stage, rather than several intermediate ceremonies.
+5. Dismiss **Checking activity…** before reconciliation finishes. No late sheet or
+   watering/stage ceremony appears. Saved growth still resolves normally. Interrupt
+   a loaded recap by backgrounding/account change; do not leak its effects.
+6. Interrupt acknowledgement/offline recovery after watching a recap, then relaunch
+   and reconnect: no replay from the same receipts. New receipts still animate.
+   A missing stage asset keeps the prior model with existing artwork/retry feedback;
+   retries, initial loads, adult previews and stored-copy browsing never celebrate.
+
+The existing F8.5/navigation, pack recovery and visitor-session acceptance below
+still applies. Catalogue discovery remains deferred; no economy/API change is implied.
+
 ## F8.5 minimal UI cleanup — source implemented, native acceptance pending, 28 October 2026
 
 This is the current highest-priority presentation batch. It supersedes historical

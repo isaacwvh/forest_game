@@ -102,6 +102,16 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var placements: [UUID: Entity] = [:]
     private var plantPlaybacks: [UUID: [AnimationPlaybackController]] = [:]
     private var renderedPlants: [UUID: GardenPlant] = [:]
+    private struct PreparedVisual {
+        let plant: GardenPlant
+        let model: PlantModelLoader.LoadedModel
+        let assetFile: String
+    }
+    private var preparedVisuals: [UUID: PreparedVisual] = [:]
+    private let sharedEffects = SharedGardenEffects()
+    private var growthEffects: GardenEffectsCoordinator?
+    private var growthUpdates: AnyCancellable?
+    var preparedGrowthCount: Int { preparedVisuals.count }
     private var board: Entity?
     private var preview: EditorRenderPreview?
     private var previewAnchor: Entity?
@@ -182,6 +192,10 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         }
         let visualsChanged = dimensionsChanged || snapshot?.plants != garden.plants ||
             snapshot?.catalogVersion != garden.catalogVersion || needsAssetReload || (loadTask == nil && requiresLoads)
+        if visualsChanged {
+            if growthEffects?.holdingRecap == true { sharedEffects.cancel() }
+            else { settleGrowthEffects() }
+        }
         snapshot = garden
         guard visualsChanged else { return }
         needsAssetReload = false
@@ -198,6 +212,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
             self.loadSeconds = 0
             let start = Date()
             if dimensionsChanged {
+                self.preparedVisuals = [:]
                 self.playbacks.forEach { $0.stop() }
                 self.plantPlaybacks.removeAll()
                 self.placements.removeAll()
@@ -225,32 +240,15 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                     let asset = try catalog.resolve(plant)
                     let model = try await self.loader.load(asset)
                     guard !Task.isCancelled, self.generation == token else { return }
-                    // Keep the previous stage grounded and visible until its
-                    // replacement is ready. A failed load remains retryable.
-                    self.removePlant(plant.id)
-                    self.modelLoadCount += 1
-                    let placement = Entity()
-                    placement.name = plant.id.uuidString
-                    placement.position = GardenCoordinates.world(x: plant.x, y: plant.y, unitMetres: garden.gardenUnitMetres)
-                    placement.orientation = simd_quatf(angle: Float(plant.rotationDegrees) * .pi / 180, axis: [0, 1, 0])
-                    // USD model dimensions are metres; gardenUnitMetres converts ground coordinates only.
-                    placement.addChild(model.entity)
-                    self.root.addChild(placement)
-                    self.placements[plant.id] = placement
-                    self.renderedPlants[plant.id] = plant
-                    let bounds = model.entity.visualBounds(relativeTo: placement)
-                    let proxy = Entity()
-                    proxy.name = "selection-proxy"
-                    proxy.position = bounds.center
-                    let size = simd_max(bounds.extents, SIMD3<Float>(repeating: 0.15))
-                    proxy.components.set(CollisionComponent(shapes: [.generateBox(size: size)]))
-                    placement.addChild(proxy)
-                    let clips = self.playWind(in: model.entity, plantID: plant.id)
-                    self.diagnostics.append(PlantRenderDiagnostic(id: plant.id, speciesId: plant.speciesId,
-                        label: "\(plant.speciesId) · \(plant.growthStage.rawValue) · \(plant.variantId)",
-                        orientation: model.orientationNote, animationCount: clips,
-                        bounds: bounds.extents, minimumY: bounds.min.y))
-                    if clips == 0 { self.errors.append("\(asset.asset.file): no playable wind animation was imported.") }
+                    let visual = PreparedVisual(plant: plant, model: model, assetFile: asset.asset.file)
+                    // Preload behind the recap, keeping the old model grounded.
+                    // Only receipt-backed stage growth is allowed to delay a swap.
+                    if let old = self.renderedPlants[plant.id], self.placements[plant.id] != nil,
+                       old.speciesId == plant.speciesId, old.variantId == plant.variantId,
+                       old.assetVersion == plant.assetVersion, old.growthStage.number < plant.growthStage.number,
+                       self.growthEffects?.holdingRecap == true || self.growthEffects?.targets[plant.id]?.advancesStage == true {
+                        self.preparedVisuals[plant.id] = visual
+                    } else { self.installVisual(visual, plant: plant, garden: garden) }
                     self.loadedCount += 1
                 } catch is CancellationError { return }
                 catch {
@@ -273,7 +271,90 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
             self.updateDebugGeometry()
             self.updatePreview(self.preview, catalog: catalog)
             self.loadTask = nil
+            self.presentGrowthEffectsIfReady()
         }
+    }
+
+    func setGrowthEffects(_ effects: GardenEffectsCoordinator?) {
+        guard growthEffects !== effects else { return }
+        settleGrowthEffects(); growthUpdates?.cancel()
+        growthEffects = effects
+        growthUpdates = effects?.changes.sink { [weak self] _ in
+            // Defer publication until after any enclosing SwiftUI update.
+            Task { @MainActor [weak self] in self?.presentGrowthEffectsIfReady() }
+        }
+    }
+
+    private func installVisual(_ visual: PreparedVisual, plant: GardenPlant, garden: GardenSnapshot) {
+        diagnostics.removeAll { $0.id == plant.id }
+        plantPlaybacks.removeValue(forKey: plant.id)?.forEach { $0.stop() }
+        modelLoadCount += 1
+        // Reuse the ground anchor, including its identity and yaw, across stages.
+        let placement = placements[plant.id] ?? Entity()
+        for child in Array(placement.children) { child.removeFromParent() }
+        placement.name = plant.id.uuidString
+        transform(placement, plant: plant, garden: garden)
+        placement.addChild(visual.model.entity)
+        if placement.parent == nil { root.addChild(placement) }
+        placements[plant.id] = placement; renderedPlants[plant.id] = plant
+        let bounds = visual.model.entity.visualBounds(relativeTo: placement)
+        let proxy = Entity()
+        proxy.name = "selection-proxy"; proxy.position = bounds.center
+        let size = simd_max(bounds.extents, SIMD3<Float>(repeating: 0.15))
+        proxy.components.set(CollisionComponent(shapes: [.generateBox(size: size)]))
+        placement.addChild(proxy)
+        let clips = playWind(in: visual.model.entity, plantID: plant.id)
+        diagnostics.append(PlantRenderDiagnostic(id: plant.id, speciesId: plant.speciesId,
+            label: "\(plant.speciesId) · \(plant.growthStage.rawValue) · \(plant.variantId)",
+            orientation: visual.model.orientationNote, animationCount: clips, bounds: bounds.extents, minimumY: bounds.min.y))
+        if clips == 0 { errors.append("\(visual.assetFile): no playable wind animation was imported.") }
+    }
+
+    @discardableResult
+    private func commitPreparedVisual(_ id: UUID) -> Entity? {
+        if let visual = preparedVisuals.removeValue(forKey: id), let garden = snapshot,
+           let plant = garden.plants.first(where: { $0.id == id }),
+           plant.speciesId == visual.plant.speciesId, plant.variantId == visual.plant.variantId,
+           plant.assetVersion == visual.plant.assetVersion, plant.growthStage == visual.plant.growthStage {
+            installVisual(visual, plant: plant, garden: garden)
+            updateSelection()
+        }
+        return placements[id]
+    }
+
+    private func settleGrowthEffects() {
+        sharedEffects.cancel()
+        for id in Array(preparedVisuals.keys) { commitPreparedVisual(id) }
+    }
+
+    private func presentGrowthEffectsIfReady() {
+        guard !disposed, let effects = growthEffects, !effects.holdingRecap,
+              let garden = snapshot, loadTask == nil else { return }
+        guard isActive else {
+            // Quiet background/manual sync never queues a later stage celebration.
+            if !effects.targets.values.contains(where: { $0.water }) {
+                _ = effects.takeTargets(for: garden); settleGrowthEffects()
+            }
+            return
+        }
+        for var target in effects.takeTargets(for: garden) {
+            guard let source = placements[target.id], renderedPlants[target.id] != nil else { continue }
+            if preparedVisuals[target.id] == nil,
+               (renderedPlants[target.id]?.growthStage.number ?? 0) < target.after.number {
+                // Artwork failed: retain the saved growth and watering feedback,
+                // but do not imply that a missing stage model was revealed.
+                target.before = target.after
+                if !target.water { continue }
+            }
+            let plantID = target.id
+            sharedEffects.enqueue(target, source: source, parent: root, reducedMotion: !wantsMotion) { [weak self] in
+                self?.commitPreparedVisual(plantID)
+            }
+        }
+        // A non-recipient may also have a new confirmed model. Do not leave it
+        // at an old stage merely because other plants are still being watered.
+        let animating = sharedEffects.plantIDs
+        for id in Array(preparedVisuals.keys) where !animating.contains(id) { commitPreparedVisual(id) }
     }
 
     func retry(_ garden: GardenSnapshot, catalog: any AssetCatalogProviding) {
@@ -320,6 +401,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     func setMotionEnabled(_ enabled: Bool) {
         guard wantsMotion != enabled else { return }
         wantsMotion = enabled
+        if growthEffects?.holdingRecap == true { sharedEffects.cancel() }
+        else { settleGrowthEffects() }
         applyMotion()
         updateAccessibility()
     }
@@ -339,8 +422,12 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         visitorRoot.isEnabled = active
         frameTime = 0
         frameCount = 0
-        if active { subscribeToUpdates() }
-        else { updateSubscription?.cancel(); updateSubscription = nil }
+        if active { subscribeToUpdates(); presentGrowthEffectsIfReady() }
+        else {
+            updateSubscription?.cancel(); updateSubscription = nil
+            sharedEffects.cancel()
+            if growthEffects?.holdingRecap != true { growthEffects?.cancel(); settleGrowthEffects() }
+        }
         applyMotion()
         updateAccessibility()
     }
@@ -355,6 +442,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     func stop() {
         guard !disposed else { return }
         setActive(false); disposed = true; visitorGeneration = UUID()
+        settleGrowthEffects(); growthUpdates?.cancel(); growthUpdates = nil; growthEffects = nil
         LifecycleDiagnostics.event("renderer disposed id=\(diagnosticID)")
         visitorLoadTask?.cancel(); visitorLoadTask = nil
         visitorPlaybacks.values.flatMap { $0 }.forEach { $0.stop() }
@@ -526,6 +614,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
 
     private func recordFrame(_ delta: TimeInterval) {
         guard isActive, delta > 0, delta < 1 else { return }
+        sharedEffects.tick(delta)
         updateVisitors()
         frameTime += delta
         frameCount += 1
@@ -858,6 +947,7 @@ struct GardenSceneView: UIViewRepresentable {
     var showBounds = false
     var groundPicking = false
     var editorPreview: EditorRenderPreview? = nil
+    var growthEffects: GardenEffectsCoordinator? = nil
     var onSelect: ((UUID?) -> Void)? = nil
     var onGroundDrag: ((SIMD2<Double>?, GardenDragPhase) -> Void)? = nil
 
@@ -871,6 +961,7 @@ struct GardenSceneView: UIViewRepresentable {
         coordinator.renderer?.detachView()
     }
     func updateUIView(_ uiView: ARView, context: Context) {
+        renderer.setGrowthEffects(growthEffects)
         renderer.display(garden, catalog: catalog)
         renderer.setMotionEnabled(motionEnabled)
         renderer.setActive(active)

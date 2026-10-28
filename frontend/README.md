@@ -89,7 +89,7 @@ invented. Asset versions are pinned to the delivered `1.0.0` packages.
 | --- | --- | --- |
 | `GardenRepository` / `GardenServing` | Explicit sample repository or authenticated `APIGardenRepository`; async identity-bound Supabase token provider; separate API/render DTOs | B6/B8 endpoints |
 | `AssetCatalogProviding` | `BundleAssetCatalog` resolves package manifests | Versioned game/asset catalogue and downloaded file resolver |
-| `GardenRenderer` | Confirmed growth/stage updates, preserved transforms and separate local drag/adult previews | Cosmetic watering transitions |
+| `GardenRenderer` | Confirmed growth/stage updates, shared receipt-driven watering/shimmer/stage effects, preserved ground anchors and separate local drag/adult previews | Native effect acceptance/performance; further interaction effects |
 | `HealthDataProviding` | `HealthKitService` / fixture provider; separate steps-only upload observation path | Additional supported metrics and observer delivery |
 | `GardenEditorStore` / `ActivitySyncCoordinator` | One confirmed garden owner, scoped cache/journals, cumulative step uploads and edit coordination; late detached-account results are ignored | B6/B8 integration |
 

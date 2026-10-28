@@ -1,6 +1,6 @@
 # Movement Forest implementation plan
 
-Revised 28 October 2026 against `forest_game_v1_spec.md`, version 0.24.
+Revised 29 October 2026 against `forest_game_v1_spec.md`, version 0.25.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
 **Current presentation handoff — 28 October 2026:** F8.3, F8.3b and F8.4 are
@@ -13,9 +13,10 @@ on Packs. Its device retest has not been reported. Portable checks pass; native
 XCTest/build and CI results remain unrecorded. CI was not awaited for either push.
 **F8.5 — minimal UI and page cleanup** is now the user-approved highest-priority
 scope and is source-implemented locally, with native build/device acceptance
-pending. The previously proposed token-reward feedback is deferred below.
-Watering/stage effects, catalogue
-discovery, workout eligibility, gameplay rewards, asset delivery and later custom
+pending. **F8.6 reward and growth effects** is now source-implemented locally at
+the user's request, 29 October; see its handoff below. The user subsequently
+requested a GitHub push for Mac testing without waiting for CI.
+Catalogue discovery, workout eligibility, gameplay rewards, asset delivery and later custom
 designs remain separate. User acceptance does not establish unrecorded automated
 test or CI results; see frontend/VALIDATION.md.
 
@@ -1153,10 +1154,48 @@ F8.5 walkthrough in frontend/F8_ACCEPTANCE.md and record executed validation in
 frontend/VALIDATION.md. The shared bottom-navigation overlap fix still needs its
 device retest as part of the scrolling checks.
 
-### Later polish sequence — proposed after F8.5, 28 October 2026
+### F8.6 — confirmed reward and growth effects — source implemented locally, 29 October 2026
 
-These are recommendations from the remaining F8 scope, not approval to implement
-or change gameplay. First spot-check `11040d2` on iPhone; keep broad native
+The user approved token feedback, shared stage transitions, then recap watering.
+Catalogue discovery stays deferred for a later UI polish. No Blender changes,
+per-species effect assets, reward calculations, endpoints or backend changes.
+
+- Token feedback: a confirmed live welcome/Collect emits one operation-scoped
+  presentation event with its exact positive receipt amount. The token counter
+  shimmers alongside floating +1/+N. Wallet refreshes, failed/zero awards, recovered
+  historical requests and detached/hidden sessions do not replay feedback. A bounded
+  queue preserves distinct feedback; reduced motion retains a stationary amount.
+- Shared stage effect: runtime leaf/light geometry and a temporary material shimmer
+  surround confirmed stage advancement. Reuse the ground entity and preserve copy
+  identity, placement, yaw, selection and camera. Preload stage replacements while
+  the recap is open; swap at the effect peak after dismissal. Multi-stage awards
+  transition once to the final model. Missing artwork retains the old model/error.
+- Watering: after a loaded recap dismisses, use only its frozen saved receipts and
+  positive awarded growth in exact micro-units. Water/shimmer only those owned-copy
+  IDs still placed. No-growth/loading-dismissed recaps never water. Droplets descend
+  over recipients, then dew flecks/material sheen rise through foliage; stage changes
+  share that peak. Up to six plant effects run concurrently, with bounded geometry.
+- Account/server-scoped cosmetic history consumes receipt IDs and stage presentation
+  before playback, independently of existing acknowledgement/reward journals. Retry,
+  relaunch or failed acknowledgement does not replay a ceremony. Interruptions cancel
+  particles and restore exact authored materials; confirmed state remains saved.
+- A dismissed loading recap suppresses its in-flight sync's late stage celebration.
+  Ordinary later syncs retain eligible stage feedback without opening a watering recap.
+- Debug-only `--fixture-health --fixture-effects` provides +1, bulk Collect, zero/mixed
+  growth, stage advancement and a 15-recipient stress case with no account/network,
+  Health upload or disk journal. `--fixture-reduce-motion` forces restrained effects.
+
+Portable validation is recorded in frontend/VALIDATION.md. Native XCTest/UI and
+Debug/public Release/InternalRelease builds require Mac execution; visual/performance,
+VoiceOver, Dynamic Type and touch acceptance require iPhone review. Follow the
+F8.6 walkthrough in frontend/F8_ACCEPTANCE.md. The user requested commit/push for
+Mac testing without waiting for CI; native execution remains a separate gate.
+
+### Later polish sequence — original proposals after F8.5, 28 October 2026
+
+Items 1–2 below were subsequently approved and source-implemented as F8.6 above;
+their original proposal is retained for context. Item 3 stays deferred. Spot-check
+`11040d2` on iPhone; keep broad native
 build/accessibility/performance evidence separate from accepted functional work.
 
 1. **Confirmed token reward feedback (deferred; formerly proposed as F8.5):** add a

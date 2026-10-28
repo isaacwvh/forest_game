@@ -2,6 +2,45 @@
 
 Prepared on Windows; native acceptance is pending.
 
+## F8.6 reward and growth effects — 29 October 2026
+
+Implemented locally at the user's request. The user subsequently requested a
+GitHub push to pull on Mac, without waiting for CI. Native results remain pending.
+
+- Confirmed live visitor rewards deliver an exact-amount event to a bounded token
+  shimmer/+N queue. Ordinary wallet refresh, zero/invalid awards and historical
+  recovery do not celebrate. Leaving the view/account cancels transient feedback.
+- Shared iOS 16 runtime geometry supplies droplets, leaf/dew flecks, temporary
+  material shimmer and stage-model replacement at a common peak. Authored textures
+  and original material values are retained/restored, ground entities and camera
+  stay stable, effects are bounded to six concurrent recipients, and Reduce Motion
+  removes particles/spatial movement with restrained material fades.
+- Recap eligibility uses the frozen displayed receipts' exact positive per-copy
+  awards and current placement. Account/server-scoped cosmetic history prevents
+  replay independently of growth and acknowledgement journals. Dismissing while
+  loading suppresses a late stage ceremony from that in-flight sync.
+- Added native coverage for precise/mixed/zero/capped/stored recipients, duplicate
+  and new receipts, durable scope isolation/history failure, multi-stage/replayed
+  growth, stage deduplication across later watering, bounded emitters/material
+  restoration, reduced motion, recap dismissal/lifecycle and token confirmation/
+  refresh/retry/recovery. Renderer regression covers preloading behind the recap,
+  interrupted replacement and stable anchor/camera. Native UI exercises the Debug
+  in-memory effects fixture. These tests are added, not executed on Windows.
+
+Executed and passed on Windows:
+
+- `python -X utf8 frontend/scripts/validate_frontend.py`: generated project current;
+  bundled asset integrity, fixture contracts, rarity contrast, portrait/light and
+  public/internal build configuration checks pass.
+- `python -X utf8 frontend/scripts/check_swift_syntax.py`: all 69 Swift files parse.
+- `git diff --check`: no whitespace errors.
+
+Not executed: Apple SDK typechecking/build, XCTest/UI, Debug/public Release/
+InternalRelease builds, native screenshots, VoiceOver, Dynamic Type and physical
+iPhone performance. No Swift/Xcode/Apple SDK is installed on this Windows host.
+Run `bash frontend/scripts/test-mac.sh` on Mac and the F8.6 walkthrough at the top
+of F8_ACCEPTANCE.md. Native visual validation cannot be replaced by a web detector.
+
 ## F8.5 minimal UI cleanup — 28 October 2026
 
 Source implemented locally at the user's request. The user subsequently requested

@@ -7,6 +7,38 @@ import UIKit
 
 @MainActor
 final class GardenRendererTests: XCTestCase {
+    func testRecapPreloadsStageAndInterruptedRevealPreservesAnchorAndCamera() async throws {
+        let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
+        let effects = GardenEffectsCoordinator(server: "test", user: UUID(), disk: nil)
+        renderer.setGrowthEffects(effects)
+        defer { renderer.stop() }
+        var first = DevelopmentScene.single.garden()
+        first.plants[0].growthStage = .sprout
+        renderer.display(first, catalog: catalog); renderer.setActive(true)
+        try await waitUntil { renderer.modelLoadCount == 1 && !renderer.isLoading }
+        let id = first.plants[0].id
+        let anchor = try XCTUnwrap(renderer.view.scene.anchors.first?.findEntity(named: id.uuidString))
+        let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
+        let position = anchor.position, rotation = anchor.orientation.vector, cameraPosition = camera.position
+        effects.beginRecap(); renderer.setActive(false)
+        var plants = first.plants; plants[0].growthStage = .young
+        let after = GardenSnapshot(gardenId: first.gardenId, title: first.title, isSample: first.isSample,
+            width: first.width, depth: first.depth, gardenUnitMetres: first.gardenUnitMetres, catalogVersion: first.catalogVersion,
+            layoutVersion: first.layoutVersion, stateVersion: first.stateVersion + 1, plants: plants)
+        renderer.display(after, catalog: catalog)
+        try await waitUntil { renderer.preparedGrowthCount == 1 && !renderer.isLoading }
+        XCTAssertEqual(renderer.modelLoadCount, 1, "The sheet must not hide the stage swap")
+        XCTAssertTrue(anchor === renderer.view.scene.anchors.first?.findEntity(named: id.uuidString))
+        // Background/cancellation installs already-confirmed state quietly.
+        effects.cancel()
+        try await waitUntil { renderer.preparedGrowthCount == 0 && renderer.modelLoadCount == 2 }
+        XCTAssertTrue(anchor === renderer.view.scene.anchors.first?.findEntity(named: id.uuidString))
+        XCTAssertEqual(anchor.position, position); XCTAssertEqual(anchor.orientation.vector, rotation)
+        XCTAssertEqual(camera.position, cameraPosition)
+        renderer.setActive(true)
+        XCTAssertEqual(renderer.modelLoadCount, 2)
+    }
+
     func testVisitorAssetRequestHandlesImmediateValueAndEmptyCompletion() async throws {
         let expected = Entity()
         let result = try await VisitorAssetLoadRequest().run { Just(expected).setFailureType(to: Error.self).eraseToAnyPublisher() }

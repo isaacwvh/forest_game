@@ -3,6 +3,18 @@
 Visual authority: the existing oak/Moonwillow assets and section 12.3 of the root
 specification. Preserve their calm, stylized miniature-world appearance.
 
+- F8.6 confirmed positive visitor rewards shimmer the token counter and display
+  the exact +1/+N beside it. Reserve amount space consistently; feedback never
+  shifts scene/camera geometry. Ordinary wallet refresh and historical recovery
+  stay quiet. Reduce Motion retains a stationary amount and gentle highlight.
+- After a loaded entry recap dismisses, droplets and a climbing pearly-green
+  material shimmer touch only still-planted copies with positive saved awards.
+  An all-zero recap does not water. Shared leaf/light stage transitions reuse
+  the ground anchor and reveal the final confirmed stage at the shimmer peak.
+  Up to six recipient effects run concurrently; no new Blender/per-species assets.
+  Reduce Motion removes particles and uses restrained highlights/fades. Interruptions
+  restore exact original materials and reveal saved state without reward replay.
+
 - Native SwiftUI lists, forms, sheets and navigation stacks; My plants / Garden / Edit / Activity bottom navigation. Edit enters a focused mode on the mounted Garden.
 - F8.1 uses portrait-only play and a consistent light appearance, including native
   sheets. Dark Mode and landscape play are outside this release batch.
