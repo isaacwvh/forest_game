@@ -2,6 +2,17 @@
 
 Prepared on Windows; native acceptance is pending.
 
+## F8.6 shimmer restoration fix — 29 October 2026
+
+- Freeze original tint, emission and blending parameter values separately from
+  the material handle. Rebuild the authored baseline for each shimmer frame and
+  restore it on completion/cancellation, including after a stage-model swap.
+- Added native regressions for normal completion, repeated watering and replacement
+  stage materials, each with standard and reduced motion. Native execution remains
+  a Mac check; user reported the original effects otherwise working on device.
+- Windows portable frontend validation, all 69 Swift syntax parses and
+  `git diff --check` pass. User requested this minimal fix be pushed to GitHub.
+
 ## F8.6 reward and growth effects — 29 October 2026
 
 Implemented locally at the user's request. The user subsequently requested a

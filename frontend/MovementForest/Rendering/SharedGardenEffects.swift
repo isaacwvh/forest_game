@@ -17,7 +17,7 @@ final class SharedGardenEffects {
     }
     private struct Surface {
         let entity: Entity
-        let materials: [any Material]
+        let materials: [() -> any Material]
         let height: Float
     }
     @MainActor private final class Effect {
@@ -108,7 +108,7 @@ final class SharedGardenEffects {
             if let model = entity.components[ModelComponent.self] {
                 let centre = entity.visualBounds(relativeTo: effect.source).center.y
                 let height = min(1, max(0, (centre - effect.bottom) / effect.height))
-                effect.surfaces.append(.init(entity: entity, materials: model.materials, height: height))
+                effect.surfaces.append(.init(entity: entity, materials: model.materials.map { materialSnapshot($0) }, height: height))
             }
             for child in entity.children { visit(child) }
         }
@@ -128,7 +128,7 @@ final class SharedGardenEffects {
             let wave = effect.pending.reduced ? sin(t * .pi) :
                 max(0, 1 - abs(surface.height - shimmer) / 0.55) * sin(shimmer * .pi)
             guard var component = surface.entity.components[ModelComponent.self] else { continue }
-            component.materials = surface.materials.map { tint($0, amount: CGFloat(max(0, wave) * 0.44), opacity: fade) }
+            component.materials = surface.materials.map { tint($0(), amount: CGFloat(max(0, wave) * 0.44), opacity: fade) }
             surface.entity.components.set(component)
         }
         for (index, particle) in effect.particles.enumerated() {
@@ -155,10 +155,36 @@ final class SharedGardenEffects {
     private func restore(_ effect: Effect) {
         for surface in effect.surfaces {
             guard var component = surface.entity.components[ModelComponent.self] else { continue }
-            component.materials = surface.materials
+            component.materials = surface.materials.map { $0() }
             surface.entity.components.set(component)
         }
         effect.surfaces = []
+    }
+
+    private func materialSnapshot(_ original: any Material) -> () -> any Material {
+        // Keep the authored parameter values separately from RealityKit's material
+        // resource. Reapplying only a saved material handle can retain its last sheen.
+        if let material = original as? PhysicallyBasedMaterial {
+            let color = material.baseColor.tint
+            let emission = material.emissiveColor
+            let intensity = material.emissiveIntensity
+            let blending = material.blending
+            return {
+                var restored = material
+                restored.baseColor.tint = color; restored.emissiveColor = emission
+                restored.emissiveIntensity = intensity; restored.blending = blending
+                return restored
+            }
+        }
+        if let material = original as? SimpleMaterial {
+            let color = material.color.tint
+            return { var restored = material; restored.color.tint = color; return restored }
+        }
+        if let material = original as? UnlitMaterial {
+            let color = material.color.tint
+            return { var restored = material; restored.color.tint = color; return restored }
+        }
+        return { original }
     }
 
     private func tint(_ original: any Material, amount: CGFloat, opacity: Float) -> any Material {

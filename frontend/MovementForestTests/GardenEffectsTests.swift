@@ -156,6 +156,54 @@ final class GardenEffectsTests: XCTestCase {
         XCTAssertEqual(restored.emissiveIntensity, material.emissiveIntensity)
     }
 
+    func testCompletedAndRepeatedWateringRestoresTintEmissionAndTransparency() throws {
+        for reduced in [false, true] {
+            let effects = SharedGardenEffects(), root = Entity()
+            var material = PhysicallyBasedMaterial()
+            material.baseColor = .init(tint: .brown)
+            material.emissiveColor = .init(color: .purple)
+            material.emissiveIntensity = 0.12
+            material.blending = .transparent(opacity: .init(floatLiteral: 0.7))
+            let color = material.baseColor.tint, intensity = material.emissiveIntensity, blending = material.blending
+            let source = ModelEntity(mesh: .generateBox(size: 1), materials: [material])
+            root.addChild(source)
+            for _ in 0..<2 {
+                effects.enqueue(.init(plantID: UUID(), water: true, before: .sprout, after: .sprout),
+                    source: source, parent: root, reducedMotion: reduced, replace: { source })
+                for _ in 0..<100 { effects.tick(1.0 / 60.0) }
+                XCTAssertEqual(effects.activeCount, 0); XCTAssertEqual(effects.queuedCount, 0)
+                XCTAssertEqual(root.children.count, 1)
+                let restored = try XCTUnwrap(source.model?.materials.first as? PhysicallyBasedMaterial)
+                XCTAssertEqual(restored.baseColor.tint, color)
+                XCTAssertEqual(restored.emissiveIntensity, intensity)
+                XCTAssertEqual(restored.blending, blending)
+            }
+        }
+    }
+
+    func testCompletedStageWateringRestoresTheReplacementModelsMaterials() throws {
+        for reduced in [false, true] {
+            let effects = SharedGardenEffects(), root = Entity()
+            var replacement = PhysicallyBasedMaterial()
+            replacement.baseColor = .init(tint: .green)
+            replacement.emissiveIntensity = 0.08
+            let color = replacement.baseColor.tint, intensity = replacement.emissiveIntensity, blending = replacement.blending
+            let source = ModelEntity(mesh: .generateBox(size: 1), materials: [SimpleMaterial(color: .brown, isMetallic: false)])
+            root.addChild(source)
+            var swaps = 0
+            effects.enqueue(.init(plantID: UUID(), water: true, before: .sprout, after: .adult),
+                source: source, parent: root, reducedMotion: reduced, replace: {
+                    swaps += 1; source.model?.materials = [replacement]; return source
+                })
+            for _ in 0..<100 { effects.tick(1.0 / 60.0) }
+            let restored = try XCTUnwrap(source.model?.materials.first as? PhysicallyBasedMaterial)
+            XCTAssertEqual(swaps, 1); XCTAssertEqual(effects.activeCount, 0)
+            XCTAssertEqual(restored.baseColor.tint, color)
+            XCTAssertEqual(restored.emissiveIntensity, intensity)
+            XCTAssertEqual(restored.blending, blending)
+        }
+    }
+
     func testReducedMotionUsesNoParticlesAndSwapsExactlyOnce() {
         let effects = SharedGardenEffects(), root = Entity(), source = ModelEntity(mesh: .generateBox(size: 1), materials: [SimpleMaterial(color: .green, isMetallic: false)])
         root.addChild(source)
