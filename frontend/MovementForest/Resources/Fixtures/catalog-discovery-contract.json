@@ -1,0 +1,17 @@
+{
+  "fresh": {
+    "userId": "11111111-1111-4111-8111-111111111111",
+    "catalogVersion": "development-oak-v1",
+    "discoveryVersion": 0,
+    "entries": []
+  },
+  "grown": {
+    "userId": "11111111-1111-4111-8111-111111111111",
+    "catalogVersion": "development-oak-v1",
+    "discoveryVersion": 2,
+    "entries": [
+      {"speciesId": "oak", "variantId": "blue", "stages": ["seedling"]},
+      {"speciesId": "oak", "variantId": "standard", "stages": ["seedling", "young", "adult"]}
+    ]
+  }
+}

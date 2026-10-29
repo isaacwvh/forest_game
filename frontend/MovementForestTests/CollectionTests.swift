@@ -363,6 +363,16 @@ final class CollectionTests: XCTestCase {
         XCTAssertEqual(updates, 1)
     }
 
+    func testCachedCatalogMetadataSurvivesCollectionRefreshFailure() async throws {
+        let contract = try CollectionContract.load(), service = FakeCollection(try CollectionContract.load())
+        service.failSummary = true
+        let store = CollectionCoordinator(userID: UUID(), service: service,
+            journal: MemoryCollectionJournal(), initialCatalogue: contract.catalogue)
+        await store.refresh()
+        XCTAssertEqual(store.catalogue?.catalogVersion, contract.catalogue.catalogVersion)
+        XCTAssertTrue(store.refreshFailed)
+    }
+
     func testJournalRejectsTamperingAndSeparatesAccountScopes() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }

@@ -36,6 +36,7 @@ All routes require the current authenticated game account.
 | `POST /v1/me/packs/{ownedPackId}/open` | `{requestId}`; returns the committed opening and owned `plant` |
 | `GET /v1/me/pack-openings` | Newest-first `openings` and `nextCursor`; same pagination limits |
 | `GET /v1/catalog` | Published plant metadata, four stage assets, profile definitions and placement geometry |
+| `GET /v1/me/catalog-discovery` | Account-owned permanent variant/stage discoveries, catalog version and monotonic discovery version; sprouts are unconditionally visible |
 
 Exchange receipts retain accepted offer/version, total spent and every acquired
 pack ID. Opening receipts retain pack/version, selected rarity, plant and profile
@@ -132,8 +133,8 @@ from Windows syntax/resource checks; use `frontend/F7_COLLECTION_ACCEPTANCE.md`.
 GET /v1/catalog now exposes `rarity` on species. Variants retain deprecated legacy
 rarity metadata for compatibility. The native catalogue uses one species row,
 variant inspection within it, and current-offer probabilities labelled by pack
-version. Old owned-pack probabilities remain available in Draws. All stage art
-is visible; permanent per-account stage discovery is future polishing work.
+version. Old owned-pack probabilities remain available in Draws. F8.7 adds catalog
+artwork discovery below; shared definitions and pack probabilities remain readable.
 
 Run the migration before seeding. Install the matching updated iOS build before
 testing newly published schema-2 offers; the earlier iOS build only understands
@@ -142,3 +143,35 @@ retires Woodland v1/Blue Oak sales without migrating acquired packs or changing
 existing owned-copy progress/currency. A repeat call never reactivates retired
 offers. The catalogue version changes to development-woodland-v2 so old cached
 placement rules are refreshed. No live game database is changed by automated tests.
+
+## Catalog stage discovery — F8.7
+
+Alembic `0009_catalog_discovery` adds `catalog_stage_discoveries` and
+`catalog_discovery_state`. The discovery key is owner/species/variant/stage;
+only seedling, young and adult require rows. All sprouts remain visible without
+ownership. Standard and sibling variants never share later-stage unlocks.
+
+The migration backfills every planted/stored copy using its pinned growth profile,
+including intermediate stages and copies outside the first inventory page.
+Duplicates union discoveries within the exact variant. Backfill timestamps record
+the upgrade time, not an invented historical first-reached time. Invalid pinned
+profiles abort the upgrade. A repeated backfill adds only missing discoveries and
+never resets versions. Downgrade refuses to discard earned discoveries.
+
+`GET /v1/me/catalog-discovery` authenticates the active owner and returns a complete,
+sparse snapshot: `userId`, `catalogVersion`, `discoveryVersion`, and `entries`
+containing `speciesId`, `variantId` and stage arrays in growth order. Missing entries
+mean undiscovered only after a successful snapshot. No client unlock endpoint exists.
+
+Activity sync inserts discoveries and advances the independent version once when
+new stages are recorded, in the same transaction as saved growth. Replay and no-new-
+discovery syncs do not mint versions. Typed workouts and all accepted daily metrics
+use the same writer; the trusted adult fixture grant also reconciles discovery.
+Pack opening still grants only a sprout; recap presentation/ack never grants discovery.
+
+For an existing installation, pause old growth/grant writers, explicitly run
+`alembic upgrade head` from the configured backend environment, deploy/restart the
+matching backend, then install the matching iOS build. The application never applies
+migrations or seeds on startup. No live/game database was upgraded by source tests.
+Old iOS builds still show their old catalog previews; current builds conceal later
+art if the endpoint is unavailable. Use `frontend/F8_ACCEPTANCE.md` for device checks.

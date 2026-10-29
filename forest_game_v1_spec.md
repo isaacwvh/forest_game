@@ -1,20 +1,38 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.25\
-Date: 29 October 2026\
+Document version: 0.28\
+Date: 30 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
 
-**F8.6 reward and growth effects, 29 October 2026 — source implemented locally;
-native acceptance pending:** exact confirmed visitor-token awards shimmer the counter
+**Catalog discovery — F8.7 source implemented locally, 29–30 October 2026;
+native/device acceptance pending:**
+all species/variant sprouts stay visible and supply catalog portraits regardless
+of ownership or progression. Seedling, young and adult art uses a solid silhouette
+until an owned copy of that exact variant first reaches the stage. Earned discovery
+is permanent per account/species/variant/stage; it never carries between variants.
+This supersedes the earlier any-variant/species-shared proposal. Intermediate-stage
+unlocks, pinned-profile existing-account backfill, transactional server state,
+account-scoped caching and acceptance are planned in
+[CATALOG_DISCOVERY_PLAN.md](CATALOG_DISCOVERY_PLAN.md). Alembic
+`0009_catalog_discovery` adds and backfills the permanent ledger; growth saves
+discoveries atomically. Native catalog art and account-scoped cache use the new
+owner-only read. Existing game databases need an explicit upgrade; none is migrated
+by source tests. See backend/frontend validation records for executed evidence.
+
+**F8.6 reward and growth effects — completed, user accepted 29 October 2026:**
+delivered in `8c6cd40`, with shimmer restoration fix `4c7784a`; the user has accepted
+the completed batch. Automated native/build and broader device evidence remain
+separate. Exact confirmed visitor-token awards shimmer the counter
 and show +1/+N. Shared runtime leaf/light transitions reveal confirmed stage models.
 A loaded entry recap's dismissal waters and shimmers only still-planted owned copies
 with positive saved growth awards; all-zero and loading-dismissed recaps never water.
 Cosmetic receipt/stage history is account/server-scoped and independent of settlement
 and acknowledgement. Backgrounding/navigation/account changes cancel effects and
 restore materials without changing growth or tokens. No Blender/per-species effect
-assets or backend/economy changes. Catalogue discovery remains deferred. See
+assets or backend/economy changes. Catalogue discovery is separately delivered in
+F8.7. See
 [F8 acceptance](frontend/F8_ACCEPTANCE.md) and [validation](frontend/VALIDATION.md).
 
 **F8.5 minimal UI cleanup, 28 October 2026 — source implemented; native acceptance
@@ -92,7 +110,7 @@ species. Schema-2 packs freeze all three levels; adding variants cannot increase
 a species' selection chance. Schema-1 packs and receipts retain their historical
 flat-outcome rules. Catalogue navigation is one entry per species, with variants
 and pack-specific odds inside its detail. Moonwillow is registered as fixture
-game content alongside Oak. Hidden-stage discovery is deferred under F8 polishing
+game content alongside Oak. Hidden-stage discovery is planned separately under F8 polishing
 in IMPLEMENTATION_PLAN.md; it is not part of this update.
 
 The editable plant/game planning workbook is [Plant_Game_Data.xlsx](outputs/plant-planning/Plant_Game_Data.xlsx). It starts with oak only. Agreed design rules, provisional defaults, illustrative balance examples and undecided values are labelled separately. Editing the workbook does not automatically publish game configuration or change runtime assets.
@@ -246,6 +264,34 @@ recovery; do not automatically replay the full animation on recovered receipts.
 Confirmation cancellation must precede any opening mutation; exact request timing,
 final layout and timings remain for frontend polishing. Confirm the result before
 showing rarity light. See section 12.4 for image assets and frontend/backend scope.
+
+#### 3.4.1 Catalog stage discovery — source implemented; native acceptance pending
+
+Keep one catalog entry per species, with variants inside its detail. Every
+species/variant sprout is always visible, even before it is owned, and remains
+the catalog portrait after later stages unlock. Species rows use the standard
+variant's sprout, falling back to the first available variant; variant detail
+uses that variant's sprout.
+
+For seedling, young and adult, locked artwork is a solid silhouette with accessible
+“Not discovered” text. First reaching a stage with an owned copy permanently
+reveals the matching stage/variant artwork for that account. Unlock every
+intermediate stage crossed in one credit. Duplicate copies of the same variant
+share visual discovery only; standard and sibling variants never share unlocks.
+Storing/replanting, inactivity and catalog/profile updates never relock earned
+discovery. Sprout preview visibility is independent of ownership and earned discovery.
+
+Backfill all existing stored/planted copies using their pinned growth profiles.
+Persist discovery atomically with confirmed growth; never derive entitlement from
+recap playback, catalog browsing or another player's garden. Retain names, stage
+labels, descriptions, mechanics and pack probabilities while artwork is concealed.
+Catalog masking does not change owned-copy or Garden/placement artwork.
+
+The full data/API/cache, rollout and acceptance plan is
+[CATALOG_DISCOVERY_PLAN.md](CATALOG_DISCOVERY_PLAN.md). This replaces the former
+per-species unlock-sharing proposal. The implementation adds a database ledger,
+transactional writes and owner API alongside catalog-only rendering and caching.
+Apply its migration explicitly before using the updated native build.
 
 ### 3.5 Friends
 
@@ -839,6 +885,8 @@ Blocking overrides friendship and visibility. Remove/disable conflicting request
 | `growth_rule_profiles` | `(id, version) PK`, validated immutable `metricMultipliers` (exact workout type → `workout_minutes.*` → 0; other omitted metrics = 0), `conditionalModifiers` and `gardenEffects` JSONB; effects declare `system` growth/visitors, supported scope, recipient/filter, conditions/activation and stacking metadata. Growth activity scope requires a canonical metric; growth water and visitor scopes forbid one. Schema version and activation metadata; an empty effects array means no emitted skills |
 | `plant_stages` | Species/variant/stage reference, visual model key, PNG thumbnail key and stage display metadata; four stable stage IDs |
 | `owned_plants` | `id uuid PK`, `owner_id FK`, `(species_id, variant_id) FK` to shared variant, resolved/pinned growth/behaviour/attraction profile references and versions, `growth_micro_units bigint CHECK >= 0` representing individual cumulative water, fractional accounting state if needed, acquisition source/reference, `first_matured_at NULL`, timestamps; stage and base attraction derived from that copy's progress and pinned profiles, not separate authoritative balances. Duplicate copies have distinct IDs and progress |
+| `catalog_stage_discoveries` (F8.7) | `(owner_id, species_id, variant_id, stage) PK`, owner and composite variant FKs, `stage` restricted to seedling/young/adult, server `recorded_at`; permanent visual discovery for that exact variant. Sprouts are always visible without discovery rows |
+| `catalog_discovery_state` (F8.7) | `owner_id PK/FK`, nonnegative monotonic `version bigint`; advance once per transaction inserting new discoveries, separately from catalog, layout, economy and cosmetic-effect versions |
 | `garden_placements` | `plant_id FK PK`, `garden_id FK`, `x numeric(9,3)`, `y numeric(9,3)` in board-local garden units, `rotation_degrees numeric(5,2)` with `0 <= value < 360`; a plant has at most one placement; coordinates are the ground-centred anchor, not a rectangle corner |
 | `visitor_wallets` | One authoritative token balance plus hosted counters and a monotonic economy version; B6 earning entries and B7 collection-event token deltas reconcile to it. No ticket or water wallet |
 | `economy_configs` | `version PK`, immutable water normalisation/base rates and caps, personal-water-boost policy, attraction/visitor curve parameters and caps, starter floor/gap protection, active slot/lease/expiry policy, slower offline rate/capacity rules, token reward rules, token-to-pack exchange cost, milestone rules, rounding/grouping policies and activation time. No direct step-to-ticket rate; changes apply prospectively |
@@ -1039,6 +1087,7 @@ Signup, sign-in, email confirmation/recovery, refresh and identity linking use S
 | `GET /v1/bootstrap` | Profile, configuration versions, own garden, token/ticket wallets, visitor storage/context/session summary, milestone state, permanent packet access, pending recap and sync settings; a read may settle storage but does not claim currency |
 | `PATCH /v1/me` | Display name, username and supported preferences |
 | `GET /v1/catalog` | Versioned species/variant definitions, circular clearance, growth/behaviour/attraction profiles, supported skill handlers, assets, visitor visuals and pool/exchange/milestone descriptions |
+| `GET /v1/me/catalog-discovery` (F8.7) | Complete owner-only variant/stage discovery snapshot and monotonic discovery version; shared catalog definitions remain separate; no client unlock endpoint |
 | `POST /v1/activity/sync` | Settle elapsed visitors before stage changes, reconcile metric buckets/workouts, credit water/boosts, update maturity/activity unlocks and future attraction, and return recap references; no direct currency award |
 | `GET /v1/me/garden` | Garden with saved growth and derived attraction; owner visitor summary separated from public garden fields |
 | `POST /v1/me/garden/edits` | Atomic batch plant/store/move/rotate actions using canonical continuous X/Y and `rotationDegrees`, expected layout version and matching catalogue/configuration version |
@@ -1076,6 +1125,12 @@ Mutations carry a request UUID. Return canonical changed state or version identi
 ### Activity sync
 
 Verify identity/device → validate input → lock account/garden accounting state → settle visitor time to the operation boundary using the old snapshot → reconcile observed values and frozen daily targets → snapshot pre-credit stages/context → calculate water entitlements and growth skills → create unique per-plant credits and update individual progress → update first-maturity/activity counters and packet access → publish the resulting visitor context prospectively → record recap references → commit. No step-ticket watermark or wallet credit occurs. Retries cannot duplicate growth, unlocks, visitor time or recap events; already elapsed visitor income stays fixed.
+
+**F8.7 addition:** insert any newly reached catalog discovery stages for
+the exact owner/species/variant before the same growth transaction commits, using
+pinned profiles and including intermediate stages. Advance the independent
+discovery version only for new rows. Keep visitor settlement ordering and original
+saved-response replay unchanged; recap presentation never grants discovery.
 
 ### Plant/store/move
 
@@ -1120,6 +1175,7 @@ All operations verify idempotency and use the common account/garden/wallet lock 
 - Keep geometry, texture sizes, shadows and particles modest. Reuse resources across repeated species.
 - Prototype the full garden on the minimum supported iPhone before producing the full art set.
 - Plant storage thumbnails are required pre-rendered shared assets: one PNG for every stage/variant combination. They represent catalogue visuals, not authoritative owned-plant state. Do not render or save a new thumbnail for each owned plant or each activity sync.
+- Catalog discovery reuses those PNGs: always-visible sprout portraits, flat silhouettes for locked later stages and full-color images once discovered. Keep this presentation separate from current-stage owned-copy thumbnails; no extra per-species silhouette assets are required.
 - Optional whole-garden preview images are a separate cosmetic feature and remain open.
 
 ### 12.2 Agreed growth and ground construction
@@ -1274,6 +1330,7 @@ Costs to monitor: asset egress, art sizes, authentication users, database capaci
 - Completed draw retries return the same owned sprout ID; unboxing does not require an available planting position.
 - Placing/storing a plant preserves ownership, stage, variant and growth; no separate seed consumption occurs.
 - Every supported stage/variant resolves to a model and transparent thumbnail; all stages use the same ground anchor.
+- Catalog discovery: all sprouts remain visible; later stages unlock permanently only for the exact account/species/variant/stage, including intermediate crossings. Verify transactional rollback/replay, pinned-profile backfill across stored/planted copies, versioned account-scoped cache behavior, loading/error masking and variant/account isolation.
 - Explicit 1.0 multipliers preserve configured normalised contributions; resolved 0 plant multipliers (after workout fallback) stay zero under ordinary activity/water boosts. Overlapping metrics receive only their deliberate configured contributions.
 - Growth activity scope requires a valid metric; growth water and visitor scopes forbid one. Effects route by explicit system/scope, each applies once, and base plant coefficients remain unchanged.
 - Same-layer bonuses add after strongest-per-group resolution and caps; the two layers deliberately compound. Check 10×1.20×1.10 = 13.2 before limits, and verify the water factor applies once after summing different metrics.
@@ -1361,6 +1418,8 @@ A useful first vertical slice is: sign in → place starter → sync steps/grow 
 
 | Date | Decision / proposal | Status |
 | --- | --- | --- |
+| 2026-10-30 | Implement F8.7 variant-specific catalog discovery, always-visible sprout portraits, pinned-progress backfill and account-scoped cache. Save broader storage/synchronization architecture separately in new scaling plan.md | Source implemented locally; native/device acceptance pending. Database upgrade is explicit; no live migration, push or CI run is performed by source validation |
+| 2026-10-29 | Plan always-visible sprout catalog portraits and permanent later-stage artwork discovery per account/species/variant/stage. Locked later stages use solid silhouettes; reaching standard adult never reveals sibling variants. Backfill pinned owned-copy progress and unlock intermediate stages transactionally | User-requested behavior; proposed F8.7 implementation plan only in CATALOG_DISCOVERY_PLAN.md. Supersedes the earlier species-shared discovery proposal; no runtime/schema/API changes made |
 | 2026-10-24 | Select +150% per-activity and combined-water caps (×6.25 across both layers), +50% plant/garden attraction with final ×2 base ceiling, flat attraction min(+10 points, 25% base), +200% capacity with +10 flat budget inside final min(absolute maximum, ×3 base). Assign adult-only Moonwillow Sleeping Dew +4% water with shared non-stacking variants; retain old pinned plants/packs | Approved initial development policy; B8 skill/cap source and native dropdown implemented. Native execution and personal-account provisioning require their own validation/availability evidence. Wider personal/input handlers remain separately scheduled. |
 | 2026-10-24 | Defer weather integration and weather-dependent skills beyond B8; keep weather neutral. Record WeatherKit as a later candidate requiring paid Apple Developer Program membership, with a shared included request allowance and optional paid capacity | Agreed B8 scope exclusion; no weather provider selected or integrated. Later location, observation buckets, caching, attribution and budget need an explicit increment |
 | 2026-10-24 | Compose skills from reusable validated components; evaluate relevant rules against shared frozen garden facts, then resolve effects per recipient. Support explicit capped count-based magnitudes while retaining strongest-per-group stacking; general-workout and exact-type bonuses add in distinct groups | Agreed specification direction; handlers remain pending. Skill assignments, activation stages, numeric balance and stateful mechanics require explicit configuration/implementation |

@@ -136,6 +136,9 @@ def grant_adult_moonwillow(session, settings, username, *, dry_run=False):
             plant.fractional_state = {}
             plant.first_matured_at = session.scalar(select(func.clock_timestamp()))
             session.flush()
+        from forest_api.discovery import record_reached
+
+        record_reached(session, user.id, [plant], session.scalar(select(func.clock_timestamp())))
         return {
             "username": user.username,
             "userId": str(user.id),

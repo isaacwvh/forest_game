@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from forest_api import activity_inputs as inputs
-from forest_api import services
+from forest_api import discovery, services
 from forest_api.activity_schemas import (
     AcknowledgeRecap,
     ActivityDayInput,
@@ -477,6 +477,7 @@ def sync(
                 )
             )
 
+        discovery.record_reached(session, user.id, plants, boundary)
         changed = any(
             (plant.growth_micro_units, plant.fractional_state) != before[plant.id][:2]
             for plant in plants

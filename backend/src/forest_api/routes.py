@@ -5,7 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from forest_api import activity, services
+from forest_api import activity, discovery, services
 from forest_api.activity_schemas import (
     AcknowledgeRecap,
     ActivityStatus,
@@ -37,7 +37,7 @@ from forest_api.server_clock import request_clock
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0008_scheduled_visitors"
+SCHEMA_REVISION = "0009_catalog_discovery"
 
 
 @router.get("/health/live", tags=["health"])
@@ -101,6 +101,17 @@ def garden(
     session: Session = Depends(get_session),
 ) -> GardenDTO:
     return services.read_garden(session, request.app.state.settings, identity)
+
+
+@router.get(
+    "/v1/me/catalog-discovery", response_model=discovery.DiscoverySnapshot, tags=["catalogue"]
+)
+def catalog_discovery(
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> discovery.DiscoverySnapshot:
+    return discovery.read(session, request.app.state.settings, identity)
 
 
 @router.get("/v1/me/inventory", response_model=InventoryDTO, tags=["inventory"])

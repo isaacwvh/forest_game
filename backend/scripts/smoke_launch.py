@@ -144,6 +144,7 @@ def main():
             )
             catalog = request("/v1/catalog")
             assert catalog["catalogVersion"] == VERSION and not catalog["isFixture"]
+            assert request("/v1/me/catalog-discovery")["entries"] == []
             installation = str(uuid4())
             enrol = request(
                 "/v1/activity/enrolments",
@@ -211,6 +212,13 @@ def main():
             assert result["garden"]["plants"][0]["growthMicroUnits"] == "100004166"
             assert result["activityMetrics"]["workout_minutes.running"] == "1/60"
             assert result["activityMetrics"]["walking_running_distance_km"] == "1"
+            discovered = request("/v1/me/catalog-discovery")
+            assert discovered == {
+                "userId": account["profile"]["userId"],
+                "catalogVersion": VERSION,
+                "discoveryVersion": 1,
+                "entries": [{"speciesId": "oak", "variantId": "standard", "stages": ["seedling"]}],
+            }
             milestone_body = {"requestId": str(uuid4())}
             milestone = request("/v1/me/milestones/first_movement/claim", milestone_body)
             assert milestone["tokensEarned"] == "30"
@@ -221,6 +229,7 @@ def main():
             server.wait(timeout=10)
             server = start()
             assert request("/v1/activity/sync", body) == result
+            assert request("/v1/me/catalog-discovery") == discovered
             assert request("/v1/me/milestones/first_movement/claim", milestone_body) == milestone
             assert request("/v1/me/collection")["tokenBalance"] == "60"
             from forest_api import visitor_rescale
@@ -259,7 +268,8 @@ def main():
                 assert visitor_rescale.publish(session, settings)["alreadyPublished"]
             print(
                 "PASS: HTTP nonfixture launch, typed daily/workout growth, seedling, "
-                "milestone ledger, ×10 conversion, scheduled/early welcome guards, restart/replay."
+                "variant-stage discovery, milestone ledger, ×10 conversion, "
+                "scheduled/early welcome guards, restart/replay."
             )
     finally:
         if server is not None:

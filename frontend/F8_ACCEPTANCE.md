@@ -3,7 +3,53 @@
 Source implementation: 26 October 2026. Native execution and device results must
 be recorded separately; portable parsing is not Apple SDK compilation.
 
-## F8.6 reward and growth effects — local source, 29 October 2026
+## F8.7 catalog discovery — source implemented, native acceptance pending
+
+Apply backend migration `0009_catalog_discovery` explicitly before testing the
+matching native build. Existing stored/planted progress is backfilled from pinned
+profiles; no reset or reseed is needed. Windows automated tests use isolated
+databases and do not perform this upgrade on the real game installation.
+
+Run `bash frontend/scripts/test-mac.sh` for native XCTest/UI and public/internal
+Release builds. `CatalogDiscoveryTests` covers the shared wire fixture, variant/
+species/account isolation, cache persistence, unknown/failure states, stale versions,
+coalescing, invalidation during a read, detach and cache-write failure. Parsing on
+Windows is not an Apple SDK typecheck or an executed native test.
+
+1. On a fresh account, open Catalog: all species rows show full-color sprouts.
+   Open each species and switch variants: its header and sprout row stay full-color,
+   including unowned variants. Seedling/young/adult show flat silhouettes and
+   Not discovered. Names, values, skills and odds stay readable.
+2. Grow Standard Oak through the stages. Each confirmed stage reveals only its
+   matching Standard image. A multi-stage credit reveals every crossed stage.
+   The header/list portrait stays a sprout after adult discovery.
+3. Blue/Vined later stages remain locked. Grow Blue to seedling: only that stage
+   reveals. A new Standard duplicate starts at sprout without relocking Standard.
+   Stored copies retain their discovered catalog art; storing alone adds no growth.
+4. Upgrade an existing account with mature stored and planted copies. Verify correct
+   variant discoveries from actual progress, and persistence after restart/relogin.
+   Viewing old unrestricted artwork alone must not count as earned discovery.
+5. Open Catalog during a sync and switch variants rapidly: no full-color locked
+   frame may flash. A confirmed sync refreshes visible discovery without a new
+   Health read, pack operation or reward ceremony. Return to Garden: camera and
+   mounted renderer remain intact, with the normal visitor lifecycle.
+6. Disconnect after loading discovery: confirmed art remains with Last confirmed
+   discovery and Retry. With no valid discovery cache or an older backend, sprouts
+   remain visible and later stages say Checking discovery / Discovery unavailable,
+   never showing all art. A failed discovery read does not block pack recovery,
+   growth confirmation or an entry recap.
+7. Switch accounts/server during an in-flight read. No old discovery can apply to
+   the new account. Switch back and confirm the correct saved state. Check another
+   device after a fresh catalog read and compare discoveries.
+8. Check VoiceOver stage/status and variant-specific unlock hints, large text,
+   contrast and Reduce Motion. Missing art uses Image unavailable without relocking
+   a discovered stage. Owned-copy/My plants/placement previews retain current art.
+
+## F8.6 reward and growth effects — completed, user accepted 29 October 2026
+
+User acceptance includes the shimmer restoration follow-up (`4c7784a`) after the
+original effects delivery (`8c6cd40`). The walkthrough below remains a regression
+reference; unrecorded native automated/build and broader device checks remain open.
 
 The user requested a GitHub push for Mac testing without waiting for CI. Run on Mac:
 `bash frontend/scripts/test-mac.sh` (Debug XCTest/UI plus public Release and

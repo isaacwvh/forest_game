@@ -85,8 +85,11 @@ native validation. No HTML/CSS detector or browser screenshot substitutes for it
 - Pack contents distinguish schema-2 rarity → equal species → weighted variant
   from legacy flat outcomes inside expandable plant entries. The initial view
   shows only rarity-coloured tier names/percentages and plant names from the pinned
-  pack. Stage artwork remains visible; silhouettes and
-  permanent account-scoped discovery are deferred polish in IMPLEMENTATION_PLAN.
+  pack. F8.7 keeps every catalog portrait and sprout visible, including unowned
+  variants. Later-stage images use a flat silhouette until the account has grown
+  that exact species/variant to the stage; duplicates share visual discovery only
+  within one variant. Preserve confirmed unlocks offline and conceal unknown art
+  during loading/failure. Catalog-specific masking never changes owned-copy art.
 
 - An app-entry sheet shows a frozen batch of saved growth per owned copy,
   including actual skill water and stage advances. Current skills are labelled

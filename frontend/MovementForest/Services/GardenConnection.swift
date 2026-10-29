@@ -284,7 +284,10 @@ final class GardenConnection: ObservableObject {
         DiagnosticHistory.shared.setScope(store.diagnosticScope)
         collection?.deactivate(); collection = nil; collectionUpdates = nil
         if visitorsEnabled {
-            let collection = CollectionCoordinator(userID: store.profile.userId, service: APICollectionRepository(client: client))
+            let discovery = CatalogDiscoveryStore(userID: store.profile.userId,
+                service: APICatalogDiscoveryRepository(client: client), cache: CatalogDiscoveryDiskStore(disk: disk))
+            let collection = CollectionCoordinator(userID: store.profile.userId,
+                service: APICollectionRepository(client: client), discovery: discovery, initialCatalogue: store.catalogue)
             self.collection = collection
             collectionUpdates = collection.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
             collection.onPlantAwarded = { [weak store] in await store?.refresh() }
@@ -313,6 +316,7 @@ final class GardenConnection: ObservableObject {
                                                        service: APIActivityRepository(client: client),
                                                        installationID: try InstallationIdentity.load(disk: disk))
             activitySync = coordinator
+            coordinator.onConfirmedGrowth = { [weak discovery = collection?.discovery] in discovery?.invalidate() }
             syncUpdates = coordinator.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
             store.prepareMembershipChange = { [weak coordinator] in
                 guard let coordinator = coordinator else { return false }

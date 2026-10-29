@@ -232,6 +232,32 @@ class OwnedPlant(Timestamps, Base):
     first_matured_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class CatalogDiscoveryState(Base):
+    __tablename__ = "catalog_discovery_state"
+    __table_args__ = (CheckConstraint("version >= 0", name="version"),)
+
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    version: Mapped[int] = mapped_column(BigInteger, server_default="0")
+
+
+class CatalogStageDiscovery(Base):
+    __tablename__ = "catalog_stage_discoveries"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["species_id", "variant_id"], ["plant_variants.species_id", "plant_variants.variant_id"]
+        ),
+        CheckConstraint("stage IN ('seedling', 'young', 'adult')", name="stage"),
+    )
+
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    species_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    variant_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    stage: Mapped[str] = mapped_column(String(16), primary_key=True)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 class GardenPlacement(Base):
     __tablename__ = "garden_placements"
     __table_args__ = (

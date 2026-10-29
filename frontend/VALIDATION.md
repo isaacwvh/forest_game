@@ -2,6 +2,43 @@
 
 Prepared on Windows; native acceptance is pending.
 
+## F8.7 catalog discovery — 30 October 2026
+
+Source implemented: permanent variant-specific artwork discovery, always-visible
+sprout/list/detail portraits, catalog-only flat silhouettes and status text,
+account/server-scoped cache, guarded/coalesced reads and confirmed-growth
+invalidation. Previously confirmed art stays available after a failed read;
+unknown discovery stays concealed. Shared catalog metadata can initialize from
+the verified Garden store's cache. Owned-copy/placement art and reward recovery
+are unchanged. The broader architecture is saved in `new scaling plan.md`;
+database reduction itself is not part of this implementation.
+
+Executed and passed on Windows:
+
+- Portable frontend validation: current generated Xcode project, plists/schemes,
+  56 app Swift source references, all bundled asset/checksum/alpha/geometry and
+  activity/collection/skill contracts, plus the new discovery wire fixture.
+- All **72 Swift files** parse without syntax errors, including eight new
+  CatalogDiscoveryTests and one cached-metadata CollectionTests regression.
+- Backend: **473 PostgreSQL tests** and four real HTTP walkthroughs pass, including
+  typed-input discovery, pinned backfill, storage/account isolation and restart.
+- Ruff lint/format, Python compilation, dependency consistency and diff whitespace.
+
+Not executed here: Apple SDK typechecking, native XCTest/UI, Debug/public Release/
+InternalRelease builds, visual/VoiceOver/Dynamic Type/Reduce Motion and iPhone
+acceptance. Run `bash frontend/scripts/test-mac.sh` and the F8.7 walkthrough in
+F8_ACCEPTANCE.md on Mac/iPhone. Syntax/resource checks are not those native passes.
+No existing game database was upgraded; migration `0009_catalog_discovery` must
+be applied explicitly before testing the matching build. No push or CI run.
+
+## F8.6 completion — user accepted, 29 October 2026
+
+The user marked reward/growth effects and the shimmer restoration follow-up
+completed. Delivered/pushed commits: `8c6cd40` and `4c7784a`. This records functional
+user acceptance, not additional automated or comprehensive device-test results.
+Previously unexecuted native/build/accessibility/performance checks below remain
+unrecorded. The remaining polish backlog is in IMPLEMENTATION_PLAN.md.
+
 ## F8.6 shimmer restoration fix — 29 October 2026
 
 - Freeze original tint, emission and blending parameter values separately from

@@ -133,6 +133,17 @@ def main():
                 prefix = f"assets/{species['speciesId']}/v1/"
                 require(references["modelKey"] == prefix + asset["file"], "API model key differs from bundle")
                 require(references["thumbnailKey"] == prefix + asset["thumbnail"], "API thumbnail key differs from bundle")
+    discovery = json.loads((ROOT / "MovementForest/Resources/Fixtures/catalog-discovery-contract.json").read_text(encoding="utf-8"))
+    require(discovery["fresh"]["discoveryVersion"] == 0 and discovery["fresh"]["entries"] == [], "Invalid fresh discovery fixture")
+    require(discovery["fresh"]["userId"] == discovery["grown"]["userId"], "Discovery account fixture mismatch")
+    revealed = {}
+    for entry in discovery["grown"]["entries"]:
+        key = (entry["speciesId"], entry["variantId"])
+        require(key not in revealed and entry["stages"] == STAGES[1:1 + len(entry["stages"])], "Invalid discovery stages")
+        require(entry["stages"] and len(entry["stages"]) <= 3, "Sprout visibility is not earned discovery")
+        revealed[key] = entry["stages"]
+    require(revealed[("oak", "standard")] == STAGES[1:] and revealed[("oak", "blue")] == ["seedling"], "Discovery leaks between variants")
+    print("PASS: variant-specific permanent discovery contract, intermediate stages and zero-row sprout preview.")
     collection = json.loads((ROOT / "MovementForest/Resources/Fixtures/collection-contract.json").read_text(encoding="utf-8"))
     bought, opened = collection["exchange"], collection["opening"]
     require(len(bought["packs"]) == bought["quantity"] == 2, "Collection pack quantity mismatch")

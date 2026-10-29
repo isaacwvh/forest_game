@@ -24,6 +24,7 @@ struct CollectionJournalStore: CollectionJournalPersisting {
 @MainActor
 final class CollectionCoordinator: ObservableObject {
     let id = UUID()
+    let discovery: CatalogDiscoveryStore
     @Published private(set) var offers: [APIExchangeOffer] = []
     @Published private(set) var milestones: [APIIntroMilestone] = []
     @Published private(set) var milestonesConfirmedAt: Date?
@@ -51,10 +52,14 @@ final class CollectionCoordinator: ObservableObject {
     var onWallet: ((String, Int64) -> Void)?
     var onPlantAwarded: (() async -> Void)?
 
-    init(userID: UUID, service: any CollectionServing, journal: (any CollectionJournalPersisting)? = nil) {
+    init(userID: UUID, service: any CollectionServing, journal: (any CollectionJournalPersisting)? = nil,
+         discovery: CatalogDiscoveryStore? = nil, initialCatalogue: APICatalogue? = nil) {
         self.userID = userID; self.service = service
+        self.discovery = discovery ?? CatalogDiscoveryStore(userID: userID,
+            service: UnavailableCatalogDiscoveryRepository(serverID: service.serverID))
         let resolved = journal ?? CollectionJournalStore()
         self.journal = resolved
+        self.catalogue = initialCatalogue
         do {
             state = try resolved.load(server: service.serverID, user: userID) ?? CollectionJournalState()
             try state.pending?.validate()
@@ -74,7 +79,7 @@ final class CollectionCoordinator: ObservableObject {
         guard let balance = tokenBalance.flatMap(ExactAmount.integer), let cost = ExactAmount.integer(offer.tokenCost) else { return false }
         return (1...20).contains(quantity) && balance >= cost * Decimal(quantity)
     }
-    func deactivate() { attached = false }
+    func deactivate() { attached = false; discovery.deactivate() }
     func applyWallet(_ balance: String, version: Int64) {
         guard attached, version > economyVersion, ExactAmount.integer(balance) != nil else { return }
         tokenBalance = balance; economyVersion = version; onWallet?(balance, version)

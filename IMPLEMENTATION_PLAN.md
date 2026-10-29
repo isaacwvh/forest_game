@@ -1,6 +1,6 @@
 # Movement Forest implementation plan
 
-Revised 29 October 2026 against `forest_game_v1_spec.md`, version 0.25.
+Revised 30 October 2026 against `forest_game_v1_spec.md`, version 0.28.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
 **Current presentation handoff — 28 October 2026:** F8.3, F8.3b and F8.4 are
@@ -13,12 +13,15 @@ on Packs. Its device retest has not been reported. Portable checks pass; native
 XCTest/build and CI results remain unrecorded. CI was not awaited for either push.
 **F8.5 — minimal UI and page cleanup** is now the user-approved highest-priority
 scope and is source-implemented locally, with native build/device acceptance
-pending. **F8.6 reward and growth effects** is now source-implemented locally at
-the user's request, 29 October; see its handoff below. The user subsequently
-requested a GitHub push for Mac testing without waiting for CI.
-Catalogue discovery, workout eligibility, gameplay rewards, asset delivery and later custom
-designs remain separate. User acceptance does not establish unrecorded automated
-test or CI results; see frontend/VALIDATION.md.
+pending. **F8.6 reward and growth effects — completed, user accepted 29 October:**
+token feedback, shared stage transitions and growth-only recap watering were
+pushed as `8c6cd40`, followed by shimmer restoration fix `4c7784a`. The user has
+marked the batch complete. Automated native/build and broad device evidence remain
+separate from this functional acceptance; see its handoff below.
+Catalogue discovery F8.7 is source-implemented locally, with native/device acceptance
+pending; see its handoff below. Workout eligibility, gameplay rewards,
+asset delivery and later custom designs remain separate. User acceptance does not
+establish unrecorded automated test or CI results; see frontend/VALIDATION.md.
 
 The first B8 skill/cap increment is now source-implemented below, including
 Sleeping Dew and the native Active skills disclosure. Its selected provisional
@@ -1154,10 +1157,12 @@ F8.5 walkthrough in frontend/F8_ACCEPTANCE.md and record executed validation in
 frontend/VALIDATION.md. The shared bottom-navigation overlap fix still needs its
 device retest as part of the scrolling checks.
 
-### F8.6 — confirmed reward and growth effects — source implemented locally, 29 October 2026
+### F8.6 — confirmed reward and growth effects — completed, user accepted 29 October 2026
 
 The user approved token feedback, shared stage transitions, then recap watering.
-Catalogue discovery stays deferred for a later UI polish. No Blender changes,
+Delivered as `8c6cd40`, with the shimmer restoration follow-up in `4c7784a`.
+The user subsequently accepted completion of this batch, including that follow-up.
+Catalogue discovery is outside F8.6 and tracked in F8.7 below. No Blender changes,
 per-species effect assets, reward calculations, endpoints or backend changes.
 
 - Token feedback: a confirmed live welcome/Collect emits one operation-scoped
@@ -1188,17 +1193,97 @@ per-species effect assets, reward calculations, endpoints or backend changes.
 Portable validation is recorded in frontend/VALIDATION.md. Native XCTest/UI and
 Debug/public Release/InternalRelease builds require Mac execution; visual/performance,
 VoiceOver, Dynamic Type and touch acceptance require iPhone review. Follow the
-F8.6 walkthrough in frontend/F8_ACCEPTANCE.md. The user requested commit/push for
-Mac testing without waiting for CI; native execution remains a separate gate.
+F8.6 walkthrough in frontend/F8_ACCEPTANCE.md. Both commits were pushed for Mac
+testing without waiting for CI. Functional acceptance is complete; unrecorded
+automated/build, accessibility and minimum-device checks remain separate gates.
+
+### Current remaining polish backlog — 29 October 2026
+
+F8.6 token feedback, stage transitions, recap watering and the stuck-shimmer fix
+are complete. Do not reopen them as future implementation work. The following
+items remain deferred or need their own scope; this list is not implementation approval.
+
+| Remaining item | Scope / status |
+| --- | --- |
+| Further UI and visual design | User-supplied page designs, custom backgrounds and new visual assets, preserving accepted navigation/editing/recovery. Agree the next design scope first. |
+| Catalogue stage discovery | F8.7 source implemented locally; native/device acceptance pending. Requirements in [CATALOG_DISCOVERY_PLAN.md](CATALOG_DISCOVERY_PLAN.md). Always-visible sprout portraits; permanent account/species/variant/stage discovery for later artwork, silhouettes, intermediate-stage credits and pinned-profile backfill. Replaces the earlier species-shared proposal. |
+| Optional additional effects | Stored-visit swarm and more elaborate interaction effects remain later work. Selection/placement/storage effects may reuse the shared controller under spec §12.4; no new effect batch is approved. |
+| My plants browsing conveniences | Search/filter/sort and bulk operations remain deferred beyond the accepted read-only inspection/placement flow. |
+| Asset delivery and cache design | Choose bundled, remote or hybrid delivery; only then scope versioned publication, downloads, prefetch/eviction, offline/retry behaviour and size budgets. |
+| API response retention and database cleanup | Proposed separate hardening plan in [DATA_RETENTION_PLAN.md](DATA_RETENTION_PLAN.md). Retain full visitor controls 24 hours, most full mutation responses 7 days and activity responses 30 days, then preserve compact completion records. Requires native recovery compatibility and measured capacity; no cleanup is implemented or scheduled. |
+| Dark Mode and landscape | Deliberately deferred beyond the current portrait/light baseline. |
+| F8 hardening and release evidence | Record native XCTest/build results, VoiceOver/Dynamic Type/Reduce Motion checks, long sessions, cache/retry/offline behaviour, minimum-device performance and multi-day loop/pacing evidence. User acceptance does not imply these unrecorded checks passed. |
+
+Adjacent follow-ups listed with F8, but not UI-only polish: numeric milestone
+progress plus early-collection/lifetime-step rewards (pacing and historical-claim
+compensation decisions first), and workout eligibility/idle-session validation
+(evidence/protocol planning first). New-species publication, provider setup and
+deployment retain their separate milestones. Catalogue discovery is source-implemented
+in F8.7 below, with native acceptance pending. The broader data-storage architecture is saved separately in
+[new scaling plan.md](new%20scaling%20plan.md); database reduction is not implemented
+by the catalog-discovery batch.
+
+### F8.7 — catalog discovery — source implemented locally, 29–30 October 2026
+
+Implemented from [CATALOG_DISCOVERY_PLAN.md](CATALOG_DISCOVERY_PLAN.md): migration
+`0009_catalog_discovery`, pinned-profile existing-account backfill, transactional
+growth/grant reconciliation, owner-only read API, account-scoped durable cache and
+catalog-specific silhouettes with permanently visible sprout portraits. A shared
+wire fixture and targeted PostgreSQL/native recovery tests accompany the change.
+Native XCTest/build and iPhone visual acceptance remain separate gates. Existing
+game databases require an explicit upgrade; no live database is migrated/reseeded
+by source tests. No push or CI run is requested for this batch.
+
+**Executed validation — 30 October:** all 473 PostgreSQL tests, four real HTTP
+walkthroughs, frontend project/resource/contract validation, 72 Swift syntax parses,
+Ruff lint/format, Python compilation, dependency and whitespace checks pass. Eight
+new native discovery tests and a cached-catalog regression are included in the
+generated Xcode project but still require Mac execution. See backend/frontend
+VALIDATION.md and the F8.7 acceptance walkthrough; this is source completion,
+not user/device acceptance.
+
+**Behavior:** keep one entry per species with variants inside detail. Every sprout
+is always visible, regardless of ownership/progression, and remains the catalog
+portrait after maturity. Seedling, young and adult images are flat silhouettes
+until an owned copy of that exact variant reaches each stage for the first time.
+Use permanent account/species/variant/stage keys: growing Standard Oak to adult
+reveals only Standard Oak's later stages; Blue/Vined retain their own locks.
+Duplicates share visual discovery within one variant without sharing growth.
+
+**Delivery order and completion checks:**
+
+1. Add constrained later-stage discovery records and an account discovery version;
+   backfill all stored/planted copies from pinned growth profiles. Verify existing
+   state preservation, intermediate stages and no-op reruns against PostgreSQL.
+2. Save unlocks atomically with confirmed growth under the existing transaction/
+   lock order, covering all accepted activity inputs and supported direct-growth
+   tools. Add an owner-only `GET /v1/me/catalog-discovery`; preserve shared catalog,
+   saved sync replay, pack odds, wallets, visitor settlement and recap semantics.
+3. Add typed account/server-scoped client state and cache. Refresh at catalog entry,
+   explicit refresh and confirmed growth; reject stale/detached responses and keep
+   failures independent of activity, recap and collection-operation recovery.
+4. Add catalog-only silhouettes/statuses and the selected variant's sprout portrait.
+   Keep artwork concealed while discovery is unknown, preserve last-confirmed
+   unlocks offline and avoid full-color flashes while switching variants. Names,
+   mechanics and probabilities remain visible; owned-copy/Garden art is unchanged.
+5. Verify thresholds, multi-stage jumps, variant/species/account isolation,
+   concurrency/rollback/replay, upgrades, cache/error/loading states and native
+   accessibility. Record PostgreSQL/portable checks, Mac XCTest/Release and iPhone
+   results separately. Use the full plan's migration/rollout and acceptance matrix.
+
+This replaces the earlier “any owned variant unlocks the species' stage” rule.
+It is separate from pack access, milestone rewards, new species, asset delivery,
+cosmetic effects, general page redesign, Dark Mode and landscape.
 
 ### Later polish sequence — original proposals after F8.5, 28 October 2026
 
-Items 1–2 below were subsequently approved and source-implemented as F8.6 above;
-their original proposal is retained for context. Item 3 stays deferred. Spot-check
+Items 1–2 below were subsequently completed and user-accepted as F8.6 above;
+their original proposal is retained for context. Item 3 is superseded by the
+variant-specific F8.7 implementation above. Spot-check
 `11040d2` on iPhone; keep broad native
 build/accessibility/performance evidence separate from accepted functional work.
 
-1. **Confirmed token reward feedback (deferred; formerly proposed as F8.5):** add a
+1. **Confirmed token reward feedback (completed in F8.6; original proposal):** add a
    brief counter shimmer and floating confirmed reward amount for a welcomed
    visitor or Collect. Show the actual receipt amount, not a hard-coded +1 for
    bulk claims. Present only after server confirmation, once per operation; retries,
@@ -1208,17 +1293,17 @@ build/accessibility/performance evidence separate from accepted functional work.
    uses a restrained alternative; feedback must not be required to understand or
    receive the reward. No new assets, reward rules or endpoint changes. Review
    confirmed receipt identity/event delivery before deciding the minimal design.
-2. **Shared growth-stage transition effect (separate next batch):** prototype one
+2. **Shared growth-stage transition effect (completed in F8.6; original proposal):** prototype one
    reusable, bounded leaf/sparkle effect around a confirmed stage-model change,
    following spec section 12's shared-runtime-effects direction. Preserve copy
    identity, anchors, camera and authoritative progress; handle multi-stage credits,
    retries and Reduce Motion without replaying rewards. Scope watering recap
    animation separately after this prototype; no per-plant effect asset expansion.
-3. **Catalogue stage discovery (larger cross-stack batch):** permanent account/
-   species/stage discovery, silhouettes and accessible Not discovered text, with
-   authoritative transactional updates and existing-account backfill. Storing a
-   plant must not relock a discovered stage. Retain the detailed backlog below;
-   this is not a frontend-only hiding change.
+3. **Catalogue stage discovery (superseded proposal):** the original account/
+   species/stage sharing is replaced by F8.7's account/species/variant/stage plan.
+   Always-visible sprouts, transactional discovery, intermediate-stage unlocks,
+   backfill and silhouettes are specified in CATALOG_DISCOVERY_PLAN.md; this is
+   not a frontend-only hiding change. F8.7 source is implemented; native acceptance remains pending.
 
 Early collection/lifetime-step rewards remain a separate gameplay option after a
 combined pacing review and explicit reward/previous-claim compensation decisions.
@@ -1369,15 +1454,16 @@ in the existing final hardening/polish milestone, after the remaining gameplay:
   motion between server responses, and stable framing during sync/invalid
   placement. Visual changes must preserve server expiry and single-award rewards.
 
-**Catalogue stage discovery — deferred polish:** keep one entry per species.
-Conceal undiscovered growth-stage artwork with a silhouette/question mark and
-accessible “Not discovered” text. Discovery should be permanent per account and
-species when any owned variant reaches that stage, including intermediate stages
-crossed in one credit. Backfill existing accounts from pinned owned-copy progress;
-never relock discovery after storing a plant. Add authoritative discovery state,
-transactional updates and account-scoped frontend presentation in that future
-increment. It is separate from pack access/milestone rewards. This update keeps
-all stage previews visible and adds no discovery schema/endpoints.
+**Catalogue stage discovery — F8.7 source implemented; native acceptance pending:** see
+[CATALOG_DISCOVERY_PLAN.md](CATALOG_DISCOVERY_PLAN.md) and spec section 3.4.1.
+Keep one entry per species, all sprouts/portraits visible and later-stage artwork
+concealed with solid silhouettes until permanently discovered for the exact
+account/species/variant/stage. The earlier proposal that any owned variant reveals
+a species' stage is superseded. Include intermediate-stage crossings, pinned-copy
+backfill, authoritative transactional state and account-scoped presentation.
+Storing a plant never relocks discovery. This is separate from pack access and
+milestone rewards. F8.7 supplies the ledger/API and catalog-only masking/cache;
+native acceptance and the explicit existing-server database upgrade remain separate.
 
 **Exchange and draw flow feedback — potential polish, 23 October 2026:** the user
 confirmed the species-first draw update works well. Review the following frontend
@@ -1457,7 +1543,8 @@ Assets and frontend presentation were integrated in F8.1 and refined through
 F8.2/F8.4. Those bounded presentation batches are user-accepted; native automated
 and full device-test evidence remains separate, as recorded above.
 
-Cosmetic watering, swarm and elaborate effects remain in later F8 increments.
+Recap watering and shared stage effects were completed in F8.6. Swarm and further
+elaborate interaction effects remain later F8 increments.
 These presentation improvements do not block B7/F7 or reopen completed B6/F6 logic.
 
 ## Historical B1–B3 delivery outline

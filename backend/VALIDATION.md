@@ -1,5 +1,28 @@
 # B1–B6 implementation verification
 
+## F8.7 catalog discovery — 30 October 2026
+
+**473 backend tests passed** on the dedicated local PostgreSQL 17 validation
+cluster, including 19 new catalog-discovery cases. All four real HTTP walkthroughs
+also passed: activity, visitor/collection, Sleeping Dew and launch/rescale. The
+launch walkthrough now verifies variant-stage discovery through a server restart
+and sync replay. Tests created/dropped only random `forest_test_*` databases and
+stopped the validation cluster afterward.
+
+Coverage includes exact/just-below thresholds, multi-stage unlocks, duplicate and
+variant/account isolation, storage permanence, concurrent/no-change syncs, atomic
+rollback/retry, optional distance/energy/flights and typed workouts, shared native
+wire fixtures, invalid stage/variant database constraints, full-schema parity,
+readiness and existing-account preservation. Migration `0009_catalog_discovery`
+backfills all stored/planted pinned copies beyond inventory pagination, ignores
+new defaults, supports no-op reruns and refuses to downgrade away earned discovery.
+
+Ruff lint/format, Python compilation and installed dependency checks pass. No live
+game/Supabase database, account, balance, pack, asset package or `.env` was migrated,
+reset or seeded. Apply the explicit upgrade in COLLECTION_API.md before deploying
+the matching backend/native build. No commit/push or remote CI run was performed.
+Native XCTest/Release and iPhone acceptance remain separate platform gates.
+
 ## B6/F6 implementation — 23 October 2026
 
 **287 backend tests passed** on isolated PostgreSQL 17.11 with Python 3.12, including

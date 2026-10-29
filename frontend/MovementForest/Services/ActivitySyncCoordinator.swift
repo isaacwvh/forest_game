@@ -13,6 +13,7 @@ final class ActivitySyncCoordinator: ObservableObject {
     @Published private(set) var recaps: [APIRewardRecap] = []
     @Published private(set) var recoveryLocked = false
     let installationID: UUID
+    var onConfirmedGrowth: (() -> Void)?
     private let editor: GardenEditorStore
     private let health: ActivityStore
     private var service: any ActivityServing
@@ -347,6 +348,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                     }
                     try editor.applyConfirmed(result.garden, at: result.acceptedAt,
                         activityRequestID: runID != nil && runID == presentationSuppressedRun ? nil : operation.id)
+                    onConfirmedGrowth?()
                 case .acknowledgement:
                     guard let recap = operation.recapID else { throw ForestError.invalidData("Invalid recap request.") }
                     let result = try await service.acknowledge(recap: recap, body: operation.body)

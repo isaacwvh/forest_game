@@ -46,6 +46,8 @@ struct CollectionScreen: View {
     @State private var openingPack: APIOwnedPack?
     @State private var inspectingPack: APIPackDefinition?
     @State private var purchasingOffer: APIExchangeOffer?
+    @State private var discoveryViewer = UUID()
+    @Environment(\.scenePhase) private var scenePhase
     @AccessibilityFocusState private var resultFocused: Bool
     private var catalogueSpecies: [APISpecies] { store.catalogue?.species ?? [] }
     private var hasPackModal: Bool { confirmingPack != nil || openingPack != nil || inspectingPack != nil || purchasingOffer != nil }
@@ -57,12 +59,19 @@ struct CollectionScreen: View {
             if destination == .catalog { content.searchable(text: $search, prompt: "Find a plant") }
             else { content }
         }
-        .refreshable { await store.refresh() }
+        .refreshable { await refresh() }
         .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
-            Button { Task { await store.refresh() } } label: { Image(systemName: "arrow.clockwise").frame(width: 44, height: 44) }
+            Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise").frame(width: 44, height: 44) }
                 .accessibilityLabel("Refresh collection").disabled(store.busy || store.recoveryLocked)
         } }
-        .task { await store.refresh() }
+        .task(id: destination) {
+            store.discovery.endViewing(discoveryViewer)
+            if destination == .catalog { store.discovery.beginViewing(discoveryViewer) }
+            await refresh()
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active && destination == .catalog { Task { await store.discovery.refresh() } }
+        }
         .alert("Open pack?", isPresented: Binding(get: { confirmingPack != nil }, set: { if !$0 { confirmingPack = nil } }), presenting: confirmingPack) { pack in
             Button("Cancel", role: .cancel) { confirmingPack = nil }
             Button("Open") { openingPack = pack; confirmingPack = nil }
@@ -86,7 +95,12 @@ struct CollectionScreen: View {
         }
         .onChange(of: hasPackModal) { openingChanged?($0) }
         .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || hasPackModal }
-        .onDisappear { openingChanged?(false) }
+        .onDisappear { openingChanged?(false); store.discovery.endViewing(discoveryViewer) }
+    }
+    private func refresh() async {
+        async let collection: Void = store.refresh()
+        if destination == .catalog { await store.discovery.refresh() }
+        await collection
     }
     private var content: some View {
         List {
@@ -167,6 +181,7 @@ struct CollectionScreen: View {
                     }
                 }
             case .catalog:
+                CatalogDiscoveryNotice(discovery: store.discovery)
                 Section("All plants") {
                     Picker("Rarity", selection: $rarity) {
                         Text("All").tag("All")
@@ -177,7 +192,8 @@ struct CollectionScreen: View {
                         (search.isEmpty || (species.displayName + " " + species.variants.map(\.displayName).joined(separator: " ")).localizedCaseInsensitiveContains(search))
                     }, id: \.speciesId) { species in
                         NavigationLink {
-                            CatalogSpeciesScreen(species: species, catalogue: store.catalogue, offers: store.offers, assets: assets)
+                            CatalogSpeciesScreen(species: species, catalogue: store.catalogue, offers: store.offers,
+                                                 assets: assets, discovery: store.discovery)
                         } label: {
                             HStack {
                                 if let variant = species.variants.first(where: { $0.variantId == "standard" }) ?? species.variants.first {
@@ -407,7 +423,37 @@ private struct CatalogThumbnail: View {
     let row: CatalogRow
     let stage: GrowthStage
     let assets: any AssetCatalogProviding
-    var body: some View { PlantThumbnail(plant: row.plant(stage), catalog: assets).frame(width: 48, height: 56) }
+    var revealed = true
+    var body: some View {
+        Group {
+            if let asset = try? assets.resolve(row.plant(stage)), let image = UIImage(contentsOfFile: asset.thumbnailURL.path) {
+                Image(uiImage: image).renderingMode(revealed ? .original : .template)
+                    .resizable().scaledToFit().foregroundStyle(Color.primary)
+            } else {
+                VStack(spacing: 2) {
+                    Image(systemName: "leaf").font(.title2)
+                    Text("Image unavailable").font(.caption2).multilineTextAlignment(.center)
+                }
+            }
+        }.frame(width: 48, height: 56).accessibilityHidden(true)
+    }
+}
+
+private struct CatalogDiscoveryNotice: View {
+    @ObservedObject var discovery: CatalogDiscoveryStore
+    var body: some View {
+        if discovery.refreshing {
+            ProgressView("Checking discovery…")
+        } else if discovery.failed {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(discovery.snapshot == nil ? "Discovery unavailable" : "Last confirmed discovery")
+                    .font(.callout).foregroundStyle(.secondary)
+                Button("Retry discovery") { Task { await discovery.refresh() } }.frame(minHeight: 44)
+            }
+        } else if discovery.snapshot != nil && discovery.lastConfirmed {
+            Text("Last confirmed discovery").font(.caption).foregroundStyle(.secondary)
+        }
+    }
 }
 
 private struct CatalogSpeciesScreen: View {
@@ -415,12 +461,20 @@ private struct CatalogSpeciesScreen: View {
     let catalogue: APICatalogue?
     let offers: [APIExchangeOffer]
     let assets: any AssetCatalogProviding
+    @ObservedObject var discovery: CatalogDiscoveryStore
     @State private var variantID = "standard"
+    @State private var discoveryViewer = UUID()
+    @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         if let variant = species.variants.first(where: { $0.variantId == variantID }) ?? species.variants.first {
             CatalogDetailScreen(row: CatalogRow(species: species, variant: variant), catalogue: catalogue,
-                                offers: offers, assets: assets, variantID: $variantID)
+                                offers: offers, assets: assets, discovery: discovery, variantID: $variantID)
                 .navigationTitle(species.displayName)
+                .task { discovery.beginViewing(discoveryViewer); await discovery.refresh() }
+                .onDisappear { discovery.endViewing(discoveryViewer) }
+                .onChange(of: scenePhase) { phase in
+                    if phase == .active { Task { await discovery.refresh() } }
+                }
                 .toolbar { ToolbarItem(placement: .principal) { PlantNameText(species.displayName, rarity: species.rarity).font(.headline) } }
         } else { Text("No variants available.") }
     }
@@ -431,6 +485,7 @@ private struct CatalogDetailScreen: View {
     let catalogue: APICatalogue?
     let offers: [APIExchangeOffer]
     let assets: any AssetCatalogProviding
+    @ObservedObject var discovery: CatalogDiscoveryStore
     @Binding var variantID: String
     private func profile(_ kind: String) -> APICatalogueProfile? {
         let fallback: APIProfileReference?
@@ -451,6 +506,11 @@ private struct CatalogDetailScreen: View {
     var body: some View {
         List {
             Section {
+                HStack {
+                    CatalogThumbnail(row: row, stage: .sprout, assets: assets)
+                    Text(row.variant.displayName).font(.headline)
+                }.accessibilityLabel("\(row.variant.displayName) \(row.species.displayName), sprout, always visible")
+                CatalogDiscoveryNotice(discovery: discovery)
                 LabeledContent("Rarity", value: row.species.rarity?.capitalized ?? "Unavailable")
                 Picker("Variant", selection: $variantID) {
                     ForEach(row.species.variants, id: \.variantId) { Text($0.displayName).tag($0.variantId) }
@@ -470,15 +530,23 @@ private struct CatalogDetailScreen: View {
             }
             Section {
                 DisclosureGroup("Growth and attraction by stage") {
+                    Text("Grow this variant to discover its later stages.")
+                        .font(.callout).foregroundStyle(.secondary)
                     ForEach(GrowthStage.allCases, id: \.self) { stage in
                         HStack {
-                            CatalogThumbnail(row: row, stage: stage, assets: assets)
+                            CatalogThumbnail(row: row, stage: stage, assets: assets,
+                                revealed: discovery.revealed(species: row.species.speciesId, variant: row.variant.variantId, stage: stage))
                             VStack(alignment: .leading) {
                                 Text(stage.title).font(.headline)
+                                Label(discovery.status(species: row.species.speciesId, variant: row.variant.variantId, stage: stage),
+                                      systemImage: discovery.revealed(species: row.species.speciesId, variant: row.variant.variantId, stage: stage) ? "eye" : "lock")
+                                    .font(.caption).foregroundStyle(.secondary)
                                 QuantityLabel(metric: "water", text: "Cumulative growth: \(amount("growth", stage: stage))")
                                 QuantityLabel(metric: "attraction", text: "Attraction: \(amount("attraction", stage: stage))")
                             }.font(.callout)
-                        }
+                        }.accessibilityElement(children: .combine)
+                            .accessibilityHint(stage == .sprout || discovery.revealed(species: row.species.speciesId, variant: row.variant.variantId, stage: stage)
+                                ? "" : "Grow a \(row.variant.displayName) \(row.species.displayName) to this stage to discover it.")
                     }
                 }
             }
