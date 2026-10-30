@@ -95,6 +95,7 @@ private final class EditorTestService: GardenServing {
     var bodies: [Data] = []
     var loseNextResponse = false
     var nextError: APIError?
+    var compactError: RequestRecovery?
     var failReads = false
     var pauseNext = false
     var pauseRead = false
@@ -125,6 +126,7 @@ private final class EditorTestService: GardenServing {
         bodies.append(body)
         if pauseNext { pauseNext = false; await withCheckedContinuation { gate = $0 } }
         if let error = nextError { nextError = nil; throw error }
+        if let error = compactError { compactError = nil; throw error }
         let request = try JSONDecoder().decode(GardenEditRequest.self, from: body)
         if let result = receipts[request.requestId] { return result }
         guard request.expectedLayoutVersion == current.layoutVersion else {
@@ -153,6 +155,28 @@ private final class EditorTestService: GardenServing {
 
 @MainActor
 final class GardenEditorTests: XCTestCase {
+    func testCompactEditCompletionRefreshesCurrentLayoutWithoutResubmission() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        service.loseNextResponse = true
+        store.begin(try XCTUnwrap(fixture.inventory.plants.first), kind: .plant)
+        store.updatePosition(x: 2, y: 2)
+        await store.releaseCandidate()
+        let pending = try XCTUnwrap(store.pending)
+        let id = try pending.request.requestId
+        service.compactError = RequestRecovery(version: 1, status: "completed", requestId: id,
+            operation: "garden_edits", acceptedAt: Date(),
+            outcome: .init(gardenId: fixture.emptyGarden.gardenId, controlSequence: nil, visits: nil, tokens: nil), refreshRequired: true)
+        let layout = service.current.layoutVersion
+        await store.retryPending()
+        XCTAssertNil(store.pending)
+        XCTAssertEqual(service.current.layoutVersion, layout)
+        XCTAssertEqual(store.confirmed?.layoutVersion, layout)
+        XCTAssertEqual(service.bodies, [pending.body, pending.body])
+    }
+
     func testConnectedPopupAttractionAndRecoveryPreserveViewportCameraAndImports() async throws {
         let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
         service.current = fixture.plantResult.garden

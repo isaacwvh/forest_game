@@ -42,6 +42,16 @@ class VisitorRequest(DTO):
 class StartVisitorSession(VisitorRequest):
     installation_id: UUID
     arrival_protocol: Literal[1, 2] = 1
+    control_protocol: Literal[1] | None = None
+    expected_control_sequence: int | None = Field(
+        default=None, ge=0, le=9223372036854775806, strict=True
+    )
+
+    @model_validator(mode="after")
+    def control_fields(self):
+        if (self.control_protocol is None) != (self.expected_control_sequence is None):
+            raise ValueError("Control protocol and sequence are required together")
+        return self
 
 
 class SessionVisitorRequest(StartVisitorSession):
@@ -65,6 +75,8 @@ class VisitorSessionDTO(DTO):
 
 
 class VisitorSummary(DTO):
+    control_protocol: int = 1
+    control_sequence: int = 0
     arrival_protocol: int = 1
     active_visits_per_hour: str = "0"
     garden_id: UUID

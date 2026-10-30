@@ -87,6 +87,45 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testStaleControlRecoveryPreservesQueuedRewardAndStaysQuiet() async throws {
+        let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        service.current = f.active
+        let journal = MemoryVisitorJournal()
+        let installation = try XCTUnwrap(f.active.session?.installationId)
+        let sessionID = try XCTUnwrap(f.active.session?.sessionId)
+        let controlID = UUID(), rewardID = UUID()
+        let control = PendingVisitorOperation(id: controlID, kind: .heartbeat, target: sessionID,
+            body: try ActivityWire.encoder().encode(VisitorMutationBody(requestId: controlID, installationId: installation,
+                controlProtocol: 1, expectedControlSequence: 0)))
+        let reward = PendingVisitorOperation(id: rewardID, kind: .claim, target: nil,
+            body: try ActivityWire.encoder().encode(VisitorMutationBody(requestId: rewardID, installationId: nil)))
+        journal.state = VisitorJournalState(pending: control, queuedReward: reward)
+        service.nextMutationError = RequestRecovery(version: 1, status: "stale_control", requestId: controlID,
+            operation: "visitor_heartbeat", acceptedAt: nil,
+            outcome: .init(gardenId: nil, controlSequence: 8, visits: nil, tokens: nil), refreshRequired: true)
+        let store = VisitorCoordinator(userID: UUID(), installationID: installation, service: service, journal: journal)
+        await store.tick(force: true)
+        XCTAssertEqual(service.operations.first, control)
+        XCTAssertEqual(service.operations.first(where: { $0.kind == .claim }), reward)
+        XCTAssertNil(journal.state.pending); XCTAssertNil(journal.state.queuedReward)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
+    }
+
+    func testMalformedCompletionRetainsOriginalRequest() async throws {
+        let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let journal = MemoryVisitorJournal(), id = UUID()
+        let request = PendingVisitorOperation(id: id, kind: .claim, target: nil,
+            body: try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: nil)))
+        journal.value = request
+        service.nextMutationError = RequestRecovery(version: 1, status: "completed", requestId: UUID(),
+            operation: "visitor_claim", acceptedAt: f.initial.serverTime,
+            outcome: .init(gardenId: nil, controlSequence: nil, visits: "1", tokens: "1"), refreshRequired: true)
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service, journal: journal)
+        await store.tick(force: true)
+        XCTAssertEqual(journal.value, request)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
+    }
+
     func testZeroOrInvalidConfirmedTokenAmountsNeverCelebrate() async throws {
         for amount in ["0", "-1", "unknown", "0.5"] {
             let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())

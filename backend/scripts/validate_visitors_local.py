@@ -27,7 +27,7 @@ subprocess.run(
         "-D",
         str(cluster),
         "-l",
-        str(cluster / "validation.log"),
+        str(cluster.parent / "b6-validation.log"),
         "-o",
         "-p 55437 -h 127.0.0.1",
         "-w",

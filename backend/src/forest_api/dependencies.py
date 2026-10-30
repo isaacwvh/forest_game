@@ -11,7 +11,11 @@ bearer = HTTPBearer(auto_error=False)
 
 
 def get_session(request: Request) -> Iterator[Session]:
-    yield from request.app.state.database.session()
+    with request.app.state.database.sessions() as session:
+        session.info["recovery_version"] = (
+            1 if request.headers.get("X-Forest-Recovery") == "1" else 0
+        )
+        yield session
 
 
 def get_identity(

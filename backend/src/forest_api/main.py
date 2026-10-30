@@ -30,6 +30,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/openapi.json" if settings.environment in {"local", "test"} else None,
     )
     app.state.settings = settings
+    from forest_api.operation_metrics import Collector, OperationMetrics
+
+    app.state.metrics = Collector(enabled=settings.operation_metrics_enabled)
+    app.add_middleware(OperationMetrics, collector=app.state.metrics)
     app.state.database = database
     app.state.verifier = TokenVerifier(settings)
     # Tests inject a deterministic clock. Runtime requests read PostgreSQL time

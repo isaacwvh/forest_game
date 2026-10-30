@@ -17,6 +17,9 @@ class Database:
             hide_parameters=True,
         )
         self.sessions = sessionmaker(self.engine, expire_on_commit=False, autoflush=False)
+        from forest_api.operation_metrics import instrument
+
+        instrument(self.engine)
 
     def session(self) -> Iterator[Session]:
         # Close rolls back unfinished transactions; never commit after a response is sent.

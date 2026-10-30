@@ -69,6 +69,7 @@ private final class SyncTestService: GardenServing, ActivityServing {
     var offline = false
     var loseNextResponse = false
     var syncError: APIError?
+    var compactError: RequestRecovery?
     var pauseNext = false
     var gate: CheckedContinuation<Void, Never>?
     var resultGardenOverride: APIGarden?
@@ -114,6 +115,7 @@ private final class SyncTestService: GardenServing, ActivityServing {
         if pauseNext { pauseNext = false; await withCheckedContinuation { gate = $0 } }
         if offline { throw URLError(.notConnectedToInternet) }
         if let error = syncError { syncError = nil; throw error }
+        if let error = compactError { compactError = nil; throw error }
         let request = try ActivityWire.decoder().decode(ActivitySyncRequest.self, from: body)
         if let receipt = receipts[request.requestId] { return receipt }
         let template = fixture.syncResult
@@ -139,6 +141,27 @@ private final class SyncTestService: GardenServing, ActivityServing {
 
 @MainActor
 final class ActivitySyncTests: XCTestCase {
+    func testCompactSyncDrainsOriginalUploadWithoutGrowthEffects() async throws {
+        let fixture = try ActivityContract.load(), journal = MemoryActivityJournal()
+        let service = SyncTestService(fixture)
+        let operation = PendingActivityOperation(id: fixture.syncRequest.requestId, kind: .sync,
+            body: try ActivityWire.encoder().encode(fixture.syncRequest), recapID: nil)
+        journal.value = ActivityJournalState(enabled: false, status: fixture.status, operations: [operation])
+        service.current = fixture.syncResult.garden
+        service.compactError = RequestRecovery(version: 1, status: "completed", requestId: operation.id,
+            operation: "activity_sync", acceptedAt: fixture.syncResult.acceptedAt,
+            outcome: .init(gardenId: fixture.syncResult.garden.gardenId, controlSequence: nil, visits: nil, tokens: nil), refreshRequired: true)
+        let store = try editor(service)
+        await store.start()
+        let sync = coordinator(service, editor: store, health: health(fixture), journal: journal)
+        // Enabling permits recovery of the already-journalled upload first.
+        await sync.setEnabled(true)
+        XCTAssertFalse(journal.value?.operations.contains(where: { $0.id == operation.id }) ?? true)
+        XCTAssertEqual(service.syncBodies.first, operation.body)
+        XCTAssertEqual(store.confirmed?.gardenId, fixture.syncResult.garden.gardenId)
+        XCTAssertTrue(store.effects.targets.isEmpty)
+    }
+
     func testDismissedLoadingRecapSuppressesOnlyItsInflightStageEffect() async throws {
         let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
         let editor = try editor(service), health = health(service.fixture)

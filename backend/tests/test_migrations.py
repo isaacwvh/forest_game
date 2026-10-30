@@ -9,6 +9,9 @@ from forest_api.config import Settings
 from forest_api.main import create_app
 from forest_api.models import Base
 
+# Compare original domain data across additive request-cache schema changes.
+LEGACY_ROW = "(to_jsonb(t) - 'completion' - 'response_expires_at' - 'recovery_version')"
+
 
 def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
     with database_factory() as url:
@@ -20,7 +23,7 @@ def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
             with engine.connect() as connection:
                 assert set(Base.metadata.tables) <= set(inspect(connection).get_table_names())
                 assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-                    "0009_catalog_discovery"
+                    "0010_compact_recovery"
                 )
             engine.dispose()
             command.downgrade(configuration, "base")
@@ -87,13 +90,13 @@ def test_b6_upgrade_preserves_existing_partially_grown_account(database_factory,
             command.downgrade(configuration, "0002_b4_b5")
             with database.engine.connect() as connection:
                 before = {
-                    table: connection.execute(text(f"SELECT to_jsonb(t) FROM {table} t")).all()
+                    table: connection.execute(text(f"SELECT {LEGACY_ROW} FROM {table} t")).all()
                     for table in ("users", "gardens", "owned_plants", "garden_placements")
                 }
             command.upgrade(configuration, "head")
             with database.engine.connect() as connection:
                 after = {
-                    table: connection.execute(text(f"SELECT to_jsonb(t) FROM {table} t")).all()
+                    table: connection.execute(text(f"SELECT {LEGACY_ROW} FROM {table} t")).all()
                     for table in before
                 }
                 assert after == before
@@ -183,13 +186,13 @@ def test_b7_upgrade_preserves_b6_balances_and_history(database_factory):
             )
             with database.engine.connect() as connection:
                 before = {
-                    table: connection.execute(text(f"SELECT to_jsonb(t) FROM {table} t")).all()
+                    table: connection.execute(text(f"SELECT {LEGACY_ROW} FROM {table} t")).all()
                     for table in tables
                 }
             command.upgrade(configuration, "head")
             with database.engine.connect() as connection:
                 after = {
-                    table: connection.execute(text(f"SELECT to_jsonb(t) FROM {table} t")).all()
+                    table: connection.execute(text(f"SELECT {LEGACY_ROW} FROM {table} t")).all()
                     for table in tables
                 }
                 assert before == after
@@ -288,7 +291,7 @@ def test_species_rarity_migration_preserves_b7_packs_and_receipts(database_facto
             with database.engine.connect() as connection:
                 before = {
                     t: connection.execute(
-                        text(f"SELECT to_jsonb(t) FROM {t} t ORDER BY to_jsonb(t)::text")
+                        text(f"SELECT {LEGACY_ROW} FROM {t} t ORDER BY {LEGACY_ROW}::text")
                     ).all()
                     for t in tables
                 }
@@ -296,7 +299,7 @@ def test_species_rarity_migration_preserves_b7_packs_and_receipts(database_facto
             with database.engine.connect() as connection:
                 after = {
                     t: connection.execute(
-                        text(f"SELECT to_jsonb(t) FROM {t} t ORDER BY to_jsonb(t)::text")
+                        text(f"SELECT {LEGACY_ROW} FROM {t} t ORDER BY {LEGACY_ROW}::text")
                     ).all()
                     for t in tables
                 }

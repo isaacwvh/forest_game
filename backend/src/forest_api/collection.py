@@ -17,7 +17,7 @@ from forest_api.collection_models import (
 )
 from forest_api.collection_schemas import PackOutcome, outcomes, parse_pack
 from forest_api.errors import ApiError
-from forest_api.models import ApiRequest, OwnedPlant, PlantStage, Species, Variant
+from forest_api.models import OwnedPlant, PlantStage, Species, Variant
 from forest_api.schemas import STAGES
 from forest_api.visitor_models import VisitorWallet
 
@@ -368,15 +368,7 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
             opening = session.scalar(select(PackOpening).where(PackOpening.pack_id == pack.id))
             if opening is not None:
                 receipt = session.get(CollectionEvent, opening.event_id).receipt
-                session.add(
-                    ApiRequest(
-                        user_id=user.id,
-                        request_id=body.request_id,
-                        operation=operation,
-                        payload_hash=digest,
-                        response=receipt,
-                    )
-                )
+                services.record_request(session, user.id, body, operation, digest, receipt)
                 return receipt
             row, definition = pack_contract(session, settings, pack.pack_id, pack.pack_version)
             validate_dependencies(session, definition)
@@ -440,14 +432,6 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                     opened_at=boundary,
                 )
             )
-        session.add(
-            ApiRequest(
-                user_id=user.id,
-                request_id=body.request_id,
-                operation=operation,
-                payload_hash=digest,
-                response=receipt,
-            )
-        )
+        services.record_request(session, user.id, body, operation, digest, receipt)
         session.flush()
         return receipt

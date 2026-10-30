@@ -868,3 +868,30 @@ Not executed on Windows: Apple SDK typechecking, XCTest/UI, Release/InternalRele
 builds, native screenshots, VoiceOver and physical iPhone/account interruption tests.
 Run frontend/scripts/test-mac.sh on Mac and the F8.4 walkthrough in F8_ACCEPTANCE.md.
 These remain pending; source parsing and portable validation are not native passes.
+
+## Scaling S1-S3 - source and portable validation, 30 October 2026
+
+Implemented typed compact-completion handling in APIClient and the visitor,
+activity and garden-edit coordinators. Requests advertise recovery capability.
+Visitor controls journal a separate server-advertised control sequence; old saved
+bodies remain byte-for-byte unchanged. Recovery validates request/operation,
+preserves queued rewards and account/late-response guards, refreshes current state
+and avoids replaying reward/growth effects or historical garden layouts. Small
+collection/account/enrolment/ack results retain their original DTO contracts.
+An update-required response retains pending requests rather than discarding them.
+
+Added native regressions for typed HTTP completion/capability, reward versus
+stale-control validation, queued rewards behind stale controls, mismatched
+completion identity, compact activity recovery and current-layout edit recovery.
+These native cases are source added, not claimed executed.
+
+Passed locally: frontend/scripts/validate_frontend.py (generated project, assets,
+contracts and resources), frontend/scripts/check_swift_syntax.py (all 72 Swift
+files) and diff whitespace checks. Backend full suite: 487 passes, plus final
+updated scaling group: 16 passes; all four real HTTP walkthroughs pass.
+
+Not executed: Apple SDK typechecking, XCTest/UI, Release/InternalRelease build,
+physical iPhone and two-installation acceptance. Windows parsing cannot establish
+native type correctness. Run bash frontend/scripts/test-mac.sh on a Mac, then the
+checklist in backend/SCALING_S1_S3.md against an explicitly upgraded test server.
+No live migration, automatic cleanup, commit, push or CI run was performed.

@@ -302,11 +302,19 @@ class GameCatalogue(Base):
 
 class ApiRequest(Base):
     __tablename__ = "api_requests"
+    __table_args__ = (
+        CheckConstraint("response IS NOT NULL OR completion IS NOT NULL", name="recoverable"),
+        CheckConstraint("octet_length(completion::text) <= 8192", name="completion_size"),
+        Index("ix_api_requests_response_expires_at", "response_expires_at"),
+    )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
     request_id: Mapped[UUID] = mapped_column(primary_key=True)
     operation: Mapped[str] = mapped_column(String(100))
     payload_hash: Mapped[str] = mapped_column(String(64))
-    response: Mapped[dict] = mapped_column(JSONB)
+    response: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
+    completion: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
+    response_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recovery_version: Mapped[int] = mapped_column(Integer, server_default="0", default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

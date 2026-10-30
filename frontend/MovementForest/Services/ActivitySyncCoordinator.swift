@@ -357,7 +357,24 @@ final class ActivitySyncCoordinator: ObservableObject {
                         throw ForestError.invalidData("Unexpected recap receipt.")
                     }
                 }
-            } catch let error as APIError where (400..<500).contains(error.status) && ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
+            } catch let recovery as RequestRecovery {
+                let expected: String
+                switch operation.kind {
+                case .sync: expected = "activity_sync"
+                case .enrolment: expected = "activity_enrolment"
+                case .acknowledgement:
+                    guard let recap = operation.recapID else { throw ForestError.invalidData("Invalid recap request.") }
+                    expected = "recap_ack:\(recap.uuidString.lowercased())"
+                }
+                try recovery.validate(id: operation.id, operation: expected)
+                guard active else { throw CancellationError() }
+                if operation.kind == .sync, recovery.outcome.gardenId != editor.confirmed?.gardenId {
+                    throw ForestError.invalidData("Unexpected recovered garden.")
+                }
+                try await refreshStatus()
+                await editor.refresh()
+                guard active, editor.state == .ready, !editor.showingCached else { throw URLError(.cannotLoadFromNetwork) }
+            } catch let error as APIError where (400..<500).contains(error.status) && ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
                 // This request definitively did not commit. Record the rejection
                 // before removing it; never change input under its existing ID.
                 var next = saved

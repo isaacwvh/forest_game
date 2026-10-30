@@ -411,6 +411,9 @@ class VisitorAccounting:
 
 
 def summary(session, garden, state, boundary):
+    from forest_api.visitor_models import VisitorControl
+
+    control = session.get(VisitorControl, garden.owner_id)
     context = session.get(VisitorContext, state.context_id)
     rule = session.get(VisitorRules, context.rule_version)
     wallet = session.get(VisitorWallet, garden.owner_id)
@@ -435,6 +438,7 @@ def summary(session, garden, state, boundary):
         .order_by(VisitorOpportunity.issued_at, VisitorOpportunity.id)
     ).all()
     return VisitorSummary(
+        control_sequence=control.sequence if control else 0,
         arrival_protocol=context.snapshot["rules"].get("arrival_protocol", 1),
         active_visits_per_hour=str(
             float(
@@ -519,6 +523,42 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
         previous = services.replay(session, user.id, body.request_id, operation, payload_hash)
         if previous is not None:
             return previous
+        control = None
+        if (
+            operation in {"visitor_start", "visitor_heartbeat", "visitor_end"}
+            and body.control_protocol == 1
+        ):
+            from forest_api.errors import RequestRecovery
+            from forest_api.visitor_models import VisitorControl
+
+            if session.info.get("recovery_version") != 1:
+                raise ApiError(
+                    422, "control_recovery_required", "Sequenced controls require recovery support"
+                )
+            control = session.get(VisitorControl, user.id)
+            if control is None:
+                control = VisitorControl(owner_id=user.id, sequence=0)
+                session.add(control)
+            if control.request_id == body.request_id:
+                if control.operation != operation or control.payload_hash != payload_hash:
+                    raise ApiError(
+                        409, "idempotency_conflict", "Control ID was used for different input"
+                    )
+            if body.expected_control_sequence != control.sequence:
+                status = "completed" if control.request_id == body.request_id else "stale_control"
+                raise RequestRecovery(
+                    {
+                        "version": 1,
+                        "status": status,
+                        "requestId": str(body.request_id),
+                        "operation": operation,
+                        "acceptedAt": control.accepted_at.isoformat()
+                        if status == "completed"
+                        else None,
+                        "outcome": {"controlSequence": control.sequence},
+                        "refreshRequired": True,
+                    }
+                )
         garden = services.lock_garden(session, user.id, write=True)
         services.get_catalogue_state(session, settings, lock=True)
         boundary = clock()
@@ -663,6 +703,12 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
                 )
             )
         state.version = checked(state.version + 1)
+        if control is not None:
+            control.sequence = checked(control.sequence + 1)
+            control.request_id = body.request_id
+            control.operation = operation
+            control.payload_hash = payload_hash
+            control.accepted_at = boundary
         session.flush()  # A newly started session must exist before its opportunity rows.
         if active and active.ended_at is None:
             visitor_schedule.plan(session, garden, state, active, boundary)
@@ -681,4 +727,10 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
         else:
             result = current_summary
         services.record_request(session, user.id, body, operation, payload_hash, result)
+        if control is not None:
+            from forest_api.models import ApiRequest
+
+            session.flush()
+            record = session.get(ApiRequest, (user.id, body.request_id))
+            record.completion = {**record.completion, "sequencedControl": True}
         return result.model_dump(mode="json", by_alias=True)

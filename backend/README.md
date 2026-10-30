@@ -7,6 +7,11 @@ and HTTP verification. Wider activity inputs and personal boosts remain separate
 increments. Native acceptance: [B8 skills](../frontend/B8_SKILLS_ACCEPTANCE.md).
 
 Python 3.12, FastAPI, synchronous SQLAlchemy 2, psycopg 3, PostgreSQL 17 and Alembic.
+
+Scaling S1–S3 is source implemented locally: read-only storage reports, optional
+payload-free operation metrics, compact replay and sequenced visitor controls.
+Migration `0010_compact_recovery` is explicit; no automatic maintenance is enabled.
+See [SCALING_S1_S3.md](SCALING_S1_S3.md) for commands, compatibility and acceptance.
 This foundation implements accounts, catalogue/profile records, owned plants,
 owner-only garden/storage reads, atomic B3 placement edits, exact B4 growth/attraction
 calculations, B5 steps synchronisation, B6 visitors and B7 token exchange/pack draws.

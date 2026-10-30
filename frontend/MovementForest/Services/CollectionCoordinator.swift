@@ -119,7 +119,7 @@ final class CollectionCoordinator: ObservableObject {
                 (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
             if isOpening { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
-                    ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
+                    ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
             guard attached else { return }
             try persist(CollectionJournalState(pending: nil, result: state.result))
             throw error

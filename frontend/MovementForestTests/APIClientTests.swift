@@ -15,6 +15,39 @@ private final class RecordingHTTPTransport: HTTPTransport {
 
 @MainActor
 final class APIClientTests: XCTestCase {
+    func testCompactCompletionIsTypedAndAdvertisesRecovery() async throws {
+        let id = UUID()
+        let body = Data("{\"requestId\":\"\(id.uuidString)\"}".utf8)
+        let payload = Data("""
+        {"recovery":{"version":1,"status":"completed","requestId":"\(id.uuidString)",
+        "operation":"visitor_claim","acceptedAt":"2026-10-30T12:00:00Z",
+        "outcome":{"visits":"0","tokens":"0"},"refreshRequired":true}}
+        """.utf8)
+        let transport = RecordingHTTPTransport(payload)
+        let client = APIClient(baseURL: try APIClient.validatedURL("https://garden.test"),
+                               tokens: FixedTokenProvider(value: "test"), transport: transport)
+        do {
+            let _: APIVisitorReward = try await client.request("v1/me/stored-visits/claim", method: "POST", body: body)
+            XCTFail("Expected typed completion")
+        } catch let result as RequestRecovery {
+            try result.validate(id: id, operation: "visitor_claim")
+            XCTAssertEqual(result.outcome.visits, "0")
+            XCTAssertThrowsError(try result.validate(id: UUID(), operation: "visitor_claim"))
+            XCTAssertThrowsError(try result.validate(id: id, operation: "visitor_welcome"))
+        }
+        XCTAssertEqual(transport.requests.first?.value(forHTTPHeaderField: "X-Forest-Recovery"), "1")
+        XCTAssertEqual(transport.requests.first?.httpBody, body)
+    }
+
+    func testStaleControlCannotBeAcceptedAsRewardCompletion() throws {
+        let id = UUID()
+        let value = RequestRecovery(version: 1, status: "stale_control", requestId: id,
+            operation: "visitor_start", acceptedAt: nil,
+            outcome: .init(gardenId: nil, controlSequence: 12, visits: nil, tokens: nil), refreshRequired: true)
+        try value.validate(id: id, operation: "visitor_start", control: true)
+        XCTAssertThrowsError(try value.validate(id: id, operation: "visitor_start"))
+    }
+
     func testConnectionURLsAreCanonicalAndCannotContainCredentialsOrPaths() throws {
         XCTAssertEqual(try APIClient.validatedURL("https://GARDEN.test:443/").absoluteString, "https://garden.test")
         for address in ["http://garden.test", "https://user:secret@garden.test", "https://garden.test/v1", "https://garden.test?token=x"] {

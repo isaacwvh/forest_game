@@ -174,6 +174,10 @@ def request_hash(operation: str, body: DTO) -> str:
     payload = body.model_dump(mode="json", by_alias=True, exclude={"request_id"})
     if operation.startswith("visitor_") and payload.get("arrivalProtocol") == 1:
         payload.pop("arrivalProtocol")
+    if operation.startswith("visitor_"):
+        for name in ("controlProtocol", "expectedControlSequence"):
+            if payload.get(name) is None:
+                payload.pop(name, None)
     if operation in {"activity_sync", "activity_enrolment"}:
         # Old queued request bytes retain their pre-extension digest.
         def omit_neutral_additions(item):
@@ -200,7 +204,36 @@ def replay(
         return None
     if record.operation != operation or record.payload_hash != payload_hash:
         raise ApiError(409, "idempotency_conflict", "Request ID was used for different input")
-    return record.response
+    if record.response is not None:
+        return record.response
+    from forest_api import recovery
+    from forest_api.errors import RequestRecovery
+
+    if session.info.get("recovery_version") != 1:
+        raise ApiError(
+            426, "recovery_client_update_required", "Update the app to recover this request"
+        )
+    if record.completion is None:
+        raise ApiError(503, "recovery_unavailable", "The saved request needs recovery")
+    if operation in {
+        "register_account",
+        "update_profile",
+        "activity_enrolment",
+    } or operation.startswith(("recap_ack:", "milestone_claim:")):
+        return record.completion["outcome"]
+    if operation in {"token_exchange", "pack_open"}:
+        from forest_api.collection_models import CollectionEvent, PackOpening
+
+        facts = record.completion["outcome"]
+        event_id = facts.get("exchangeId")
+        if facts.get("openingId"):
+            opening = session.get(PackOpening, UUID(facts["openingId"]))
+            event_id = opening.event_id if opening else None
+        event = session.get(CollectionEvent, UUID(str(event_id))) if event_id else None
+        if event is None or event.owner_id != user_id:
+            raise ApiError(503, "recovery_unavailable", "The original receipt is unavailable")
+        return event.receipt
+    raise RequestRecovery(recovery.envelope(record))
 
 
 def record_request(
@@ -211,15 +244,26 @@ def record_request(
     payload_hash: str,
     response: DTO | dict,
 ) -> None:
+    from forest_api import recovery
+
+    saved = (
+        response if isinstance(response, dict) else response.model_dump(mode="json", by_alias=True)
+    )
+    accepted_at = session.scalar(select(func.clock_timestamp()))
+    facts = recovery.completion(operation, saved)
+    version = session.info.get("recovery_version", 0)
+    window = recovery.retention(operation)
     session.add(
         ApiRequest(
             user_id=user_id,
             request_id=body.request_id,
             operation=operation,
             payload_hash=payload_hash,
-            response=response
-            if isinstance(response, dict)
-            else response.model_dump(mode="json", by_alias=True),
+            response=saved,
+            completion=facts,
+            created_at=accepted_at,
+            recovery_version=version,
+            response_expires_at=accepted_at + window if version == 1 and facts else None,
         )
     )
 

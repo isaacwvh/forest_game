@@ -41,6 +41,16 @@ acknowledged recap details explicit retention or aggregation policies.
 
 ## Delivery scope
 
+**30 October implementation checkpoint:** S1–S3 are source implemented locally;
+native/device acceptance remains pending. S4–S6 are separate follow-up work.
+See [the delivered protocol and checklist](backend/SCALING_S1_S3.md). No live
+migration or automatic cleanup is enabled, and nothing is pushed for CI.
+
+[SCALING_IMPLEMENTATION_PLAN.md](SCALING_IMPLEMENTATION_PLAN.md) expands this
+direction into six proposed engineering batches, based on the current source and
+scheduled visitor protocol. It includes dependencies, recovery safeguards and
+acceptance criteria; it does not change runtime behavior or approved game rules.
+
 1. **Data contract and budget:** classify every table as current state, durable
    recovery, temporary history or diagnostics. Set retention and indexed-size
    targets. Inspect actual usage before choosing capacity limits.

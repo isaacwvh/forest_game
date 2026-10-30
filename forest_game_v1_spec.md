@@ -1,10 +1,26 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.28\
+Document version: 0.29\
 Date: 30 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
+
+**Scaling S1–S3 — source implemented locally, 30 October 2026:**
+retain current authoritative gameplay and reward rules; add read-only storage/operation
+measurement, compact completion recovery and sequenced visitor controls. Updated
+clients advertise `X-Forest-Recovery: 1`; accepted legacy requests retain their full
+response bodies. New visitor control protocol 1 is independent of arrival protocol
+2 and preserves its timing. After a 24-hour control cache, stale sequences cannot
+execute again; ordinary mutations/rewards retain durable UUID/hash completion proof.
+Large ordinary response snapshots can compact after seven days, activity responses
+after 30 days. Native recovery refreshes current state without repeating mutations
+or celebrations. The new control protocol uses account/sequence identity after cache
+expiry rather than permanently reserving every historical control UUID globally.
+Full visitor/growth history cleanup remains S4–S6. See
+[the exact recovery contract and acceptance guide](backend/SCALING_S1_S3.md).
+Native/device acceptance is pending; no live migration, automatic cleanup or push
+is implied by source implementation.
 
 **Catalog discovery — F8.7 source implemented locally, 29–30 October 2026;
 native/device acceptance pending:**
@@ -916,7 +932,8 @@ Planning workbook mapping: replace `Footprint (tiles)` with `Clearance radius (g
 | `weather_contexts` (deferred beyond B8) | `id uuid PK`, coarse region key, provider, observation interval, normalised condition, retrieval time; shared cached observations, no precise route |
 | `reward_events` | `id uuid PK`, user, garden, reason, source key/revision, economy version, aggregate growth summary, resource delta JSONB, accepted_at; unique logical credit key |
 | `wallet_entries` | `id uuid PK`, user/currency, signed amount, reason, source event/request, timestamp; append-only ledger |
-| `api_requests` | `(user_id, request_id) PK`, operation, payload hash, status, stored response, created_at; idempotency record |
+| `api_requests` | `(user_id, request_id) PK`, operation, target-bound payload hash, original acceptance time, recovery capability, bounded completion outcome and nullable expirable response; ordinary/legacy request identity remains durable |
+| `visitor_controls` | One account control sequence, latest request/operation/hash and accepted time; protects sequenced start/heartbeat/end after their 24-hour cache is removed, independently of arrival scheduling |
 | `reward_recaps` | `id uuid PK`, user, covered reward-event references, immutable recap payload/reference, presentation acknowledgement and timestamps; presentation/acknowledgement never issues rewards |
 | `garden_visitor_state` | `garden_id FK PK`, owner reference, `settled_through_at`, fixed-point `stored_visits_micro_units CHECK >= 0`, current context reference, active-session reference nullable, stable active-slot cursor/gap-protection state, state version; storage can temporarily exceed a newly reduced capacity without loss. Exactly one accounting timeline per garden |
 | `visitor_storage_lots` | `(garden_id, token_reward_version) PK`, nonnegative whole stored-visit count and pinned tokens per visit; these counts plus the state's sub-visit remainder reconcile to aggregate stored visits. Generation creates whole visits at the then-effective reward version; claims debit lots and retain their reward breakdown, never reprice old whole visits |
@@ -928,7 +945,13 @@ Planning workbook mapping: replace `Footprint (tiles)` with `Clearance radius (g
 | `collection_events` | Unique owner/request, operation, payload hash, signed token delta and immutable exchange/opening receipt; B7 has nonpositive deltas because reward milestones are deferred |
 | `visitor_milestone_grants` | `id uuid PK`, user, logical milestone ID, granted rule version, authoritative threshold/event context, reward references and timestamp; UNIQUE(user, logical milestone ID) prevents retries/version edits regranting a completed entitlement |
 
-A reused request ID with a different payload must fail. Keep durable draw/reward uniqueness even if short-lived API response records are cleaned up.
+A reused ordinary/legacy request ID with a different payload must fail. New
+sequenced visitor controls preserve exact cached replay and latest-command conflict
+checks; after cache expiry, older sequences return typed stale recovery and cannot
+execute. Their historical UUIDs are not retained in the permanent global namespace.
+Keep durable draw/reward uniqueness even if short-lived API response records are
+cleaned up. See [S1–S3 recovery](backend/SCALING_S1_S3.md) for the explicit opt-in
+and native compatibility contract.
 
 These are proposed logical records, not applied migrations; implementation may consolidate records if uniqueness, audit and concurrency guarantees remain explicit. Profiles carry skill definitions; a separate ability table is optional later. Keep shared authoring metadata (descriptions, rarity, multipliers, stage attraction/thresholds, packet rules and effect definitions) in validated catalogue/configuration records. Keep individual ownership/growth, visitor state/claims, token/ticket balances, daily targets, grants and recap receipts in player state. The Excel workbook is a planning source, not a live database or automatic configuration deployment.
 

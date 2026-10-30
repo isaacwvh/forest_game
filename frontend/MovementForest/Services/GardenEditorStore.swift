@@ -380,7 +380,19 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             report("Saved.", kind: .success)
             DiagnosticHistory.shared.record("Garden edit", "confirmed", requestID: request.requestId.uuidString, scope: diagnosticScope)
             await refresh()
-        } catch let error as APIError where (400..<500).contains(error.status) && error.status != 408 && error.status != 429 {
+        } catch let recovery as RequestRecovery {
+            do {
+                try recovery.validate(id: edit.request.requestId, operation: "garden_edits")
+                guard isActive else { return }
+                guard recovery.outcome.gardenId == edit.gardenID else { throw ForestError.invalidData("Unexpected recovered garden.") }
+                try journal.remove(server: edit.serverID, user: edit.userID)
+                pending = nil; needsRefresh = true; state = .ready
+                await refresh()
+            } catch {
+                state = .unknown
+                report("The saved edit completion needs another retry. Your request is retained.", kind: .uncertain)
+            }
+        } catch let error as APIError where (400..<500).contains(error.status) && ![408, 426, 429].contains(error.status) {
             PlayerMessage.recordFailure("Garden edit", error, requestID: pendingRequestID, scope: diagnosticScope)
             if error.status == 401 {
                 state = .authenticationRequired; report("Sign in again to finish confirming this edit. Your saved request is retained.")

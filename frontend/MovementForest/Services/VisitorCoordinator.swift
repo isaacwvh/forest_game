@@ -145,8 +145,19 @@ final class VisitorCoordinator: ObservableObject {
                     DiagnosticHistory.shared.record("Visitors", "reward visits=\(reward.visits) tokens=\(reward.tokens)",
                         requestID: operation.id.uuidString, scope: scope)
                 }
+            } catch let recovery as RequestRecovery {
+                let isControl = [.start, .heartbeat, .end].contains(operation.kind)
+                try recovery.validate(id: operation.id, operation: "visitor_" + operation.kind.rawValue, control: isControl)
+                let value = try await service.read()
+                guard attached else { return }
+                apply(value)
+                // Clear only the verified operation; a reward queued behind it
+                // remains durable and is drained with its original UUID/body.
+                try persist(VisitorJournalState(pending: queuedReward))
+                liveRewardIDs.remove(operation.id)
+                needsRead = false
             } catch let error as APIError where (400..<500).contains(error.status) &&
-                        ![401, 408, 429].contains(error.status) && error.code != "idempotency_conflict" {
+                        ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
                 guard attached else { return }
                 try persist(VisitorJournalState(pending: queuedReward))
                 liveRewardIDs.remove(operation.id)
@@ -160,8 +171,11 @@ final class VisitorCoordinator: ObservableObject {
         let id = UUID()
         let installation = kind == .start || kind == .heartbeat || kind == .end ? installationID : nil
         let protocolVersion = kind == .start && summary?.arrivalProtocol == 2 ? 2 : nil
+        let sequenced = installation != nil && summary?.controlProtocol == 1 && summary?.controlSequence != nil
         let body = try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: installation,
-                                                                       arrivalProtocol: protocolVersion))
+                                                                       arrivalProtocol: protocolVersion,
+                                                                       controlProtocol: sequenced ? 1 : nil,
+                                                                       expectedControlSequence: sequenced ? summary?.controlSequence : nil))
         return PendingVisitorOperation(id: id, kind: kind, target: target, body: body)
     }
 

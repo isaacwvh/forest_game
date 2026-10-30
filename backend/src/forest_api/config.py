@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     auth_algorithm: Literal["RS256", "ES256"] = "RS256"
     db_pool_size: int = Field(default=5, ge=1, le=50)
     db_max_overflow: int = Field(default=5, ge=0, le=50)
+    operation_metrics_enabled: bool = False
 
     @model_validator(mode="after")
     def validate_configuration(self) -> "Settings":

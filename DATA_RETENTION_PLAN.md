@@ -4,6 +4,13 @@ Prepared 29 October 2026. **Proposal only; no application code, schema, schedule
 job or existing database contents are changed by this plan.** This is a separate
 backend/native hardening batch from catalog discovery.
 
+**30 October implementation update:** the request-cache foundation and bounded
+new visitor controls are source implemented in S1–S3. See
+[SCALING_S1_S3.md](backend/SCALING_S1_S3.md) for the delivered opt-in/replay policy
+and pending native acceptance. The original proposal below remains historical;
+new sequenced control caches can be deleted rather than retaining lifetime keys.
+No live migration or automatic cleanup has been enabled.
+
 ## 1. Recommendation
 
 Expire large saved response bodies by operation, while retaining small durable

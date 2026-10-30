@@ -1,6 +1,6 @@
 # Movement Forest implementation plan
 
-Revised 30 October 2026 against `forest_game_v1_spec.md`, version 0.28.
+Revised 30 October 2026 against `forest_game_v1_spec.md`, version 0.29.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
 **Current presentation handoff — 28 October 2026:** F8.3, F8.3b and F8.4 are
@@ -114,6 +114,17 @@ The core loop is now:
 Existing B6–B9 become B7–B10 below. Existing F6 becomes F7 and F7 becomes F8, with visitor UI inserted as F6.
 
 ## Revised backend milestones
+
+**Scaling work before broader external alpha — S1–S3 source implemented locally:**
+[SCALING_IMPLEMENTATION_PLAN.md](SCALING_IMPLEMENTATION_PLAN.md) defines S1–S6 for
+measured storage budgets, compact request recovery, bounded visitor controls,
+visitor/growth history compaction and migration verification. This is a separate
+cross-cutting batch. S1–S3 add measurement, compact recovery and sequenced controls;
+native/device acceptance is pending and S4–S6 remain proposed. See
+[implementation/acceptance](backend/SCALING_S1_S3.md). No live migration, push or CI
+run is included. Accepted reward rules are unchanged. It expands
+[new scaling plan.md](new%20scaling%20plan.md); catalog acceptance
+can finish first, while substantial new reward systems should follow this work.
 
 | Step | Work | Completion check |
 | --- | --- | --- |

@@ -11,7 +11,18 @@ class ApiError(Exception):
         self.details = details
 
 
+class RequestRecovery(Exception):
+    """Successful prior completion or obsolete control, never a fresh mutation."""
+
+    def __init__(self, payload: dict):
+        self.payload = payload
+
+
 def install_error_handlers(app: FastAPI) -> None:
+    @app.exception_handler(RequestRecovery)
+    async def recovery_handler(request: Request, result: RequestRecovery) -> JSONResponse:
+        return JSONResponse(status_code=200, content={"recovery": result.payload})
+
     @app.exception_handler(ApiError)
     async def api_error_handler(request: Request, error: ApiError) -> JSONResponse:
         payload = {"code": error.code, "message": error.message}

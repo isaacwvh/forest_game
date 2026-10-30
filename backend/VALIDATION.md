@@ -520,3 +520,39 @@ native and Linux results can be distinguished from local validation. The first
 Linux run passed backend regressions and the new HTTP flow but exposed the legacy
 visitor smoke's dependency on an ignored .local-tmp parent directory. It now uses
 the platform temporary directory, allowing a clean checkout to run the walkthrough.
+
+## Scaling S1-S3 - local validation, 30 October 2026
+
+Full isolated PostgreSQL suite: **487 passed in 425.91s**. All four real Uvicorn
+HTTP walkthroughs passed: activity, visitors/collection, Sleeping Dew, and typed
+launch/milestone/economy conversion/scheduled arrivals with server restart replay.
+Final updated scaling group: **16 passed in 25.34s**, including the additional
+no-growth cleanup/retry race and database proof/size constraints added after the
+full run. No failures remain in the executed checks.
+
+Coverage includes explicit migration model parity/downgrade/reupgrade, original
+account/plant/wallet/request preservation, 24-hour/seven-day/30-day exact expiry
+boundaries, dry-run and legacy backfill preservation, unknown operations,
+compacted account/profile/enrolment/ack/edit/sync/welcome/empty-claim recovery,
+changed payload/target conflict, original exchange/opening receipts, device
+replacement, latest-control completion after restart, stale starts/ends, concurrent
+control starts, account-lock skips and interrupted cleanup rollback. New control
+cache rows disappear while the account sequence and ordinary keys remain.
+
+Ruff lint and formatting, pip dependency check, frontend project/assets/contracts,
+all 72 Swift syntax parses and diff whitespace checks pass. Operation measurement
+uses a bounded payload-free collector; the reproducible synthetic artifact is
+backend/benchmarks/scaling-s1-baseline.json. Single-plant measured query counts:
+heartbeat 31, welcome 31, empty claim 26 and activity sync 71. This is not a live
+storage audit, p95/load result, 15-plant benchmark or a 1,000-MAU capacity claim.
+
+All database tests used only random forest_test_* databases on the dedicated
+loopback validation cluster; it was stopped after validation. No game .env,
+auth/provider configuration, personal account data or live schema was changed.
+Migration 0010_compact_recovery and maintenance remain explicit server commands;
+maintenance defaults to a dry run and has no automatic schedule. Nothing was
+committed or pushed and no CI run was requested.
+
+Apple SDK typechecking, native XCTest/UI, Release/InternalRelease builds and
+physical iPhone/multidevice acceptance are not executable on this Windows host.
+See SCALING_S1_S3.md and frontend/scripts/test-mac.sh before broader cleanup.

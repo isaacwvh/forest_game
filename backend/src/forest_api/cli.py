@@ -12,6 +12,13 @@ from forest_api.seed import seed_development_catalogue
 def main() -> None:
     parser = argparse.ArgumentParser(description="Movement Forest development tools")
     commands = parser.add_subparsers(dest="command", required=True)
+    usage = commands.add_parser("storage-report", help="Read-only table/index/TOAST size inventory")
+    usage.add_argument("--exact", action="store_true", help="Count every row; may be expensive")
+    cleanup = commands.add_parser(
+        "compact-requests", help="Bounded completion backfill/cache expiry (dry run by default)"
+    )
+    cleanup.add_argument("--apply", action="store_true")
+    cleanup.add_argument("--limit", type=int, default=500)
     commands.add_parser("seed-dev", help="Seed explicitly unapproved local/test catalogue")
     commands.add_parser("seed-skills-dev", help="Publish Sleeping Dew and new development packs")
     commands.add_parser(
@@ -54,7 +61,15 @@ def main() -> None:
     database = Database(settings)
     try:
         with database.sessions() as session:
-            if args.command == "publish-visitor-rescale":
+            if args.command == "storage-report":
+                from forest_api.storage_usage import report
+
+                print(json.dumps(report(session, exact=args.exact)))
+            elif args.command == "compact-requests":
+                from forest_api.recovery import maintain
+
+                print(json.dumps(maintain(session, apply=args.apply, limit=args.limit)))
+            elif args.command == "publish-visitor-rescale":
                 from forest_api.visitor_rescale import publish
 
                 print(json.dumps(publish(session, settings)))

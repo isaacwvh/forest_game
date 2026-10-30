@@ -29,6 +29,19 @@ class VisitorRules(Base):
     rules: Mapped[dict] = mapped_column(JSONB)
 
 
+class VisitorControl(Base):
+    """One control high-water mark per account, independent of arrival cursors."""
+
+    __tablename__ = "visitor_controls"
+    __table_args__ = (CheckConstraint("sequence >= 0", name="sequence"),)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    sequence: Mapped[int] = mapped_column(BigInteger, default=0)
+    request_id: Mapped[UUID | None] = mapped_column()
+    operation: Mapped[str | None] = mapped_column(String(100))
+    payload_hash: Mapped[str | None] = mapped_column(String(64))
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class VisitorContext(Base):
     __tablename__ = "visitor_contexts"
     id: Mapped[UUID] = mapped_column(primary_key=True)

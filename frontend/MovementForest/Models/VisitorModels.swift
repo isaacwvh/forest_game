@@ -48,6 +48,8 @@ struct APIVisitorSummary: Codable, Equatable {
     var economyVersion: Int64? = nil
     var arrivalProtocol: Int? = nil
     var activeVisitsPerHour: String? = nil
+    var controlProtocol: Int? = nil
+    var controlSequence: Int64? = nil
 }
 
 struct APIVisitorReward: Codable {
@@ -62,6 +64,8 @@ struct VisitorMutationBody: Codable {
     let requestId: UUID
     let installationId: UUID?
     var arrivalProtocol: Int? = nil
+    var controlProtocol: Int? = nil
+    var expectedControlSequence: Int64? = nil
 }
 
 struct PendingVisitorOperation: Codable, Equatable {
@@ -88,6 +92,10 @@ struct PendingVisitorOperation: Codable, Equatable {
         }
         if let protocolVersion = value.arrivalProtocol, kind != .start || ![1, 2].contains(protocolVersion) {
             throw ForestError.invalidData("The saved visitor protocol could not be verified.")
+        }
+        guard (value.controlProtocol == nil) == (value.expectedControlSequence == nil),
+              value.controlProtocol == nil || (needsInstallation && value.controlProtocol == 1 && (value.expectedControlSequence ?? -1) >= 0) else {
+            throw ForestError.invalidData("The saved control sequence could not be verified.")
         }
     }
 }

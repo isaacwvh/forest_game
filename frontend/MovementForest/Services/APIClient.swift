@@ -12,6 +12,33 @@ private struct APIErrorEnvelope: Decodable {
     let error: Detail
 }
 
+/// A confirmed historical action or obsolete control. Never treat this as a
+/// rejected request or issue a replacement reward UUID.
+struct RequestRecovery: Error, Decodable {
+    struct Outcome: Decodable {
+        let gardenId: UUID?
+        let controlSequence: Int64?
+        let visits: String?
+        let tokens: String?
+    }
+    let version: Int
+    let status: String
+    let requestId: UUID
+    let operation: String
+    let acceptedAt: Date?
+    let outcome: Outcome
+    let refreshRequired: Bool
+    func validate(id: UUID, operation: String, control: Bool = false) throws {
+        guard version == 1, requestId == id, self.operation == operation,
+              refreshRequired, status == "completed" || (control && status == "stale_control"),
+              status != "completed" || acceptedAt != nil else {
+            throw ForestError.invalidData("The saved completion could not be verified. Your request is retained.")
+        }
+    }
+}
+
+private struct RequestRecoveryEnvelope: Decodable { let recovery: RequestRecovery }
+
 @MainActor
 protocol TokenProviding {
     func token() async throws -> String
@@ -99,6 +126,7 @@ struct APIClient {
         request.httpMethod = method
         request.httpBody = body
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("1", forHTTPHeaderField: "X-Forest-Recovery")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         if authenticated {
             request.setValue("Bearer \(try await tokens.token())", forHTTPHeaderField: "Authorization")
@@ -122,6 +150,9 @@ struct APIClient {
                            message: detail?.error.message ?? "The server could not complete this request (\(response.statusCode)).")
         }
         DiagnosticHistory.shared.record("HTTP", "\(method) \(path) response: \(response.statusCode)", scope: diagnosticScope)
+        if let envelope = try? ActivityWire.decoder().decode(RequestRecoveryEnvelope.self, from: data) {
+            throw envelope.recovery
+        }
         return try ActivityWire.decoder().decode(T.self, from: data)
     }
 }
