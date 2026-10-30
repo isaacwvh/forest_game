@@ -289,7 +289,9 @@ def test_real_sleeping_dew_growth_store_retry_and_repeat_grant(app, client, head
                 select(PlantGrowthCredit).where(PlantGrowthCredit.plant_id == actor["plant"])
             )
         )
-        assert credits[0].context["skills"]["waterFactor"] == "1.04"
+        from forest_api.growth_history import trace
+
+        assert trace(session, credits[0])["skills"]["waterFactor"] == "1.04"
         assert credits[0].context["skillBonusGrowthMicroUnits"] == "400000"
         assert session.get(OwnedPlant, UUID(grant["plantId"])).growth_micro_units == 1000 * MICRO
 

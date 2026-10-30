@@ -12,6 +12,11 @@ Scaling S1–S3 is source implemented locally: read-only storage reports, option
 payload-free operation metrics, compact replay and sequenced visitor controls.
 Migration `0010_compact_recovery` is explicit; no automatic maintenance is enabled.
 See [SCALING_S1_S3.md](SCALING_S1_S3.md) for commands, compatibility and acceptance.
+
+S1–S3 are functionally user accepted. S4–S6 add compact visitor/growth history and
+an opt-in bounded maintenance worker at migration `0011_compact_history`. See
+[SCALING_S4_S6.md](SCALING_S4_S6.md) for retention, measured scenarios, explicit
+upgrade/enablement and the device checklist. No live cleanup is enabled by default.
 This foundation implements accounts, catalogue/profile records, owned plants,
 owner-only garden/storage reads, atomic B3 placement edits, exact B4 growth/attraction
 calculations, B5 steps synchronisation, B6 visitors and B7 token exchange/pack draws.

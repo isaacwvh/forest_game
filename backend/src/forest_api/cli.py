@@ -19,6 +19,17 @@ def main() -> None:
     )
     cleanup.add_argument("--apply", action="store_true")
     cleanup.add_argument("--limit", type=int, default=500)
+    history = commands.add_parser(
+        "maintain-history", help="Reconciled S4-S6 maintenance; dry-run unless --apply"
+    )
+    history.add_argument("--apply", action="store_true")
+    history.add_argument("--responses", action="store_true")
+    history.add_argument("--visitors", action="store_true")
+    history.add_argument("--growth", action="store_true")
+    history.add_argument("--limit", type=int, default=500)
+    commands.add_parser(
+        "history-worker", help="One shared scheduled maintenance worker; opt-in families"
+    )
     commands.add_parser("seed-dev", help="Seed explicitly unapproved local/test catalogue")
     commands.add_parser("seed-skills-dev", help="Publish Sleeping Dew and new development packs")
     commands.add_parser(
@@ -60,8 +71,28 @@ def main() -> None:
         return
     database = Database(settings)
     try:
+        if args.command == "history-worker":
+            from forest_api.history_worker import run
+
+            run(database, settings)
+            return
         with database.sessions() as session:
-            if args.command == "storage-report":
+            if args.command == "maintain-history":
+                from forest_api.history import maintain
+
+                print(
+                    json.dumps(
+                        maintain(
+                            session,
+                            apply=args.apply,
+                            visitor_detail=args.visitors,
+                            growth_detail=args.growth,
+                            responses=args.responses,
+                            limit=args.limit,
+                        )
+                    )
+                )
+            elif args.command == "storage-report":
                 from forest_api.storage_usage import report
 
                 print(json.dumps(report(session, exact=args.exact)))

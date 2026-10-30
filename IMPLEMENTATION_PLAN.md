@@ -1,6 +1,6 @@
 # Movement Forest implementation plan
 
-Revised 30 October 2026 against `forest_game_v1_spec.md`, version 0.29.
+Revised 30 October 2026 against `forest_game_v1_spec.md`, version 0.30.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 
 **Current presentation handoff — 28 October 2026:** F8.3, F8.3b and F8.4 are
@@ -115,7 +115,13 @@ Existing B6–B9 become B7–B10 below. Existing F6 becomes F7 and F7 becomes F8
 
 ## Revised backend milestones
 
-**Scaling work before broader external alpha — S1–S3 source implemented locally:**
+**Scaling work before broader external alpha — S1–S3 complete; S4–S6 implemented locally:**
+
+**Current acceptance update:** S1–S3 are completed and user accepted after iPhone
+interruption/reconnect/reward/activity/edit checks on 30 October. S4–S6 add
+reconciled history summaries, shared growth provenance and opt-in bounded
+maintenance. See [S4–S6 implementation/acceptance](backend/SCALING_S4_S6.md).
+No live S4–S6 migration, automatic cleanup, commit or push is implied.
 [SCALING_IMPLEMENTATION_PLAN.md](SCALING_IMPLEMENTATION_PLAN.md) defines S1–S6 for
 measured storage budgets, compact request recovery, bounded visitor controls,
 visitor/growth history compaction and migration verification. This is a separate

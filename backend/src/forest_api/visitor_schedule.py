@@ -91,7 +91,7 @@ def plan(session, garden, state, active, boundary):
             context_id=context.id,
             sequence=0,
             remaining={},
-            tutorial_used=has_history,
+            tutorial_used=has_history or state.ever_issued,
         )
         session.add(row)
         session.flush()
@@ -150,6 +150,7 @@ def plan(session, garden, state, active, boundary):
             status="issued",
         )
         session.add(opportunity)
+        state.ever_issued = True
         pending.append(opportunity)
         row.next_at += timedelta(microseconds=math.ceil(jitter() / arrival_rate * 1_000_000))
     session.flush()

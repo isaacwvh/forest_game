@@ -1,5 +1,13 @@
 # B4/B5 activity backend and F5 integration contract
 
+**Scaling update, 30 October 2026:** activity rewards/watermarks and wire success
+DTOs are unchanged. Recent per-copy diagnostics now reference shared immutable
+`growth_provenance`; use `growth_history.trace(session, credit)` to inspect the
+combined recent explanation. Optional maintenance can replace credits older than
+30 days with reconciled `growth_day_summaries`, preserving actual awards and
+profile/skill provenance. Pending recap payloads, workout identities and required
+watermarks remain intact. See [SCALING_S4_S6.md](SCALING_S4_S6.md).
+
 Current update: [typed activity and launch configuration](LAUNCH_ACTIVITY.md),
 25 October 2026, migration `0007_activity_launch`. The historical steps-only
 contract below remains compatible, with optional daily quantities and workouts

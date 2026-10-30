@@ -137,7 +137,8 @@ def test_compact_welcome_preserves_amount_and_target_conflicts(app, client, fore
         f"/v1/me/visitor-opportunities/{uuid4()}/welcome", json=body, headers=header
     )
     assert wrong.status_code == 409
-    assert client.post(path, json={"requestId": str(uuid4())}, headers=header).json() == original
+    alias = client.post(path, json={"requestId": str(uuid4())}, headers=header).json()["recovery"]
+    assert alias["outcome"]["eventId"] == original["eventId"]
 
 
 def test_activity_completion_never_recredits_after_device_replacement(app, client, actors, headers):

@@ -1,12 +1,26 @@
 # Movement Forest: V1 Working Specification
 
 Status: planning draft, not a final product or architecture contract  
-Document version: 0.29\
+Document version: 0.30\
 Date: 30 October 2026\
 Platform: iOS first  
 Working title: Movement Forest (name undecided)
 
-**Scaling S1–S3 — source implemented locally, 30 October 2026:**
+**Scaling S4–S6 — compact-history contract, 30 October 2026:**
+S1–S3 are completed and functionally user accepted on iPhone. S4–S6 preserve all
+gameplay while allowing reconciled visitor detail older than seven days and
+per-copy growth traces older than 30 days to retire into compact summaries.
+Recent growth traces share immutable provenance. Summaries retain copy/day,
+rule/profile/skill provenance, exact awards and accounting totals; permanent
+reconstruction of every old per-sync calculation is no longer required. Pending
+recaps remain intact; acknowledged payloads can compact seven days after ack.
+Watermarks, workout deduplication, current fractions/lots and financial uniqueness
+remain durable. New paid welcomes resolve from compact immutable reward facts
+even after opportunity removal; legacy exact-response compatibility is protected.
+Cleanup is opt-in, bounded and reconciled. See
+[S4–S6 implementation and acceptance](backend/SCALING_S4_S6.md).
+
+**Scaling S1–S3 — completed and user functionally accepted, 30 October 2026:**
 retain current authoritative gameplay and reward rules; add read-only storage/operation
 measurement, compact completion recovery and sequenced visitor controls. Updated
 clients advertise `X-Forest-Recovery: 1`; accepted legacy requests retain their full
@@ -19,8 +33,8 @@ or celebrations. The new control protocol uses account/sequence identity after c
 expiry rather than permanently reserving every historical control UUID globally.
 Full visitor/growth history cleanup remains S4–S6. See
 [the exact recovery contract and acceptance guide](backend/SCALING_S1_S3.md).
-Native/device acceptance is pending; no live migration, automatic cleanup or push
-is implied by source implementation.
+User functional acceptance does not establish unreported native automated or CI
+results. S4–S6 require their own explicit server upgrade and cleanup enablement.
 
 **Catalog discovery — F8.7 source implemented locally, 29–30 October 2026;
 native/device acceptance pending:**
@@ -603,7 +617,12 @@ For each accepted activity credit, within one transaction:
 2. Build shared garden facts and evaluate skills emitted by eligible placed sources, alongside species modifiers and event effects. Select recipients and calculate magnitudes from that same snapshot/context. Route the resulting effects to their declared activity or water scope and resolve stacking per recipient.
 3. Convert each eligible metric with its normalisation and plant multiplier, resolving activity bonuses within personal/context bands before summing.
 4. Apply the single resolved combined-water factor, defined overall limits and remaining-maturity clamp, carrying fractional remainders. Use the same snapshot for all recipients so processing order cannot change the outcome.
-5. Save accumulated growth and the growth-credit record for each affected plant. At the server boundary, refresh attraction/visitor-skill eligibility from the new stages for future time only; elapsed visitor rewards and the batch's pre-credit growth effects stay fixed.
+5. Save accumulated growth and a recent growth-credit record for each affected
+   plant, sharing immutable diagnostic context. After 30 days, reconciled
+   per-copy/day/rule/profile summaries can replace those detailed credits; durable
+   request completion and activity watermarks still prevent repeat growth. At the
+   server boundary, refresh attraction/visitor-skill eligibility from new stages
+   for future time only; elapsed visitor rewards and pre-credit effects stay fixed.
 
 Index placed plant IDs by species, pre-credit stage and pinned gameplay tags once per snapshot; reuse counts, presence checks and selector results. Evaluate only rules present in the garden, sharing garden-wide work within each applicable context/band. Bulk-load profiles and keep database/network calls outside rule loops. Cache validated definitions by immutable profile/version; do not merge different pinned versions. Recipient groups may share resolved factors, but each copy retains its own coefficients, growth, maturity clamp and fractional remainder. Rule conditions read frozen base facts, not other effects' outputs, so skills cannot form feedback loops. Persistent garden caches are optional only after profiling and explicit invalidation rules.
 
@@ -749,7 +768,7 @@ Activity and water deliberately compound across layers: 10 base water ×2.5 acti
 
 Flat visitor additions enter after percentage layers so percentages cannot amplify the flat budget. Count all eligible plant-recipient flat attraction additions and garden flat additions in the same aggregate garden budget; then apply the final attraction ceiling. Capacity adds its capped flat amount after its percentage calculation, floors only the final capacity, and applies both the base-relative and absolute limits. With base capacity 30 and absolute maximum 120, the effective limit is 90 visits; a flat skill cannot raise it to 100. Preserve already earned storage when the effective capacity falls.
 
-Each count-based skill must also declare its own magnitude maximum. Configuration cannot bypass aggregate budgets by emitting extra effects or assigning new groups. Persist cap policy/version, requested group magnitudes, resolved factors, actual award and source provenance. UI shows effective aggregate factors, with cap-reached explanations. Initial caps are selected provisional development balance; other conversion rates, thresholds, visitor pacing and production balance remain separately provisional.
+Each count-based skill must also declare its own magnitude maximum. Configuration cannot bypass aggregate budgets by emitting extra effects or assigning new groups. Persist cap policy/version, requested group magnitudes, resolved factors, actual award and source provenance. Recent diagnostic credits share immutable provenance; after 30 days, S5 may replace detailed credits with reconciled copy/day/rule/profile/skill summaries of actual awards. Permanent full per-sync reconstruction is not required. UI shows effective aggregate factors, with cap-reached explanations. Initial caps are selected provisional development balance; other conversion rates, thresholds, visitor pacing and production balance remain separately provisional.
 
 Future fixed-water grants would start with a proposed per-plant/game-day budget min(10 water, 10% of eligible neutral activity water), still within the combined-water/maturity ceilings. This proposal is not an enabled mechanic: it requires atomic cumulative daily entitlements so repeated syncing cannot create extra grants. Personal marginal step boosts and wider metric/workout upload handlers remain separately scheduled B8 increments; their effects must enter the existing activity pool rather than a third multiplier. Weather and weather-dependent skills stay deferred.
 
@@ -934,6 +953,9 @@ Planning workbook mapping: replace `Footprint (tiles)` with `Clearance radius (g
 | `wallet_entries` | `id uuid PK`, user/currency, signed amount, reason, source event/request, timestamp; append-only ledger |
 | `api_requests` | `(user_id, request_id) PK`, operation, target-bound payload hash, original acceptance time, recovery capability, bounded completion outcome and nullable expirable response; ordinary/legacy request identity remains durable |
 | `visitor_controls` | One account control sequence, latest request/operation/hash and accepted time; protects sequenced start/heartbeat/end after their 24-hour cache is removed, independently of arrival scheduling |
+| `visitor_day_summaries` | Garden/UTC date/rule/mode key; exact duration, rational generated/discarded quantities and earned/claimed visits/tokens; source removal and summary update are atomic |
+| `growth_provenance` | Immutable content-addressed shared recent profile/rate/skill explanation; removed only after all recent credits release it |
+| `growth_day_summaries` | Owned-copy/game-date/rule/profile-and-skill key; exact awarded growth, bonus and source-credit count; current progress and input watermarks remain authoritative |
 | `reward_recaps` | `id uuid PK`, user, covered reward-event references, immutable recap payload/reference, presentation acknowledgement and timestamps; presentation/acknowledgement never issues rewards |
 | `garden_visitor_state` | `garden_id FK PK`, owner reference, `settled_through_at`, fixed-point `stored_visits_micro_units CHECK >= 0`, current context reference, active-session reference nullable, stable active-slot cursor/gap-protection state, state version; storage can temporarily exceed a newly reduced capacity without loss. Exactly one accounting timeline per garden |
 | `visitor_storage_lots` | `(garden_id, token_reward_version) PK`, nonnegative whole stored-visit count and pinned tokens per visit; these counts plus the state's sub-visit remainder reconcile to aggregate stored visits. Generation creates whole visits at the then-effective reward version; claims debit lots and retain their reward breakdown, never reprice old whole visits |

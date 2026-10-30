@@ -397,6 +397,7 @@ class ActivityDay(Base):
 class ActivityCredit(Base):
     __tablename__ = "activity_credits"
     __table_args__ = (
+        Index("ix_activity_credits_accepted_at", "accepted_at"),
         ForeignKeyConstraint(
             ["owner_id", "game_date"], ["activity_days.owner_id", "activity_days.game_date"]
         ),
@@ -427,6 +428,8 @@ class ActivityCredit(Base):
 class PlantGrowthCredit(Base):
     __tablename__ = "plant_growth_credits"
     __table_args__ = (
+        Index("ix_plant_growth_credits_activity_credit_id", "activity_credit_id"),
+        Index("ix_plant_growth_credits_provenance_id", "provenance_id"),
         CheckConstraint("before_growth >= 0 AND after_growth >= before_growth", name="growth"),
     )
     plant_id: Mapped[UUID] = mapped_column(ForeignKey("owned_plants.id"), primary_key=True)
@@ -436,6 +439,7 @@ class PlantGrowthCredit(Base):
     before_growth: Mapped[int] = mapped_column(BigInteger)
     after_growth: Mapped[int] = mapped_column(BigInteger)
     context: Mapped[dict] = mapped_column(JSONB)
+    provenance_id: Mapped[str | None] = mapped_column(ForeignKey("growth_provenance.id"))
 
 
 class PlayerProgress(Base):
@@ -453,7 +457,10 @@ class PlayerProgress(Base):
 
 class RewardEvent(Base):
     __tablename__ = "reward_events"
-    __table_args__ = (UniqueConstraint("owner_id", "request_id"),)
+    __table_args__ = (
+        UniqueConstraint("owner_id", "request_id"),
+        Index("ix_reward_events_accepted_at", "accepted_at"),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
     request_id: Mapped[UUID] = mapped_column()
@@ -463,6 +470,13 @@ class RewardEvent(Base):
 
 class RewardRecap(Base):
     __tablename__ = "reward_recaps"
+    __table_args__ = (
+        Index(
+            "ix_reward_recaps_pending_compaction",
+            "acknowledged_at",
+            postgresql_where=text("acknowledged_at IS NOT NULL AND NOT (payload ? 'compacted')"),
+        ),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
     event_id: Mapped[UUID] = mapped_column(ForeignKey("reward_events.id"), unique=True)

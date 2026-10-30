@@ -86,7 +86,8 @@ def create_context(session, settings, garden, boundary):
         .join(GardenPlacement, GardenPlacement.plant_id == OwnedPlant.id)
         .where(GardenPlacement.garden_id == garden.id)
         .order_by(OwnedPlant.id)
-    )
+    ).all()
+    presenter.preload([plant for plant, _ in rows])
     sources = []
     for plant, placement in rows:
         dto = presenter.plant(plant, placement)
@@ -98,7 +99,9 @@ def create_context(session, settings, garden, boundary):
                 "profile": dto.pinned_profiles.attraction.model_dump(mode="json", by_alias=True),
             }
         )
-    skills = services.skill_snapshot(session, garden, presenter=presenter, boundary=boundary)
+    skills = services.skill_snapshot(
+        session, garden, presenter=presenter, rows=rows, boundary=boundary
+    )
     attraction = skills.attraction()
     parameters = visitor_parameters(attraction, len(sources), definition.curve)
     parameters["capacity"] = skills.capacity(
@@ -122,6 +125,14 @@ def create_context(session, settings, garden, boundary):
             "skills": skills.summary(),
         },
     )
+    current = session.get(VisitorState, garden.id)
+    previous = session.get(VisitorContext, current.context_id) if current else None
+    if (
+        previous
+        and previous.rule_version == context.rule_version
+        and previous.snapshot == context.snapshot
+    ):
+        return previous
     session.add(context)
     session.flush()
     return context
@@ -231,11 +242,7 @@ def active_interval(session, state, context, active, start, end, boundary, can_i
         if existing is None:
             state.gap_slots += 1
             rule = context.snapshot["rules"]
-            first_tutorial = rule.get("tutorial_first_visitor", False) and not session.scalar(
-                select(VisitorOpportunity.id)
-                .where(VisitorOpportunity.garden_id == state.garden_id)
-                .limit(1)
-            )
+            first_tutorial = rule.get("tutorial_first_visitor", False) and not state.ever_issued
             if first_tutorial or slot_succeeds(
                 probability, state.gap_slots, rule["gap_slots"], draw
             ):
@@ -260,6 +267,7 @@ def active_interval(session, state, context, active, start, end, boundary, can_i
                         status="issued",
                     )
                     session.add(opportunity)
+                    state.ever_issued = True
                     state.gap_slots = 0
     state.last_slot = max(state.last_slot, last)
     return {
@@ -400,10 +408,10 @@ class VisitorAccounting:
 
     def after_change(self, session: Session, garden: Garden, boundary: datetime):
         state = session.get(VisitorState, garden.id)
-        visitor_schedule.pause(session, garden.id, max(boundary, state.settled_at))
-        state.context_id = create_context(
-            session, self.settings, garden, max(boundary, state.settled_at)
-        ).id
+        context = create_context(session, self.settings, garden, max(boundary, state.settled_at))
+        if context.id != state.context_id:
+            visitor_schedule.pause(session, garden.id, max(boundary, state.settled_at))
+            state.context_id = context.id
         state.version = checked(state.version + 1)
         active = active_session(session, garden)
         if active:
@@ -623,8 +631,24 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
         elif operation == "visitor_welcome":
             opportunity = session.get(VisitorOpportunity, target)
             if opportunity is None or opportunity.garden_id != garden.id:
+                from forest_api.history import recover_welcome
+
+                recovered = recover_welcome(session, user, body, payload_hash, target)
+                if recovered is not None:
+                    return recovered
                 raise ApiError(404, "visitor_not_found", "Visitor not found")
             if opportunity.status == "welcomed":
+                if "summary" not in opportunity.result:
+                    from forest_api.history import recover_welcome
+
+                    recovered = recover_welcome(session, user, body, payload_hash, target)
+                    if recovered is None:
+                        raise ApiError(
+                            503,
+                            "recovery_unavailable",
+                            "The original visitor receipt needs recovery",
+                        )
+                    return recovered
                 result = VisitorRewardResult.model_validate(opportunity.result)
                 # Preserve original award and snapshot, including original request UUID.
                 services.record_request(session, user.id, body, operation, payload_hash, result)
@@ -723,7 +747,20 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
                 summary=current_summary,
             )
             if operation == "visitor_welcome":
-                opportunity.result = result.model_dump(mode="json", by_alias=True)
+                event = session.get(VisitorRewardEvent, event_id)
+                event.receipt = {
+                    "requestId": str(body.request_id),
+                    "eventId": str(event_id),
+                    "visits": str(visits),
+                    "tokens": str(tokens),
+                    "acceptedAt": boundary.isoformat(),
+                    "recoverable": session.info.get("recovery_version") == 1,
+                }
+                opportunity.result = (
+                    {k: v for k, v in event.receipt.items() if k != "recoverable"}
+                    if event.receipt["recoverable"]
+                    else result.model_dump(mode="json", by_alias=True)
+                )
         else:
             result = current_summary
         services.record_request(session, user.id, body, operation, payload_hash, result)

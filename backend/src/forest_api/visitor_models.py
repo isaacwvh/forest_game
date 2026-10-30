@@ -44,6 +44,7 @@ class VisitorControl(Base):
 
 class VisitorContext(Base):
     __tablename__ = "visitor_contexts"
+    __table_args__ = (Index("ix_visitor_contexts_effective_at", "effective_at"),)
     id: Mapped[UUID] = mapped_column(primary_key=True)
     garden_id: Mapped[UUID] = mapped_column(ForeignKey("gardens.id"), index=True)
     effective_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -64,6 +65,7 @@ class VisitorState(Base):
     last_slot: Mapped[int] = mapped_column(BigInteger)
     gap_slots: Mapped[int] = mapped_column(Integer, default=0)
     version: Mapped[int] = mapped_column(BigInteger, default=0)
+    ever_issued: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
 
 class VisitorStorageLot(Base):
@@ -78,6 +80,7 @@ class VisitorStorageLot(Base):
 class VisitorSession(Base):
     __tablename__ = "visitor_sessions"
     __table_args__ = (
+        Index("ix_visitor_sessions_ended_at", "ended_at"),
         CheckConstraint(
             "lease_expires_at >= started_at AND (ended_at IS NULL OR ended_at >= started_at)",
             name="interval",
@@ -108,6 +111,7 @@ class VisitorSession(Base):
 class VisitorSettlement(Base):
     __tablename__ = "visitor_settlements"
     __table_args__ = (
+        Index("ix_visitor_settlements_end_at", "end_at"),
         UniqueConstraint("garden_id", "start_at"),
         CheckConstraint("end_at > start_at", name="interval"),
     )
@@ -165,13 +169,24 @@ class VisitorWallet(Base):
 
 class VisitorRewardEvent(Base):
     __tablename__ = "visitor_reward_events"
-    __table_args__ = (UniqueConstraint("owner_id", "kind", "source_id"),)
+    __table_args__ = (
+        UniqueConstraint("owner_id", "kind", "source_id"),
+        Index(
+            "ix_visitor_reward_events_pending_summary",
+            "created_at",
+            postgresql_where=text(
+                "summarized_at IS NULL AND kind IN ('active_welcome', 'offline_claim')"
+            ),
+        ),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
     kind: Mapped[str] = mapped_column(String(32))
     source_id: Mapped[UUID] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     detail: Mapped[dict] = mapped_column(JSONB)
+    receipt: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
+    summarized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class VisitorWalletEntry(Base):

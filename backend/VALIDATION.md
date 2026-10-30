@@ -556,3 +556,71 @@ committed or pushed and no CI run was requested.
 Apple SDK typechecking, native XCTest/UI, Release/InternalRelease builds and
 physical iPhone/multidevice acceptance are not executable on this Windows host.
 See SCALING_S1_S3.md and frontend/scripts/test-mac.sh before broader cleanup.
+
+## Scaling S4-S6 - local implementation and validation, 30 October 2026
+
+S1-S3 are completed and functionally user accepted on the updated iPhone app.
+S4-S6 are source implemented locally with explicit migration 0011_compact_history.
+No live game migration, cleanup, worker enablement, commit, push or CI run occurred.
+
+Executed full PostgreSQL regression suite: **501 passed, 3 opt-in benchmark cases
+skipped, in 366.56s**. All four actual Uvicorn HTTP walkthroughs passed: activity,
+visitors/collection, skills, and typed launch/milestones/economy conversion/
+scheduled arrivals with restart replay. The separately executed final focused
+group passed **81 tests in 256.85s**, including all three opt-in benchmark cases,
+history/concurrency/rollback, migration model parity/downgrade/reupgrade, compact
+recovery and skill/growth checks after the final cleanup/index refinements.
+No failure remains in the executed checks. The three opt-in cases were not left
+untested merely because the normal suite skips them.
+
+Coverage includes original and alias welcome recovery after opportunity removal,
+once-only financial/hosted totals, empty claims and stored-lot conservation,
+legacy response protection, current/pending context/session dependencies, stable
+schedules after unchanged moves, growth rollup idempotence and exact awards,
+shared recent provenance, rollback after the rollup actually wrote to PostgreSQL,
+exact retention boundaries, pending/acknowledged recaps, protected watermark/
+workout identities, UTC midnight overflow with a Singapore DB session timezone,
+DST/queued-observation cutoff bounds, concurrent cleanup, locked accounts and
+shared-provenance references, orphan diagnostics without other account work,
+immutable reward/provenance guards, failed worker reconciliation and refusal to
+downgrade away new compact receipt/history proof.
+
+Reproducible retained-state artifacts: backend/benchmarks/history-35d.json,
+history-90d.json and history-365d.json. Cohorts use 5/15/60 Garden minutes,
+10/15/15 planted copies, four activity sync shapes per active day, rotating
+one-in-eight active days, legacy-rate visitor captures and actual pack exchanges/
+openings. Model: 1,000 MAU / 125 DAU plus separately budgeted dormant accounts.
+This is synthetic retained-state measurement, not a 1,000-client load test or
+validation of continuous real Health ingestion. Higher protocol-2 visitor/reward
+volume is explicitly projected separately; full activity/visitor suites cover
+actual ingestion, limits and high-attraction behavior.
+
+Final total indexed table allocation, decimal MB, before / after cleanup in the
+existing files / fresh restored retained data:
+- 35 days: 3.13 / 3.24 / 2.77.
+- 90 days: 6.92 / 7.54 / 3.64.
+- 365 days: 52.36 / 56.57 / 6.91.
+
+The 365-day case retired about 36.25 MB of logical row data. Each scenario ran a
+real pg_dump/pg_restore into another random disposable database, verified all
+table row counts and critical plant/layout/wallet/state/lot/opening/collection
+checksums, then reconciled restored balances. Reports include actual WAL bytes,
+heap/index/TOAST allocation, dead-tuple estimates, maintenance duration and before/
+after p50/p95 read samples with query/response sizes. Normal maintenance reuses
+space; file shrink is not promised and VACUUM FULL is not part of the worker.
+No 500-MB/1,000-MAU capacity guarantee is inferred from these cohorts.
+
+Passed: Ruff lint/format (98 Python files), pip dependency check, Docker Compose
+configuration including the opt-in maintenance profile, frontend project/assets/
+contracts and all 72 Swift syntax parses, plus diff whitespace checks. Final
+worker default is 60 seconds between bounded 500-row batches; its Docker profile
+and each response/visitor/growth family remain disabled until explicitly enabled.
+This cadence avoids the obvious throughput shortfall of hourly 500-row passes;
+actual lag/CPU/WAL still require operational monitoring.
+
+All database work used generated forest_test_* databases on the dedicated
+loopback validation cluster; it was stopped after validation. Existing personal
+data, real .env/Auth/signing setup and unrelated art were preserved. Native
+XCTest/Apple SDK/build and live backend/device cleanup acceptance are not claimed
+by Windows checks. No Swift source changed in this batch; reuse the already
+updated S1-S3 app. See SCALING_S4_S6.md for upgrade/maintenance/device acceptance.

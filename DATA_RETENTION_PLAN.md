@@ -1,5 +1,11 @@
 # API response retention and database cleanup plan
 
+**Current delivery:** S1–S3 are completed and user accepted. S4–S6 now implement
+the separate visitor/growth history work described as future scope below. See
+[SCALING_S4_S6.md](backend/SCALING_S4_S6.md) for the current contract, measured
+scenarios and explicit maintenance rollout. This original proposal is historical;
+it does not enable cleanup on the game database.
+
 Prepared 29 October 2026. **Proposal only; no application code, schema, scheduled
 job or existing database contents are changed by this plan.** This is a separate
 backend/native hardening batch from catalog discovery.

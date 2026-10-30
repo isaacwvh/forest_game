@@ -41,6 +41,11 @@ acknowledged recap details explicit retention or aggregation policies.
 
 ## Delivery scope
 
+**Current delivery update:** S1–S3 are completed and functionally user accepted on
+iPhone, 30 October 2026. S4–S6 are source implemented locally; see
+[maintenance, evidence and acceptance](backend/SCALING_S4_S6.md). Historical
+proposals/checkpoints below do not imply live cleanup is enabled.
+
 **30 October implementation checkpoint:** S1–S3 are source implemented locally;
 native/device acceptance remains pending. S4–S6 are separate follow-up work.
 See [the delivered protocol and checklist](backend/SCALING_S1_S3.md). No live

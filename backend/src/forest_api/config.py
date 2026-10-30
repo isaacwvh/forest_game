@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     db_pool_size: int = Field(default=5, ge=1, le=50)
     db_max_overflow: int = Field(default=5, ge=0, le=50)
     operation_metrics_enabled: bool = False
+    maintenance_responses_enabled: bool = False
+    maintenance_visitors_enabled: bool = False
+    maintenance_growth_enabled: bool = False
+    maintenance_interval_seconds: int = Field(default=60, ge=60, le=86400)
+    maintenance_batch_limit: int = Field(default=500, ge=1, le=5000)
 
     @model_validator(mode="after")
     def validate_configuration(self) -> "Settings":

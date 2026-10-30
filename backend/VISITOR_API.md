@@ -1,5 +1,14 @@
 # B6 visitor contract
 
+**Scaling update, 30 October 2026:** S1–S3 are user accepted. S4–S6 add optional
+seven-day visitor-detail rollups, protected cursor/tutorial history and compact
+paid-welcome outcomes. For recovery-v1 requests, a new UUID targeting an already
+welcomed visitor can return typed completion even inside the response-cache
+window; it never pays again. Legacy exact-response recovery stays protected.
+See [SCALING_S4_S6.md](SCALING_S4_S6.md) for retention, explicit migration and
+maintenance. Current arrival protocol 2/timing is defined in VISITOR_RESCALE.md;
+the original slot-based description below is historical.
+
 Implemented for the existing FastAPI/PostgreSQL application. Game data remains
 local; hosted Supabase Auth and the existing Tailscale HTTPS origin are reused.
 No Health-device replacement, account recreation or growth reset is required.

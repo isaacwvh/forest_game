@@ -37,7 +37,7 @@ from forest_api.server_clock import request_clock
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0010_compact_recovery"
+SCHEMA_REVISION = "0011_compact_history"
 
 
 @router.get("/health/live", tags=["health"])

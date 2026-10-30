@@ -48,7 +48,6 @@ from forest_api.models import (
     RewardRecap,
 )
 from forest_api.placement import DISABLED_ACCOUNTING, PlacementAccounting, utc_now
-from forest_api.schemas import BehaviourDefinition
 
 RECONCILIATION_DAYS = 7
 QUEUED_MAX_AGE_DAYS = 30
@@ -271,6 +270,7 @@ def sync(
             progress = PlayerProgress(owner_id=user.id, activity_steps=0, first_maturity_count=0)
             session.add(progress)
         presenter = services.PlantPresenter(session)
+        presenter.preload(plants)
         before = {
             plant.id: (
                 plant.growth_micro_units,
@@ -280,9 +280,16 @@ def sync(
             for plant in plants
         }
         # One pre-credit stage/profile snapshot for the entire upload.
-        skills = services.skill_snapshot(session, garden, presenter=presenter, boundary=boundary)
+        skills = services.skill_snapshot(
+            session,
+            garden,
+            presenter=presenter,
+            rows=[(plant, None) for plant in plants],
+            boundary=boundary,
+        )
         source_facts = {plant.id: plant for plant in skills.plants}
         day_results, credits = [], []
+        growth_traces = []
         skill_bonus = dict.fromkeys(before, 0)
         accounting_started = False
         workout_quantities, workout_rates, workout_receipts = inputs.workout_credits(
@@ -369,14 +376,11 @@ def sync(
                             "unsupported_maturity_profile",
                             "Terminal maturity must match the adult threshold",
                         )
-                    behaviour = presenter.profile(
-                        "behaviour", plant.behaviour_profile_id, plant.behaviour_profile_version
-                    )
                     # All effects read the shared pre-credit snapshot, including later days.
                     prior = plant.growth_micro_units
                     prior_fraction = dict(plant.fractional_state)
                     try:
-                        definition = BehaviourDefinition.model_validate(behaviour.rules)
+                        definition = presenter.behaviour(plant)
                         activity_factors, water_factor = skills.growth(
                             source_facts[str(plant.id)], rates
                         )
@@ -421,7 +425,7 @@ def sync(
                         progress.first_maturity_count = checked_add(
                             progress.first_maturity_count, 1
                         )
-                    session.add(
+                    growth_traces.append(
                         PlantGrowthCredit(
                             plant_id=plant.id,
                             activity_credit_id=credit.id,
@@ -477,6 +481,9 @@ def sync(
                 )
             )
 
+        from forest_api import growth_history
+
+        growth_history.store(session, growth_traces)
         discovery.record_reached(session, user.id, plants, boundary)
         changed = any(
             (plant.growth_micro_units, plant.fractional_state) != before[plant.id][:2]

@@ -1,8 +1,10 @@
 # Efficient game state and database usage: implementation draft
 
 Prepared 30 October 2026 from the V1 spec v0.28, implementation plan, new scaling
-plan, retention proposal and current backend/iOS source. **S1–S3 source implemented
-locally on 30 October 2026; native/device acceptance pending. S4–S6 remain proposed.**
+plan, retention proposal and current backend/iOS source. **S1–S3 completed and
+functionally accepted by the user on iPhone on 30 October 2026. S4–S6 are source
+implemented locally, with validation and server/device acceptance recorded separately.**
+See [S4–S6 maintenance and acceptance](backend/SCALING_S4_S6.md).
 See [the implementation and acceptance guide](backend/SCALING_S1_S3.md) for the
 delivered protocol, explicit migration/maintenance commands, budgets and checklist.
 No live database upgrade, automatic cleanup, push or CI run is performed.

@@ -895,3 +895,23 @@ physical iPhone and two-installation acceptance. Windows parsing cannot establis
 native type correctness. Run bash frontend/scripts/test-mac.sh on a Mac, then the
 checklist in backend/SCALING_S1_S3.md against an explicitly upgraded test server.
 No live migration, automatic cleanup, commit, push or CI run was performed.
+
+## Scaling S4-S6 - backend handoff, 30 October 2026
+
+S1-S3 functional behavior is user accepted on the updated iPhone app. S4-S6 reuse
+that typed compact-completion handling; no Swift source, project, resources,
+Health permission, Auth or signing settings changed. A new UUID for a previously
+welcomed visitor may now receive typed completion from its permanent compact
+reward proof, including after the opportunity row has retired. Current state
+refreshes quietly; original pending requests retain their normal recovery guards.
+
+Portable frontend project/assets/contracts and all 72 Swift syntax parses pass.
+Backend full suite: 501 passed with three separately executed opt-in matrix cases;
+final focused history/migration/growth/recovery/matrix group: 81 passed. All four
+real HTTP walkthroughs pass. These are not new native XCTest/build results.
+
+No new iPhone build is required for this backend batch. Upgrade a test backend to
+0011_compact_history, then follow backend/SCALING_S4_S6.md before enabling live
+history removal. Check normal state, compacted/alias welcome recovery, interrupted
+claims/exchanges/openings/sync/edits, pending recaps and worker interruption. Live
+cleanup/device acceptance remains pending; nothing was committed or pushed.

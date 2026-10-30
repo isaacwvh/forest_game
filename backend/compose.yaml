@@ -60,5 +60,27 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  maintenance:
+    build: .
+    profiles: ["maintenance"]
+    command: ["forest", "history-worker"]
+    environment:
+      FOREST_ENVIRONMENT: local
+      FOREST_DATABASE_URL: postgresql+psycopg://forest:forest-local-only@db:5432/forest
+      FOREST_AUTH_MODE: development
+      FOREST_DEV_AUTH_SECRET: ${FOREST_DEV_AUTH_SECRET:-maintenance-local-only-not-used-for-sign-in}
+      FOREST_MAINTENANCE_RESPONSES_ENABLED: ${FOREST_MAINTENANCE_RESPONSES_ENABLED:-false}
+      FOREST_MAINTENANCE_VISITORS_ENABLED: ${FOREST_MAINTENANCE_VISITORS_ENABLED:-false}
+      FOREST_MAINTENANCE_GROWTH_ENABLED: ${FOREST_MAINTENANCE_GROWTH_ENABLED:-false}
+      FOREST_MAINTENANCE_INTERVAL_SECONDS: ${FOREST_MAINTENANCE_INTERVAL_SECONDS:-60}
+      FOREST_MAINTENANCE_BATCH_LIMIT: ${FOREST_MAINTENANCE_BATCH_LIMIT:-500}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   forest-db:

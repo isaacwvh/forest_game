@@ -369,6 +369,36 @@ class PlantPresenter:
         self.session = session
         self.profiles = {}
         self.stages = {}
+        self.behaviours = {}
+
+    def preload(self, plants):
+        for kind, model in PROFILE_MODELS.items():
+            keys = {
+                (getattr(p, f"{kind}_profile_id"), getattr(p, f"{kind}_profile_version"))
+                for p in plants
+            }
+            keys = {key for key in keys if (kind, *key) not in self.profiles}
+            if keys:
+                for row in self.session.scalars(
+                    select(model).where(tuple_(model.id, model.version).in_(keys))
+                ):
+                    self.profiles[(kind, row.id, row.version)] = row
+        keys = {(p.species_id, p.variant_id) for p in plants}
+        if keys:
+            for row in self.session.scalars(
+                select(PlantStage).where(
+                    tuple_(PlantStage.species_id, PlantStage.variant_id).in_(keys)
+                )
+            ):
+                self.stages[(row.species_id, row.variant_id, row.stage)] = row
+
+    def behaviour(self, plant):
+        key = (plant.behaviour_profile_id, plant.behaviour_profile_version)
+        if key not in self.behaviours:
+            self.behaviours[key] = BehaviourDefinition.model_validate(
+                self.profile("behaviour", *key).rules
+            )
+        return self.behaviours[key]
 
     def profile(self, kind: str, row_id: str, version: int):
         key = (kind, row_id, version)
@@ -413,11 +443,7 @@ class PlantPresenter:
             ),
             base_attraction_micro_units=str(getattr(attraction_definition.stage_attraction, stage)),
             contributes_attraction=placement is not None,
-            garden_skills=BehaviourDefinition.model_validate(
-                self.profile(
-                    "behaviour", plant.behaviour_profile_id, plant.behaviour_profile_version
-                ).rules
-            ).model_dump(by_alias=True)["gardenEffects"],
+            garden_skills=self.behaviour(plant).model_dump(by_alias=True)["gardenEffects"],
             model_key=assets.model_key,
             thumbnail_key=assets.thumbnail_key,
             placement=PlacementDTO(
@@ -505,6 +531,7 @@ def skill_snapshot(session, garden, *, presenter=None, rows=None, boundary=None)
             (getattr(p, f"{kind}_profile_id"), getattr(p, f"{kind}_profile_version"))
             for p, _ in rows
         }
+        keys = {key for key in keys if (kind, *key) not in presenter.profiles}
         if keys:
             for profile in session.scalars(
                 select(model).where(tuple_(model.id, model.version).in_(keys))
@@ -534,11 +561,7 @@ def skill_snapshot(session, garden, *, presenter=None, rows=None, boundary=None)
                 "attraction", plant.attraction_profile_id, plant.attraction_profile_version
             )
             stage = stage_for(plant.growth_micro_units, growth.thresholds)
-            behaviour = BehaviourDefinition.model_validate(
-                presenter.profile(
-                    "behaviour", plant.behaviour_profile_id, plant.behaviour_profile_version
-                ).rules
-            )
+            behaviour = presenter.behaviour(plant)
             facts.append(
                 PlantFacts(
                     str(plant.id),

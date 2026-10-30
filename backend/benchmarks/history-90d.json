@@ -1,0 +1,2228 @@
+{
+  "days": 90,
+  "gardenMinutes": 15,
+  "plants": 15,
+  "activeDays": 12,
+  "model": {
+    "MAU": 1000,
+    "DAU": 125,
+    "additionalDormantAccounts": 500,
+    "dailySyncs": 4,
+    "capturePolicy": "One welcome/minute; high-v2 volume projected separately.",
+    "growthInputs": "Four quantities plus workout fixtures; ingestion tested separately."
+  },
+  "before": {
+    "version": 1,
+    "readOnly": true,
+    "rowCounts": "exact",
+    "databaseBytes": 16037555,
+    "tables": [
+      {
+        "schema": "public",
+        "name": "api_requests",
+        "estimated_rows": 0,
+        "heap_bytes": 2236416,
+        "toast_aux_bytes": 270336,
+        "index_bytes": 131072,
+        "total_bytes": 2637824,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 1139
+      },
+      {
+        "schema": "public",
+        "name": "plant_growth_credits",
+        "estimated_rows": 0,
+        "heap_bytes": 1482752,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 90112,
+        "total_bytes": 1605632,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 735
+      },
+      {
+        "schema": "public",
+        "name": "visitor_settlements",
+        "estimated_rows": 0,
+        "heap_bytes": 147456,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 180224,
+        "total_bytes": 360448,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 1080
+      },
+      {
+        "schema": "public",
+        "name": "visitor_reward_events",
+        "estimated_rows": 0,
+        "heap_bytes": 98304,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 90112,
+        "total_bytes": 221184,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "visitor_wallet_entries"
+        ],
+        "exact_rows": 180
+      },
+      {
+        "schema": "public",
+        "name": "visitor_opportunities",
+        "estimated_rows": 0,
+        "heap_bytes": 65536,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 73728,
+        "total_bytes": 172032,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 180
+      },
+      {
+        "schema": "public",
+        "name": "activity_credits",
+        "estimated_rows": 0,
+        "heap_bytes": 16384,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 65536,
+        "total_bytes": 114688,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "plant_growth_credits"
+        ],
+        "exact_rows": 49
+      },
+      {
+        "schema": "public",
+        "name": "collection_events",
+        "estimated_rows": 0,
+        "heap_bytes": 16384,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 49152,
+        "total_bytes": 98304,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "owned_packs",
+          "pack_openings"
+        ],
+        "exact_rows": 7
+      },
+      {
+        "schema": "public",
+        "name": "visitor_wallet_entries",
+        "estimated_rows": 0,
+        "heap_bytes": 24576,
+        "toast_aux_bytes": 24576,
+        "index_bytes": 49152,
+        "total_bytes": 98304,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 180
+      },
+      {
+        "schema": "public",
+        "name": "pack_openings",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 81920,
+        "total_bytes": 90112,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 6
+      },
+      {
+        "schema": "public",
+        "name": "visitor_sessions",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 81920,
+        "total_bytes": 90112,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "visitor_opportunities"
+        ],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "activity_devices",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_metric_days"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "owned_plants",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "current_state",
+        "referencedBy": [
+          "garden_placements",
+          "growth_day_summaries",
+          "pack_openings",
+          "plant_growth_credits"
+        ],
+        "exact_rows": 21
+      },
+      {
+        "schema": "public",
+        "name": "reward_events",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "reward_recaps"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "users",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 49152,
+        "total_bytes": 65536,
+        "category": "current_state",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_devices",
+          "activity_metric_days",
+          "activity_workout_days",
+          "activity_workouts",
+          "api_requests",
+          "catalog_discovery_state",
+          "catalog_stage_discoveries",
+          "collection_events",
+          "gardens",
+          "milestone_claims",
+          "owned_packs",
+          "owned_plants",
+          "pack_openings",
+          "player_progress",
+          "reward_events",
+          "reward_recaps",
+          "visitor_controls",
+          "visitor_economy_conversions",
+          "visitor_reward_events",
+          "visitor_sessions",
+          "visitor_throttles",
+          "visitor_wallet_entries",
+          "visitor_wallets"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_contexts",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 49152,
+        "total_bytes": 65536,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "garden_visitor_state",
+          "visitor_opportunities",
+          "visitor_schedules",
+          "visitor_settlements"
+        ],
+        "exact_rows": 3
+      },
+      {
+        "schema": "public",
+        "name": "gardens",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 49152,
+        "total_bytes": 57344,
+        "category": "current_state",
+        "referencedBy": [
+          "garden_placements",
+          "garden_visitor_state",
+          "visitor_contexts",
+          "visitor_day_summaries",
+          "visitor_opportunities",
+          "visitor_schedules",
+          "visitor_sessions",
+          "visitor_settlements",
+          "visitor_storage_lots"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "owned_packs",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 49152,
+        "total_bytes": 57344,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "pack_openings"
+        ],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "economy_configs",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 49152,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_metric_days",
+          "activity_workout_days",
+          "growth_day_summaries"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_rules",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 49152,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "visitor_contexts",
+          "visitor_day_summaries",
+          "visitor_opportunities",
+          "visitor_storage_lots"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "exchange_offers",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 2
+      },
+      {
+        "schema": "public",
+        "name": "garden_placements",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 15
+      },
+      {
+        "schema": "public",
+        "name": "reward_recaps",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "attraction_profiles",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "garden_visitor_state",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "growth_profiles",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "growth_provenance",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "plant_growth_credits"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "growth_rule_profiles",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "pack_definitions",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "exchange_offers",
+          "owned_packs",
+          "pack_members"
+        ],
+        "exact_rows": 2
+      },
+      {
+        "schema": "public",
+        "name": "pack_members",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 4
+      },
+      {
+        "schema": "public",
+        "name": "plant_species",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "plant_stages",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "plant_variants",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "catalog_stage_discoveries",
+          "game_catalogue",
+          "owned_plants",
+          "pack_members",
+          "plant_stages"
+        ],
+        "exact_rows": 3
+      },
+      {
+        "schema": "public",
+        "name": "player_progress",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "skill_policies",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "activity_days",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "activity_credits"
+        ],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "alembic_version",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "catalog_discovery_state",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "catalog_stage_discoveries",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 3
+      },
+      {
+        "schema": "public",
+        "name": "game_catalogue",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_controls",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_throttles",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_wallets",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "activity_workout_days",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "activity_workouts",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "growth_day_summaries",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "milestone_claims",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_day_summaries",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_economy_conversions",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_schedules",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "activity_metric_days",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 0,
+        "index_bytes": 8192,
+        "total_bytes": 8192,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_storage_lots",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 0,
+        "index_bytes": 8192,
+        "total_bytes": 8192,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 0
+      }
+    ],
+    "walLsn": "0/985B8298",
+    "deadTuples": 488,
+    "logicalRowBytes": 3659909
+  },
+  "after": {
+    "version": 1,
+    "readOnly": true,
+    "rowCounts": "exact",
+    "databaseBytes": 16660147,
+    "tables": [
+      {
+        "schema": "public",
+        "name": "api_requests",
+        "estimated_rows": 0,
+        "heap_bytes": 2236416,
+        "toast_aux_bytes": 270336,
+        "index_bytes": 139264,
+        "total_bytes": 2646016,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 59
+      },
+      {
+        "schema": "public",
+        "name": "plant_growth_credits",
+        "estimated_rows": 0,
+        "heap_bytes": 1482752,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 90112,
+        "total_bytes": 1605632,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 240
+      },
+      {
+        "schema": "public",
+        "name": "growth_day_summaries",
+        "estimated_rows": 0,
+        "heap_bytes": 450560,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 49152,
+        "total_bytes": 532480,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 120
+      },
+      {
+        "schema": "public",
+        "name": "visitor_settlements",
+        "estimated_rows": 0,
+        "heap_bytes": 147456,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 180224,
+        "total_bytes": 360448,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 90
+      },
+      {
+        "schema": "public",
+        "name": "visitor_reward_events",
+        "estimated_rows": 0,
+        "heap_bytes": 180224,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 90112,
+        "total_bytes": 303104,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "visitor_wallet_entries"
+        ],
+        "exact_rows": 180
+      },
+      {
+        "schema": "public",
+        "name": "visitor_opportunities",
+        "estimated_rows": 0,
+        "heap_bytes": 65536,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 73728,
+        "total_bytes": 172032,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 15
+      },
+      {
+        "schema": "public",
+        "name": "activity_credits",
+        "estimated_rows": 0,
+        "heap_bytes": 16384,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 65536,
+        "total_bytes": 114688,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "plant_growth_credits"
+        ],
+        "exact_rows": 49
+      },
+      {
+        "schema": "public",
+        "name": "collection_events",
+        "estimated_rows": 0,
+        "heap_bytes": 16384,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 49152,
+        "total_bytes": 98304,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "owned_packs",
+          "pack_openings"
+        ],
+        "exact_rows": 7
+      },
+      {
+        "schema": "public",
+        "name": "visitor_wallet_entries",
+        "estimated_rows": 0,
+        "heap_bytes": 24576,
+        "toast_aux_bytes": 24576,
+        "index_bytes": 49152,
+        "total_bytes": 98304,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 180
+      },
+      {
+        "schema": "public",
+        "name": "pack_openings",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 81920,
+        "total_bytes": 90112,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 6
+      },
+      {
+        "schema": "public",
+        "name": "visitor_sessions",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 81920,
+        "total_bytes": 90112,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "visitor_opportunities"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "activity_devices",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_metric_days"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "owned_plants",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "current_state",
+        "referencedBy": [
+          "garden_placements",
+          "growth_day_summaries",
+          "pack_openings",
+          "plant_growth_credits"
+        ],
+        "exact_rows": 21
+      },
+      {
+        "schema": "public",
+        "name": "reward_events",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "reward_recaps"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "users",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 49152,
+        "total_bytes": 65536,
+        "category": "current_state",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_devices",
+          "activity_metric_days",
+          "activity_workout_days",
+          "activity_workouts",
+          "api_requests",
+          "catalog_discovery_state",
+          "catalog_stage_discoveries",
+          "collection_events",
+          "gardens",
+          "milestone_claims",
+          "owned_packs",
+          "owned_plants",
+          "pack_openings",
+          "player_progress",
+          "reward_events",
+          "reward_recaps",
+          "visitor_controls",
+          "visitor_economy_conversions",
+          "visitor_reward_events",
+          "visitor_sessions",
+          "visitor_throttles",
+          "visitor_wallet_entries",
+          "visitor_wallets"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_contexts",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 49152,
+        "total_bytes": 65536,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "garden_visitor_state",
+          "visitor_opportunities",
+          "visitor_schedules",
+          "visitor_settlements"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "gardens",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 49152,
+        "total_bytes": 57344,
+        "category": "current_state",
+        "referencedBy": [
+          "garden_placements",
+          "garden_visitor_state",
+          "visitor_contexts",
+          "visitor_day_summaries",
+          "visitor_opportunities",
+          "visitor_schedules",
+          "visitor_sessions",
+          "visitor_settlements",
+          "visitor_storage_lots"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "owned_packs",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 49152,
+        "total_bytes": 57344,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "pack_openings"
+        ],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "economy_configs",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 49152,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_metric_days",
+          "activity_workout_days",
+          "growth_day_summaries"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_rules",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 49152,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "visitor_contexts",
+          "visitor_day_summaries",
+          "visitor_opportunities",
+          "visitor_storage_lots"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "exchange_offers",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 2
+      },
+      {
+        "schema": "public",
+        "name": "garden_placements",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 15
+      },
+      {
+        "schema": "public",
+        "name": "reward_recaps",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "attraction_profiles",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "garden_visitor_state",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "growth_profiles",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "growth_provenance",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "plant_growth_credits"
+        ],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "growth_rule_profiles",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "pack_definitions",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "exchange_offers",
+          "owned_packs",
+          "pack_members"
+        ],
+        "exact_rows": 2
+      },
+      {
+        "schema": "public",
+        "name": "pack_members",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 4
+      },
+      {
+        "schema": "public",
+        "name": "plant_species",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "plant_stages",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "plant_variants",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "catalog_stage_discoveries",
+          "game_catalogue",
+          "owned_plants",
+          "pack_members",
+          "plant_stages"
+        ],
+        "exact_rows": 3
+      },
+      {
+        "schema": "public",
+        "name": "player_progress",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "skill_policies",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_day_summaries",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 22
+      },
+      {
+        "schema": "public",
+        "name": "activity_days",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "activity_credits"
+        ],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "alembic_version",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "catalog_discovery_state",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "catalog_stage_discoveries",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 3
+      },
+      {
+        "schema": "public",
+        "name": "game_catalogue",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_controls",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_throttles",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_wallets",
+        "estimated_rows": 0,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "activity_workout_days",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "activity_workouts",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "milestone_claims",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_economy_conversions",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_schedules",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "activity_metric_days",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 0,
+        "index_bytes": 8192,
+        "total_bytes": 8192,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_storage_lots",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 0,
+        "index_bytes": 8192,
+        "total_bytes": 8192,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 0
+      }
+    ],
+    "walLsn": "0/98692000",
+    "deadTuples": 3827,
+    "logicalRowBytes": 744934
+  },
+  "restored": {
+    "version": 1,
+    "readOnly": true,
+    "rowCounts": "exact",
+    "databaseBytes": 12555955,
+    "tables": [
+      {
+        "schema": "public",
+        "name": "plant_growth_credits",
+        "estimated_rows": 240,
+        "heap_bytes": 720896,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 65536,
+        "total_bytes": 819200,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 240
+      },
+      {
+        "schema": "public",
+        "name": "visitor_reward_events",
+        "estimated_rows": 180,
+        "heap_bytes": 147456,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 81920,
+        "total_bytes": 262144,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "visitor_wallet_entries"
+        ],
+        "exact_rows": 180
+      },
+      {
+        "schema": "public",
+        "name": "growth_day_summaries",
+        "estimated_rows": 120,
+        "heap_bytes": 180224,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 40960,
+        "total_bytes": 253952,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 120
+      },
+      {
+        "schema": "public",
+        "name": "api_requests",
+        "estimated_rows": 59,
+        "heap_bytes": 24576,
+        "toast_aux_bytes": 131072,
+        "index_bytes": 32768,
+        "total_bytes": 188416,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 59
+      },
+      {
+        "schema": "public",
+        "name": "activity_credits",
+        "estimated_rows": 49,
+        "heap_bytes": 16384,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 65536,
+        "total_bytes": 114688,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "plant_growth_credits"
+        ],
+        "exact_rows": 49
+      },
+      {
+        "schema": "public",
+        "name": "visitor_settlements",
+        "estimated_rows": 90,
+        "heap_bytes": 16384,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 65536,
+        "total_bytes": 114688,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 90
+      },
+      {
+        "schema": "public",
+        "name": "collection_events",
+        "estimated_rows": 7,
+        "heap_bytes": 16384,
+        "toast_aux_bytes": 32768,
+        "index_bytes": 49152,
+        "total_bytes": 98304,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "owned_packs",
+          "pack_openings"
+        ],
+        "exact_rows": 7
+      },
+      {
+        "schema": "public",
+        "name": "visitor_wallet_entries",
+        "estimated_rows": 180,
+        "heap_bytes": 24576,
+        "toast_aux_bytes": 24576,
+        "index_bytes": 49152,
+        "total_bytes": 98304,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 180
+      },
+      {
+        "schema": "public",
+        "name": "pack_openings",
+        "estimated_rows": 6,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 81920,
+        "total_bytes": 90112,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 6
+      },
+      {
+        "schema": "public",
+        "name": "visitor_opportunities",
+        "estimated_rows": 15,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 73728,
+        "total_bytes": 90112,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 15
+      },
+      {
+        "schema": "public",
+        "name": "visitor_sessions",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 81920,
+        "total_bytes": 90112,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "visitor_opportunities"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "activity_devices",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_metric_days"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "owned_plants",
+        "estimated_rows": 21,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "current_state",
+        "referencedBy": [
+          "garden_placements",
+          "growth_day_summaries",
+          "pack_openings",
+          "plant_growth_credits"
+        ],
+        "exact_rows": 21
+      },
+      {
+        "schema": "public",
+        "name": "reward_events",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 65536,
+        "total_bytes": 81920,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "reward_recaps"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "users",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 49152,
+        "total_bytes": 65536,
+        "category": "current_state",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_devices",
+          "activity_metric_days",
+          "activity_workout_days",
+          "activity_workouts",
+          "api_requests",
+          "catalog_discovery_state",
+          "catalog_stage_discoveries",
+          "collection_events",
+          "gardens",
+          "milestone_claims",
+          "owned_packs",
+          "owned_plants",
+          "pack_openings",
+          "player_progress",
+          "reward_events",
+          "reward_recaps",
+          "visitor_controls",
+          "visitor_economy_conversions",
+          "visitor_reward_events",
+          "visitor_sessions",
+          "visitor_throttles",
+          "visitor_wallet_entries",
+          "visitor_wallets"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_contexts",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 49152,
+        "total_bytes": 65536,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "garden_visitor_state",
+          "visitor_opportunities",
+          "visitor_schedules",
+          "visitor_settlements"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "gardens",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 49152,
+        "total_bytes": 57344,
+        "category": "current_state",
+        "referencedBy": [
+          "garden_placements",
+          "garden_visitor_state",
+          "visitor_contexts",
+          "visitor_day_summaries",
+          "visitor_opportunities",
+          "visitor_schedules",
+          "visitor_sessions",
+          "visitor_settlements",
+          "visitor_storage_lots"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "owned_packs",
+        "estimated_rows": 12,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 49152,
+        "total_bytes": 57344,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "pack_openings"
+        ],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "economy_configs",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 49152,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "activity_credits",
+          "activity_days",
+          "activity_metric_days",
+          "activity_workout_days",
+          "growth_day_summaries"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_rules",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 49152,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "visitor_contexts",
+          "visitor_day_summaries",
+          "visitor_opportunities",
+          "visitor_storage_lots"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "exchange_offers",
+        "estimated_rows": 2,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 2
+      },
+      {
+        "schema": "public",
+        "name": "garden_placements",
+        "estimated_rows": 15,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 15
+      },
+      {
+        "schema": "public",
+        "name": "reward_recaps",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 40960,
+        "category": "history_requires_replacement",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "attraction_profiles",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "garden_visitor_state",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "growth_profiles",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "growth_rule_profiles",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "owned_plants",
+          "pack_members",
+          "plant_species",
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "pack_definitions",
+        "estimated_rows": 2,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "exchange_offers",
+          "owned_packs",
+          "pack_members"
+        ],
+        "exact_rows": 2
+      },
+      {
+        "schema": "public",
+        "name": "pack_members",
+        "estimated_rows": 4,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 4
+      },
+      {
+        "schema": "public",
+        "name": "plant_species",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "plant_variants"
+        ],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "plant_stages",
+        "estimated_rows": 12,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "plant_variants",
+        "estimated_rows": 3,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [
+          "catalog_stage_discoveries",
+          "game_catalogue",
+          "owned_plants",
+          "pack_members",
+          "plant_stages"
+        ],
+        "exact_rows": 3
+      },
+      {
+        "schema": "public",
+        "name": "player_progress",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "skill_policies",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_day_summaries",
+        "estimated_rows": 22,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 22
+      },
+      {
+        "schema": "public",
+        "name": "activity_days",
+        "estimated_rows": 12,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "durable_recovery",
+        "referencedBy": [
+          "activity_credits"
+        ],
+        "exact_rows": 12
+      },
+      {
+        "schema": "public",
+        "name": "alembic_version",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "catalog_discovery_state",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "catalog_stage_discoveries",
+        "estimated_rows": 3,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 3
+      },
+      {
+        "schema": "public",
+        "name": "game_catalogue",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "shared_configuration",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_controls",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_throttles",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "visitor_wallets",
+        "estimated_rows": 1,
+        "heap_bytes": 8192,
+        "toast_aux_bytes": 0,
+        "index_bytes": 16384,
+        "total_bytes": 24576,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 1
+      },
+      {
+        "schema": "public",
+        "name": "activity_workout_days",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "activity_workouts",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "growth_provenance",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "history_requires_replacement",
+        "referencedBy": [
+          "plant_growth_credits"
+        ],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "milestone_claims",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_economy_conversions",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_schedules",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 8192,
+        "index_bytes": 8192,
+        "total_bytes": 16384,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "activity_metric_days",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 0,
+        "index_bytes": 8192,
+        "total_bytes": 8192,
+        "category": "durable_recovery",
+        "referencedBy": [],
+        "exact_rows": 0
+      },
+      {
+        "schema": "public",
+        "name": "visitor_storage_lots",
+        "estimated_rows": 0,
+        "heap_bytes": 0,
+        "toast_aux_bytes": 0,
+        "index_bytes": 8192,
+        "total_bytes": 8192,
+        "category": "current_state",
+        "referencedBy": [],
+        "exact_rows": 0
+      }
+    ],
+    "walLsn": "0/98D3EEC0",
+    "deadTuples": 0,
+    "logicalRowBytes": 744934
+  },
+  "backupRestoreVerified": true,
+  "maintenanceSeconds": 7.75,
+  "batches": 2,
+  "readLatencyMs": {
+    "p50": 19.314499979373068,
+    "p95": 23.205599980428815,
+    "queries": [
+      17
+    ],
+    "responseBytes": [
+      2919
+    ]
+  },
+  "readLatencyBeforeMs": {
+    "p50": 15.860100043937564,
+    "p95": 17.942799953743815,
+    "queries": [
+      17
+    ],
+    "responseBytes": [
+      2919
+    ]
+  },
+  "packsPurchased": 12,
+  "packsOpened": 6,
+  "physicalTableBytesBefore": 6922240,
+  "physicalTableBytesAfter": 7544832,
+  "restoredPhysicalBytes": 3637248,
+  "logicalRowBytesSaved": 2914975,
+  "walBytesDuringMaintenance": 892264
+}

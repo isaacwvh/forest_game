@@ -1,5 +1,11 @@
 # Scaling S1–S3: local implementation and acceptance
 
+**Completed — user functional acceptance, 30 October 2026:** the user confirmed
+normal play and all requested interruption/reconnect/activity/edit/account flows
+on the updated iPhone app. Source was pushed as `5153c59`. This acceptance does
+not assert unreported Mac/XCTest/CI results. S4–S6 are tracked separately in
+[SCALING_S4_S6.md](SCALING_S4_S6.md). The original handoff below is historical.
+
 Implemented 30 October 2026. Local source only; no push, CI, live migration or
 automatic cleanup. Full-history visitor/growth cleanup remains S4–S6.
 

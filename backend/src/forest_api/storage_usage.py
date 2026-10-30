@@ -21,6 +21,8 @@ GROUPS = {
         "visitor_controls",
     },
     "durable_recovery": {
+        "visitor_day_summaries",
+        "growth_day_summaries",
         "api_requests",
         "activity_devices",
         "activity_days",
@@ -36,6 +38,7 @@ GROUPS = {
         "visitor_economy_conversions",
     },
     "history_requires_replacement": {
+        "growth_provenance",
         "activity_credits",
         "plant_growth_credits",
         "reward_events",
