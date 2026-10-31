@@ -216,7 +216,7 @@ struct OwnedPlantDetailScreen: View {
         Group {
             if let copy = store.ownedCopy(copyID), let rendered = store.render(copy) {
                 PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false, owned: copy,
-                    catalogue: store.catalogue, onPlace: context == .storagePlacement ? place : nil,
+                    catalogue: store.catalogue, onPlace: placementAction,
                     placementDisabled: !store.editing || !store.canEdit || copy.placement != nil)
             } else {
                 JournalInspector(title: "Plant details", close: { dismiss() }) {
@@ -224,6 +224,10 @@ struct OwnedPlantDetailScreen: View {
                 } footer: { EmptyView() }
             }
         }
+    }
+    private var placementAction: (() -> Void)? {
+        guard context == .storagePlacement else { return nil }
+        return { self.place() }
     }
     private func place() {
         guard store.editing, store.canEdit, let current = store.ownedCopy(copyID), current.placement == nil else { return }
