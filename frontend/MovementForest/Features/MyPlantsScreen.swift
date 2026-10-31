@@ -130,6 +130,7 @@ struct OwnedPlantTile: View {
     let identifier: String
     let open: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
+    @ScaledMetric(relativeTo: .subheadline) private var nameHeight: CGFloat = 22
     private var rarity: String? { store.catalogue?.rarity(for: plant.speciesId) }
     private var name: String {
         store.catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId.capitalized
@@ -150,11 +151,11 @@ struct OwnedPlantTile: View {
                             .background(JournalTheme.sage.opacity(0.45))
                             VStack(spacing: 3) {
                                 PlantNameText(name, rarity: rarity, announcesRarity: false)
-                                    .font(.system(.subheadline, design: .serif).weight(.semibold)).lineLimit(2)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                    .font(.system(.subheadline, design: .serif).weight(.semibold))
+                                    .lineLimit(1).minimumScaleFactor(0.65).frame(height: nameHeight)
                                 Text("\(plant.variantId.capitalized) · \(plant.growthStage.number)/4")
                                     .font(.caption2).foregroundStyle(JournalTheme.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                    .lineLimit(1).minimumScaleFactor(0.75)
                             }.padding(.horizontal, 6).multilineTextAlignment(.center)
                         }.contentShape(Rectangle())
                     }

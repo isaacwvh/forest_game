@@ -166,7 +166,9 @@ private struct JournalExplanation: View {
                 Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
                     .accessibilityLabel("Close explanation")
             }
-            Text(explanation).font(.callout).fixedSize(horizontal: false, vertical: true)
+            if !explanation.isEmpty {
+                Text(explanation).font(.callout).fixedSize(horizontal: false, vertical: true)
+            }
         }.padding(16).frame(width: 250)
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
             .background(JournalTheme.paper).accessibilityAction(.escape, close)
@@ -194,8 +196,7 @@ struct JournalRarity: View {
     let rarity: String?
     var body: some View {
         JournalInfoIcon(title: PlantRarity(label: rarity)?.title ?? "Rarity unavailable",
-                        explanation: rarity.map { "\($0.capitalized). The frame colour identifies the species rarity." }
-                            ?? "The rarity of this species is unavailable.",
+                        explanation: "",
                         symbol: JournalTheme.raritySymbol(rarity), color: JournalTheme.frame(rarity))
     }
 }
@@ -279,10 +280,25 @@ struct JournalAttribute: View {
     }
 }
 
+/// Rounds presentation only; stored amounts and growth calculations stay exact.
+enum JournalAmount {
+    static func water(_ value: String, locale: Locale = .current) -> String {
+        guard let amount = ExactAmount.integer(value) else { return "Unavailable" }
+        var water = amount / 1_000_000
+        var rounded = Decimal()
+        NSDecimalRound(&rounded, &water, 1, .plain)
+        if amount > 0 && rounded == 0 {
+            return "<" + (Decimal(1) / 10).formatted(.number.locale(locale))
+        }
+        return rounded.formatted(.number.precision(.fractionLength(0...1)).locale(locale))
+    }
+}
+
 /// Reuses the existing exact amount/progress contract; does not award or alter growth.
 struct JournalGrowthSummary: Equatable {
     let fraction: Double?
     let remaining: String?
+    let displayRemaining: String?
     let nextStage: String?
     let fullyGrown: Bool
     init(plant: APIOwnedPlant) {
@@ -293,39 +309,53 @@ struct JournalGrowthSummary: Equatable {
         if let next = progress?.nextStageMicroUnits,
            let target = ExactAmount.integer(next), let current = ExactAmount.integer(plant.growthMicroUnits),
            resolvedFraction != nil {
-            remaining = ExactAmount.water(NSDecimalNumber(decimal: max(0, target - current)).stringValue)
+            let rawRemaining = NSDecimalNumber(decimal: max(0, target - current)).stringValue
+            remaining = ExactAmount.water(rawRemaining)
+            displayRemaining = JournalAmount.water(rawRemaining)
             nextStage = plant.growthStage.next.map { $0 == .young ? "Young" : $0.title }
-        } else { remaining = nil; nextStage = nil }
+        } else { remaining = nil; displayRemaining = nil; nextStage = nil }
     }
     var caption: String {
         if fullyGrown { return "Fully grown" }
-        if let remaining = remaining, let nextStage = nextStage { return "\(remaining) to \(nextStage)" }
+        if let remaining = displayRemaining, let nextStage = nextStage { return "\(remaining) to \(nextStage)" }
         return "Growth unavailable"
     }
 }
 
 struct JournalPlantProgress: View {
     let plant: APIOwnedPlant
+    @ScaledMetric(relativeTo: .caption) private var rowHeight: CGFloat = 44
     private var summary: JournalGrowthSummary { JournalGrowthSummary(plant: plant) }
     var body: some View {
         VStack(spacing: 2) {
-            if !summary.fullyGrown, let fraction = summary.fraction {
-                ProgressView(value: fraction).tint(JournalTheme.action.opacity(0.75))
-                    .accessibilityLabel("Progress to next stage").accessibilityValue(fraction.formatted(.percent))
-            }
-            if summary.fullyGrown {
-                Label("Fully grown", systemImage: "leaf.fill").font(.caption)
-                    .foregroundStyle(JournalTheme.secondary).frame(minHeight: 36)
-            } else {
-                HStack(spacing: 0) {
-                    JournalInfoIcon(title: "Growth", explanation: summary.remaining.map {
-                        "\($0) more water to \(summary.nextStage ?? "the next stage")."
-                    } ?? "Confirmed growth progress is unavailable.", metric: "water")
-                    Text(summary.caption).font(.caption).monospacedDigit()
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                if !summary.fullyGrown, let fraction = summary.fraction {
+                    ProgressView(value: fraction).tint(JournalTheme.action.opacity(0.75))
+                        .accessibilityLabel("Progress to next stage").accessibilityValue(fraction.formatted(.percent))
+                } else {
+                    Color.clear.accessibilityHidden(true)
                 }
-            }
+            }.frame(height: 4)
+            Group {
+                if summary.fullyGrown {
+                    Label("Fully grown", systemImage: "leaf.fill").font(.caption)
+                        .lineLimit(1).minimumScaleFactor(0.75)
+                        .foregroundStyle(JournalTheme.secondary)
+                } else {
+                    HStack(spacing: 0) {
+                        JournalInfoIcon(title: "Growth", explanation: summary.caption, metric: "water")
+                        VStack(alignment: .leading, spacing: 2) {
+                            if let remaining = summary.displayRemaining, let nextStage = summary.nextStage {
+                                Text(remaining).monospacedDigit()
+                                Text("to \(nextStage)")
+                            } else {
+                                Text("Growth unavailable").lineLimit(2)
+                            }
+                        }.font(.caption).lineLimit(1).minimumScaleFactor(0.7)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }.frame(maxWidth: .infinity).frame(height: max(44, rowHeight))
         }.foregroundStyle(JournalTheme.ink)
     }
 }

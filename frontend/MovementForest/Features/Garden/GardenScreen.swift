@@ -113,16 +113,14 @@ struct PlantDetailScreen: View {
             }
             JournalGrid(minimumWidth: 52, fixedColumns: owned == nil ? 2 : owned?.baseAttractionMicroUnits == nil ? 3 : 4) {
                 JournalAttribute(title: "Variant", value: plant.variantId.capitalized,
-                    explanation: "\(plant.variantId.capitalized) variant of \(name).", symbol: "leaf")
+                    explanation: plant.variantId.capitalized, symbol: "leaf")
                 JournalRarity(rarity: rarity).frame(maxWidth: .infinity)
                 if let owned = owned {
-                    JournalAttribute(title: "Total water", value: ExactAmount.water(owned.growthMicroUnits),
-                        explanation: "Total confirmed water earned by this copy.", metric: "water")
+                    JournalAttribute(title: "Total water", value: JournalAmount.water(owned.growthMicroUnits),
+                        explanation: "", metric: "water")
                     if let attraction = owned.baseAttractionMicroUnits {
-                        JournalAttribute(title: "Base attraction", value: ExactAmount.water(attraction),
-                            explanation: owned.placement == nil
-                                ? "Base attraction at this stage. This stored copy currently contributes no garden attraction."
-                                : "Base attraction of this copy at its confirmed stage.", metric: "attraction")
+                        JournalAttribute(title: "Base attraction", value: JournalAmount.water(attraction),
+                            explanation: "", metric: "attraction")
                     }
                 }
             }.padding(8).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
@@ -143,7 +141,7 @@ struct PlantDetailScreen: View {
                     JournalGrid(minimumWidth: 96) {
                         ForEach(multipliers.keys.sorted(), id: \.self) { key in
                             JournalMetric(title: ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×",
-                                explanation: multiplierExplanation(key), metric: key)
+                                explanation: "", metric: key)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
                         }
@@ -176,9 +174,9 @@ struct PlantDetailScreen: View {
                         DisclosureGroup("Growth details") {
                             VStack(alignment: .leading, spacing: 8) {
                                 QuantityDetailRow(metric: "water", title: "Stage begins at",
-                                    value: ExactAmount.water(progress.stageStartMicroUnits))
+                                    value: JournalAmount.water(progress.stageStartMicroUnits))
                                 if let next = progress.nextStageMicroUnits {
-                                    QuantityDetailRow(metric: "water", title: "Next stage at", value: ExactAmount.water(next))
+                                    QuantityDetailRow(metric: "water", title: "Next stage at", value: JournalAmount.water(next))
                                 }
                             }.padding(.top, 8)
                         }.padding(.top, 10)
@@ -199,11 +197,6 @@ struct PlantDetailScreen: View {
                 }.background(JournalTheme.paper)
             }
         }
-    }
-    private func multiplierExplanation(_ key: String) -> String {
-        let prefix = "\(ActivityMetricLabel.title(key)): \(multipliers[key]?.formatted() ?? "Unavailable")× for this copy."
-        return key == "workout_minutes.*" ? prefix + " The recorded-workout default applies when no exact workout multiplier is listed."
-            : prefix
     }
 }
 

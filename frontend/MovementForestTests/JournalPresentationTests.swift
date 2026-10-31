@@ -39,6 +39,21 @@ final class JournalPresentationTests: XCTestCase {
         let fractional = JournalGrowthSummary(plant: copy(growth: "399999999"))
         XCTAssertEqual(fractional.remaining, ExactAmount.water("1"))
         XCTAssertNotEqual(fractional.remaining, "0")
+        XCTAssertEqual(fractional.displayRemaining, JournalAmount.water("1"))
+    }
+    func testWaterDisplayRoundsWithoutChangingExactAmounts() {
+        let locale = Locale(identifier: "en_US_POSIX")
+        XCTAssertEqual(JournalAmount.water("541157600", locale: locale), "541.2")
+        XCTAssertEqual(JournalAmount.water("39308141", locale: locale), "39.3")
+        XCTAssertEqual(JournalAmount.water("150000", locale: locale), "0.2")
+        XCTAssertEqual(JournalAmount.water("100000000", locale: locale), "100")
+        XCTAssertEqual(JournalAmount.water("0", locale: locale), "0")
+        XCTAssertEqual(JournalAmount.water("1", locale: locale), "<0.1")
+        XCTAssertEqual(JournalAmount.water("invalid", locale: locale), "Unavailable")
+        let display = JournalGrowthSummary(plant: copy(growth: "360691859"))
+        XCTAssertEqual(display.remaining, ExactAmount.water("39308141"))
+        XCTAssertEqual(display.displayRemaining, JournalAmount.water("39308141"))
+        XCTAssertEqual(display.caption, "\(JournalAmount.water("39308141")) to Young")
     }
     func testCatalogDescriptionsReplaceOnlyLegacyPlaceholderOrMissingCopy() {
         var oak = APISpecies(speciesId: "oak", displayName: "Oak", clearanceRadius: 0.9, variants: [])

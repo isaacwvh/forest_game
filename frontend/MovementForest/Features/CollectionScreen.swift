@@ -474,6 +474,7 @@ private struct CatalogSpeciesTile: View {
     let offers: [APIExchangeOffer]
     let assets: any AssetCatalogProviding
     @ObservedObject var discovery: CatalogDiscoveryStore
+    @ScaledMetric(relativeTo: .headline) private var nameHeight: CGFloat = 24
     var body: some View {
         JournalPlantFrame(rarity: species.rarity) {
             ZStack(alignment: .topTrailing) {
@@ -488,8 +489,9 @@ private struct CatalogSpeciesTile: View {
                         }.frame(height: 100).frame(maxWidth: .infinity).padding(8)
                             .background(JournalTheme.sage.opacity(0.45))
                         PlantNameText(species.displayName, rarity: species.rarity, announcesRarity: false)
-                            .font(.system(.headline, design: .serif)).lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.center)
+                            .font(.system(.headline, design: .serif))
+                            .lineLimit(1).minimumScaleFactor(0.65).frame(height: nameHeight)
+                            .multilineTextAlignment(.center)
                             .padding(.horizontal, 6)
                         HStack(spacing: 4) {
                             Text("\(species.variants.count) \(species.variants.count == 1 ? "variant" : "variants")")
@@ -554,7 +556,7 @@ private struct CatalogDetailScreen: View {
     private func amount(_ kind: String, stage: GrowthStage) -> String {
         let values = kind == "growth" ? profile(kind)?.thresholdsMicroUnits : profile(kind)?.stageAttractionMicroUnits
         guard let raw = values?[stage.rawValue] else { return "Unavailable" }
-        return ExactAmount.water(raw)
+        return JournalAmount.water(raw)
     }
     private var multipliers: [String: Decimal] { profile("behaviour")?.metricMultipliers ?? [:] }
     var body: some View {
@@ -568,11 +570,11 @@ private struct CatalogDetailScreen: View {
                 variantPicker
                 JournalGrid(minimumWidth: 76, fixedColumns: 3) {
                     JournalAttribute(title: "Variant", value: row.variant.displayName,
-                        explanation: "\(row.variant.displayName) variant of \(row.species.displayName).", symbol: "leaf")
+                        explanation: row.variant.displayName, symbol: "leaf")
                     JournalRarity(rarity: row.species.rarity).frame(maxWidth: .infinity)
                     JournalAttribute(title: "Clearance radius",
                         value: row.species.clearanceRadius.formatted(.number.precision(.fractionLength(2...3))),
-                        explanation: "Reserved ground radius: \(row.species.clearanceRadius.formatted()) garden units. The same clearance applies to all stages and variants.",
+                        explanation: "\(row.species.clearanceRadius.formatted()) garden units",
                         symbol: "scope")
                 }.padding(8).background(JournalTheme.sage.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
                 if let description = CatalogSpeciesCopy.description(for: row.species) {
@@ -592,7 +594,7 @@ private struct CatalogDetailScreen: View {
                         JournalGrid(minimumWidth: 100) {
                             ForEach(multipliers.keys.sorted(), id: \.self) { key in
                                 JournalMetric(title: ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×",
-                                    explanation: multiplierExplanation(key), metric: key)
+                                    explanation: "", metric: key)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
                             }
@@ -686,16 +688,14 @@ private struct CatalogDetailScreen: View {
                     .frame(height: 88).frame(maxWidth: .infinity)
                 if !revealed {
                     JournalInfoIcon(title: "\(stage.title), \(status)",
-                        explanation: discovery.snapshot == nil
-                            ? "Discovery has not been confirmed. Refresh the catalog to check this stage."
-                            : "Grow a \(row.variant.displayName) \(row.species.displayName) to this stage to discover its artwork.",
+                        explanation: "",
                         symbol: discovery.snapshot == nil ? "questionmark.circle" : "lock.fill")
                 }
             }
             JournalMetric(title: "Cumulative water", value: amount("growth", stage: stage),
-                explanation: "Total water required to reach \(stage.title).", metric: "water", compact: true)
+                explanation: "", metric: "water", compact: true)
             JournalMetric(title: "Base attraction", value: amount("attraction", stage: stage),
-                explanation: "Base attraction at the \(stage.title) stage.", metric: "attraction", compact: true)
+                explanation: "", metric: "attraction", compact: true)
             if !revealed {
                 Text(status).font(.caption2).foregroundStyle(JournalTheme.secondary)
                     .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.center)
@@ -707,10 +707,6 @@ private struct CatalogDetailScreen: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(row.variant.displayName) \(row.species.displayName), \(stage.title), \(status)")
         .accessibilityIdentifier("catalog.stage.\(stage.rawValue)")
-    }
-    private func multiplierExplanation(_ key: String) -> String {
-        let value = "\(ActivityMetricLabel.title(key)): \(multipliers[key]?.formatted() ?? "Unavailable")×."
-        return key == "workout_minutes.*" ? value + " Default for recorded workouts without an exact listed multiplier." : value
     }
 }
 
