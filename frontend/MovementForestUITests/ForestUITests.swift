@@ -72,8 +72,9 @@ final class ForestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Planted"].exists); XCTAssertTrue(app.staticTexts["Stored"].exists)
         let owned = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "myplants.stored.")).firstMatch
         XCTAssertTrue(owned.waitForExistence(timeout: 5)); owned.tap()
-        XCTAssertTrue(app.staticTexts["Growth stage"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["plantDetails.stage"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["editor.place"].exists); XCTAssertFalse(app.buttons["editor.move"].exists)
+        app.buttons["plantDetails.close"].tap()
         app.buttons["navigation.Edit"].tap()
         XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["navigation.My plants"].exists); XCTAssertFalse(app.buttons["collection.menu"].exists)
@@ -91,6 +92,46 @@ final class ForestUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Saved."].exists)
         app.buttons["navigation.My plants"].tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "myplants.planted.")).firstMatch.waitForExistence(timeout: 5))
+    }
+
+    func testJournalRarityExplanationDoesNotOpenOrChangeAnOwnedCopy() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()
+        XCTAssertTrue(app.buttons["navigation.My plants"].waitForExistence(timeout: 15))
+        app.buttons["navigation.My plants"].tap()
+        let rarity = app.buttons["Common"].firstMatch
+        XCTAssertTrue(rarity.waitForExistence(timeout: 5))
+        rarity.press(forDuration: 0.6)
+        XCTAssertTrue(app.buttons["Close explanation"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["plantDetails.close"].exists)
+        app.buttons["Close explanation"].tap()
+        let stored = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "myplants.stored.")).firstMatch
+        stored.tap()
+        XCTAssertTrue(app.buttons["plantDetails.close"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["editor.place"].exists)
+        XCTAssertFalse(app.staticTexts["catalog.description"].exists)
+        XCTAssertFalse(app.staticTexts["Stored plants do not grow."].exists)
+        app.buttons["plantDetails.close"].tap()
+        XCTAssertTrue(stored.waitForExistence(timeout: 5))
+    }
+
+    func testJournalCatalogKeepsSpeciesNavigationVariantSelectionAndStageFactsReadOnly() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-collection"]; app.launch()
+        XCTAssertTrue(app.buttons["Catalog"].waitForExistence(timeout: 15)); app.buttons["Catalog"].tap()
+        let oak = app.buttons["catalog.species.oak"]
+        XCTAssertTrue(oak.waitForExistence(timeout: 5)); oak.tap()
+        let blue = app.buttons["catalog.variant.blue"]
+        XCTAssertTrue(blue.waitForExistence(timeout: 5)); blue.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["catalog.stage.sprout"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["catalog.stage.adult"].exists)
+        XCTAssertFalse(app.staticTexts["Grow this variant to discover its later stages."].exists)
+        XCTAssertFalse(app.staticTexts["Movement Forest initial collection."].exists)
+        XCTAssertFalse(app.staticTexts["Clearance & plant information"].exists)
+        XCTAssertFalse(app.buttons["editor.place"].exists)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        let requests = app.staticTexts["fixture.collectionRequests"]
+        XCTAssertEqual(requests.value as? String, "0")
     }
 
     func testDeveloperDiagnosticsAreReachableThroughSettings() {

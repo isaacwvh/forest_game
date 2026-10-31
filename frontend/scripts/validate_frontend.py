@@ -69,6 +69,38 @@ def main():
         require(f"../assets/{folder}" in project_text, f"Presentation resources missing: {folder}")
     require("../assets/quantity-icons-v1/png-128" in project_text, "Quantity icon exports are not bundled")
     require("../assets/quantity-icons-v1/sources" not in project_text, "Original icon canvases must not be bundled")
+    require("../assets/journal" in project_text, "Journal ornaments are not bundled")
+    journal_folder = REPO / "assets/journal/v1"
+    journal = json.loads((journal_folder / "journal.json").read_text(encoding="utf-8"))
+    ornament_names = {f"vine-corner-{corner}.png" for corner in
+                      ["top-left", "top-right", "bottom-left", "bottom-right"]} | {"vine-divider.png"}
+    require(journal["version"] == 1 and {item["file"] for item in journal["files"]} == ornament_names,
+            "Journal ornament manifest mismatch")
+    require({item.name for item in journal_folder.iterdir()} == ornament_names | {"journal.json", "catalog-descriptions.json"},
+            "Only runtime ornaments and approved copy belong in the journal package")
+    journal_bytes = 0
+    for item in journal["files"]:
+        require(Path(item["file"]).name == item["file"], "Unsafe journal asset path")
+        png = (journal_folder / item["file"]).read_bytes()
+        require(len(png) == item["bytes"] and hashlib.sha256(png).hexdigest() == item["sha256"],
+                f"Journal checksum mismatch: {item['file']}")
+        require(png[:8] == b"\x89PNG\r\n\x1a\n", "Invalid journal PNG")
+        width, height, depth, colour = struct.unpack(">IIBB", png[16:26])
+        expected_size = (768, 96) if item["file"] == "vine-divider.png" else (240, 240)
+        require((width, height) == expected_size and depth == 8 and colour == 6,
+                "Journal ornament dimensions/alpha differ")
+        journal_bytes += len(png)
+    require(journal_bytes < 128 * 1024, "Journal ornament package exceeds its display budget")
+    copy_source = ast.parse((REPO / "backend/src/forest_api/catalog_copy.py").read_text(encoding="utf-8"))
+    approved_copy = next(ast.literal_eval(node.value) for node in copy_source.body if isinstance(node, ast.Assign)
+                         and any(isinstance(target, ast.Name) and target.id == "SPECIES_DESCRIPTIONS" for target in node.targets))
+    copy_asset = journal["catalogDescriptions"]
+    require(copy_asset["file"] == "catalog-descriptions.json", "Unexpected catalog copy asset")
+    copy_bytes = (journal_folder / copy_asset["file"]).read_bytes()
+    require(len(copy_bytes) == copy_asset["bytes"] and hashlib.sha256(copy_bytes).hexdigest() == copy_asset["sha256"],
+            "Catalog descriptive copy checksum differs")
+    require(json.loads(copy_bytes) == approved_copy, "Bundled catalog copy differs from approved server content")
+    print(f"PASS: five journal ornaments, alpha/dimensions/checksums and bundle membership ({journal_bytes:,} bytes).")
     icon_names = {"steps", "walking_running_distance_km", "active_energy_kcal", "flights_climbed",
                   "workout_minutes.running", "workout_minutes.cycling", "workout_minutes.swimming",
                   "workout_minutes.strength_training", "water", "attraction", "active_visitor_rate",
@@ -230,6 +262,21 @@ def main():
             for background in backgrounds:
                 low, high = sorted([luminance(foreground), luminance(background)])
                 require((high + 0.05) / (low + 0.05) >= 4.5, f"Insufficient {rarity} text contrast")
+    journal_source = (ROOT / "MovementForest/Features/BotanicalJournal.swift").read_text(encoding="utf-8")
+    theme = {key: [float(number) for number in rgb] for key, *rgb in re.findall(
+        r"static let (\w+) = Color\(red: ([\d.]+), green: ([\d.]+), blue: ([\d.]+)\)", journal_source)}
+    require({"paper", "sage", "ink", "secondary", "action", "vine"} <= theme.keys(), "Incomplete journal theme")
+    for foreground in ["ink", "secondary", "action"]:
+        for background in ["paper", "sage"]:
+            low, high = sorted([luminance(theme[foreground]), luminance(theme[background])])
+            require((high + 0.05) / (low + 0.05) >= 4.5, f"Journal {foreground} text contrast is too low")
+    frames = re.findall(r"case \.(common|rare|epic|legendary): return Color\(red: ([\d.]+), green: ([\d.]+), blue: ([\d.]+)\)",
+                        journal_source)
+    require(len(frames) == 4, "Incomplete journal rarity frame palette")
+    for rarity, *values in frames:
+        low, high = sorted([luminance([float(v) for v in values]), luminance(theme["paper"])])
+        require((high + 0.05) / (low + 0.05) >= 3, f"Insufficient {rarity} frame contrast")
+    print("PASS: journal text/action/frame contrast on the actual paper and sage surfaces.")
     launch = ast.parse((REPO / "backend/src/forest_api/launch_balance.py").read_text(encoding="utf-8"))
     plants = next(ast.literal_eval(node.value) for node in launch.body if isinstance(node, ast.Assign)
                   and any(isinstance(target, ast.Name) and target.id == "PLANTS" for target in node.targets))

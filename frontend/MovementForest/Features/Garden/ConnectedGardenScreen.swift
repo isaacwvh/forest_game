@@ -16,6 +16,9 @@ struct ConnectedGardenScreen: View {
     private var renderer: RealityGardenRenderer { renderSession.renderer }
     @State private var sheet: GardenEditorSheet?
     @State private var detailCopyID: UUID?
+    @State private var browsingInspection: PlantInspection?
+    @State private var storageInspection: PlantInspection?
+    @State private var placedFromStorageInspector = false
     @State private var visible = false
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -102,13 +105,12 @@ struct ConnectedGardenScreen: View {
                 }
             }
         }
-        .sheet(item: $sheet) { item in
+        .sheet(item: secondarySheet) { item in
             NavigationStack {
                 switch item {
                 case .plants: plantsList
                 case .storage: storageList
-                case .details:
-                    if let id = detailCopyID { OwnedPlantDetailScreen(store: store, copyID: id, catalog: catalog) }
+                case .details: EmptyView()
                 case .information: gardenInformation
                 case .position, .rotation:
                     CandidateControlsScreen(store: store, rotationOnly: item == .rotation)
@@ -123,6 +125,9 @@ struct ConnectedGardenScreen: View {
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
                 }
             }
+        }
+        .fullScreenCover(item: detailInspection) { selection in
+            OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog).journalModalBackground()
         }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
         .onChange(of: store.canEdit) { if !$0 && !store.preparingMembership { store.cancelCandidate() } }
@@ -326,13 +331,31 @@ struct ConnectedGardenScreen: View {
                         OwnedPlantRow(plant: plant, store: store, catalog: catalog)
                     }.accessibilityIdentifier("editor.plant.\(plant.id)")
                 } else {
-                    NavigationLink { OwnedPlantDetailScreen(store: store, copyID: plant.id, catalog: catalog) } label: {
+                    Button { browsingInspection = PlantInspection(id: plant.id) } label: {
                         OwnedPlantRow(plant: plant, store: store, catalog: catalog)
                     }
                 }
             }
         }.navigationTitle("Garden plants")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
+            .fullScreenCover(item: $browsingInspection) { selection in
+                OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog).journalModalBackground()
+            }
+    }
+
+    private var secondarySheet: Binding<GardenEditorSheet?> {
+        Binding(get: { sheet == .details ? nil : sheet }, set: { value in
+            if value != nil || sheet != .details { sheet = value }
+        })
+    }
+
+    private var detailInspection: Binding<PlantInspection?> {
+        Binding(get: {
+            guard sheet == .details, let id = detailCopyID else { return nil }
+            return PlantInspection(id: id)
+        }, set: { value in
+            if value == nil && sheet == .details { sheet = nil }
+        })
     }
 
     private var storageList: some View {
@@ -340,15 +363,23 @@ struct ConnectedGardenScreen: View {
             if let message = store.message { Text(message).font(.callout) }
             if store.inventory.isEmpty { Text("No stored copies in the saved inventory. Storing a plant preserves its progress.") }
             ForEach(store.inventory) { plant in
-                NavigationLink {
-                    OwnedPlantDetailScreen(store: store, copyID: plant.id, catalog: catalog, context: .storagePlacement,
-                                           placed: { sheet = nil })
-                } label: { OwnedPlantRow(plant: plant, store: store, catalog: catalog) }
+                Button { storageInspection = PlantInspection(id: plant.id) } label: {
+                    OwnedPlantRow(plant: plant, store: store, catalog: catalog)
+                }
                     .accessibilityIdentifier("storage.copy.\(plant.id)")
             }
             InventoryPagination(store: store)
         }.navigationTitle("Storage")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
+            .fullScreenCover(item: $storageInspection, onDismiss: {
+                if placedFromStorageInspector {
+                    placedFromStorageInspector = false; sheet = nil
+                }
+            }) { selection in
+                OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog, context: .storagePlacement,
+                    placed: { placedFromStorageInspector = true; storageInspection = nil })
+                    .journalModalBackground()
+            }
     }
 
 }

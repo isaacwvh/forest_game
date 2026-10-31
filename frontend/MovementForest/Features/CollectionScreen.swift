@@ -56,7 +56,7 @@ struct CollectionScreen: View {
     }
     var body: some View {
         Group {
-            if destination == .catalog { content.searchable(text: $search, prompt: "Find a plant") }
+            if destination == .catalog { catalogContent }
             else { content }
         }
         .refreshable { await refresh() }
@@ -180,38 +180,69 @@ struct CollectionScreen: View {
                         Text("No confirmed opening yet.").foregroundStyle(.secondary)
                     }
                 }
-            case .catalog:
-                CatalogDiscoveryNotice(discovery: store.discovery)
-                Section("All plants") {
-                    Picker("Rarity", selection: $rarity) {
-                        Text("All").tag("All")
-                        ForEach(Array(Set(catalogueSpecies.compactMap(\.rarity))).sorted(), id: \.self) { Text($0.capitalized).tag($0) }
-                    }
-                    ForEach(catalogueSpecies.filter { species in
-                        (rarity == "All" || species.rarity == rarity) &&
-                        (search.isEmpty || (species.displayName + " " + species.variants.map(\.displayName).joined(separator: " ")).localizedCaseInsensitiveContains(search))
-                    }, id: \.speciesId) { species in
-                        NavigationLink {
-                            CatalogSpeciesScreen(species: species, catalogue: store.catalogue, offers: store.offers,
-                                                 assets: assets, discovery: store.discovery)
-                        } label: {
-                            HStack {
-                                if let variant = species.variants.first(where: { $0.variantId == "standard" }) ?? species.variants.first {
-                                    CatalogThumbnail(row: CatalogRow(species: species, variant: variant), stage: .sprout, assets: assets)
-                                }
-                                VStack(alignment: .leading) {
-                                    PlantNameText(species.displayName, rarity: species.rarity, announcesRarity: false)
-                                    Text("\(species.rarity?.capitalized ?? "Rarity unavailable") · \(species.variants.count) variants")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                }
-                            }
-                        }.accessibilityIdentifier("catalog.species.\(species.speciesId)")
-                    }
-                    if catalogueSpecies.isEmpty && !store.busy { Text("Refresh to load the plant catalogue.") }
-                }
+            case .catalog: EmptyView()
             }
         }
     }
+
+    private var filteredSpecies: [APISpecies] {
+        catalogueSpecies.filter { species in
+            (rarity == "All" || species.rarity == rarity) &&
+            (search.isEmpty || (species.displayName + " " + species.variants.map(\.displayName).joined(separator: " "))
+                .localizedCaseInsensitiveContains(search))
+        }
+    }
+    private var catalogContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                JournalSearchField(text: $search)
+                HStack {
+                    Spacer(minLength: 0)
+                    Menu {
+                        Picker("Rarity", selection: $rarity) {
+                            Text("All rarities").tag("All")
+                            ForEach(Array(Set(catalogueSpecies.compactMap(\.rarity))).sorted(), id: \.self) {
+                                Text($0.capitalized).tag($0)
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "diamond")
+                            Text(rarity == "All" ? "All rarities" : rarity.capitalized)
+                            Image(systemName: "chevron.down").font(.caption)
+                        }.padding(.horizontal, 14).frame(minHeight: 44)
+                            .background(JournalTheme.sage, in: Capsule())
+                    }.accessibilityLabel("Filter by rarity")
+                }
+                CatalogDiscoveryNotice(discovery: store.discovery)
+                if store.busy { ProgressView("Refreshing catalog…") }
+                if let message = store.message, store.refreshFailed || store.recoveryLocked {
+                    Text(message).font(.callout).accessibilityIdentifier("collection.status")
+                }
+                if store.refreshFailed {
+                    Button("Retry refresh") { Task { await refresh() } }.frame(minHeight: 44)
+                }
+                JournalGrid {
+                    ForEach(filteredSpecies, id: \.speciesId) { species in
+                        CatalogSpeciesTile(species: species, catalogue: store.catalogue, offers: store.offers,
+                                           assets: assets, discovery: store.discovery)
+                    }
+                }
+                if filteredSpecies.isEmpty && !store.busy {
+                    Text(catalogueSpecies.isEmpty ? "Refresh to load the plant catalogue." : "No matching plants.")
+                        .foregroundStyle(JournalTheme.secondary)
+                }
+            }.padding(16).padding(.bottom, 20)
+        }
+        .background(JournalPageBackground().ignoresSafeArea())
+        .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Catalog").font(.system(.title2, design: .serif).weight(.semibold)).foregroundStyle(JournalTheme.ink)
+            }
+        }
+    }
+
 
     private func milestoneRow(_ milestone: APIIntroMilestone) -> some View {
         let claimed = milestone.claimed || store.confirmedMilestoneIDs.contains(milestone.id)
@@ -419,25 +450,6 @@ struct CatalogRow: Identifiable {
     }
 }
 
-private struct CatalogThumbnail: View {
-    let row: CatalogRow
-    let stage: GrowthStage
-    let assets: any AssetCatalogProviding
-    var revealed = true
-    var body: some View {
-        Group {
-            if let asset = try? assets.resolve(row.plant(stage)), let image = UIImage(contentsOfFile: asset.thumbnailURL.path) {
-                Image(uiImage: image).renderingMode(revealed ? .original : .template)
-                    .resizable().scaledToFit().foregroundStyle(Color.primary)
-            } else {
-                VStack(spacing: 2) {
-                    Image(systemName: "leaf").font(.title2)
-                    Text("Image unavailable").font(.caption2).multilineTextAlignment(.center)
-                }
-            }
-        }.frame(width: 48, height: 56).accessibilityHidden(true)
-    }
-}
 
 private struct CatalogDiscoveryNotice: View {
     @ObservedObject var discovery: CatalogDiscoveryStore
@@ -452,6 +464,44 @@ private struct CatalogDiscoveryNotice: View {
             }
         } else if discovery.snapshot != nil && discovery.lastConfirmed {
             Text("Last confirmed discovery").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct CatalogSpeciesTile: View {
+    let species: APISpecies
+    let catalogue: APICatalogue?
+    let offers: [APIExchangeOffer]
+    let assets: any AssetCatalogProviding
+    @ObservedObject var discovery: CatalogDiscoveryStore
+    var body: some View {
+        JournalPlantFrame(rarity: species.rarity) {
+            ZStack(alignment: .topTrailing) {
+                NavigationLink {
+                    CatalogSpeciesScreen(species: species, catalogue: catalogue, offers: offers, assets: assets, discovery: discovery)
+                } label: {
+                    VStack(spacing: 6) {
+                        Group {
+                            if let variant = species.variants.first(where: { $0.variantId == "standard" }) ?? species.variants.first {
+                                JournalPlantImage(plant: CatalogRow(species: species, variant: variant).plant(.sprout), catalog: assets)
+                            } else { Image(systemName: "leaf").resizable().scaledToFit() }
+                        }.frame(height: 100).frame(maxWidth: .infinity).padding(8)
+                            .background(JournalTheme.sage.opacity(0.45))
+                        PlantNameText(species.displayName, rarity: species.rarity, announcesRarity: false)
+                            .font(.system(.headline, design: .serif)).lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.center)
+                            .padding(.horizontal, 6)
+                        HStack(spacing: 4) {
+                            Text("\(species.variants.count) \(species.variants.count == 1 ? "variant" : "variants")")
+                            Image(systemName: "chevron.right").font(.caption2)
+                        }.font(.caption).foregroundStyle(JournalTheme.secondary)
+                            .padding(.bottom, 12).padding(.horizontal, 6)
+                    }.contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .accessibilityLabel("\(species.displayName), \(species.rarity?.capitalized ?? "Rarity unavailable"), \(species.variants.count) variants")
+                    .accessibilityIdentifier("catalog.species.\(species.speciesId)")
+                JournalRarity(rarity: species.rarity)
+            }.clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }
 }
@@ -475,7 +525,9 @@ private struct CatalogSpeciesScreen: View {
                 .onChange(of: scenePhase) { phase in
                     if phase == .active { Task { await discovery.refresh() } }
                 }
-                .toolbar { ToolbarItem(placement: .principal) { PlantNameText(species.displayName, rarity: species.rarity).font(.headline) } }
+                .toolbar { ToolbarItem(placement: .principal) {
+                    PlantNameText(species.displayName, rarity: species.rarity).font(.system(.title2, design: .serif).weight(.semibold))
+                } }
         } else { Text("No variants available.") }
     }
 }
@@ -487,6 +539,7 @@ private struct CatalogDetailScreen: View {
     let assets: any AssetCatalogProviding
     @ObservedObject var discovery: CatalogDiscoveryStore
     @Binding var variantID: String
+    @Environment(\.dynamicTypeSize) private var textSize
     private func profile(_ kind: String) -> APICatalogueProfile? {
         let fallback: APIProfileReference?
         switch kind {
@@ -503,77 +556,164 @@ private struct CatalogDetailScreen: View {
         guard let raw = values?[stage.rawValue] else { return "Unavailable" }
         return ExactAmount.water(raw)
     }
+    private var multipliers: [String: Decimal] { profile("behaviour")?.metricMultipliers ?? [:] }
     var body: some View {
-        List {
-            Section {
-                HStack {
-                    CatalogThumbnail(row: row, stage: .sprout, assets: assets)
-                    Text(row.variant.displayName).font(.headline)
-                }.accessibilityLabel("\(row.variant.displayName) \(row.species.displayName), sprout, always visible")
+        ScrollView {
+            VStack(spacing: 18) {
+                JournalPlantFrame(rarity: row.species.rarity) {
+                    JournalPlantImage(plant: row.plant(.sprout), catalog: assets, maximumPixels: 600)
+                        .frame(width: 148, height: 148).padding(12)
+                }.frame(width: 172)
+                    .accessibilityLabel("\(row.variant.displayName) \(row.species.displayName), sprout, always visible")
+                variantPicker
+                JournalGrid(minimumWidth: 76, fixedColumns: 3) {
+                    JournalAttribute(title: "Variant", value: row.variant.displayName,
+                        explanation: "\(row.variant.displayName) variant of \(row.species.displayName).", symbol: "leaf")
+                    JournalRarity(rarity: row.species.rarity).frame(maxWidth: .infinity)
+                    JournalAttribute(title: "Clearance radius",
+                        value: row.species.clearanceRadius.formatted(.number.precision(.fractionLength(2...3))),
+                        explanation: "Reserved ground radius: \(row.species.clearanceRadius.formatted()) garden units. The same clearance applies to all stages and variants.",
+                        symbol: "scope")
+                }.padding(8).background(JournalTheme.sage.opacity(0.5), in: RoundedRectangle(cornerRadius: 14))
+                if let description = CatalogSpeciesCopy.description(for: row.species) {
+                    Text(description).font(.body).frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("catalog.description")
+                }
                 CatalogDiscoveryNotice(discovery: discovery)
-                LabeledContent("Rarity", value: row.species.rarity?.capitalized ?? "Unavailable")
-                Picker("Variant", selection: $variantID) {
-                    ForEach(row.species.variants, id: \.variantId) { Text($0.displayName).tag($0.variantId) }
+                VStack(alignment: .leading, spacing: 8) {
+                    JournalSectionHeading(title: "Growth stages")
+                    stageGrid
                 }
-                DisclosureGroup("About this plant") {
-                    if let description = row.species.description, !description.isEmpty { Text(description) }
-                    if let description = row.variant.description, !description.isEmpty { Text(description) }
-                    LabeledContent("Clearance radius", value: "\(row.species.clearanceRadius.formatted()) garden units")
-                }
-            }
-            Section("Draw probabilities by pack") {
-                ForEach(offers.filter { $0.pack.speciesOdds.contains { $0.speciesId == row.species.speciesId } }) { offer in
-                    DisclosureGroup(offer.pack.displayName) {
-                        ForEach(offer.pack.speciesOdds.filter { $0.speciesId == row.species.speciesId }) { odds in SpeciesOddsView(odds: odds) }
+                VStack(alignment: .leading, spacing: 8) {
+                    JournalSectionHeading(title: "Activity multipliers")
+                    if multipliers.isEmpty {
+                        Text("Activity multipliers unavailable").font(.callout).foregroundStyle(JournalTheme.secondary)
+                    } else {
+                        JournalGrid(minimumWidth: 100) {
+                            ForEach(multipliers.keys.sorted(), id: \.self) { key in
+                                JournalMetric(title: ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×",
+                                    explanation: multiplierExplanation(key), metric: key)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
+                            }
+                        }
                     }
                 }
-            }
-            Section {
-                DisclosureGroup("Growth and attraction by stage") {
-                    Text("Grow this variant to discover its later stages.")
-                        .font(.callout).foregroundStyle(.secondary)
-                    ForEach(GrowthStage.allCases, id: \.self) { stage in
-                        HStack {
-                            CatalogThumbnail(row: row, stage: stage, assets: assets,
-                                revealed: discovery.revealed(species: row.species.speciesId, variant: row.variant.variantId, stage: stage))
-                            VStack(alignment: .leading) {
-                                Text(stage.title).font(.headline)
-                                Label(discovery.status(species: row.species.speciesId, variant: row.variant.variantId, stage: stage),
-                                      systemImage: discovery.revealed(species: row.species.speciesId, variant: row.variant.variantId, stage: stage) ? "eye" : "lock")
-                                    .font(.caption).foregroundStyle(.secondary)
-                                QuantityLabel(metric: "water", text: "Cumulative growth: \(amount("growth", stage: stage))")
-                                QuantityLabel(metric: "attraction", text: "Attraction: \(amount("attraction", stage: stage))")
-                            }.font(.callout)
-                        }.accessibilityElement(children: .combine)
-                            .accessibilityHint(stage == .sprout || discovery.revealed(species: row.species.speciesId, variant: row.variant.variantId, stage: stage)
-                                ? "" : "Grow a \(row.variant.displayName) \(row.species.displayName) to this stage to discover it.")
+                VStack(alignment: .leading, spacing: 8) {
+                    JournalSectionHeading(title: "Garden skills")
+                    if let skills = profile("behaviour")?.gardenEffects, !skills.isEmpty {
+                        ForEach(skills) { skill in
+                            DisclosureGroup {
+                                Text(skill.description).font(.callout).padding(.top, 6)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(skill.name).font(.headline)
+                                    Label("Requires a fully grown plant in the garden", systemImage: "lock")
+                                        .font(.caption).foregroundStyle(JournalTheme.secondary)
+                                }
+                            }.padding(12).background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
+                        }
+                    } else if profile("behaviour") != nil {
+                        Text("No garden skill").font(.callout).foregroundStyle(JournalTheme.secondary)
+                    } else {
+                        Text("Skill information unavailable").font(.callout).foregroundStyle(JournalTheme.secondary)
                     }
                 }
-            }
-            Section {
-                DisclosureGroup("Activity multipliers") {
-                    let multipliers = profile("behaviour")?.metricMultipliers ?? [:]
-                    ForEach(multipliers.keys.sorted(), id: \.self) { key in
-                        QuantityDetailRow(metric: key, title: ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×")
-                    }
-                    Text("Recorded workouts use their exact multiplier when listed, otherwise the recorded-workout default. Other unlisted activities contribute no growth.")
-                        .font(.caption).foregroundStyle(.secondary)
+                DisclosureGroup("Pack probabilities") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        let packs = offers.filter { $0.pack.speciesOdds.contains { $0.speciesId == row.species.speciesId } }
+                        if packs.isEmpty { Text("Pack probabilities unavailable.").font(.callout) }
+                        ForEach(packs) { offer in
+                            DisclosureGroup(offer.pack.displayName) {
+                                ForEach(offer.pack.speciesOdds.filter { $0.speciesId == row.species.speciesId }) {
+                                    SpeciesOddsView(odds: $0)
+                                }
+                            }
+                        }
+                    }.padding(.top, 10)
+                }.padding(12).background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
+            }.padding(18).padding(.bottom, 20)
+        }.background(JournalPageBackground().ignoresSafeArea())
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+    }
+    private var variantPicker: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 4) {
+                ForEach(row.species.variants, id: \.variantId) { variant in
+                    Button { variantID = variant.variantId } label: {
+                        Text(variant.displayName).font(.subheadline.weight(.medium))
+                            .fixedSize().padding(.horizontal, 12).frame(minHeight: 44)
+                            .foregroundStyle(variantID == variant.variantId ? JournalTheme.paper : JournalTheme.ink)
+                            .background(variantID == variant.variantId ? JournalTheme.action : Color.clear, in: Capsule())
+                    }.buttonStyle(.plain)
+                        .accessibilityAddTraits(variantID == variant.variantId ? [.isSelected] : [])
+                        .accessibilityIdentifier("catalog.variant.\(variant.variantId)")
                 }
-            }
-            if let skills = profile("behaviour")?.gardenEffects, !skills.isEmpty {
-                Section("Garden skills") {
-                    ForEach(skills) { skill in
-                        DisclosureGroup {
-                            Text(skill.description).font(.callout)
-                            Text("Requires a fully grown plant in the garden")
-                                .font(.caption).foregroundStyle(.secondary)
-                        } label: { Text(skill.name).font(.headline) }
-                    }
-                }
+            }.padding(4).background(JournalTheme.sage, in: Capsule())
+            Picker("Variant", selection: $variantID) {
+                ForEach(row.species.variants, id: \.variantId) { Text($0.displayName).tag($0.variantId) }
+            }.pickerStyle(.menu).frame(minHeight: 44)
+        }
+    }
+    @ViewBuilder private var stageGrid: some View {
+        if textSize.isAccessibilitySize {
+            VStack(spacing: 10) { ForEach(GrowthStage.allCases) { stageCell($0) } }
+        } else if textSize >= .xxLarge {
+            twoColumnStages
+        } else {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 10) {
+                    ForEach(GrowthStage.allCases) { stageCell($0).frame(width: 80) }
+                }.fixedSize(horizontal: true, vertical: false)
+                twoColumnStages
             }
         }
     }
+    private var twoColumnStages: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 10) {
+            ForEach(GrowthStage.allCases) { stageCell($0) }
+        }
+    }
+    private func stageCell(_ stage: GrowthStage) -> some View {
+        let revealed = discovery.revealed(species: row.species.speciesId, variant: row.variant.variantId, stage: stage)
+        let status = discovery.status(species: row.species.speciesId, variant: row.variant.variantId, stage: stage)
+        return VStack(spacing: 4) {
+            Text(stage == .young ? "Young" : stage.title)
+                .font(.system(.caption, design: .serif).weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.center)
+            ZStack(alignment: .bottomTrailing) {
+                JournalPlantImage(plant: row.plant(stage), catalog: assets, revealed: revealed, maximumPixels: 300)
+                    .frame(height: 88).frame(maxWidth: .infinity)
+                if !revealed {
+                    JournalInfoIcon(title: "\(stage.title), \(status)",
+                        explanation: discovery.snapshot == nil
+                            ? "Discovery has not been confirmed. Refresh the catalog to check this stage."
+                            : "Grow a \(row.variant.displayName) \(row.species.displayName) to this stage to discover its artwork.",
+                        symbol: discovery.snapshot == nil ? "questionmark.circle" : "lock.fill")
+                }
+            }
+            JournalMetric(title: "Cumulative water", value: amount("growth", stage: stage),
+                explanation: "Total water required to reach \(stage.title).", metric: "water", compact: true)
+            JournalMetric(title: "Base attraction", value: amount("attraction", stage: stage),
+                explanation: "Base attraction at the \(stage.title) stage.", metric: "attraction", compact: true)
+            if !revealed {
+                Text(status).font(.caption2).foregroundStyle(JournalTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.center)
+            }
+        }
+        .padding(.vertical, 8).padding(.horizontal, 3)
+        .frame(maxWidth: .infinity, alignment: .top)
+        .background(JournalTheme.sage.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(row.variant.displayName) \(row.species.displayName), \(stage.title), \(status)")
+        .accessibilityIdentifier("catalog.stage.\(stage.rawValue)")
+    }
+    private func multiplierExplanation(_ key: String) -> String {
+        let value = "\(ActivityMetricLabel.title(key)): \(multipliers[key]?.formatted() ?? "Unavailable")×."
+        return key == "workout_minutes.*" ? value + " Default for recorded workouts without an exact listed multiplier." : value
+    }
 }
+
 
 private struct ReceiptRow: View {
     let receipt: APICollectionReceipt

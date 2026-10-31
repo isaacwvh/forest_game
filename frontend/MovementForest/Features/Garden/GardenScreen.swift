@@ -45,9 +45,9 @@ struct GardenScreen: View {
                     }
                 }
                 .onPreferenceChange(GardenOverlayFrames.self) { renderer.setOverlayFrames($0) }
-                .sheet(item: $selectedPlant) { plant in
-                    NavigationStack { PlantDetailScreen(plant: plant, catalog: catalog, isSample: garden.isSample) }
-                        .presentationDetents([.medium, .large])
+                .fullScreenCover(item: $selectedPlant) { plant in
+                    PlantDetailScreen(plant: plant, catalog: catalog, isSample: garden.isSample)
+                        .journalModalBackground()
                 }
                 .sheet(isPresented: $informationPresented) {
                     NavigationStack {
@@ -87,82 +87,135 @@ struct PlantDetailScreen: View {
     let isSample: Bool
     var owned: APIOwnedPlant? = nil
     var catalogue: APICatalogue? = nil
+    var onPlace: (() -> Void)? = nil
+    var placementDisabled = false
     @Environment(\.dismiss) private var dismiss
     private var rarity: String? { isSample ? SamplePlantPresentation.rarities[plant.speciesId] : catalogue?.rarity(for: plant.speciesId) }
+    private var name: String {
+        catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId.capitalized
+    }
+    private var multipliers: [String: Decimal] {
+        guard let reference = owned?.pinnedProfiles?.behaviour else { return [:] }
+        return catalogue?.profiles?["behaviour"]?.first {
+            $0.id == reference.id && $0.version == reference.version
+        }?.metricMultipliers ?? [:]
+    }
     var body: some View {
-        List {
-            PlantThumbnail(plant: plant, catalog: catalog).frame(height: 180).frame(maxWidth: .infinity)
-            Section {
-                DetailRow(title: "Variant", value: plant.variantId.capitalized)
-                DetailRow(title: "Growth stage", value: "\(plant.growthStage.number) of 4 · \(plant.growthStage.title)")
+        JournalInspector(title: "Plant details", close: { dismiss() }) {
+            VStack(spacing: 10) {
+                JournalPlantFrame(rarity: rarity) {
+                    JournalPlantImage(plant: plant, catalog: catalog, maximumPixels: 600)
+                        .frame(width: 148, height: 148).padding(12)
+                }.frame(width: 172)
+                PlantNameText(name, rarity: rarity)
+                    .font(.system(.largeTitle, design: .serif).weight(.semibold))
+                Text(plant.variantId.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
+            }
+            JournalGrid(minimumWidth: 52, fixedColumns: owned == nil ? 2 : owned?.baseAttractionMicroUnits == nil ? 3 : 4) {
+                JournalAttribute(title: "Variant", value: plant.variantId.capitalized,
+                    explanation: "\(plant.variantId.capitalized) variant of \(name).", symbol: "leaf")
+                JournalRarity(rarity: rarity).frame(maxWidth: .infinity)
                 if let owned = owned {
-                    PlantGrowthProgress(plant: owned)
-                    DisclosureGroup("Growth details") {
-                        QuantityDetailRow(metric: "water", title: "Total water", value: ExactAmount.water(owned.growthMicroUnits))
-                        if let next = owned.growthProgress?.nextStageMicroUnits {
-                            DetailRow(title: "Next stage at", value: "\(ExactAmount.water(next)) total water")
-                        }
-                    }
+                    JournalAttribute(title: "Total water", value: ExactAmount.water(owned.growthMicroUnits),
+                        explanation: "Total confirmed water earned by this copy.", metric: "water")
                     if let attraction = owned.baseAttractionMicroUnits {
-                        QuantityDetailRow(metric: "attraction", title: "Base attraction", value: ExactAmount.water(attraction))
+                        JournalAttribute(title: "Base attraction", value: ExactAmount.water(attraction),
+                            explanation: owned.placement == nil
+                                ? "Base attraction at this stage. This stored copy currently contributes no garden attraction."
+                                : "Base attraction of this copy at its confirmed stage.", metric: "attraction")
                     }
-                    Text(owned.placement == nil ? "In storage" : "Planted").font(.footnote).foregroundStyle(.secondary)
                 }
-            }
-            if let reference = owned?.pinnedProfiles?.behaviour,
-               let multipliers = catalogue?.profiles?["behaviour"]?.first(where: {
-                   $0.id == reference.id && $0.version == reference.version
-               })?.metricMultipliers {
-                Section {
-                    DisclosureGroup("Activity multipliers · this copy") {
+            }.padding(8).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
+            VStack(alignment: .leading, spacing: 8) {
+                Text("\(plant.growthStage.title) · \(plant.growthStage.number) / 4")
+                    .font(.system(.title3, design: .serif).weight(.semibold))
+                    .accessibilityIdentifier("plantDetails.stage")
+                if let owned = owned {
+                    JournalPlantProgress(plant: owned)
+                    Text(owned.placement == nil ? "In storage" : "Planted")
+                        .font(.caption).foregroundStyle(JournalTheme.secondary)
+                        .accessibilityIdentifier("plantDetails.placement")
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            if !multipliers.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    JournalSectionHeading(title: "Activity multipliers")
+                    JournalGrid(minimumWidth: 96) {
                         ForEach(multipliers.keys.sorted(), id: \.self) { key in
-                            QuantityDetailRow(metric: key, title: ActivityMetricLabel.title(key),
-                                              value: "\(multipliers[key]!.formatted())×")
-                        }
-                        Text("Recorded workouts use their listed multiplier, otherwise the recorded-workout default. Other unlisted activities contribute no growth. Stored copies do not grow.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-            }
-            if isSample {
-                Section { Text("Sample plant · Sign in to see your own collection.").foregroundStyle(.secondary) }
-            }
-            if let skills = owned?.gardenSkills, !skills.isEmpty {
-                Section("Garden skills") {
-                    ForEach(skills) { skill in
-                        DisclosureGroup {
-                            Text(skill.description).font(.callout)
-                            Text("See Garden info → Active skills for current bonuses and sources.")
-                                .font(.caption).foregroundStyle(.secondary)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(skill.name).font(.headline)
-                                Text(owned?.placement == nil ? "Inactive in storage" :
-                                     plant.growthStage == .adult ? "Fully grown source" : "Requires a fully grown plant")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
+                            JournalMetric(title: ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×",
+                                explanation: multiplierExplanation(key), metric: key)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
                         }
                     }
                 }
             }
-        }
-        .navigationTitle(plant.speciesId.capitalized).navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) { PlantNameText(plant.speciesId.capitalized, rarity: rarity).font(.headline) }
-            ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+            if let owned = owned {
+                VStack(alignment: .leading, spacing: 8) {
+                    JournalSectionHeading(title: "Garden skills")
+                    if let skills = owned.gardenSkills, !skills.isEmpty {
+                        ForEach(skills) { skill in
+                            DisclosureGroup {
+                                Text(skill.description).font(.callout).padding(.top, 6)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(skill.name).font(.headline)
+                                    Label(owned.placement == nil ? "Inactive in storage" :
+                                        plant.growthStage == .adult ? "Fully grown source" : "Requires a fully grown plant",
+                                        systemImage: owned.placement != nil && plant.growthStage == .adult ? "leaf" : "lock")
+                                        .font(.caption).foregroundStyle(JournalTheme.secondary)
+                                }
+                            }.padding(12).background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
+                        }
+                    } else if owned.gardenSkills != nil {
+                        Text("No garden skill").font(.callout).foregroundStyle(JournalTheme.secondary)
+                    } else {
+                        Text("Skill information unavailable").font(.callout).foregroundStyle(JournalTheme.secondary)
+                    }
+                    if let progress = owned.growthProgress {
+                        DisclosureGroup("Growth details") {
+                            VStack(alignment: .leading, spacing: 8) {
+                                QuantityDetailRow(metric: "water", title: "Stage begins at",
+                                    value: ExactAmount.water(progress.stageStartMicroUnits))
+                                if let next = progress.nextStageMicroUnits {
+                                    QuantityDetailRow(metric: "water", title: "Next stage at", value: ExactAmount.water(next))
+                                }
+                            }.padding(.top, 8)
+                        }.padding(.top, 10)
+                    }
+                }
+            }
+            if isSample { Text("Sample plant").font(.caption).foregroundStyle(JournalTheme.secondary) }
+        } footer: {
+            if let onPlace = onPlace {
+                VStack(spacing: 0) {
+                    Divider()
+                    Button(action: onPlace) {
+                        Text("Place").frame(maxWidth: .infinity, minHeight: 44).foregroundStyle(JournalTheme.paper)
+                    }
+                        .buttonStyle(.borderedProminent).controlSize(.large)
+                        .padding(14)
+                        .disabled(placementDisabled).accessibilityIdentifier("editor.place")
+                }.background(JournalTheme.paper)
+            }
         }
     }
+    private func multiplierExplanation(_ key: String) -> String {
+        let prefix = "\(ActivityMetricLabel.title(key)): \(multipliers[key]?.formatted() ?? "Unavailable")× for this copy."
+        return key == "workout_minutes.*" ? prefix + " The recorded-workout default applies when no exact workout multiplier is listed."
+            : prefix
+    }
 }
+
 
 struct GardenPlantList: View {
     let garden: GardenSnapshot
     let catalog: any AssetCatalogProviding
     @Environment(\.dismiss) private var dismiss
+    @State private var inspecting: GardenPlant?
     var body: some View {
         List(garden.plants) { plant in
-            NavigationLink {
-                PlantDetailScreen(plant: plant, catalog: catalog, isSample: garden.isSample)
-            } label: {
+            Button { inspecting = plant } label: {
                 HStack(spacing: 12) {
                     PlantThumbnail(plant: plant, catalog: catalog).frame(width: 48, height: 56)
                     VStack(alignment: .leading, spacing: 3) {
@@ -174,5 +227,8 @@ struct GardenPlantList: View {
             }
         }.navigationTitle("Garden plants")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .fullScreenCover(item: $inspecting) { plant in
+                PlantDetailScreen(plant: plant, catalog: catalog, isSample: garden.isSample).journalModalBackground()
+            }
     }
 }

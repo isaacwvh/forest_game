@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "files": [
+    {
+      "file": "vine-corner-top-left.png",
+      "sha256": "c6766d6b1472993a85c6709a99700f30293e74cddfbfdb133a9aa94020d20e68",
+      "bytes": 13995
+    },
+    {
+      "file": "vine-corner-top-right.png",
+      "sha256": "d9a26b72686e8db344e85cfa945504468d92f6beada7494fca96f45ae3359406",
+      "bytes": 13981
+    },
+    {
+      "file": "vine-corner-bottom-left.png",
+      "sha256": "42b64b134bcdbb14ee475155bc4b6f7f98bc000fb35fab255fd1dbc1f08b909b",
+      "bytes": 13889
+    },
+    {
+      "file": "vine-corner-bottom-right.png",
+      "sha256": "fe3538a17f6aaace42fa00d205c343de758689bf7db713e1277495cbb698480c",
+      "bytes": 13943
+    },
+    {
+      "file": "vine-divider.png",
+      "sha256": "5355ec8c93b1139952acccd7da23456be0d45fcf99ab2d935c97d7927a309643",
+      "bytes": 4362
+    }
+  ],
+  "catalogDescriptions": {
+    "file": "catalog-descriptions.json",
+    "bytes": 205,
+    "sha256": "97fab393ceec0cecc294f42143bcfd77ab4bee11dbb9dab244582aa34285d526"
+  }
+}

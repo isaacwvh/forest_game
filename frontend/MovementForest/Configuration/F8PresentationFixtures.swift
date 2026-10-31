@@ -213,6 +213,7 @@ private struct CollectionCleanupFixtureHost: View {
                 Picker("Page", selection: $destination) {
                     Text("Exchange").tag(CollectionDestination.exchange)
                     Text("Packs").tag(CollectionDestination.draws)
+                    Text("Catalog").tag(CollectionDestination.catalog)
                 }.pickerStyle(.segmented)
                 CollectionScreen(store: store, destination: destination, assets: assets,
                                  navigate: { destination = $0 ?? .draws })

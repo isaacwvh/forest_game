@@ -9,6 +9,7 @@ from sqlalchemy import func, select, update
 from forest_api import collection
 from forest_api.activity_inputs import WORKOUT_TYPES
 from forest_api.calculations import MICRO, CalculationRules
+from forest_api.catalog_copy import SPECIES_DESCRIPTIONS
 from forest_api.collection_models import ExchangeOffer
 from forest_api.collection_schemas import PublishPack, SpeciesPackContract
 from forest_api.models import (
@@ -150,7 +151,7 @@ def publish(session, settings, *, effective_at=None):
             values = {
                 "display_name": definition["name"],
                 "rarity": definition["rarity"],
-                "description": "Movement Forest initial collection.",
+                "description": SPECIES_DESCRIPTIONS[species_id],
                 "clearance_radius": Decimal(definition["radius"]),
                 "enabled": True,
                 "is_fixture": False,

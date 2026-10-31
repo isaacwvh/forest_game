@@ -31,6 +31,10 @@ def main() -> None:
         "history-worker", help="One shared scheduled maintenance worker; opt-in families"
     )
     commands.add_parser("seed-dev", help="Seed explicitly unapproved local/test catalogue")
+    descriptive_copy = commands.add_parser(
+        "update-catalog-descriptions", help="Preview approved species text updates; no rules change"
+    )
+    descriptive_copy.add_argument("--apply", action="store_true")
     commands.add_parser("seed-skills-dev", help="Publish Sleeping Dew and new development packs")
     commands.add_parser(
         "publish-launch-balance", help="Publish the approved two-species activity economy"
@@ -77,7 +81,11 @@ def main() -> None:
             run(database, settings)
             return
         with database.sessions() as session:
-            if args.command == "maintain-history":
+            if args.command == "update-catalog-descriptions":
+                from forest_api.catalog_copy import update_descriptions
+
+                print(json.dumps(update_descriptions(session, apply=args.apply)))
+            elif args.command == "maintain-history":
                 from forest_api.history import maintain
 
                 print(

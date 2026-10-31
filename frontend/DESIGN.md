@@ -1,5 +1,43 @@
 # Native baseline conventions
 
+## Stage 1 botanical journal — implemented locally, 31 October 2026
+
+The user's approved plant/catalog renders now govern My plants, owned inspection
+and Catalog. This section supersedes the older row/List presentation clauses for
+those surfaces only. Native build and device visual acceptance remain pending;
+use [STAGE1_UI_ACCEPTANCE.md](STAGE1_UI_ACCEPTANCE.md).
+
+- Warm parchment, forest ink, pale sage, restrained olive vine corners, system
+  serif headings and native body text. Bundle the five small journal ornaments;
+  draw rarity frames natively and cache only display-sized plant PNGs.
+- My plants uses compact rarity-framed copy tiles, preserving variant, stage,
+  exact progress, remaining water, duplicates, loaded-page filters and pagination.
+  Rarity is species metadata; variant colours never determine frame colour.
+- Owned inspection is a large inset scrollable card over the current surface.
+  Header/Close and the contextual Place footer stay fixed. Resolve the live copy
+  by UUID. Place exists only in Edit Storage and uses the unchanged guarded
+  placement-candidate operation. Storage/Garden browsers keep their older layouts
+  until the later batch; their detail entry points use the shared inspector.
+- Catalog is a species tile grid with always-visible sprout portraits. Detail
+  order: portrait/name, variant selector, variant/rarity/clearance bar, species
+  description, growth stages, activity multipliers/skills and pack probabilities.
+  Do not repeat clearance in a lower disclosure or show descriptions on owned
+  inspection. Only the approved species description is displayed, not legacy
+  variant placeholder copy.
+- Missing/legacy placeholder descriptions may use the bundled approved catalog
+  copy; authored server descriptions take precedence. The bundle is checked
+  against the server's descriptive metadata. Existing text fields need no schema
+  migration; a separate preview-first command can update those fields alone.
+- Icon tap/hold opens an explanation with an accessible Close; controls are
+  separate from navigation buttons. Omit inline instructional tips about storage,
+  stage discovery and holding icons. Keep actual locked/unavailable/inactive,
+  pending and recovery states readable. Support larger text with fewer columns.
+- Keep exact-variant discovery, masks chosen before render, pinned owned profiles,
+  native back navigation, stable mounted scene/camera and existing gameplay.
+  Recap, Garden/Edit styling, economy, account and settings redesigns are deferred.
+
+## Retained gameplay and earlier presentation context
+
 Visual authority: the existing oak/Moonwillow assets and section 12.3 of the root
 specification. Preserve their calm, stylized miniature-world appearance.
 
