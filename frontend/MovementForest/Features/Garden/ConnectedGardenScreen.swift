@@ -36,7 +36,7 @@ struct ConnectedGardenScreen: View {
         plant.rotationDegrees = NSDecimalNumber(decimal: candidate.rotation).doubleValue
         let radius = store.catalogue.flatMap { try? $0.radius(for: candidate.plant) }
         return EditorRenderPreview(plant: plant, radius: radius.map { Double($0) / 1000 },
-                                   valid: candidate.validity == .valid, adult: store.adultPreview,
+                                   valid: candidate.validity == .valid, adult: candidate.kind == .plant && store.adultPreview,
                                    movable: candidate.kind == .move || candidate.kind == .plant)
     }
 
@@ -207,7 +207,7 @@ struct ConnectedGardenScreen: View {
                     .font(.callout).accessibilityIdentifier("editor.validity")
                 Text(candidate.kind == .rotate ? "Adjust the angle, then apply." : "Drag or tap the ground. A valid release saves your edit.")
                     .font(.caption).foregroundStyle(.secondary)
-                if store.adultPreview { Text("Adult preview · Clearance stays the same").font(.caption) }
+                if candidate.kind == .plant && store.adultPreview { Text("Adult preview · Clearance stays the same").font(.caption) }
             } else if let message = store.gardenMessage {
                 Text(message).font(.callout).accessibilityIdentifier("editor.status")
             } else if store.confirmed?.plants.isEmpty == true {
@@ -297,8 +297,10 @@ struct ConnectedGardenScreen: View {
                     Button("Apply") { Task { await store.releaseCandidate() } }
                         .disabled(candidate.validity != .valid || !store.canEdit).accessibilityIdentifier("editor.apply")
                 }.buttonStyle(.bordered).controlSize(.large)
-                Toggle("Show adult preview", isOn: $store.adultPreview).font(.callout)
-                    .disabled(candidate.plant.growthStage == .adult).accessibilityIdentifier("editor.adult")
+                if candidate.kind == .plant {
+                    Toggle("Show adult preview", isOn: $store.adultPreview).font(.callout)
+                        .disabled(candidate.plant.growthStage == .adult).accessibilityIdentifier("editor.adult")
+                }
             }
             VStack(spacing: 0) {
                 HStack {
@@ -409,17 +411,8 @@ struct GardenRotationControls: View {
     }
     var body: some View {
         VStack(spacing: 8) {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 12) {
-                    Text("Rotate plant").font(.system(.headline, design: .serif)).fixedSize()
-                    Spacer(minLength: 0)
-                    adultPreview
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Rotate plant").font(.system(.headline, design: .serif))
-                    adultPreview
-                }
-            }
+            Text("Rotate plant").font(.system(.headline, design: .serif))
+                .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 12) {
                 Slider(value: angle, in: 0...359.99, step: 0.01,
                        onEditingChanged: { if $0 { editingAngle = false } })
@@ -452,11 +445,6 @@ struct GardenRotationControls: View {
                     Button("Done") { editingAngle = false }
                 }
             }
-    }
-    private var adultPreview: some View {
-        Toggle("Adult preview", isOn: $store.adultPreview).font(.caption).fixedSize(horizontal: true, vertical: false)
-            .frame(minHeight: 44).disabled(store.candidate?.plant.growthStage == .adult || !store.canEdit)
-            .accessibilityLabel("Show adult preview").accessibilityIdentifier("editor.adult")
     }
 }
 

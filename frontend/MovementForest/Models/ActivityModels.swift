@@ -37,6 +37,7 @@ struct ActivityReport {
     let isFixture: Bool
     var todaySteps: Double? { days.last?.steps }
     var metricIssues: [String: String] = [:]
+    var includesOptionalActivity = true
 }
 
 enum ActivityCalendar {

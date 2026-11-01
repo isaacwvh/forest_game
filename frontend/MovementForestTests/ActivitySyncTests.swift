@@ -22,6 +22,7 @@ private struct ActivityContract: Decodable {
 private final class MemoryActivityJournal: ActivityJournalPersisting {
     var value: ActivityJournalState?
     var failSave = false
+    var failPresentationSave = false
     var failLoad = false
     var failRemoval = false
     func load(server: String, user: UUID) throws -> ActivityJournalState? {
@@ -29,7 +30,8 @@ private final class MemoryActivityJournal: ActivityJournalPersisting {
         return value
     }
     func save(_ state: ActivityJournalState, server: String, user: UUID) throws {
-        if failSave || (failRemoval && state.operations.count < (value?.operations.count ?? 0)) {
+        if failSave || (failPresentationSave && state.lastPresentationRecaps != nil)
+            || (failRemoval && state.operations.count < (value?.operations.count ?? 0)) {
             throw URLError(.cannotWriteToFile)
         }
         value = state
@@ -478,8 +480,42 @@ final class ActivitySyncTests: XCTestCase {
         XCTAssertEqual(service.current.plants.first?.growthMicroUnits, service.fixture.syncResult.garden.plants.first?.growthMicroUnits)
     }
 
+    func testPresentationCacheFailureDoesNotFailConfirmedActivityOrBlockEditing() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        journal.failPresentationSave = true
+        let store = try editor(service), health = health(service.fixture)
+        await store.start()
+        let sync = coordinator(service, editor: store, health: health, journal: journal)
+        await sync.setEnabled(true)
+        XCTAssertEqual(store.confirmed?.plants.first?.growthMicroUnits, "10000000")
+        XCTAssertFalse(sync.recaps.isEmpty)
+        XCTAssertFalse(sync.presentationRecaps.isEmpty)
+        XCTAssertEqual(sync.pendingCount, 0)
+        XCTAssertFalse(sync.recoveryLocked)
+        XCTAssertTrue(store.canEdit)
+    }
+
     private func health(_ fixture: ActivityContract) -> ActivityStore {
         ActivityStore(provider: SyncHealthProvider(fixture), defaults: UserDefaults(suiteName: "f5-" + UUID().uuidString)!)
+    }
+
+    func testAcknowledgedRecapPresentationSurvivesRelaunchWithoutAcknowledgingAgain() async throws {
+        let service = SyncTestService(try ActivityContract.load()), journal = MemoryActivityJournal()
+        let store = try editor(service), health = health(service.fixture)
+        await store.start()
+        let sync = coordinator(service, editor: store, health: health, journal: journal)
+        await sync.setEnabled(true)
+        let shown = try XCTUnwrap(sync.recaps.first)
+        await sync.dismissRecaps(ids: [shown.id])
+        XCTAssertTrue(sync.recaps.isEmpty)
+        XCTAssertEqual(sync.presentationRecaps.map(\.id), [shown.id])
+        let encoded = try ActivityWire.encoder().encode(XCTUnwrap(journal.value))
+        journal.value = try ActivityWire.decoder().decode(ActivityJournalState.self, from: encoded)
+        sync.deactivate()
+        let restored = coordinator(service, editor: store, health: health, journal: journal)
+        XCTAssertEqual(restored.presentationRecaps.map(\.id), [shown.id])
+        XCTAssertTrue(restored.recaps.isEmpty)
+        XCTAssertEqual(service.ackBodies.count, 1)
     }
     private func editor(_ service: SyncTestService, disk: AccountDiskStore? = nil) throws -> GardenEditorStore {
         GardenEditorStore(profile: service.fixture.profile, service: service, assets: try BundleAssetCatalog(), cache: disk, effectHistory: disk)

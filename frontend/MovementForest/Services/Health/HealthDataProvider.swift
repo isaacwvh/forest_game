@@ -102,7 +102,8 @@ final class ActivityStore: ObservableObject {
             let previous = report?.timeZoneIdentifier == timeZone.identifier ? report : nil
             report = ActivityReport(observedAt: result.observedAt, timeZoneIdentifier: result.timeZoneIdentifier,
                                     days: result.days, workouts: previous?.workouts ?? [], stepsIssue: result.stepsIssue,
-                                    workoutsIssue: previous?.workoutsIssue, isFixture: result.isFixture)
+                                    workoutsIssue: previous?.workoutsIssue, isFixture: result.isFixture,
+                                    includesOptionalActivity: false)
         }
         return result
     }

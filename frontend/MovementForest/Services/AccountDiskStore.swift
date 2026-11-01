@@ -77,6 +77,7 @@ struct ActivityJournalState: Codable {
     var dismissedRecaps: [UUID] = []
     var lastRejectedRequest: UUID?
     var lastRejectionCode: String?
+    var lastPresentationRecaps: [APIRewardRecap]? = nil
 }
 
 @MainActor

@@ -95,9 +95,13 @@ final class ForestUITests: XCTestCase {
         let rotate = app.buttons["editor.rotate"]
         XCTAssertTrue(rotate.waitForExistence(timeout: 10))
         expectation(for: ready, evaluatedWith: rotate); waitForExpectations(timeout: 10)
+        app.buttons["editor.move"].tap()
+        XCTAssertFalse(app.switches["editor.adult"].exists)
+        app.buttons["editor.cancel"].tap()
         rotate.tap()
         let slider = app.sliders["editor.rotation"]
         XCTAssertTrue(slider.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.switches["editor.adult"].exists)
         let garden = app.descendants(matching: .any).matching(identifier: "garden.scene").firstMatch
         XCTAssertTrue(garden.exists); XCTAssertTrue(garden.isHittable)
         XCTAssertLessThanOrEqual(garden.frame.maxY, slider.frame.minY + 1)
@@ -429,6 +433,25 @@ final class ForestUITests: XCTestCase {
         connect.tap()
         XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Sample activity · not your Health data"].exists)
+    }
+
+    func testActivityStripScrollsThroughEveryTrackedDailyTotal() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health"]; app.launch()
+        XCTAssertTrue(app.buttons["navigation.Activity"].waitForExistence(timeout: 15))
+        app.buttons["navigation.Activity"].tap()
+        XCTAssertTrue(app.buttons["activity.connect"].waitForExistence(timeout: 5))
+        app.buttons["activity.connect"].tap()
+        let strip = app.scrollViews["activity.totals.scroll"]
+        XCTAssertTrue(strip.waitForExistence(timeout: 5))
+        for metric in ["steps", "distance", "energy", "flights", "workouts", "workoutMinutes"] {
+            let item = app.descendants(matching: .any).matching(identifier: "activity.total." + metric).firstMatch
+            for _ in 0..<6 {
+                if item.isHittable { break }
+                strip.swipeLeft()
+            }
+            XCTAssertTrue(item.exists, "Missing activity metric: " + metric)
+        }
     }
 
     func testEmptyActivityExplainsMissingData() {

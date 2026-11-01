@@ -152,7 +152,7 @@ struct RootView: View {
                     }
                     if selectedTab == .activity {
                         NavigationStack {
-                            ConnectedActivityScreen(connection: connection, store: container.activity)
+                            ConnectedActivityScreen(connection: connection, store: container.activity, assets: catalog)
                                 .toolbar { menuButton; settingsButton }
                         }
                     }
@@ -216,7 +216,9 @@ struct RootView: View {
                 .sheet(isPresented: $entryRecap.showing, onDismiss: {
                     entryRecap.dismissed(allowEffects: entryAllowed && selectedTab == .garden && collectionDestination == nil)
                 }) {
-                    ActivityRecapScreen(recap: entryRecap, catalogue: container.connection.editor?.catalogue, assets: catalog)
+                    ActivityRecapScreen(recap: entryRecap, health: container.activity,
+                        gameTimezone: container.connection.editor?.profile.gameTimezone ?? TimeZone.current.identifier,
+                        catalogue: container.connection.editor?.catalogue, assets: catalog)
                 }
                 .onChange(of: connection.activitySync?.id) { id in
                     if id == nil { resume.resetConnection(); entryRecap.signOut() }

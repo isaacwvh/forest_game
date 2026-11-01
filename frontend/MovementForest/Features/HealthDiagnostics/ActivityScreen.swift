@@ -4,6 +4,11 @@ struct ActivityScreen: View {
     @ObservedObject var store: ActivityStore
     var body: some View {
         List {
+            if let report = store.report {
+                Section {
+                    ActivityTotalsStrip(report: report, summary: nil, timeZone: store.timeZone, showsNewActivity: false)
+                }.listRowBackground(JournalTheme.paper)
+            }
             Section {
                 Text("Activity from Apple Health. Garden uploads are controlled separately in Activity sync.")
                     .foregroundStyle(.secondary)
@@ -27,7 +32,7 @@ struct ActivityScreen: View {
                 if let issue = store.requestIssue { Section { Text(issue) } }
                 if store.isLoading { Section { ProgressView("Reading activity…") } }
                 if let report = store.report {
-                    Section("Today") {
+                    Section("Daily Health details") {
                         if let steps = report.todaySteps {
                             QuantityDetailRow(metric: "steps", title: "Steps read from Health", value: steps.formatted(.number.precision(.fractionLength(0))))
                         } else {
@@ -85,7 +90,8 @@ struct ActivityScreen: View {
                 }
             }
         }
-        .navigationTitle("Activity")
+        .scrollContentBackground(.hidden).background(JournalPageBackground().ignoresSafeArea())
+        .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Activity")
         .task { if store.report == nil { await store.refresh() } }
         .refreshable { await store.refresh() }
     }

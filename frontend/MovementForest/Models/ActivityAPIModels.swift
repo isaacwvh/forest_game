@@ -191,6 +191,19 @@ struct APIActivityDayResult: Codable {
     let creditedSteps: Int64
     let ruleVersion: String
     let activityCreditId: UUID?
+    var metrics: [String: APIActivityMetricReceipt]? = nil
+}
+
+struct APIActivityMetricReceipt: Codable {
+    let available: Bool
+    let newlyEligible: String
+    var waterQuantity: String? = nil
+}
+
+struct APIWorkoutReceipt: Codable {
+    let workoutId: UUID
+    let status: String
+    var newlyEligibleMinutes: String? = nil
 }
 
 struct APIActivitySyncResult: Codable {
@@ -215,6 +228,8 @@ struct APIRewardRecap: Codable, Identifiable {
         let plants: [Plant]
         let activityDays: [APIActivityDayResult]
         let resourceDeltas: [String: String]
+        var activitySummaryVersion: Int? = nil
+        var workouts: [APIWorkoutReceipt]? = nil
     }
     struct Plant: Codable, Identifiable {
         var id: UUID { plantId }
@@ -225,6 +240,9 @@ struct APIRewardRecap: Codable, Identifiable {
         let beforeStage: GrowthStage
         let afterStage: GrowthStage
         var skillBonusGrowthMicroUnits: String? = nil
+        var speciesId: String? = nil
+        var variantId: String? = nil
+        var maximumGrowthMicroUnits: String? = nil
     }
 }
 

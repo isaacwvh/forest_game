@@ -11,6 +11,7 @@ final class ActivitySyncCoordinator: ObservableObject {
     @Published private(set) var status: APIActivityStatus?
     @Published private(set) var pendingCount = 0
     @Published private(set) var recaps: [APIRewardRecap] = []
+    @Published private(set) var presentationRecaps: [APIRewardRecap] = []
     @Published private(set) var recoveryLocked = false
     let installationID: UUID
     var onConfirmedGrowth: (() -> Void)?
@@ -34,6 +35,7 @@ final class ActivitySyncCoordinator: ObservableObject {
             saved = try resolvedJournal.load(server: service.serverID, user: editor.profile.userId) ?? ActivityJournalState()
             enabled = saved.enabled; status = saved.status; pendingCount = saved.operations.count
             includesOptionalActivity = saved.expandedInputsEnabled == true
+            presentationRecaps = saved.lastPresentationRecaps ?? []
             message = enabled ? "Ready to sync activity." : "Activity sync is off."
         } catch {
             recoveryLocked = true
@@ -59,6 +61,7 @@ final class ActivitySyncCoordinator: ObservableObject {
 
     func deactivate() {
         active = false
+        presentationRecaps = []
         editor.prepareMembershipChange = nil; editor.reconcileActivity = nil
         finishWaiters(false)
     }
@@ -247,6 +250,13 @@ final class ActivitySyncCoordinator: ObservableObject {
         var next = saved; next.status = value; try save(next)
     }
 
+    /// A local Health read only; never changes upload consent or queues activity.
+    func refreshDailyActivity() async {
+        guard active, health.hasRequestedAccess,
+              let timeZone = TimeZone(identifier: editor.profile.gameTimezone) else { return }
+        _ = await health.readForUpload(timeZone: timeZone, includingOptional: true)
+    }
+
     private struct Observation {
         let observedAt: Date
         let days: [ActivityDayUpload]
@@ -403,7 +413,14 @@ final class ActivitySyncCoordinator: ObservableObject {
             }
             cursor = page.nextCursor
         } while cursor != nil
-        recaps = all.sorted { $0.createdAt < $1.createdAt }
+        let ordered = all.sorted { $0.createdAt < $1.createdAt }
+        recaps = ordered; presentationRecaps = ordered
+        var next = saved; next.lastPresentationRecaps = ordered
+        do { try save(next) }
+        catch {
+            // A presentation cache failure must not fail a confirmed upload.
+            PlayerMessage.recordFailure("Activity presentation", error, scope: editor.diagnosticScope)
+        }
     }
 
     func dismissRecaps(ids: Set<UUID>? = nil) async {

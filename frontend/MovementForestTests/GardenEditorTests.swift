@@ -251,6 +251,7 @@ final class GardenEditorTests: XCTestCase {
         let bounds = renderer.view.bounds, cameraPosition = camera.position, cameraRotation = camera.orientation.vector
         let originalRotation = entity.orientation.vector
         store.begin(plant, kind: .rotate); store.updateRotation(189.43)
+        store.adultPreview = true // Stale state must never reveal adult artwork while rotating.
         try await Task.sleep(nanoseconds: 150_000_000)
         XCTAssertFalse(renderer.view.isHidden, "The garden must stay active while the rotation panel is open")
         XCTAssertEqual(renderer.view.bounds, bounds)

@@ -277,6 +277,15 @@ def main():
         low, high = sorted([luminance([float(v) for v in values]), luminance(theme["paper"])])
         require((high + 0.05) / (low + 0.05) >= 3, f"Insufficient {rarity} frame contrast")
     print("PASS: journal text/action/frame contrast on the actual paper and sage surfaces.")
+    activity_source = (ROOT / "MovementForest/Features/ActivityJournal.swift").read_text(encoding="utf-8")
+    activity_colours = {name: [float(r), float(g), float(b)] for name, r, g, b in re.findall(
+        r"static let (\w+) = Color\(red: ([\d.]+), green: ([\d.]+), blue: ([\d.]+)\)", activity_source)}
+    for name, minimum in [("added", 3), ("addedText", 4.5)]:
+        require(name in activity_colours, f"Missing activity colour: {name}")
+        for background in [theme["paper"], theme["sage"]]:
+            low, high = sorted([luminance(activity_colours[name]), luminance(background)])
+            require((high + 0.05) / (low + 0.05) >= minimum, f"Insufficient activity {name} contrast")
+    print("PASS: orange recap progress and new-activity text contrast.")
     launch = ast.parse((REPO / "backend/src/forest_api/launch_balance.py").read_text(encoding="utf-8"))
     plants = next(ast.literal_eval(node.value) for node in launch.body if isinstance(node, ast.Assign)
                   and any(isinstance(target, ast.Name) and target.id == "PLANTS" for target in node.targets))

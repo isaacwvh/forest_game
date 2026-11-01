@@ -3,76 +3,48 @@ import SwiftUI
 @MainActor
 struct ActivityRecapScreen: View {
     @ObservedObject var recap: AppEntryRecapCoordinator
+    @ObservedObject var health: ActivityStore
+    let gameTimezone: String
     let catalogue: APICatalogue?
     let assets: any AssetCatalogProviding
     @AccessibilityFocusState private var titleFocused: Bool
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text("Garden update").font(.title2.bold())
-                        .accessibilityAddTraits(.isHeader).accessibilityFocused($titleFocused)
+        VStack(spacing: 0) {
+            Text("Activity recap").font(.system(.title2, design: .serif).weight(.semibold))
+                .accessibilityAddTraits(.isHeader).accessibilityFocused($titleFocused)
+                .frame(maxWidth: .infinity, alignment: .leading).padding(20)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    ActivityTotalsStrip(report: health.report, summary: recap.loading ? nil : recap.activitySummary,
+                                        timeZone: TimeZone(identifier: gameTimezone) ?? .current)
                     if recap.loading { ProgressView("Checking activity…") }
-                    else { Text(recap.status).accessibilityIdentifier("recap.status") }
-                }
-                if !recap.rows.isEmpty {
-                    Section("Plant progress") {
-                        ForEach(recap.rows) { row in
-                            HStack(alignment: .top, spacing: 12) {
-                                if let plant = row.plant, let catalogue = catalogue {
-                                    PlantThumbnail(plant: plant.rendered(catalogue: catalogue, assets: assets), catalog: assets)
-                                        .frame(width: 48, height: 64).accessibilityHidden(true)
-                                }
-                                VStack(alignment: .leading, spacing: 6) {
-                                    PlantNameText(OwnedCopyLabel.title(row.id, in: recap.rows.compactMap(\.plant)),
-                                        rarity: row.plant.flatMap { catalogue?.rarity(for: $0.speciesId) })
-                                        .font(.headline)
-                                    if row.water != "0" {
-                                        Text("+\(ExactAmount.water(row.water)) water")
-                                        if row.skillWater != "0" {
-                                            DisclosureGroup("Skill bonus: +\(ExactAmount.water(row.skillWater)) water") {
-                                                Text("Included in this saved growth reward.").foregroundStyle(.secondary)
-                                            }.font(.subheadline)
-                                        }
-                                    } else { Text(row.plant?.growthStage == .adult ? "Fully grown" : "No new confirmed growth").foregroundStyle(.secondary) }
-                                    if let before = row.beforeStage, let after = row.afterStage, before != after {
-                                        Label("\(before.title) → \(after.title)", systemImage: "leaf")
-                                    }
-                                    if let plant = row.plant {
-                                        PlantGrowthProgress(plant: plant)
-                                        if plant.placement == nil { Text("Now in Storage").font(.caption).foregroundStyle(.secondary) }
-                                    }
-                                }
-                            }.padding(.vertical, 4)
+                    else { Text(recap.status).font(.callout).accessibilityIdentifier("recap.status") }
+                    if !recap.rows.isEmpty {
+                        RecapPlantGrid(rows: recap.rows, catalogue: catalogue, assets: assets)
+                    } else if !recap.loading { Text("No planted copies to show.").font(.callout) }
+                    if !recap.activeSkills.isEmpty {
+                        DisclosureGroup("Skills active now") {
+                            ForEach(recap.activeSkills) { skill in
+                                DisclosureGroup {
+                                    Text(skill.description).font(.subheadline)
+                                } label: { SkillSummaryLabel(skill: skill) }
+                            }
                         }
                     }
-                } else if !recap.loading { Text("No plant progress yet. Plant a copy from Edit → Storage.") }
-                if !recap.activeSkills.isEmpty {
-                    Section("Skills active now") {
-                        ForEach(recap.activeSkills) { skill in
-                            DisclosureGroup {
-                                Text(skill.description).font(.subheadline)
-                            } label: { SkillSummaryLabel(skill: skill) }
-                        }
-                        DisclosureGroup("About these bonuses") {
-                            Text("These are current skills. Growth above includes only bonuses saved with those rewards; newly adult sources affect later uploads.")
-                                .font(.footnote).foregroundStyle(.secondary)
-                        }
-                    }
-                }
+                }.padding(.horizontal, 20).padding(.bottom, 20)
             }
-            .navigationTitle("Welcome back").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) {
-                Button("Continue") { recap.showing = false }.frame(minHeight: 44)
-                    .accessibilityIdentifier("recap.continue")
-            } }
+            Divider()
+            Button("Continue") { recap.showing = false }
+                .frame(maxWidth: .infinity, minHeight: 44).buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("recap.continue").padding(16)
+        }.background(JournalPageBackground().ignoresSafeArea())
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
             .onAppear { LifecycleDiagnostics.event("entry sheet appeared") }
             .task {
                 do { try await Task.sleep(nanoseconds: 300_000_000) } catch { return }
                 titleFocused = true
             }
-        }
     }
 }
 

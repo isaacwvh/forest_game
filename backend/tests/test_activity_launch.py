@@ -159,6 +159,73 @@ def test_steps_plus_one_hour_workout_and_no_duplicate_credit(player, client):
     assert again["workouts"][0]["status"] == "already_processed"
 
 
+def test_recap_keeps_daily_metrics_workout_receipts_and_growth_scale(player, client):
+    start = player["now"][0] + timedelta(seconds=1)
+    record = workout(start, minutes=20)
+    player["now"][0] = start + timedelta(minutes=21)
+    result, body = player["submit"](
+        steps=2200,
+        walkingRunningDistanceMetres="2000.000",
+        activeEnergyKcal="130.000",
+        flightsClimbed=8,
+        workouts=[record],
+    )
+    recaps = client.get("/v1/me/reward-recaps", headers=player["headers"]).json()["recaps"]
+    payload = next(row["payload"] for row in recaps if row["recapId"] == result["recapId"])
+    assert payload["activitySummaryVersion"] == 1
+    assert payload["workouts"] == result["workouts"]
+    assert payload["workouts"][0]["workoutId"] == record["workoutId"]
+    assert payload["workouts"][0]["status"] == "accepted"
+    day = payload["activityDays"][0]
+    assert day["newlyEligibleSteps"] == 1200
+    assert Fraction(day["metrics"]["walking_running_distance_km"]["newlyEligible"]) == 1
+    assert Fraction(day["metrics"]["active_energy_kcal"]["newlyEligible"]) == 30
+    assert Fraction(day["metrics"]["flights_climbed"]["newlyEligible"]) == 3
+    assert Fraction(day["metrics"]["workout_minutes.running"]["newlyEligible"]) == 20
+    plant = payload["plants"][0]
+    assert int(plant["maximumGrowthMicroUnits"]) >= int(plant["afterGrowthMicroUnits"])
+    assert plant["speciesId"] == "oak" and plant["variantId"] == "standard"
+    replay = client.post("/v1/activity/sync", headers=player["headers"], json=body)
+    assert replay.json() == result
+    assert client.get("/v1/me/reward-recaps", headers=player["headers"]).json()["recaps"] == recaps
+
+
+def test_metric_only_activity_above_water_cap_still_has_a_recoverable_recap(player, client):
+    first, _ = player["submit"](activeEnergyKcal="999999.000")
+    second, _ = player["submit"](activeEnergyKcal="999999.001")
+    assert growth(second) == growth(first)
+    assert second["recapId"] is not None
+    rows = client.get("/v1/me/reward-recaps", headers=player["headers"]).json()["recaps"]
+    payload = next(row["payload"] for row in rows if row["recapId"] == second["recapId"])
+    assert payload["plants"] == []
+    metric = payload["activityDays"][0]["metrics"]["active_energy_kcal"]
+    assert Fraction(metric["newlyEligible"]) == Fraction(1, 1000)
+    assert Fraction(metric["waterQuantity"]) == 0
+    repeat, _ = player["submit"](activeEnergyKcal="999999.001")
+    assert repeat["recapId"] is None
+
+
+def test_midnight_recap_preserves_previous_day_new_steps(player, client):
+    previous = player["now"][0].date().isoformat()
+    player["now"][0] = (player["now"][0] + timedelta(days=1)).replace(hour=0, minute=1)
+    today = player["now"][0].date().isoformat()
+    result, _ = player["submit"](
+        days=[
+            {"gameDate": previous, "steps": 2200},
+            {"gameDate": today, "steps": 0},
+        ]
+    )
+    rows = client.get("/v1/me/reward-recaps", headers=player["headers"]).json()["recaps"]
+    payload = next(row["payload"] for row in rows if row["recapId"] == result["recapId"])
+    assert sum(day["newlyEligibleSteps"] for day in payload["activityDays"]) == 1200
+    assert (
+        next(day for day in payload["activityDays"] if day["gameDate"] == today)[
+            "newlyEligibleSteps"
+        ]
+        == 0
+    )
+
+
 @pytest.mark.parametrize("manual", [True, False, None])
 def test_manual_guard_preserves_true_false_absent(player, app, manual):
     start = player["now"][0] + timedelta(seconds=1)

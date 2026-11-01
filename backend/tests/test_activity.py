@@ -253,7 +253,11 @@ def test_maturity_once_caps_and_no_hidden_bank(app, client, headers, actors):
     assert first["garden"]["plants"][0]["growthMicroUnits"] == str(1000 * MICRO)
     assert first["firstMaturityCount"] == 1
     second = submit(client, headers, actor, 2000).json()
-    assert second["firstMaturityCount"] == 1 and second["recapId"] is None
+    assert second["firstMaturityCount"] == 1 and second["recapId"] is not None
+    recap = client.get("/v1/me/reward-recaps", headers=headers()).json()["recaps"]
+    adult = next(row["payload"] for row in recap if row["recapId"] == second["recapId"])
+    assert adult["plants"] == []
+    assert adult["activityDays"][0]["newlyEligibleSteps"] == 1000
     assert second["garden"]["totalAttractionMicroUnits"] == str(20 * MICRO)
     assert second["activitySteps"] == "2000"
 

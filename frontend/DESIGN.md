@@ -59,6 +59,31 @@ saved values, discovery and database contracts remain unchanged.
 Portable validation passes; native build, XCTest and device appearance remain
 Mac checks. See [STAGE2_UI_ACCEPTANCE.md](STAGE2_UI_ACCEPTANCE.md).
 
+## Stage 3 activity journal — 1 November 2026
+
+Activity and the entry popup share a horizontal daily-total strip for steps,
+distance, active energy, flights, workout count and workout minutes. Today uses
+readable local Health observations in the account's game timezone; new activity
+uses the fixed, deduplicated server recap batch and may belong to earlier days.
+Unavailable/legacy details do not pretend to be zero. Raw Health detail screens
+show daily totals without inventing a game recap.
+
+Recap plants use the existing rarity-framed card language and a cumulative bar
+to adulthood: green is existing water, orange is this recap's awarded water.
+Keep numeric gains, stage transitions, skill-water inclusion, storage status and
+VoiceOver values. Freeze awarded growth/stage/maximum to the receipt; current
+Health totals never calculate the gain. Mature/zero-award copies add no orange.
+
+Server recap JSON now retains metric/workout receipts and growth maxima and can
+describe newly accepted activity even when no integer water is awarded. No
+database migration, conversion/rate/cap or deduplication change is included.
+The last displayed recap is cached within the existing account/server-scoped
+activity journal; cache failure must not fail a confirmed sync or block editing.
+
+Move and Rotate no longer expose or render mature previews, superseding the
+Stage 2 adult-preview clause. Initial placement retains its existing preview.
+Native validation is pending; see [STAGE3_UI_ACCEPTANCE.md](STAGE3_UI_ACCEPTANCE.md).
+
 ## Retained gameplay and earlier presentation context
 
 Visual authority: the existing oak/Moonwillow assets and section 12.3 of the root

@@ -34,6 +34,10 @@ struct ActivityRecapRow: Identifiable {
     let skillWater: String
     let beforeStage: GrowthStage?
     let afterStage: GrowthStage?
+    let endGrowth: String?
+    let maximumGrowth: String?
+    let speciesID: String?
+    let variantID: String?
 
     static func make(recaps: [APIRewardRecap], plants: [APIOwnedPlant]) -> [Self] {
         let copies = Dictionary(plants.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
@@ -48,7 +52,11 @@ struct ActivityRecapRow: Identifiable {
             }
             return Self(id: id, plant: copies[id], water: sum(credits.map(\.awardedGrowthMicroUnits)),
                         skillWater: sum(credits.compactMap(\.skillBonusGrowthMicroUnits)),
-                        beforeStage: credits.first?.beforeStage, afterStage: credits.last?.afterStage)
+                        beforeStage: credits.first?.beforeStage, afterStage: credits.last?.afterStage,
+                        endGrowth: credits.last?.afterGrowthMicroUnits ?? copies[id]?.growthMicroUnits,
+                        maximumGrowth: credits.last?.maximumGrowthMicroUnits ?? copies[id]?.growthProgress?.maximumGrowthMicroUnits,
+                        speciesID: copies[id]?.speciesId ?? credits.last?.speciesId,
+                        variantID: copies[id]?.variantId ?? credits.last?.variantId)
         }.sorted {
             let left = ExactAmount.integer($0.water) ?? 0, right = ExactAmount.integer($1.water) ?? 0
             if (left > 0) != (right > 0) { return left > 0 }
@@ -64,6 +72,7 @@ final class AppEntryRecapCoordinator: ObservableObject {
     @Published private(set) var rows: [ActivityRecapRow] = []
     @Published private(set) var status = ""
     @Published private(set) var activeSkills: [APISkillSummary.Effect] = []
+    @Published private(set) var activitySummary = ActivityRecapSummary(recaps: [])
     private(set) var receiptIDs = Set<UUID>()
     private var gate = AppEntryGate()
     private var generation = UUID()
@@ -85,6 +94,7 @@ final class AppEntryRecapCoordinator: ObservableObject {
             editor?.effects.cancel(); displayedRecaps = []; editor = nil
             task?.cancel(); task = nil; generation = UUID()
             showing = false; loading = false; receiptIDs = []; rows = []; activeSkills = []
+            activitySummary = ActivityRecapSummary(recaps: [])
         }
         syncID = sync.id
     }
@@ -108,6 +118,7 @@ final class AppEntryRecapCoordinator: ObservableObject {
         editor.effects.beginRecap()
         syncID = sync.id
         rows = []; receiptIDs = []; activeSkills = []
+        activitySummary = ActivityRecapSummary(recaps: [])
         loading = true; showing = true; status = "Checking activity…"
         LifecycleDiagnostics.event("entry requested generation=\(token)")
         task = Task { [weak self] in
@@ -122,13 +133,15 @@ final class AppEntryRecapCoordinator: ObservableObject {
             // Storage pagination must not keep a confirmed recap in loading.
             self.receiptIDs = Set(recaps.map(\.id))
             self.displayedRecaps = recaps
+            self.activitySummary = ActivityRecapSummary(recaps: recaps)
             let affected = Set(recaps.flatMap { $0.payload.plants.map(\.plantId) })
             self.rows = ActivityRecapRow.make(recaps: recaps, plants: copies.filter { $0.placement != nil || affected.contains($0.id) })
             self.activeSkills = editor.confirmed?.skillSummary?.activeSkills ?? []
-            self.status = confirmed ? (recaps.isEmpty ? "No new confirmed growth." : "Your growth is already saved.") :
+            self.status = confirmed ? (recaps.isEmpty ? "No new confirmed growth." : "Activity and growth saved.") :
                 "Activity could not be fully refreshed. Showing available confirmed progress. You can retry in Activity."
             self.loading = false
             LifecycleDiagnostics.event("entry loaded generation=\(token) receipts=\(recaps.count)")
+            await sync.refreshDailyActivity()
         }
         return true
     }
@@ -159,5 +172,6 @@ final class AppEntryRecapCoordinator: ObservableObject {
 
     func signOut() {
         background(); gate.signOut(); sync = nil; editor = nil; syncID = nil; rows = []; activeSkills = []
+        activitySummary = ActivityRecapSummary(recaps: [])
     }
 }

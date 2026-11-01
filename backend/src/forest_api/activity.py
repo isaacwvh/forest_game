@@ -504,12 +504,27 @@ def sync(
                 "beforeStage": before[plant.id][2],
                 "afterStage": presenter.plant(plant, None).growth_stage,
                 "skillBonusGrowthMicroUnits": str(skill_bonus[plant.id]),
+                "speciesId": plant.species_id,
+                "variantId": plant.variant_id,
+                "maximumGrowthMicroUnits": str(
+                    presenter.profile(
+                        "growth", plant.growth_profile_id, plant.growth_profile_version
+                    ).maximum_growth_micro_units
+                ),
             }
             for plant in plants
             if plant.growth_micro_units > before[plant.id][0]
         ]
         recap_id = None
-        if credits:
+        # A recap describes accepted activity even when growth is capped or all
+        # plants are adult. Reward calculations and credit accounting stay above.
+        newly_accepted_days = [
+            day
+            for day in day_results
+            if day.newly_eligible_steps > 0
+            or any(Fraction(metric["newlyEligible"]) > 0 for metric in day.metrics.values())
+        ]
+        if credits or newly_accepted_days:
             event = RewardEvent(
                 id=uuid4(),
                 owner_id=user.id,
@@ -520,16 +535,16 @@ def sync(
                     "creditIds": credits,
                     "plants": summary,
                     "activityDays": [
-                        day.model_dump(mode="json", by_alias=True)
-                        for day in day_results
-                        if day.activity_credit_id is not None
+                        day.model_dump(mode="json", by_alias=True) for day in day_results
                     ],
+                    "activitySummaryVersion": 1,
+                    "workouts": workout_receipts,
                     "resourceDeltas": {},
                 },
             )
             session.add(event)
             session.flush()
-            if summary:
+            if summary or newly_accepted_days:
                 recap_id = uuid4()
                 session.add(
                     RewardRecap(
