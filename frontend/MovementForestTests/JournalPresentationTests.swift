@@ -1,5 +1,7 @@
 import XCTest
 import Foundation
+import SwiftUI
+import UIKit
 @testable import MovementForest
 
 final class JournalPresentationTests: XCTestCase {
@@ -54,6 +56,23 @@ final class JournalPresentationTests: XCTestCase {
         XCTAssertEqual(display.remaining, ExactAmount.water("39308141"))
         XCTAssertEqual(display.displayRemaining, JournalAmount.water("39308141"))
         XCTAssertEqual(display.caption, "\(JournalAmount.water("39308141")) to Young")
+    }
+    @MainActor
+    func testCompactCatalogMetricReservesASeparateSingleLineForTheWholeNumber() {
+        func height(_ value: String) -> CGFloat {
+            let host = UIHostingController(rootView:
+                JournalMetric(title: "Cumulative water", value: value, explanation: "", metric: "water", compact: true)
+                    .environment(\.dynamicTypeSize, .large))
+            return host.sizeThatFits(in: CGSize(width: 74, height: 1000)).height
+        }
+        let baseline = height("0")
+        let lineHeight = UIFont.preferredFont(forTextStyle: .caption2,
+            compatibleWith: UITraitCollection(preferredContentSizeCategory: .large)).lineHeight
+        XCTAssertGreaterThan(baseline, 44, "The number needs its own row below the 44-point icon target")
+        XCTAssertLessThanOrEqual(baseline, 44 + ceil(lineHeight) + 4)
+        for value in ["1000", "1,000", "1000.1"] {
+            XCTAssertEqual(height(value), baseline, accuracy: 1, "\(value) must stay on one line in an 80-point stage cell")
+        }
     }
     func testCatalogDescriptionsReplaceOnlyLegacyPlaceholderOrMissingCopy() {
         var oak = APISpecies(speciesId: "oak", displayName: "Oak", clearanceRadius: 0.9, variants: [])

@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum GardenEditorSheet: String, Identifiable {
-    case plants, storage, position, rotation, errors, information, details
+    case plants, storage, position, errors, information, details
     var id: String { rawValue }
 }
 
@@ -69,7 +69,10 @@ struct ConnectedGardenScreen: View {
                     if store.editing { statusPanel }
                     else { browsingStatus }
                 } controls: {
-                    if store.editing { controls }
+                    if store.editing {
+                        if store.candidate?.kind == .rotate { GardenRotationControls(store: store) }
+                        else { controls }
+                    }
                     else if let selected = store.selectedPlanted {
                         GardenSelectionPopup(name: selected.speciesId.capitalized, variant: selected.variantId.capitalized,
                             rarity: store.catalogue?.rarity(for: selected.speciesId),
@@ -112,8 +115,8 @@ struct ConnectedGardenScreen: View {
                 case .storage: storageList
                 case .details: EmptyView()
                 case .information: gardenInformation
-                case .position, .rotation:
-                    CandidateControlsScreen(store: store, rotationOnly: item == .rotation)
+                case .position:
+                    CandidateControlsScreen(store: store)
                 case .errors:
                     List {
                         Text("Some plants couldn’t be displayed. Your plants and progress are saved.")
@@ -221,7 +224,7 @@ struct ConnectedGardenScreen: View {
                 Text("Sign in again through Settings → Account and sign-in. Your saved requests are retained.").font(.caption)
             }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal).padding(.vertical, 10)
-            .background(Color(uiColor: .systemBackground))
+            .foregroundStyle(JournalTheme.ink).background(JournalTheme.paper)
     }
 
     private var gardenInformation: some View {
@@ -269,7 +272,7 @@ struct ConnectedGardenScreen: View {
                 if store.editing && store.candidate == nil && selected.placement != nil {
                     editingLayout {
                         Button("Move") { store.begin(selected, kind: .move) }.accessibilityIdentifier("editor.move")
-                        Button("Rotate") { store.begin(selected, kind: .rotate); if store.candidate != nil { sheet = .rotation } }
+                        Button("Rotate") { store.begin(selected, kind: .rotate) }
                             .accessibilityIdentifier("editor.rotate")
                         Button("Store") {
                             let id = selected.id
@@ -315,7 +318,8 @@ struct ConnectedGardenScreen: View {
                         .accessibilityLabel("Reset garden view")
                 }
             }
-        }.padding(.horizontal).padding(.bottom, 8).background(Color(uiColor: .systemBackground))
+        }.padding(.horizontal).padding(.bottom, 8)
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
     }
 
     private var editingLayout: AnyLayout {
@@ -323,20 +327,24 @@ struct ConnectedGardenScreen: View {
     }
 
     private var plantsList: some View {
-        List {
-            if store.confirmed?.plants.isEmpty != false { Text("No planted copies. Use Edit → Storage to place a plant.") }
-            ForEach(store.confirmed?.plants ?? []) { plant in
-                if store.editing {
-                    Button { store.cancelCandidate(); store.selectedID = plant.id; sheet = nil } label: {
-                        OwnedPlantRow(plant: plant, store: store, catalog: catalog)
-                    }.accessibilityIdentifier("editor.plant.\(plant.id)")
-                } else {
-                    Button { browsingInspection = PlantInspection(id: plant.id) } label: {
-                        OwnedPlantRow(plant: plant, store: store, catalog: catalog)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                if store.confirmed?.plants.isEmpty != false { Text("No planted copies. Use Edit → Storage to place a plant.") }
+                JournalGrid {
+                    ForEach(store.confirmed?.plants ?? []) { plant in
+                        OwnedPlantTile(plant: plant, store: store, catalog: catalog,
+                            identifier: (store.editing ? "editor.plant." : "garden.plant.") + plant.id.uuidString) {
+                            if store.editing {
+                                store.cancelCandidate(); store.selectedID = plant.id; sheet = nil
+                            } else {
+                                browsingInspection = PlantInspection(id: plant.id)
+                            }
+                        }
                     }
                 }
-            }
-        }.navigationTitle("Garden plants")
+            }.padding(16)
+        }.background(JournalPageBackground().ignoresSafeArea())
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Garden plants")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
             .fullScreenCover(item: $browsingInspection) { selection in
                 OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog).journalModalBackground()
@@ -359,17 +367,23 @@ struct ConnectedGardenScreen: View {
     }
 
     private var storageList: some View {
-        List {
-            if let message = store.message { Text(message).font(.callout) }
-            if store.inventory.isEmpty { Text("No stored copies in the saved inventory. Storing a plant preserves its progress.") }
-            ForEach(store.inventory) { plant in
-                Button { storageInspection = PlantInspection(id: plant.id) } label: {
-                    OwnedPlantRow(plant: plant, store: store, catalog: catalog)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                if store.showingCached { Label("Saved plants · Connect to refresh", systemImage: "wifi.slash").font(.callout) }
+                if let message = store.message { Text(message).font(.callout) }
+                if store.inventory.isEmpty { Text("No stored copies in the saved inventory.") }
+                JournalGrid {
+                    ForEach(store.inventory) { plant in
+                        OwnedPlantTile(plant: plant, store: store, catalog: catalog,
+                            identifier: "storage.copy." + plant.id.uuidString) {
+                            storageInspection = PlantInspection(id: plant.id)
+                        }
+                    }
                 }
-                    .accessibilityIdentifier("storage.copy.\(plant.id)")
-            }
-            InventoryPagination(store: store)
-        }.navigationTitle("Storage")
+                InventoryPagination(store: store)
+            }.padding(16)
+        }.background(JournalPageBackground().ignoresSafeArea())
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Storage")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
             .fullScreenCover(item: $storageInspection, onDismiss: {
                 if placedFromStorageInspector {
@@ -384,23 +398,82 @@ struct ConnectedGardenScreen: View {
 
 }
 
+/// Lives in the reserved editing panel: the scene stays mounted and active.
+@MainActor
+struct GardenRotationControls: View {
+    @ObservedObject var store: GardenEditorStore
+    @FocusState private var editingAngle: Bool
+    private var angle: Binding<Double> {
+        Binding(get: { NSDecimalNumber(decimal: store.candidate?.rotation ?? 0).doubleValue },
+                set: { store.updateRotation($0) })
+    }
+    var body: some View {
+        VStack(spacing: 8) {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    Text("Rotate plant").font(.system(.headline, design: .serif)).fixedSize()
+                    Spacer(minLength: 0)
+                    adultPreview
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Rotate plant").font(.system(.headline, design: .serif))
+                    adultPreview
+                }
+            }
+            HStack(spacing: 12) {
+                Slider(value: angle, in: 0...359.99, step: 0.01,
+                       onEditingChanged: { if $0 { editingAngle = false } })
+                    .frame(minHeight: 44).accessibilityLabel("Rotation in degrees")
+                    .accessibilityIdentifier("editor.rotation")
+                HStack(spacing: 2) {
+                    TextField("Degrees", value: angle, format: .number.precision(.fractionLength(0...2)))
+                        .keyboardType(.decimalPad).multilineTextAlignment(.trailing).monospacedDigit()
+                        .textFieldStyle(.roundedBorder).focused($editingAngle)
+                        .frame(width: 80).frame(minHeight: 44)
+                        .accessibilityLabel("Degrees").accessibilityIdentifier("editor.angle")
+                    Text("°").accessibilityHidden(true)
+                }
+            }.disabled(!store.canEdit)
+            HStack(spacing: 12) {
+                Button("Cancel") { editingAngle = false; store.cancelCandidate() }
+                    .frame(minHeight: 44).accessibilityIdentifier("editor.cancel")
+                Spacer(minLength: 0)
+                Button("Apply") { editingAngle = false; Task { await store.releaseCandidate() } }
+                    .frame(minHeight: 44)
+                    .disabled(store.candidate?.validity != .valid || !store.canEdit)
+                    .accessibilityIdentifier("editor.apply")
+            }.buttonStyle(.bordered).controlSize(.regular)
+        }.padding(.horizontal, 16).padding(.bottom, 8)
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
+            .accessibilityIdentifier("editor.rotationPanel")
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { editingAngle = false }
+                }
+            }
+    }
+    private var adultPreview: some View {
+        Toggle("Adult preview", isOn: $store.adultPreview).font(.caption).fixedSize(horizontal: true, vertical: false)
+            .frame(minHeight: 44).disabled(store.candidate?.plant.growthStage == .adult || !store.canEdit)
+            .accessibilityLabel("Show adult preview").accessibilityIdentifier("editor.adult")
+    }
+}
+
 @MainActor
 private struct CandidateControlsScreen: View {
     @ObservedObject var store: GardenEditorStore
-    let rotationOnly: Bool
     @State private var x: Double = 0
     @State private var y: Double = 0
     @State private var angle: Double = 0
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         Form {
-            if !rotationOnly {
-                Section("Garden position") {
-                    TextField("X", value: $x, format: .number.precision(.fractionLength(0...3)))
-                        .keyboardType(.decimalPad).accessibilityIdentifier("editor.x")
-                    TextField("Y", value: $y, format: .number.precision(.fractionLength(0...3)))
-                        .keyboardType(.decimalPad).accessibilityIdentifier("editor.y")
-                }
+            Section("Garden position") {
+                TextField("X", value: $x, format: .number.precision(.fractionLength(0...3)))
+                    .keyboardType(.decimalPad).accessibilityIdentifier("editor.x")
+                TextField("Y", value: $y, format: .number.precision(.fractionLength(0...3)))
+                    .keyboardType(.decimalPad).accessibilityIdentifier("editor.y")
             }
             Section("Rotation") {
                 Slider(value: $angle, in: 0...359.99, step: 0.01).accessibilityLabel("Rotation in degrees")
@@ -411,7 +484,7 @@ private struct CandidateControlsScreen: View {
             Button("Apply and save") {
                 Task { await store.releaseCandidate(); dismiss() }
             }.disabled(store.candidate?.validity != .valid || !store.canEdit).accessibilityIdentifier("editor.savePosition")
-        }.navigationTitle(rotationOnly ? "Rotate plant" : "Position plant")
+        }.navigationTitle("Position plant")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { store.cancelCandidate(); dismiss() } } }
             .onAppear {
                 if let candidate = store.candidate {

@@ -183,11 +183,16 @@ struct JournalMetric: View {
     var symbol: String = "info.circle"
     var compact = false
     var body: some View {
-        HStack(spacing: 0) {
+        let layout = compact ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 0))
+        layout {
             JournalInfoIcon(title: title, explanation: explanation, metric: metric, symbol: symbol)
-            Text(value).font(compact ? .caption2 : .callout).monospacedDigit()
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityLabel("\(title), \(value)")
+            if compact {
+                Text(value).font(.caption2).monospacedDigit().lineLimit(1).minimumScaleFactor(0.75)
+                    .frame(maxWidth: .infinity).accessibilityLabel("\(title), \(value)")
+            } else {
+                Text(value).font(.callout).monospacedDigit().fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel("\(title), \(value)")
+            }
         }.foregroundStyle(JournalTheme.ink)
     }
 }

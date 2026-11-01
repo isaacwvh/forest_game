@@ -221,6 +221,61 @@ final class GardenEditorTests: XCTestCase {
         renderer.stop()
     }
 
+    func testInlineRotationKeepsThePlantVisibleAndOnlySavesOnApply() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        service.current = fixture.plantResult.garden
+        let store = try makeStore(service), catalog = try BundleAssetCatalog()
+        await store.start()
+        let plant = try XCTUnwrap(store.confirmed?.plants.first)
+        let placement = try XCTUnwrap(plant.placement)
+        store.editing = true; store.selectedID = plant.id
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = UIHostingController(rootView:
+            ConnectedGardenScreen(store: store, catalog: catalog, active: true)
+                .environment(\.dynamicTypeSize, .large).environment(\.accessibilityReduceMotion, true)
+                .environment(\.scenePhase, .active))
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil }
+        for _ in 0..<1500 {
+            if let renderer = LiveGardenDiagnostics.shared.renderer, renderer.view.window === window,
+               renderer.modelLoadCount == 1, !renderer.isLoading, !renderer.view.isHidden { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        let renderer = try XCTUnwrap(LiveGardenDiagnostics.shared.renderer)
+        defer { renderer.stop() }
+        XCTAssertTrue(renderer.view.window === window)
+        XCTAssertFalse(renderer.view.isHidden)
+        let entity = try XCTUnwrap(renderer.view.scene.anchors.first?.findEntity(named: plant.id.uuidString))
+        let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
+        let bounds = renderer.view.bounds, cameraPosition = camera.position, cameraRotation = camera.orientation.vector
+        let originalRotation = entity.orientation.vector
+        store.begin(plant, kind: .rotate); store.updateRotation(189.43)
+        try await Task.sleep(nanoseconds: 150_000_000)
+        XCTAssertFalse(renderer.view.isHidden, "The garden must stay active while the rotation panel is open")
+        XCTAssertEqual(renderer.view.bounds, bounds)
+        XCTAssertEqual(camera.position, cameraPosition); XCTAssertEqual(camera.orientation.vector, cameraRotation)
+        XCTAssertNotEqual(entity.orientation.vector, originalRotation, "The slider's candidate must reach the visible plant")
+        XCTAssertEqual(renderer.modelLoadCount, 1)
+        XCTAssertEqual(store.confirmed?.plants.first?.placement, placement)
+        XCTAssertTrue(service.bodies.isEmpty)
+        store.cancelCandidate()
+        try await Task.sleep(nanoseconds: 150_000_000)
+        XCTAssertEqual(entity.orientation.vector, originalRotation)
+        XCTAssertTrue(service.bodies.isEmpty)
+        store.begin(plant, kind: .rotate); store.updateRotation(359.99)
+        await store.releaseCandidate()
+        let request = try JSONDecoder().decode(GardenEditRequest.self, from: XCTUnwrap(service.bodies.first))
+        let action = try XCTUnwrap(request.actions.first)
+        XCTAssertEqual(service.bodies.count, 1)
+        XCTAssertEqual(action.action, .rotate); XCTAssertEqual(action.plantId, plant.id)
+        XCTAssertNil(action.x); XCTAssertNil(action.y)
+        XCTAssertEqual(action.rotationDegrees, Decimal(string: "359.99"))
+        XCTAssertEqual(store.confirmed?.plants.first?.placement?.x, placement.x)
+        XCTAssertEqual(store.confirmed?.plants.first?.placement?.y, placement.y)
+        XCTAssertEqual(store.confirmed?.plants.first?.growthMicroUnits, plant.growthMicroUnits)
+    }
+
     func testConfirmedStorageClearsGardenSelectionEvenWhileTheCopyRemainsOwned() async throws {
         let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
         service.current = fixture.plantResult.garden

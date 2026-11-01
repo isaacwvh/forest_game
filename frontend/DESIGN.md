@@ -36,6 +36,29 @@ use [STAGE1_UI_ACCEPTANCE.md](STAGE1_UI_ACCEPTANCE.md).
   native back navigation, stable mounted scene/camera and existing gameplay.
   Recap, Garden/Edit styling, economy, account and settings redesigns are deferred.
 
+## Stage 2 botanical journal — 1 November 2026
+
+This batch extends the approved Stage 1 cards to Storage and the connected
+Garden plant picker, superseding their row-layout deferral above. Both reuse
+OwnedPlantTile, including equal heights, rarity explanations, rounded display
+water, exact copy identity and the existing details/placement entry points.
+Storage retains its pagination, saved-data notice and recovery messages.
+
+Rotation lives in the existing reserved editing panel beside the mounted,
+active garden scene. The slider and precise degree field update only the
+existing candidate; Cancel discards it and Apply uses the unchanged guarded
+save operation. Adult preview, keyboard dismissal, background cancellation and
+Done editing remain available. Position editing retains its existing form.
+Panel changes do not resize the scene or reset the camera.
+
+Compact catalog stage metrics place the icon above a single-line number so
+values such as 1000 do not compete with the icon's 44-point touch target.
+Existing fewer-column/vertical layouts handle larger text. Game calculations,
+saved values, discovery and database contracts remain unchanged.
+
+Portable validation passes; native build, XCTest and device appearance remain
+Mac checks. See [STAGE2_UI_ACCEPTANCE.md](STAGE2_UI_ACCEPTANCE.md).
+
 ## Retained gameplay and earlier presentation context
 
 Visual authority: the existing oak/Moonwillow assets and section 12.3 of the root

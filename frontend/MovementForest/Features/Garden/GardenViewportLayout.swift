@@ -14,7 +14,8 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
     var body: some View {
         GeometryReader { geometry in
             let top = editing && !compact ? min(260, geometry.size.height * 0.32) : 0
-            let bottom = editing && !compact ? min(180, geometry.size.height * 0.24) : 0
+            // Reserve the normal rotation panel even on a shorter portrait screen.
+            let bottom = editing && !compact ? min(180, max(160, geometry.size.height * 0.24)) : 0
             let side = editing && compact ? min(340, geometry.size.width * 0.42) : 0
             let browsingHeight = editing ? geometry.size.height : min(geometry.size.height,
                 max(0, (navigationTop ?? geometry.frame(in: .global).maxY) - geometry.frame(in: .global).minY))
@@ -33,7 +34,7 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                             }
                     } else if !compact {
                         ScrollView { status() }.frame(height: top)
-                            .background(Color(uiColor: .systemBackground))
+                            .background(JournalTheme.paper)
                     }
                 }
                 .overlay(alignment: .bottom) {
@@ -50,13 +51,13 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                             .padding(.bottom, geometry.size.height - browsingHeight)
                     } else if !compact {
                         ScrollView { controls() }.frame(height: bottom)
-                            .background(Color(uiColor: .systemBackground))
+                            .background(JournalTheme.paper)
                     }
                 }
                 .overlay(alignment: .trailing) {
                     if editing && compact {
                         ScrollView { status(); controls() }.frame(width: side)
-                            .background(Color(uiColor: .systemBackground))
+                            .background(JournalTheme.paper)
                     }
                 }
         }.coordinateSpace(name: "garden.viewport")
