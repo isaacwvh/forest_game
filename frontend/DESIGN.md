@@ -84,6 +84,37 @@ Move and Rotate no longer expose or render mature previews, superseding the
 Stage 2 adult-preview clause. Initial placement retains its existing preview.
 Native validation is pending; see [STAGE3_UI_ACCEPTANCE.md](STAGE3_UI_ACCEPTANCE.md).
 
+## Stage 4 Garden/Edit completion — 3 November 2026
+
+The selection card, editing controls and Garden header now use the journal
+palette, current-stage portraits, rarity frames and concise native icon labels.
+Garden offers Details/Close; focused Edit adds the unchanged Move/Rotate/Store
+callbacks. Long holds use native label-only context menus without firing the
+action. Disabled operations retain visible disabled styling. Sample/read-only
+plant browsers use portrait grids without inventing earned-water quantities.
+
+This supersedes the older full-scene overlay rule below. GardenViewportLayout
+allocates separate clipped header, visible-scene and lower-panel regions. The
+lower panel stays above the measured navigation edge; compact editing retains
+its side panel. Region sizes depend on mode, available safe-area bounds and
+text size, never selection or notice content. Selection/error changes preserve
+scene identity, bounds, camera and imported models. Tall content scrolls within
+its own region. Offscreen panel frames cannot exclude visible garden hit targets.
+
+Precise Position is inline beside the live garden. Its numeric formats, slider,
+store setters and Apply/Cancel operations are retained. The scene is visible
+but does not accept ground gestures while entering precise coordinates, matching
+the former modal's interaction protection. Keyboard Done/dismissal is available.
+The disappearing panel does not cancel an Apply whose activity preflight has
+already captured the placement intent. Move/Rotate still have no mature preview;
+initial placement retains its existing option.
+
+Garden information, loading/artwork recovery, token/attraction/stored-visit
+presentation and the sample Garden share the same materials. Token feedback,
+collection eligibility, visitor clocks/claims and all service/model/renderer
+code are unchanged. See [STAGE4_UI_ACCEPTANCE.md](STAGE4_UI_ACCEPTANCE.md) for
+executed portable checks and the native validation still required.
+
 ## Retained gameplay and earlier presentation context
 
 Visual authority: the existing oak/Moonwillow assets and section 12.3 of the root

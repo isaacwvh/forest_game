@@ -89,12 +89,27 @@ final class ForestUITests: XCTestCase {
         XCTAssertTrue(app.buttons["editor.place"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["editor.apply"].exists)
         app.buttons["editor.place"].tap()
-        XCTAssertTrue(app.buttons["editor.cancel"].waitForExistence(timeout: 5)); app.buttons["editor.cancel"].tap()
+        XCTAssertTrue(app.buttons["editor.cancel"].waitForExistence(timeout: 5))
+        app.buttons["editor.position"].tap()
+        XCTAssertTrue(app.textFields["editor.x"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["editor.y"].exists); XCTAssertTrue(app.textFields["editor.angle"].exists)
+        let positionPanel = app.descendants(matching: .any).matching(identifier: "editor.positionPanel").firstMatch
+        let liveGarden = app.descendants(matching: .any).matching(identifier: "garden.scene").firstMatch
+        XCTAssertTrue(liveGarden.exists); XCTAssertGreaterThan(liveGarden.frame.height, 0)
+        XCTAssertLessThanOrEqual(liveGarden.frame.maxY, positionPanel.frame.minY + 1)
+        XCTAssertFalse(app.navigationBars["Position plant"].exists)
+        app.buttons["editor.cancel"].tap()
         app.buttons["editor.storage"].tap(); stored.tap(); app.buttons["editor.place"].tap()
         app.buttons["editor.apply"].tap()
         let rotate = app.buttons["editor.rotate"]
         XCTAssertTrue(rotate.waitForExistence(timeout: 10))
         expectation(for: ready, evaluatedWith: rotate); waitForExpectations(timeout: 10)
+        let popup = app.descendants(matching: .any).matching(identifier: "garden.selection").firstMatch
+        XCTAssertTrue(popup.exists)
+        XCTAssertLessThanOrEqual(liveGarden.frame.maxY, popup.frame.minY + 1)
+        app.buttons["editor.store"].press(forDuration: 0.6)
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+        XCTAssertTrue(app.buttons["editor.store"].waitForExistence(timeout: 5), "Holding an action icon must not store the plant")
         app.buttons["editor.move"].tap()
         XCTAssertFalse(app.switches["editor.adult"].exists)
         app.buttons["editor.cancel"].tap()
@@ -351,10 +366,10 @@ final class ForestUITests: XCTestCase {
         app.buttons["settings.gameHelp"].tap()
         app.buttons["garden.samplePlants"].tap()
         XCTAssertTrue(app.navigationBars["Garden plants"].waitForExistence(timeout: 5))
-        let firstPlant = app.cells.firstMatch
+        let firstPlant = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "garden.browser.")).firstMatch
         XCTAssertTrue(firstPlant.waitForExistence(timeout: 5))
         firstPlant.tap()
-        XCTAssertTrue(app.staticTexts["Growth stage"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["plantDetails.stage"].waitForExistence(timeout: 5))
     }
 
     func testGameHelpKeepsControlsOutOfGardenInfoAndRevealsThemOnDemand() {

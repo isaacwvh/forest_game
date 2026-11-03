@@ -275,43 +275,44 @@ struct GardenSummaryHeader: View {
                 }
                 HStack(spacing: 6) {
                     infoButton.frame(maxWidth: .infinity)
-                    Color.clear.frame(maxWidth: .infinity).frame(height: 0).allowsHitTesting(false)
-                        .accessibilityHidden(true)
                     collectButton.frame(maxWidth: .infinity)
                 }
             }
-        }.padding(.horizontal, 12).padding(.top, 8)
+        }.padding(.horizontal, 12).padding(.vertical, 6)
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
     }
 
     private func metric(_ title: String, key: String, value: String?) -> some View {
         VStack(spacing: 2) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
             if key == "tokens" {
                 TokenRewardCounter(balance: value ?? "Unavailable", reward: tokenReward, finished: tokenRewardFinished,
                                    reduceMotionOverride: tokenReduceMotion)
             } else {
                 QuantityLabel(metric: key, text: value ?? "Unavailable").font(.subheadline).monospacedDigit()
+                    .lineLimit(1).minimumScaleFactor(0.75)
             }
-        }.frame(maxWidth: .infinity, alignment: textSize.isAccessibilitySize ? .leading : .center)
+        }.frame(maxWidth: .infinity, minHeight: 48, alignment: textSize.isAccessibilitySize ? .leading : .center)
+            .contentShape(Rectangle()).contextMenu { Button(title) { }.disabled(true) }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(key == "offline_capacity" ? (storedAccessibility ?? "Stored visits, Unavailable") :
                 "\(key == "tokens" ? "Visitor tokens" : title), \(value ?? "Unavailable")")
     }
     private var infoButton: some View {
-        Button("Garden info", action: information).buttonStyle(GardenOutlineButtonStyle())
-            .font(.callout).accessibilityIdentifier("garden.info").gardenOverlayTarget()
+        GardenActionButton(title: "Garden info", symbol: "info.circle",
+            identifier: "garden.info", action: information).gardenOverlayTarget()
     }
     private var collectButton: some View {
         Button(action: collect) {
             HStack(spacing: 4) {
                 if collecting { ProgressView().controlSize(.small) }
-                Text("Collect")
+                Image(systemName: "tray.and.arrow.down").frame(minWidth: 44, minHeight: 44)
             }
         }.buttonStyle(GardenOutlineButtonStyle()).font(.callout)
             .disabled(!canCollect).foregroundStyle(canCollect ? Color.forestTint : .secondary)
             .accessibilityLabel("Collect stored visits")
             .accessibilityValue(collecting ? "Confirming collection" : "")
             .accessibilityIdentifier("visitors.claim").gardenOverlayTarget()
+            .contextMenu { Button("Collect stored visits") { }.disabled(true) }
     }
 }
 

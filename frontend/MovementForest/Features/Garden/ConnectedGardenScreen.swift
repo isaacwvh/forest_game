@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum GardenEditorSheet: String, Identifiable {
-    case plants, storage, position, errors, information, details
+    case plants, storage, errors, information, details
     var id: String { rawValue }
 }
 
@@ -15,6 +15,7 @@ struct ConnectedGardenScreen: View {
     @StateObject private var renderSession = GardenRenderSession()
     private var renderer: RealityGardenRenderer { renderSession.renderer }
     @State private var sheet: GardenEditorSheet?
+    @State private var positionControlsPresented = false
     @State private var detailCopyID: UUID?
     @State private var browsingInspection: PlantInspection?
     @State private var storageInspection: PlantInspection?
@@ -62,6 +63,7 @@ struct ConnectedGardenScreen: View {
                             if event == .ended { Task { await store.releaseCandidate() } }
                         }
                     })
+                    .allowsHitTesting(!positionControlsPresented)
                     .overlay {
                         if let visitors = visitors { VisitorGardenOverlay(store: visitors, renderer: renderer) }
                     }
@@ -69,16 +71,14 @@ struct ConnectedGardenScreen: View {
                     if store.editing { statusPanel }
                     else { browsingStatus }
                 } controls: {
-                    if store.editing {
-                        if store.candidate?.kind == .rotate { GardenRotationControls(store: store) }
-                        else { controls }
-                    }
+                    if store.editing { controls }
                     else if let selected = store.selectedPlanted {
-                        GardenSelectionPopup(name: selected.speciesId.capitalized, variant: selected.variantId.capitalized,
+                        GardenSelectionPopup(name: name(of: selected), variant: selected.variantId.capitalized,
                             rarity: store.catalogue?.rarity(for: selected.speciesId),
                             stage: selected.growthStage.title,
                             close: { renderer.dismissSelection() },
-                            details: { detailCopyID = selected.id; sheet = .details })
+                            details: { detailCopyID = selected.id; sheet = .details },
+                            plant: store.render(selected), owned: selected, catalog: catalog)
                     }
                 }
                 .onPreferenceChange(GardenOverlayFrames.self) { renderer.setOverlayFrames($0) }
@@ -115,16 +115,18 @@ struct ConnectedGardenScreen: View {
                 case .storage: storageList
                 case .details: EmptyView()
                 case .information: gardenInformation
-                case .position:
-                    CandidateControlsScreen(store: store)
                 case .errors:
-                    List {
-                        Text("Some plants couldn’t be displayed. Your plants and progress are saved.")
-                        Button("Reload plants") {
-                            sheet = nil
-                            if let garden = store.rendered { renderer.retry(garden, catalog: catalog) }
-                        }
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Some plants couldn’t be displayed. Your plants and progress are saved.")
+                            Button("Reload plants") {
+                                sheet = nil
+                                if let garden = store.rendered { renderer.retry(garden, catalog: catalog) }
+                            }.frame(minHeight: 44).buttonStyle(.bordered)
+                        }.padding(20)
                     }.navigationTitle("Plant artwork")
+                        .background(JournalPageBackground().ignoresSafeArea())
+                        .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
                         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
                 }
             }
@@ -133,6 +135,7 @@ struct ConnectedGardenScreen: View {
             OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog).journalModalBackground()
         }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
+        .onChange(of: store.candidate?.plant.id) { if $0 == nil { positionControlsPresented = false } }
         .onChange(of: store.canEdit) { if !$0 && !store.preparingMembership { store.cancelCandidate() } }
         .onChange(of: active) { value in
             if !value { store.cancelCandidate() }
@@ -157,11 +160,11 @@ struct ConnectedGardenScreen: View {
         VStack(spacing: 8) {
             if let visitors = visitors {
                 VisitorSummaryHeader(store: visitors,
-                    attraction: (store.confirmed?.totalAttractionMicroUnits).map { ExactAmount.water($0) },
+                    attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
                     information: { sheet = .information })
                 VisitorRecoveryNotice(store: visitors)
             } else {
-                GardenSummaryHeader(attraction: (store.confirmed?.totalAttractionMicroUnits).map { ExactAmount.water($0) },
+                GardenSummaryHeader(attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
                     information: { sheet = .information }, collect: {})
             }
             if store.showingCached || store.gardenMessage != nil || store.state.busy ||
@@ -205,123 +208,127 @@ struct ConnectedGardenScreen: View {
             if let candidate = store.candidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
                     .font(.callout).accessibilityIdentifier("editor.validity")
-                Text(candidate.kind == .rotate ? "Adjust the angle, then apply." : "Drag or tap the ground. A valid release saves your edit.")
-                    .font(.caption).foregroundStyle(.secondary)
                 if candidate.kind == .plant && store.adultPreview { Text("Adult preview · Clearance stays the same").font(.caption) }
             } else if let message = store.gardenMessage {
                 Text(message).font(.callout).accessibilityIdentifier("editor.status")
-            } else if store.confirmed?.plants.isEmpty == true {
-                Text("Open Storage and choose a plant to inspect, then Place.").font(.callout)
-            } else {
-                Text("Select a plant to move, rotate, store or inspect.").font(.caption).foregroundStyle(.secondary)
             }
             if store.state.busy { ProgressView(store.state == .saving ? "Saving edit…" : "Refreshing garden…") }
             if store.state == .unknown {
-                Button("Retry saved edit") { Task { await store.retryPending() } }.accessibilityIdentifier("editor.retry")
+                Button("Retry saved edit") { Task { await store.retryPending() } }
+                    .frame(minHeight: 44).accessibilityIdentifier("editor.retry")
             } else if store.state == .blocked && store.pending == nil && !store.recoveryLocked {
-                Button("Refresh garden") { Task { await store.refresh() } }
+                Button("Refresh garden") { Task { await store.refresh() } }.frame(minHeight: 44)
             } else if store.state == .authenticationRequired {
                 Text("Sign in again through Settings → Account and sign-in. Your saved requests are retained.").font(.caption)
+            }
+            if renderer.isLoading { ProgressView("Loading plants…") }
+            if renderer.visitorAssetIssue != nil {
+                Text("Butterfly artwork is unavailable. You can still welcome visitors.").font(.caption)
+                Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.frame(minHeight: 44)
+            }
+            if !renderer.errors.isEmpty {
+                Button("Some plants couldn’t load") { sheet = .errors }.frame(minHeight: 44)
             }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal).padding(.vertical, 10)
             .foregroundStyle(JournalTheme.ink).background(JournalTheme.paper)
     }
 
     private var gardenInformation: some View {
-        List {
-            Section("Active skills") {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                JournalSectionHeading(title: "Active skills")
                 if let summary = store.confirmed?.skillSummary {
-                    if summary.activeSkills.isEmpty { Text("No active skills").foregroundStyle(.secondary) }
+                    if summary.activeSkills.isEmpty { Text("No active skills").foregroundStyle(JournalTheme.secondary) }
                     ForEach(summary.activeSkills) { skill in
                         DisclosureGroup {
-                            Text(skill.description).foregroundStyle(.secondary)
+                            Text(skill.description).foregroundStyle(JournalTheme.secondary)
                             if let source = store.ownedCopy(skill.sourcePlantId) {
                                 PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []),
                                     rarity: store.catalogue?.rarity(for: source.speciesId), suffix: " · Fully grown source")
-                                    .font(.caption).foregroundStyle(.secondary)
+                                    .font(.caption).foregroundStyle(JournalTheme.secondary)
                             }
                             if skill.eligibleSourcePlantIds.count > 1 {
                                 Text("\(skill.eligibleSourcePlantIds.count) sources share this bonus.").font(.caption)
                             }
                         } label: {
                             SkillSummaryLabel(skill: skill)
-                        }.padding(.vertical, 4).accessibilityIdentifier("garden.skill.\(skill.skillId)")
+                        }.padding(12).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
+                            .accessibilityIdentifier("garden.skill.\(skill.skillId)")
                     }
                     if summary.capReached {
                         DisclosureGroup("Boost cap reached") { Text(summary.caps.description).font(.footnote) }
                     }
                 } else { Text("Skill information is unavailable. Refresh your garden to try again.") }
-                if store.showingCached { Text("Last confirmed skills").font(.caption).foregroundStyle(.secondary) }
-            }
+                if store.showingCached { Text("Last confirmed skills").font(.caption).foregroundStyle(JournalTheme.secondary) }
+            }.padding(20)
         }.navigationTitle("Garden information")
+            .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
     }
 
     private var controls: some View {
-        VStack(spacing: 8) {
-            if renderer.isLoading { ProgressView("Loading plants…") }
-            if renderer.visitorAssetIssue != nil {
-                Text("Butterfly artwork is unavailable. You can still welcome visitors.").font(.caption).foregroundStyle(.secondary)
-                Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.frame(minHeight: 44)
-            }
-            if !renderer.errors.isEmpty { Button("Some plants couldn’t load") { sheet = .errors }.font(.caption) }
-            if let selected = store.selected {
-                PlantNameText("\(selected.speciesId.capitalized) · \(selected.variantId.capitalized)",
-                    rarity: store.catalogue?.rarity(for: selected.speciesId), suffix: " · \(selected.growthStage.title)")
-                    .font(.subheadline)
-                if store.editing && store.candidate == nil && selected.placement != nil {
-                    editingLayout {
-                        Button("Move") { store.begin(selected, kind: .move) }.accessibilityIdentifier("editor.move")
-                        Button("Rotate") { store.begin(selected, kind: .rotate) }
-                            .accessibilityIdentifier("editor.rotate")
-                        Button("Store") {
-                            let id = selected.id
-                            Task {
-                                guard store.editing, store.selectedID == id else { return }
-                                await store.storeSelected()
-                            }
-                        }.accessibilityIdentifier("editor.store")
-                    }.buttonStyle(.bordered).controlSize(.large).disabled(!store.canEdit || renderer.isLoading)
-                }
-                if store.candidate == nil {
-                    Button("Plant details") { detailCopyID = selected.id; sheet = .details }.frame(minHeight: 44)
-                        .accessibilityIdentifier("garden.details")
-                }
-            }
+        VStack(spacing: 4) {
             if let candidate = store.candidate {
-                editingLayout {
-                    Button("Cancel") { store.cancelCandidate() }.accessibilityIdentifier("editor.cancel")
-                    if candidate.kind != .rotate {
-                        Button("Position…") { sheet = .position }.accessibilityIdentifier("editor.position")
+                if positionControlsPresented {
+                    CandidateControlsScreen(store: store, close: { positionControlsPresented = false })
+                } else if candidate.kind == .rotate {
+                    GardenRotationControls(store: store)
+                } else {
+                    Text("\(name(of: candidate.plant)) · \(candidate.plant.variantId.capitalized)")
+                        .font(.system(.subheadline, design: .serif)).padding(.top, 6)
+                    editingLayout {
+                        Button("Cancel") { store.cancelCandidate() }.accessibilityIdentifier("editor.cancel")
+                        Button("Position…") { positionControlsPresented = true }.accessibilityIdentifier("editor.position")
+                        Button("Apply") { Task { await store.releaseCandidate() } }
+                            .disabled(candidate.validity != .valid || !store.canEdit).accessibilityIdentifier("editor.apply")
+                    }.buttonStyle(.bordered).controlSize(.large).padding(.horizontal, 12)
+                    if candidate.kind == .plant {
+                        Toggle("Show adult preview", isOn: $store.adultPreview).font(.callout).padding(.horizontal, 12)
+                            .disabled(candidate.plant.growthStage == .adult).accessibilityIdentifier("editor.adult")
                     }
-                    Button("Apply") { Task { await store.releaseCandidate() } }
-                        .disabled(candidate.validity != .valid || !store.canEdit).accessibilityIdentifier("editor.apply")
-                }.buttonStyle(.bordered).controlSize(.large)
-                if candidate.kind == .plant {
-                    Toggle("Show adult preview", isOn: $store.adultPreview).font(.callout)
-                        .disabled(candidate.plant.growthStage == .adult).accessibilityIdentifier("editor.adult")
                 }
+            } else if let selected = store.selected {
+                selectionPopup(selected)
             }
-            VStack(spacing: 0) {
-                HStack {
-                    Button { sheet = .plants } label: { Label("Select plant", systemImage: "leaf").frame(minHeight: 44) }
-                        .accessibilityIdentifier("garden.plants")
-                    Button { sheet = .storage } label: { Label("Storage", systemImage: "tray").frame(minHeight: 44) }
-                        .accessibilityIdentifier("editor.storage")
-                    Spacer(minLength: 0)
+            if !positionControlsPresented {
+                HStack(spacing: 4) {
+                    GardenActionButton(title: "Select plant", symbol: "leaf", identifier: "garden.plants") { sheet = .plants }
+                    GardenActionButton(title: "Storage", symbol: "tray", identifier: "editor.storage") { sheet = .storage }
+                    GardenActionButton(title: "Zoom out", symbol: "minus.magnifyingglass", identifier: "editor.zoomOut") { renderer.zoom(by: 1.2) }
+                    GardenActionButton(title: "Zoom in", symbol: "plus.magnifyingglass", identifier: "editor.zoomIn") { renderer.zoom(by: 0.8) }
+                    GardenActionButton(title: "Reset garden view", symbol: "arrow.counterclockwise", identifier: "editor.resetView") { renderer.resetCamera() }
                 }
-                HStack {
-                    Spacer()
-                    Button { renderer.zoom(by: 1.2) } label: { Image(systemName: "minus.magnifyingglass").frame(width: 44, height: 44) }
-                        .accessibilityLabel("Zoom out")
-                    Button { renderer.zoom(by: 0.8) } label: { Image(systemName: "plus.magnifyingglass").frame(width: 44, height: 44) }
-                        .accessibilityLabel("Zoom in")
-                    Button { renderer.resetCamera() } label: { Image(systemName: "arrow.counterclockwise").frame(width: 44, height: 44) }
-                        .accessibilityLabel("Reset garden view")
-                }
+                .padding(.horizontal, 12).background(JournalTheme.sage.opacity(0.5))
             }
-        }.padding(.horizontal).padding(.bottom, 8)
+        }.padding(.bottom, 4)
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
+    }
+
+    private func name(of plant: APIOwnedPlant) -> String {
+        store.catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId.capitalized
+    }
+
+    @ViewBuilder private func selectionPopup(_ selected: APIOwnedPlant) -> some View {
+        if selected.placement != nil {
+            GardenSelectionPopup(name: name(of: selected), variant: selected.variantId.capitalized,
+                rarity: store.catalogue?.rarity(for: selected.speciesId), stage: selected.growthStage.title,
+                close: { renderer.dismissSelection() },
+                details: { detailCopyID = selected.id; sheet = .details },
+                plant: store.render(selected), owned: selected, catalog: catalog,
+                move: { store.begin(selected, kind: .move) }, rotate: { store.begin(selected, kind: .rotate) },
+                store: {
+                    let id = selected.id
+                    Task {
+                        guard store.editing, store.selectedID == id else { return }
+                        await store.storeSelected()
+                    }
+                }, editingDisabled: !store.canEdit || renderer.isLoading)
+        } else {
+            GardenSelectionPopup(name: name(of: selected), variant: selected.variantId.capitalized,
+                rarity: store.catalogue?.rarity(for: selected.speciesId), stage: selected.growthStage.title,
+                close: { renderer.dismissSelection() }, details: { detailCopyID = selected.id; sheet = .details },
+                plant: store.render(selected), owned: selected, catalog: catalog)
+        }
     }
 
     private var editingLayout: AnyLayout {
@@ -451,29 +458,55 @@ struct GardenRotationControls: View {
 @MainActor
 private struct CandidateControlsScreen: View {
     @ObservedObject var store: GardenEditorStore
+    let close: () -> Void
     @State private var x: Double = 0
     @State private var y: Double = 0
     @State private var angle: Double = 0
-    @Environment(\.dismiss) private var dismiss
+    @State private var applying = false
+    private enum Field: Hashable { case x, y, angle }
+    @FocusState private var focusedField: Field?
+    @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
-        Form {
-            Section("Garden position") {
-                TextField("X", value: $x, format: .number.precision(.fractionLength(0...3)))
-                    .keyboardType(.decimalPad).accessibilityIdentifier("editor.x")
-                TextField("Y", value: $y, format: .number.precision(.fractionLength(0...3)))
-                    .keyboardType(.decimalPad).accessibilityIdentifier("editor.y")
-            }
-            Section("Rotation") {
-                Slider(value: $angle, in: 0...359.99, step: 0.01).accessibilityLabel("Rotation in degrees")
-                TextField("Degrees", value: $angle, format: .number.precision(.fractionLength(0...2)))
-                    .keyboardType(.decimalPad).accessibilityIdentifier("editor.angle")
-            }
-            if let candidate = store.candidate { Text(candidate.validity.message) }
-            Button("Apply and save") {
-                Task { await store.releaseCandidate(); dismiss() }
-            }.disabled(store.candidate?.validity != .valid || !store.canEdit).accessibilityIdentifier("editor.savePosition")
-        }.navigationTitle("Position plant")
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { store.cancelCandidate(); dismiss() } } }
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Position plant").font(.system(.headline, design: .serif))
+            let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
+            layout {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("X").font(.caption)
+                    TextField("X", value: $x, format: .number.precision(.fractionLength(0...3)))
+                        .keyboardType(.decimalPad).focused($focusedField, equals: .x).frame(minHeight: 44)
+                        .accessibilityLabel("X coordinate").accessibilityIdentifier("editor.x")
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Y").font(.caption)
+                    TextField("Y", value: $y, format: .number.precision(.fractionLength(0...3)))
+                        .keyboardType(.decimalPad).focused($focusedField, equals: .y).frame(minHeight: 44)
+                        .accessibilityLabel("Y coordinate").accessibilityIdentifier("editor.y")
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Degrees").font(.caption)
+                    TextField("Degrees", value: $angle, format: .number.precision(.fractionLength(0...2)))
+                        .keyboardType(.decimalPad).focused($focusedField, equals: .angle).frame(minHeight: 44)
+                        .accessibilityLabel("Degrees").accessibilityIdentifier("editor.angle")
+                }
+            }.textFieldStyle(.roundedBorder)
+            Slider(value: $angle, in: 0...359.99, step: 0.01).frame(minHeight: 44).accessibilityLabel("Rotation in degrees")
+            HStack {
+                Button("Cancel") { focusedField = nil; store.cancelCandidate(); close() }
+                    .frame(minHeight: 44).accessibilityIdentifier("editor.cancel")
+                Spacer(minLength: 8)
+                Button("Apply and save") {
+                    focusedField = nil; applying = true
+                    Task { await store.releaseCandidate(); close() }
+                }.frame(minHeight: 44).disabled(applying || store.candidate?.validity != .valid || !store.canEdit)
+                    .accessibilityIdentifier("editor.savePosition")
+            }.buttonStyle(.bordered)
+        }.padding(12).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+            .accessibilityIdentifier("editor.positionPanel")
+            .toolbar { ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focusedField = nil }
+            } }
             .onAppear {
                 if let candidate = store.candidate {
                     x = NSDecimalNumber(decimal: candidate.x).doubleValue
@@ -484,7 +517,11 @@ private struct CandidateControlsScreen: View {
             .onChange(of: x) { store.updatePosition(x: $0, y: y) }
             .onChange(of: y) { store.updatePosition(x: x, y: $0) }
             .onChange(of: angle) { store.updateRotation($0) }
-            .onDisappear { store.cancelCandidate() }
+            .onDisappear {
+                // Membership preflight may clear the preview while its captured
+                // placement is still being submitted. Do not cancel that intent.
+                if !applying { store.cancelCandidate() }
+            }
     }
 }
 

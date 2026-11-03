@@ -1,71 +1,88 @@
 import SwiftUI
 
-/// Browsing overlays never participate in scene sizing. Editing retains its
-/// geometry-reserved panels, with the scene at the same structural identity.
+/// Presentation geometry depends on the mode, available safe area and text
+/// size, never on selection or message content.
+struct GardenViewportRegions {
+    let scene: CGRect
+    let status: CGRect
+    let controls: CGRect
+    let usesSidePanel: Bool
+    init(size: CGSize, visibleHeight: CGFloat, editing: Bool, compact: Bool, accessibility: Bool) {
+        let width = max(0, size.width), height = max(0, min(size.height, visibleHeight))
+        usesSidePanel = editing && compact
+        if usesSidePanel {
+            let side = min(340, width * 0.42)
+            scene = CGRect(x: 0, y: 0, width: width - side, height: height)
+            status = CGRect(x: width - side, y: 0, width: side, height: 0)
+            controls = CGRect(x: width - side, y: 0, width: side, height: height)
+        } else {
+            let top = min(height * 0.22, accessibility ? 180 : editing ? 96 : 120)
+            let bottom = min(height * 0.36, accessibility ? 260 : editing ? 208 : 152)
+            status = CGRect(x: 0, y: 0, width: width, height: top)
+            scene = CGRect(x: 0, y: top, width: width, height: height - top - bottom)
+            controls = CGRect(x: 0, y: height - bottom, width: width, height: bottom)
+        }
+    }
+}
+
+/// The scene always has the same structural identity. Header and selection/
+/// editing panels have their own clipped regions outside the visible garden.
 @MainActor
 struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
     let compact: Bool
     var editing = false
     @Environment(\.gardenBottomNavigationTop) private var navigationTop
+    @Environment(\.dynamicTypeSize) private var textSize
     @ViewBuilder let scene: () -> Scene
     @ViewBuilder let status: () -> Status
     @ViewBuilder let controls: () -> Controls
 
     var body: some View {
         GeometryReader { geometry in
-            let top = editing && !compact ? min(260, geometry.size.height * 0.32) : 0
-            // Reserve the normal rotation panel even on a shorter portrait screen.
-            let bottom = editing && !compact ? min(180, max(160, geometry.size.height * 0.24)) : 0
-            let side = editing && compact ? min(340, geometry.size.width * 0.42) : 0
-            let browsingHeight = editing ? geometry.size.height : min(geometry.size.height,
+            let visibleHeight = editing ? geometry.size.height : min(geometry.size.height,
                 max(0, (navigationTop ?? geometry.frame(in: .global).maxY) - geometry.frame(in: .global).minY))
-            scene()
-                .frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
-                .padding(.top, top).padding(.bottom, bottom).padding(.trailing, side)
-                .overlay(alignment: .top) {
-                    if !editing {
-                        ViewThatFits(in: .vertical) {
-                            status()
-                            ScrollView { status() }
-                        }.frame(maxHeight: browsingHeight * 0.55, alignment: .top).clipped()
-                            .transformPreference(GardenOverlayFrames.self) { frames in
-                                let visible = CGRect(x: 0, y: 0, width: geometry.size.width, height: browsingHeight * 0.55)
-                                frames = frames.map { $0.intersection(visible) }.filter { !$0.isNull && !$0.isEmpty }
-                            }
-                    } else if !compact {
-                        ScrollView { status() }.frame(height: top)
-                            .background(JournalTheme.paper)
-                    }
+            let regions = GardenViewportRegions(size: geometry.size, visibleHeight: visibleHeight,
+                editing: editing, compact: compact, accessibility: textSize.isAccessibilitySize)
+            ZStack(alignment: .topLeading) {
+                JournalTheme.paper.frame(width: geometry.size.width, height: geometry.size.height)
+                scene().frame(width: regions.scene.width, height: regions.scene.height).clipped()
+                    .offset(x: regions.scene.minX, y: regions.scene.minY)
+                if !regions.usesSidePanel {
+                    ScrollView { status() }
+                        .frame(width: regions.status.width, height: regions.status.height, alignment: .top)
+                        .background(JournalTheme.paper).clipped()
+                        .offset(x: regions.status.minX, y: regions.status.minY)
+                        .transformPreference(GardenOverlayFrames.self) { frames in
+                            frames = frames.map { $0.intersection(regions.status) }.filter { !$0.isNull && !$0.isEmpty }
+                        }
                 }
-                .overlay(alignment: .bottom) {
-                    if !editing {
-                        ViewThatFits(in: .vertical) {
-                            controls()
-                            ScrollView { controls() }
-                        }.frame(maxHeight: browsingHeight * 0.4, alignment: .bottom).clipped()
-                            .transformPreference(GardenOverlayFrames.self) { frames in
-                                let visible = CGRect(x: 0, y: browsingHeight * 0.6,
-                                                     width: geometry.size.width, height: browsingHeight * 0.4)
-                                frames = frames.map { $0.intersection(visible) }.filter { !$0.isNull && !$0.isEmpty }
-                            }
-                            .padding(.bottom, geometry.size.height - browsingHeight)
-                    } else if !compact {
-                        ScrollView { controls() }.frame(height: bottom)
-                            .background(JournalTheme.paper)
-                    }
+                ScrollView {
+                    if regions.usesSidePanel { status() }
+                    controls()
                 }
-                .overlay(alignment: .trailing) {
-                    if editing && compact {
-                        ScrollView { status(); controls() }.frame(width: side)
-                            .background(JournalTheme.paper)
-                    }
+                .scrollDismissesKeyboard(.interactively)
+                .frame(width: regions.controls.width, height: regions.controls.height, alignment: .top)
+                .background(JournalTheme.paper).clipped()
+                .offset(x: regions.controls.minX, y: regions.controls.minY)
+                .transformPreference(GardenOverlayFrames.self) { frames in
+                    frames = frames.map { $0.intersection(regions.controls) }.filter { !$0.isNull && !$0.isEmpty }
                 }
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+            .transformPreference(GardenOverlayFrames.self) { frames in
+                // Convert viewport-space hit exclusions to the scene's local space.
+                frames = frames.compactMap { frame in
+                    let visible = frame.intersection(regions.scene)
+                    return visible.isNull || visible.isEmpty ? nil :
+                        visible.offsetBy(dx: -regions.scene.minX, dy: -regions.scene.minY)
+                }
+            }
         }.coordinateSpace(name: "garden.viewport")
     }
 }
 
 /// The custom navigation bar can overlap a NavigationStack's scene bounds.
-/// Pass its real top edge through so only browsing overlays avoid that overlap.
+/// Pass its real top edge through so browsing panels avoid that overlap.
 struct GardenBottomNavigationTop: PreferenceKey {
     static var defaultValue: CGFloat? = nil
     static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) { value = nextValue() ?? value }
@@ -99,13 +116,13 @@ extension View {
 
 struct GardenOutline: ViewModifier {
     @Environment(\.isEnabled) private var enabled
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
     func body(content: Content) -> some View {
         content
-            .background(reduceTransparency || contrast == .increased ? Color(uiColor: .systemBackground) : .clear,
-                        in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(enabled ? Color.forestTint : Color.secondary, lineWidth: 1))
+            .foregroundStyle(enabled ? JournalTheme.ink : JournalTheme.secondary).tint(JournalTheme.action)
+            .background(JournalTheme.paper, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(
+                enabled ? JournalTheme.action : JournalTheme.secondary, lineWidth: contrast == .increased ? 2 : 1))
     }
 }
 
@@ -115,39 +132,5 @@ struct GardenOutlineButtonStyle: ButtonStyle {
         configuration.label.padding(.horizontal, 12).frame(minHeight: 44)
             .contentShape(RoundedRectangle(cornerRadius: 12))
             .modifier(GardenOutline()).opacity(enabled ? (configuration.isPressed ? 0.65 : 1) : 0.45)
-    }
-}
-
-struct GardenSelectionPopup: View {
-    let name: String
-    let variant: String
-    var rarity: String? = nil
-    let stage: String
-    let close: () -> Void
-    let details: () -> Void
-    @Environment(\.dynamicTypeSize) private var textSize
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 8) {
-                PlantNameText("\(name) · \(variant)", rarity: rarity).font(.headline).fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 10)
-                Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                    .accessibilityLabel("Close plant selection").accessibilityIdentifier("garden.selection.close")
-            }
-            let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0)) :
-                AnyLayout(HStackLayout(spacing: 12))
-            layout {
-                Text(stage).font(.subheadline).fixedSize(horizontal: false, vertical: true)
-                if !textSize.isAccessibilitySize { Spacer(minLength: 0) }
-                Button("Plant details", action: details).frame(minHeight: 44)
-                    .accessibilityIdentifier("garden.details")
-            }
-        }
-        .padding(.leading, 12).padding(.trailing, 4).padding(.bottom, 4)
-        .frame(maxWidth: 460).modifier(GardenOutline())
-        .contentShape(RoundedRectangle(cornerRadius: 12))
-        .onTapGesture { /* Popup background taps must not select the ground behind it. */ }
-        .accessibilityElement(children: .contain).accessibilityIdentifier("garden.selection")
-        .gardenOverlayTarget().padding(.horizontal, 12).padding(.vertical, 8)
     }
 }

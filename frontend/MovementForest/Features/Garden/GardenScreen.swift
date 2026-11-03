@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct GardenScreen: View {
     @ObservedObject var store: GardenStore
     let catalog: any AssetCatalogProviding
@@ -23,10 +24,9 @@ struct GardenScreen: View {
                 } status: {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(garden.isSample ? "Sample garden" : garden.title).font(.subheadline)
+                            Text(garden.isSample ? "Sample garden" : garden.title).font(.system(.subheadline, design: .serif))
                             Spacer(minLength: 8)
-                            Button("Garden info") { informationPresented = true }
-                                .buttonStyle(GardenOutlineButtonStyle()).accessibilityIdentifier("garden.info")
+                            GardenActionButton(title: "Garden info", symbol: "info.circle", identifier: "garden.info") { informationPresented = true }
                                 .gardenOverlayTarget()
                         }
                         if renderer.isLoading { ProgressView("Loading plants…").allowsHitTesting(false) }
@@ -35,13 +35,13 @@ struct GardenScreen: View {
                                 Label("Some plants need attention", systemImage: "exclamationmark.triangle").frame(minHeight: 44)
                             }.gardenOverlayTarget()
                         }
-                    }.padding(12)
+                    }.padding(12).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
                 } controls: {
                     if let selected = garden.plants.first(where: { $0.id == renderer.selectedPlantID }) {
                         GardenSelectionPopup(name: selected.speciesId.capitalized, variant: selected.variantId.capitalized,
                             rarity: SamplePlantPresentation.rarities[selected.speciesId],
                             stage: selected.growthStage.title, close: { renderer.dismissSelection() },
-                            details: { selectedPlant = selected })
+                            details: { selectedPlant = selected }, plant: selected, catalog: catalog, isSample: garden.isSample)
                     }
                 }
                 .onPreferenceChange(GardenOverlayFrames.self) { renderer.setOverlayFrames($0) }
@@ -51,20 +51,26 @@ struct GardenScreen: View {
                 }
                 .sheet(isPresented: $informationPresented) {
                     NavigationStack {
-                        List {
-                            Section("Active skills") {
-                                Text("No active skills in this sample garden.").foregroundStyle(.secondary)
-                            }
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 14) {
+                                JournalSectionHeading(title: "Active skills")
+                                Text("No active skills in this sample garden.").foregroundStyle(JournalTheme.secondary)
+                            }.padding(20)
                         }.navigationTitle("Garden information")
+                            .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
                             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { informationPresented = false } } }
                     }
                 }
                 .sheet(isPresented: $errorsPresented) {
                     NavigationStack {
-                        List {
-                            Text("Some plants couldn’t be displayed. Try loading the artwork again.")
-                            Button("Reload plants") { errorsPresented = false; renderer.retry(garden, catalog: catalog) }
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Some plants couldn’t be displayed. Try loading the artwork again.")
+                                Button("Reload plants") { errorsPresented = false; renderer.retry(garden, catalog: catalog) }
+                                    .frame(minHeight: 44).buttonStyle(.bordered)
+                            }.padding(20)
                         }.navigationTitle("Loading plants")
+                            .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
                             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { errorsPresented = false } } }
                     }
                 }
@@ -201,24 +207,23 @@ struct PlantDetailScreen: View {
 }
 
 
+@MainActor
 struct GardenPlantList: View {
     let garden: GardenSnapshot
     let catalog: any AssetCatalogProviding
     @Environment(\.dismiss) private var dismiss
     @State private var inspecting: GardenPlant?
     var body: some View {
-        List(garden.plants) { plant in
-            Button { inspecting = plant } label: {
-                HStack(spacing: 12) {
-                    PlantThumbnail(plant: plant, catalog: catalog).frame(width: 48, height: 56)
-                    VStack(alignment: .leading, spacing: 3) {
-                        PlantNameText(plant.speciesId.capitalized,
-                            rarity: garden.isSample ? SamplePlantPresentation.rarities[plant.speciesId] : nil).font(.headline)
-                        Text("\(plant.variantId.capitalized) · \(plant.growthStage.title)").font(.subheadline).foregroundStyle(.secondary)
+        ScrollView {
+            JournalGrid {
+                ForEach(garden.plants) { plant in
+                    GardenBrowserTile(plant: plant, catalog: catalog, isSample: garden.isSample) {
+                        inspecting = plant
                     }
-                }.accessibilityElement(children: .combine)
-            }
-        }.navigationTitle("Garden plants")
+                }
+            }.padding(16)
+        }.navigationTitle("Garden plants").background(JournalPageBackground().ignoresSafeArea())
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             .fullScreenCover(item: $inspecting) { plant in
                 PlantDetailScreen(plant: plant, catalog: catalog, isSample: garden.isSample).journalModalBackground()
