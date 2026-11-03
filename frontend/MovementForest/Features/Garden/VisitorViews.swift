@@ -254,6 +254,7 @@ struct GardenSummaryHeader: View {
     let information: () -> Void
     let collect: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
+    @ScaledMetric(relativeTo: .subheadline) private var feedbackSpace: CGFloat = 16
 
     var body: some View {
         VStack(spacing: 6) {
@@ -268,30 +269,30 @@ struct GardenSummaryHeader: View {
                     VStack(alignment: .leading, spacing: 6) { infoButton; collectButton }
                 }
             } else {
-                HStack(alignment: .top, spacing: 6) {
+                HStack(alignment: .center, spacing: 4) {
                     metric("Tokens", key: "tokens", value: tokens)
                     metric("Attraction", key: "attraction", value: attraction)
                     metric("Stored visits", key: "offline_capacity", value: stored)
-                }
-                HStack(spacing: 6) {
-                    infoButton.frame(maxWidth: .infinity)
-                    collectButton.frame(maxWidth: .infinity)
-                }
+                    infoButton.frame(width: 44)
+                    collectButton.frame(width: 44)
+                }.padding(.bottom, feedbackSpace)
             }
-        }.padding(.horizontal, 12).padding(.vertical, 6)
+        }.padding(.horizontal, 12).padding(.vertical, 4)
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
+            .gardenOverlayTarget()
     }
 
     private func metric(_ title: String, key: String, value: String?) -> some View {
         VStack(spacing: 2) {
             if key == "tokens" {
                 TokenRewardCounter(balance: value ?? "Unavailable", reward: tokenReward, finished: tokenRewardFinished,
-                                   reduceMotionOverride: tokenReduceMotion)
+                                   reduceMotionOverride: tokenReduceMotion, reservesRewardSpace: textSize.isAccessibilitySize)
+                    .lineLimit(1).minimumScaleFactor(0.75)
             } else {
                 QuantityLabel(metric: key, text: value ?? "Unavailable").font(.subheadline).monospacedDigit()
                     .lineLimit(1).minimumScaleFactor(0.75)
             }
-        }.frame(maxWidth: .infinity, minHeight: 48, alignment: textSize.isAccessibilitySize ? .leading : .center)
+        }.frame(maxWidth: .infinity, minHeight: 44, alignment: textSize.isAccessibilitySize ? .leading : .center)
             .contentShape(Rectangle()).contextMenu { Button(title) { }.disabled(true) }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(key == "offline_capacity" ? (storedAccessibility ?? "Stored visits, Unavailable") :
@@ -303,12 +304,13 @@ struct GardenSummaryHeader: View {
     }
     private var collectButton: some View {
         Button(action: collect) {
-            HStack(spacing: 4) {
+            Group {
                 if collecting { ProgressView().controlSize(.small) }
-                Image(systemName: "tray.and.arrow.down").frame(minWidth: 44, minHeight: 44)
-            }
-        }.buttonStyle(GardenOutlineButtonStyle()).font(.callout)
-            .disabled(!canCollect).foregroundStyle(canCollect ? Color.forestTint : .secondary)
+                else { Image(systemName: "tray.and.arrow.down") }
+            }.frame(width: 44, height: 44).contentShape(Rectangle())
+        }.buttonStyle(.plain).font(.body)
+            .disabled(!canCollect).foregroundStyle(canCollect ? JournalTheme.action : JournalTheme.secondary)
+            .opacity(canCollect ? 1 : 0.45)
             .accessibilityLabel("Collect stored visits")
             .accessibilityValue(collecting ? "Confirming collection" : "")
             .accessibilityIdentifier("visitors.claim").gardenOverlayTarget()

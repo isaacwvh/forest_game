@@ -3,6 +3,15 @@
 Prepared for Mac testing. The user requested committing and pushing this batch
 without waiting for CI. No CI result is claimed.
 
+Follow-up correction: the user requested the original viewport, with overlays
+and no dedicated browsing slots. The pre-Stage 4 viewport is restored while
+retaining the new selection card. The normal header uses one aligned compact
+row; token feedback has shared space instead of offsetting only its icon.
+The native viewport tests now enforce full-scene browsing and navigation
+clearance, replacing the reserved-region contract described below.
+The correction passes portable frontend/syntax/whitespace checks; the updated
+native header and viewport tests still require Xcode.
+
 ## Executed validation
 
 - Full backend regression suite: **511 passed, 3 skipped** in 442.17 seconds.

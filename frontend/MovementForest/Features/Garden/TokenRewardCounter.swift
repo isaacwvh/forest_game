@@ -7,6 +7,7 @@ struct TokenRewardCounter: View {
     var reward: ConfirmedTokenReward?
     var finished: (UUID) -> Void = { _ in }
     var reduceMotionOverride = false
+    var reservesRewardSpace = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var sweep: CGFloat = -1
@@ -44,7 +45,7 @@ struct TokenRewardCounter: View {
                         .accessibilityIdentifier("visitors.tokenReward")
                 }
             }
-            .padding(.bottom, rewardSpace)
+            .padding(.bottom, reservesRewardSpace ? rewardSpace : 0)
             .allowsHitTesting(false).accessibilityHidden(true)
             .task(id: reward?.id) {
                 sweep = -1; fading = false

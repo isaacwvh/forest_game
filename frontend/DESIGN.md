@@ -86,6 +86,13 @@ Native validation is pending; see [STAGE3_UI_ACCEPTANCE.md](STAGE3_UI_ACCEPTANCE
 
 ## Stage 4 Garden/Edit completion — 3 November 2026
 
+Follow-up correction: restore the pre-Stage 4 viewport. Browsing uses the full
+scene with bounded header/selection overlays above navigation; it reserves no
+header or selection space. Editing retains its original panel geometry. Keep
+the Stage 4 card and controls. The normal Garden header is one compact row with
+aligned metrics/actions and shared space for token feedback. This supersedes
+the separate-region layout paragraph below.
+
 The selection card, editing controls and Garden header now use the journal
 palette, current-stage portraits, rarity frames and concise native icon labels.
 Garden offers Details/Close; focused Edit adds the unchanged Move/Rotate/Store

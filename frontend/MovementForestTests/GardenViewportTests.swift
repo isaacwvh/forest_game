@@ -53,7 +53,7 @@ private struct ViewportTestScreen: View {
 
 @MainActor
 final class GardenViewportTests: XCTestCase {
-    func testDockedPopupStaysOutsideTheGardenAndAboveNavigation() async throws {
+    func testPopupStaysAboveNavigationWithoutReservingGardenSpace() async throws {
         var frames: [String: CGRect] = [:]
         let overlap: CGFloat = 64
         let content = GeometryReader { geometry in
@@ -89,39 +89,14 @@ final class GardenViewportTests: XCTestCase {
         let garden = try XCTUnwrap(frames["scene"])
         XCTAssertGreaterThan(popup.height, 44)
         XCTAssertGreaterThan(garden.height, 0)
-        XCTAssertGreaterThanOrEqual(popup.minY, garden.maxY - 1)
+        XCTAssertEqual(garden.height, viewport.height, accuracy: 1, "Selection must overlay the original full garden viewport")
         XCTAssertLessThanOrEqual(popup.maxY, viewport.maxY - overlap + 1)
-    }
-
-    func testReservedRegionsNeverCoverTheGardenAcrossSizesAndTextSettings() {
-        for size in [CGSize(width: 320, height: 480), CGSize(width: 390, height: 844),
-                     CGSize(width: 430, height: 932), CGSize(width: 700, height: 320),
-                     CGSize(width: 320, height: 260)] {
-            for editing in [false, true] {
-                for compact in [false, true] {
-                    for accessibility in [false, true] {
-                        let visibleHeight = size.height - (editing ? 0 : 64)
-                        let regions = GardenViewportRegions(size: size, visibleHeight: visibleHeight,
-                            editing: editing, compact: compact, accessibility: accessibility)
-                        XCTAssertGreaterThan(regions.scene.width, 0)
-                        XCTAssertGreaterThan(regions.scene.height, 0)
-                        XCTAssertFalse(regions.scene.intersects(regions.status))
-                        XCTAssertFalse(regions.scene.intersects(regions.controls))
-                        for rect in [regions.scene, regions.status, regions.controls] {
-                            XCTAssertGreaterThanOrEqual(rect.minX, 0)
-                            XCTAssertGreaterThanOrEqual(rect.minY, 0)
-                            XCTAssertLessThanOrEqual(rect.maxX, size.width + 0.001)
-                            XCTAssertLessThanOrEqual(rect.maxY, visibleHeight + 0.001)
-                        }
-                    }
-                }
-            }
-        }
     }
 
     func testClippedPanelContentDoesNotExcludeVisibleGardenHitTargets() async throws {
         var exclusions: [CGRect] = []
         var laidOut = false
+        var sceneSize = CGSize.zero
         let content = GardenViewportLayout(compact: false) {
             Color.clear.background(GeometryReader { scene in
                 Color.clear.preference(key: PopupTestBounds.self, value: ["scene": scene.frame(in: .global)])
@@ -132,7 +107,10 @@ final class GardenViewportTests: XCTestCase {
             Color.clear.frame(height: 1000).gardenOverlayTarget()
         }
         .onPreferenceChange(GardenOverlayFrames.self) { exclusions = $0 }
-        .onPreferenceChange(PopupTestBounds.self) { laidOut = ($0["scene"]?.height ?? 0) > 0 }
+        .onPreferenceChange(PopupTestBounds.self) {
+            sceneSize = $0["scene"]?.size ?? .zero
+            laidOut = sceneSize.height > 0
+        }
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
         window.rootViewController = UIHostingController(rootView: content)
@@ -144,7 +122,31 @@ final class GardenViewportTests: XCTestCase {
         }
         XCTAssertTrue(laidOut)
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertTrue(exclusions.isEmpty, "Offscreen panel content must not block native visitor accessibility")
+        XCTAssertFalse(exclusions.isEmpty)
+        let bounds = CGRect(origin: .zero, size: sceneSize)
+        let middle = CGRect(x: 0, y: sceneSize.height * 0.55 + 1,
+                            width: sceneSize.width, height: sceneSize.height * 0.05 - 2)
+        for rect in exclusions {
+            XCTAssertTrue(bounds.insetBy(dx: -1, dy: -1).contains(rect))
+            XCTAssertFalse(rect.intersects(middle), "Clipped overlay content must not block the clear middle of the garden")
+        }
+    }
+
+    func testLeanHeaderAndCounterKeepOneAlignedRow() {
+        let header = UIHostingController(rootView:
+            GardenSummaryHeader(tokens: "101", attraction: "8.2", stored: "5/1500",
+                                information: {}, collect: {}).environment(\.dynamicTypeSize, .large))
+        let height = header.sizeThatFits(in: CGSize(width: 320, height: 1000)).height
+        XCTAssertGreaterThanOrEqual(height, 44)
+        XCTAssertLessThanOrEqual(height, 80)
+        let counter = UIHostingController(rootView:
+            TokenRewardCounter(balance: "101", reservesRewardSpace: false).environment(\.dynamicTypeSize, .large))
+        let label = UIHostingController(rootView:
+            QuantityLabel(metric: "tokens", text: "101").font(.subheadline).monospacedDigit()
+                .environment(\.dynamicTypeSize, .large))
+        let size = CGSize(width: 90, height: 1000)
+        XCTAssertEqual(counter.sizeThatFits(in: size).height, label.sizeThatFits(in: size).height, accuracy: 1,
+                       "Token feedback must not vertically offset the token icon inside the shared row")
     }
 
     func testPortraitViewportDoesNotResizeForStatusOrInvalidPlacement() async throws {
@@ -176,7 +178,7 @@ final class GardenViewportTests: XCTestCase {
         let bounds = renderer.view.bounds
         XCTAssertGreaterThan(bounds.height, 0); XCTAssertGreaterThan(bounds.width, 0)
         if !editing {
-            XCTAssertGreaterThan(bounds.height, window.bounds.height * 0.35, "The garden must stay usable above its dedicated panels")
+            XCTAssertGreaterThan(bounds.height, window.bounds.height * 0.65, "Browsing must retain the original full garden viewport")
         }
         renderer.zoom(by: 0.8)
         let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
