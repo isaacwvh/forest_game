@@ -96,7 +96,8 @@ final class ForestUITests: XCTestCase {
         let positionPanel = app.descendants(matching: .any).matching(identifier: "editor.positionPanel").firstMatch
         let liveGarden = app.descendants(matching: .any).matching(identifier: "garden.scene").firstMatch
         XCTAssertTrue(liveGarden.exists); XCTAssertGreaterThan(liveGarden.frame.height, 0)
-        XCTAssertLessThanOrEqual(liveGarden.frame.maxY, positionPanel.frame.minY + 1)
+        XCTAssertGreaterThanOrEqual(positionPanel.frame.minY, liveGarden.frame.minY - 1)
+        XCTAssertLessThan(positionPanel.frame.minY, liveGarden.frame.maxY)
         XCTAssertFalse(app.navigationBars["Position plant"].exists)
         app.buttons["editor.cancel"].tap()
         app.buttons["editor.storage"].tap(); stored.tap(); app.buttons["editor.place"].tap()
@@ -106,7 +107,8 @@ final class ForestUITests: XCTestCase {
         expectation(for: ready, evaluatedWith: rotate); waitForExpectations(timeout: 10)
         let popup = app.descendants(matching: .any).matching(identifier: "garden.selection").firstMatch
         XCTAssertTrue(popup.exists)
-        XCTAssertLessThanOrEqual(liveGarden.frame.maxY, popup.frame.minY + 1)
+        XCTAssertGreaterThanOrEqual(popup.frame.minY, liveGarden.frame.minY - 1)
+        XCTAssertLessThanOrEqual(popup.frame.maxY, liveGarden.frame.maxY + 1)
         app.buttons["editor.store"].press(forDuration: 0.6)
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
         XCTAssertTrue(app.buttons["editor.store"].waitForExistence(timeout: 5), "Holding an action icon must not store the plant")
@@ -119,7 +121,8 @@ final class ForestUITests: XCTestCase {
         XCTAssertFalse(app.switches["editor.adult"].exists)
         let garden = app.descendants(matching: .any).matching(identifier: "garden.scene").firstMatch
         XCTAssertTrue(garden.exists); XCTAssertTrue(garden.isHittable)
-        XCTAssertLessThanOrEqual(garden.frame.maxY, slider.frame.minY + 1)
+        XCTAssertGreaterThanOrEqual(slider.frame.minY, garden.frame.minY - 1)
+        XCTAssertLessThanOrEqual(slider.frame.maxY, garden.frame.maxY + 1)
         XCTAssertFalse(app.navigationBars["Rotate plant"].exists)
         let angle = app.textFields["editor.angle"]
         let originalAngle = angle.value as? String

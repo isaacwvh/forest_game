@@ -88,7 +88,8 @@ Native validation is pending; see [STAGE3_UI_ACCEPTANCE.md](STAGE3_UI_ACCEPTANCE
 
 Follow-up correction: restore the pre-Stage 4 viewport. Browsing uses the full
 scene with bounded header/selection overlays above navigation; it reserves no
-header or selection space. Editing retains its original panel geometry. Keep
+header or selection space. Editing also uses the full viewport, with bounded
+status/controls overlays and no reserved top, bottom or compact side strip. Keep
 the Stage 4 card and controls. The normal Garden header is one compact row with
 aligned metrics/actions and shared space for token feedback. This supersedes
 the separate-region layout paragraph below.

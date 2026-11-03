@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Browsing overlays never participate in scene sizing. Editing retains its
-/// geometry-reserved panels, with the scene at the same structural identity.
+/// Browsing and editing controls overlay the full scene without reserving
+/// viewport space. The mounted scene keeps the same structural identity.
 @MainActor
 struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
     let compact: Bool
@@ -14,14 +14,13 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
     var body: some View {
         GeometryReader { geometry in
             let top = editing && !compact ? min(260, geometry.size.height * 0.32) : 0
-            // Reserve the normal rotation panel even on a shorter portrait screen.
+            // Bound editing overlays without subtracting space from the scene.
             let bottom = editing && !compact ? min(180, max(160, geometry.size.height * 0.24)) : 0
             let side = editing && compact ? min(340, geometry.size.width * 0.42) : 0
             let browsingHeight = editing ? geometry.size.height : min(geometry.size.height,
                 max(0, (navigationTop ?? geometry.frame(in: .global).maxY) - geometry.frame(in: .global).minY))
             scene()
                 .frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
-                .padding(.top, top).padding(.bottom, bottom).padding(.trailing, side)
                 .overlay(alignment: .top) {
                     if !editing {
                         ViewThatFits(in: .vertical) {
@@ -33,8 +32,10 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                                 frames = frames.map { $0.intersection(visible) }.filter { !$0.isNull && !$0.isEmpty }
                             }
                     } else if !compact {
-                        ScrollView { status() }.frame(height: top)
-                            .background(JournalTheme.paper)
+                        ViewThatFits(in: .vertical) {
+                            status()
+                            ScrollView { status() }
+                        }.frame(maxHeight: top, alignment: .top).clipped()
                     }
                 }
                 .overlay(alignment: .bottom) {
@@ -50,14 +51,18 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                             }
                             .padding(.bottom, geometry.size.height - browsingHeight)
                     } else if !compact {
-                        ScrollView { controls() }.frame(height: bottom)
-                            .background(JournalTheme.paper)
+                        ViewThatFits(in: .vertical) {
+                            controls()
+                            ScrollView { controls() }
+                        }.frame(maxHeight: bottom, alignment: .bottom).clipped()
                     }
                 }
                 .overlay(alignment: .trailing) {
                     if editing && compact {
-                        ScrollView { status(); controls() }.frame(width: side)
-                            .background(JournalTheme.paper)
+                        ViewThatFits(in: .vertical) {
+                            VStack(spacing: 0) { status(); controls() }
+                            ScrollView { status(); controls() }
+                        }.frame(width: side).frame(maxHeight: geometry.size.height, alignment: .bottom).clipped()
                     }
                 }
         }.coordinateSpace(name: "garden.viewport")

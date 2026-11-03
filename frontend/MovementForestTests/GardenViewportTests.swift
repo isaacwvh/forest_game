@@ -7,6 +7,7 @@ import UIKit
 @MainActor
 private final class ViewportTestStatus: ObservableObject {
     @Published var expanded = false
+    @Published var editing = false
 }
 
 private struct PopupTestBounds: PreferenceKey {
@@ -25,7 +26,7 @@ private struct ViewportTestScreen: View {
     let compact: Bool
     let editing: Bool
     var body: some View {
-        GardenViewportLayout(compact: compact, editing: editing) {
+        GardenViewportLayout(compact: compact, editing: editing || status.editing) {
             GardenSceneView(renderer: renderer, garden: garden, catalog: catalog)
         } status: {
             VStack {
@@ -177,14 +178,14 @@ final class GardenViewportTests: XCTestCase {
         XCTAssertEqual(renderer.modelLoadCount, 1)
         let bounds = renderer.view.bounds
         XCTAssertGreaterThan(bounds.height, 0); XCTAssertGreaterThan(bounds.width, 0)
-        if !editing {
-            XCTAssertGreaterThan(bounds.height, window.bounds.height * 0.65, "Browsing must retain the original full garden viewport")
-        }
+        XCTAssertGreaterThan(bounds.height, window.bounds.height * 0.65, "Browsing and Edit must retain the full garden viewport")
+        XCTAssertGreaterThan(bounds.width, window.bounds.width * 0.9, "Compact editing must not reserve a side strip")
         renderer.zoom(by: 0.8)
         let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
         let position = camera.position, rotation = camera.orientation.vector
         for expanded in [true, false, true] {
             status.expanded = expanded
+            status.editing = expanded
             try await Task.sleep(nanoseconds: 150_000_000)
             window.layoutIfNeeded(); window.rootViewController?.view.layoutIfNeeded()
             XCTAssertEqual(renderer.view.bounds, bounds)

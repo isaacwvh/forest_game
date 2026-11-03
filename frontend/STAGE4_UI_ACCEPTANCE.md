@@ -11,6 +11,10 @@ The native viewport tests now enforce full-scene browsing and navigation
 clearance, replacing the reserved-region contract described below.
 The correction passes portable frontend/syntax/whitespace checks; the updated
 native header and viewport tests still require Xcode.
+Edit follow-up: editing also renders the full viewport. Status, selection,
+position/rotation controls and the compact side panel overlay it without fixed
+blank strips. Regression coverage now checks full width/height in both modes
+and unchanged camera/model identity when switching modes or expanding notices.
 
 ## Executed validation
 
