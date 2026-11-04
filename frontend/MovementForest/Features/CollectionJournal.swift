@@ -159,63 +159,25 @@ struct CollectionPlantReceiptCard: View {
     }
 }
 
-struct CollectionSpeciesOddsTile: View {
-    let odds: SpeciesDrawOdds
-    let catalogue: APICatalogue?
-    let assets: (any AssetCatalogProviding)?
-    let expanded: Bool
-    let select: () -> Void
-    @ScaledMetric(relativeTo: .headline) private var nameHeight: CGFloat = 44
-    private var species: APISpecies? { catalogue?.species.first { $0.speciesId == odds.speciesId } }
-    private var variant: APIVariant? {
-        let available = species?.variants.filter { variant in odds.variants.contains { $0.variantId == variant.variantId } } ?? []
-        return available.first { $0.variantId == "standard" } ?? available.first
-    }
-    var body: some View {
-        JournalPlantFrame(rarity: odds.rarity) {
-            Button(action: select) {
-                VStack(spacing: 6) {
-                    Group {
-                        if let variant = variant, let assets = assets {
-                            JournalPlantImage(plant: GardenPlant(id: UUID(), speciesId: odds.speciesId,
-                                variantId: variant.variantId, assetVersion: variant.assetCatalogVersion,
-                                growthStage: .sprout, x: 0, y: 0, rotationDegrees: 0), catalog: assets)
-                        } else { Image(systemName: "leaf").font(.largeTitle) }
-                    }.frame(height: 96).frame(maxWidth: .infinity).padding(8)
-                        .background(JournalTheme.sage.opacity(0.45))
-                    PlantNameText(species?.displayName ?? odds.speciesId.capitalized,
-                                  rarity: odds.rarity, announcesRarity: false)
-                        .font(.system(.headline, design: .serif)).lineLimit(2).minimumScaleFactor(0.8)
-                        .frame(height: nameHeight).padding(.horizontal, 6)
-                    HStack(spacing: 4) {
-                        Text(odds.overall.formatted(.percent.precision(.fractionLength(0...4))))
-                        Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption2)
-                    }.font(.caption).monospacedDigit().lineLimit(1).minimumScaleFactor(0.75)
-                        .padding(.bottom, 12)
-                }.frame(maxWidth: .infinity).contentShape(Rectangle())
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-            }.buttonStyle(.plain)
-                .accessibilityLabel("\(species?.displayName ?? odds.speciesId.capitalized), \(odds.rarity.capitalized), \(odds.overall.formatted(.percent.precision(.fractionLength(0...4)))) overall")
-                .accessibilityValue(expanded ? "Expanded" : "Collapsed")
-                .accessibilityHint("Show odds")
-                .accessibilityIdentifier("pack.species.\(odds.rarity).\(odds.speciesId)")
-        }
-    }
-}
-
 struct CollectionOddsDetails: View {
     let odds: SpeciesDrawOdds
+    var catalogue: APICatalogue? = nil
+    private var speciesName: String {
+        catalogue?.species.first { $0.speciesId == odds.speciesId }?.displayName ?? odds.speciesId.capitalized
+    }
     private func percent(_ value: Double) -> String { value.formatted(.percent.precision(.fractionLength(0...4))) }
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Within \(odds.rarity.capitalized): \(percent(odds.withinRarity)) · Overall: \(percent(odds.overall))")
-                .font(.callout).accessibilityIdentifier("pack.odds.\(odds.id)")
             ForEach(odds.variants) { variant in
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(variant.variantId.capitalized).font(.subheadline.weight(.medium))
-                    Text("After \(odds.speciesId.capitalized): \(percent(variant.conditional)) · Overall: \(percent(variant.overall))")
-                        .font(.caption).foregroundStyle(JournalTheme.secondary)
-                }
+                let variantName = catalogue?.variant(species: odds.speciesId, variant: variant.variantId)?.displayName
+                    ?? variant.variantId.capitalized
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    PlantNameText("\(speciesName) (\(variantName))", rarity: odds.rarity, announcesRarity: false)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Text(percent(variant.overall)).monospacedDigit().fixedSize()
+                }.font(.callout).accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("pack.variant.\(odds.rarity).\(odds.speciesId).\(variant.variantId)")
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)

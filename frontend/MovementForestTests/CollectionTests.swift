@@ -39,12 +39,17 @@ private final class FakeCollection: CollectionServing {
     var milestones: [APIIntroMilestone] = []
     var failSummaryAfterMutation = false
     var failSummary = false
+    var summaryError: Error?
+    var mutationError: Error?
+    var checkRefreshCancellation = false
     var blockOpening = false
     var openingContinuation: CheckedContinuation<Void, Never>?
     var capacity: APIInventoryCapacity?
     var saleReceiptCapacity: APIInventoryCapacity?
     init(_ contract: CollectionContract) { self.contract = contract }
     func summary() async throws -> APICollectionSummary {
+        if checkRefreshCancellation { try Task.checkCancellation() }
+        if let summaryError = summaryError { throw summaryError }
         if failSummary { throw URLError(.notConnectedToInternet) }
         if failSummaryAfterMutation && !operations.isEmpty { throw URLError(.networkConnectionLost) }
         var value = contract.summary; value.milestones = milestones; value.capacity = capacity; return value
@@ -65,6 +70,7 @@ private final class FakeCollection: CollectionServing {
         if operation.kind == .open && blockOpening {
             await withCheckedContinuation { openingContinuation = $0 }
         }
+        if let mutationError = mutationError { throw mutationError }
         if let reject = reject { throw reject }
         if loseResponse { throw URLError(.networkConnectionLost) }
         if operation.kind == .sell {
@@ -89,6 +95,71 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testCancelledSwipeStillCompletesCollectionRefresh() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        service.checkRefreshCancellation = true
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+        let refresh = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            await store.refresh()
+        }
+        await refresh.value
+        XCTAssertFalse(store.refreshFailed); XCTAssertFalse(store.busy)
+        XCTAssertNil(store.message)
+        XCTAssertEqual(store.tokenBalance, service.contract.summary.tokenBalance)
+        XCTAssertEqual(store.packs.map(\.id), service.contract.packs.packs.map(\.id))
+        XCTAssertEqual(store.history.first?.id, service.contract.opening.id)
+        XCTAssertTrue(service.operations.isEmpty)
+    }
+
+    func testReadCancellationDoesNotShowFailureAndNextRefreshStillWorks() async throws {
+        for error in [CancellationError(), URLError(.cancelled)] as [Error] {
+            let service = FakeCollection(try CollectionContract.load())
+            let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+            await store.refresh()
+            let confirmedPacks = store.packs.map(\.id)
+            service.summaryError = error
+            await store.refresh()
+            XCTAssertFalse(store.refreshFailed); XCTAssertFalse(store.busy)
+            XCTAssertNil(store.message)
+            XCTAssertEqual(store.packs.map(\.id), confirmedPacks)
+            service.summaryError = nil
+            await store.refresh()
+            XCTAssertFalse(store.refreshFailed); XCTAssertNil(store.message)
+            XCTAssertTrue(service.operations.isEmpty)
+        }
+    }
+
+    func testGenuineRefreshFailureRemainsVisibleAndClearsAfterSuccess() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+        service.summaryError = URLError(.badServerResponse)
+        await store.refresh()
+        XCTAssertTrue(store.refreshFailed); XCTAssertNotNil(store.message)
+        service.summaryError = nil
+        await store.refresh()
+        XCTAssertFalse(store.refreshFailed); XCTAssertNil(store.message)
+        XCTAssertFalse(store.busy)
+    }
+
+    func testCancelledRecoveryKeepsOriginalRequestForTheNextRetry() async throws {
+        let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: journal)
+        await store.refresh()
+        service.loseResponse = true
+        await store.exchange(try XCTUnwrap(store.offers.first), quantity: 1)
+        let pending = try XCTUnwrap(store.state.pending)
+        service.loseResponse = false; service.mutationError = URLError(.cancelled)
+        await store.refresh()
+        XCTAssertFalse(store.refreshFailed); XCTAssertNil(store.message)
+        XCTAssertEqual(store.state.pending, pending); XCTAssertEqual(journal.value.pending, pending)
+        service.mutationError = nil
+        await store.refresh()
+        XCTAssertNil(store.state.pending)
+        XCTAssertEqual(service.operations.count, 3)
+        XCTAssertTrue(service.operations.allSatisfy { $0 == pending })
+    }
+
     func testInventoryFailuresExplainTheRequiredAction() {
         let messages = [
             "starter_protected": "cannot be sold",

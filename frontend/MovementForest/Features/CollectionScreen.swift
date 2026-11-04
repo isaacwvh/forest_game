@@ -87,7 +87,7 @@ struct CollectionScreen: View {
         .fullScreenCover(item: $inspectingPack) { definition in
             JournalInspector(title: definition.displayName, close: { inspectingPack = nil },
                              closeLabel: "Close pack contents", identifier: "packContents") {
-                PackContentsScreen(pack: definition, catalogue: store.catalogue, assets: assets)
+                PackContentsScreen(pack: definition, catalogue: store.catalogue)
             } footer: { EmptyView() }
                 .journalModalBackground()
         }
@@ -436,11 +436,8 @@ private struct PurchasePackScreen: View {
 struct PackContentsScreen: View {
     let pack: APIPackDefinition
     var catalogue: APICatalogue? = nil
-    var assets: (any AssetCatalogProviding)? = nil
-    @State private var expandedOdds: String?
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            CollectionPackArtwork(packID: pack.packId, height: 144)
             ForEach(pack.rarities) { pool in
                 raritySection(pool)
             }
@@ -455,22 +452,8 @@ struct PackContentsScreen: View {
                 Spacer(minLength: 8)
                 Text(pack.probability(pool)).font(.subheadline.weight(.medium)).monospacedDigit()
             }.accessibilityElement(children: .combine)
-            JournalGrid(minimumWidth: 112) {
-                ForEach(species) { odds in
-                    CollectionSpeciesOddsTile(odds: odds, catalogue: catalogue, assets: assets,
-                        expanded: expandedOdds == odds.id) {
-                        expandedOdds = expandedOdds == odds.id ? nil : odds.id
-                    }
-                }
-            }
-            if let odds = species.first(where: { $0.id == expandedOdds }) {
-                VStack(alignment: .leading, spacing: 10) {
-                    PlantNameText(catalogue?.species.first { $0.speciesId == odds.speciesId }?.displayName
-                                  ?? odds.speciesId.capitalized,
-                                  rarity: odds.rarity, announcesRarity: false)
-                        .font(.system(.headline, design: .serif))
-                    CollectionOddsDetails(odds: odds)
-                }.padding(12).background(JournalTheme.sage.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
+            ForEach(species) { odds in
+                CollectionOddsDetails(odds: odds, catalogue: catalogue)
             }
         }
     }

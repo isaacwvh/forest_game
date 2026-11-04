@@ -167,13 +167,20 @@ final class CollectionCoordinator: ObservableObject {
     func refresh() async {
         guard attached, !busy, !recoveryLocked else { return }
         busy = true; refreshFailed = false; message = nil; defer { busy = false }
-        do { try await recover(); guard attached else { return }; try await loadCurrent() }
-        catch { if attached {
-            refreshFailed = true
-            message = displayFailure(error)
-            if state.pending?.kind == .exchange { exchangeMessage = "Purchase confirmation interrupted. Retry the saved request to recover its result." }
-            else if exchangeOfferID != nil && confirmedExchange == nil { exchangeMessage = message }
-        } }
+        // SwiftUI can cancel the swipe's task as its refresh control updates.
+        // Finish the same refresh/recovery independently; account guards still apply.
+        let work = Task { @MainActor in
+            do { try await recover(); guard attached else { return }; try await loadCurrent() }
+            catch is CancellationError { }
+            catch let error as URLError where error.code == .cancelled { }
+            catch { if attached {
+                refreshFailed = true
+                message = displayFailure(error)
+                if state.pending?.kind == .exchange { exchangeMessage = "Purchase confirmation interrupted. Retry the saved request to recover its result." }
+                else if exchangeOfferID != nil && confirmedExchange == nil { exchangeMessage = message }
+            } }
+        }
+        await work.value
     }
     private func submit(_ operation: PendingCollectionOperation) async {
         guard canMutate else { return }

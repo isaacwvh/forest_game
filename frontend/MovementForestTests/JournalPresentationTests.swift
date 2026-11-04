@@ -105,19 +105,17 @@ final class JournalPresentationTests: XCTestCase {
         }
     }
     @MainActor
-    func testExpandedOddsKeepTheSameSpeciesTileDimensions() {
+    func testSimpleVariantOddsFitNarrowScreensWithLongNames() {
         let odds = SpeciesDrawOdds(speciesId: "moonwillow", rarity: "epic", withinRarity: 0.5, overall: 0.0000001,
                                   variants: [VariantDrawOdds(variantId: "standard", conditional: 1, overall: 0.0000001)])
-        func size(_ expanded: Bool) -> CGSize {
+        for textSize: DynamicTypeSize in [.large, .accessibility3] {
             let host = UIHostingController(rootView:
-                CollectionSpeciesOddsTile(odds: odds, catalogue: nil, assets: nil, expanded: expanded, select: {})
-                    .environment(\.dynamicTypeSize, .large))
-            return host.sizeThatFits(in: CGSize(width: 112, height: 1000))
+                CollectionOddsDetails(odds: odds).environment(\.dynamicTypeSize, textSize))
+            let size = host.sizeThatFits(in: CGSize(width: 232, height: 2000))
+            XCTAssertLessThanOrEqual(size.width, 233)
+            XCTAssertTrue(size.height.isFinite)
+            XCTAssertGreaterThan(size.height, 0)
         }
-        let collapsed = size(false), expanded = size(true)
-        XCTAssertEqual(collapsed.height, expanded.height, accuracy: 1)
-        XCTAssertEqual(collapsed.width, expanded.width, accuracy: 1)
-        XCTAssertLessThanOrEqual(expanded.width, 113)
     }
     @MainActor
     func testCollectionSummaryFitsNarrowScreensWithLargeTextAndOverLimitCounts() {

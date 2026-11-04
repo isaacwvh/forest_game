@@ -401,9 +401,7 @@ final class ForestUITests: XCTestCase {
         XCTAssertEqual(requests.value as? String, "0")
         XCTAssertEqual(tokens.value as? String, "14")
         app.buttons["collection.offerContents.woodland"].tap()
-        let odds = app.staticTexts["pack.odds.common/oak"]
-        XCTAssertFalse(odds.exists)
-        app.buttons["pack.species.common.oak"].tap()
+        let odds = app.descendants(matching: .any).matching(identifier: "pack.variant.common.oak.standard").firstMatch
         XCTAssertTrue(odds.waitForExistence(timeout: 5))
         app.buttons["packContents.close"].tap()
         XCTAssertEqual(requests.value as? String, "0")
@@ -441,7 +439,7 @@ final class ForestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Last confirmed result"].exists)
     }
 
-    func testJournalContentsExpansionKeepsCardSizeAndNeverPurchases() {
+    func testPackContentsListsVariantOddsWithoutArtworkOrExpansionAndNeverPurchases() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-collection"]; app.launch()
         let inspect = app.buttons["collection.offerContents.woodland"]
@@ -449,15 +447,14 @@ final class ForestUITests: XCTestCase {
         inspect.press(forDuration: 0.7)
         let close = app.buttons["packContents.close"]
         XCTAssertTrue(close.waitForExistence(timeout: 5))
-        let tile = app.buttons["pack.species.common.oak"]
-        XCTAssertTrue(tile.waitForExistence(timeout: 5))
-        let initial = tile.frame
-        tile.tap()
-        XCTAssertTrue(app.staticTexts["pack.odds.common/oak"].waitForExistence(timeout: 5))
-        XCTAssertEqual(tile.frame.height, initial.height, accuracy: 1)
-        XCTAssertEqual(tile.frame.width, initial.width, accuracy: 1)
-        tile.tap()
-        XCTAssertFalse(app.staticTexts["pack.odds.common/oak"].exists)
+        for variant in ["standard", "blue", "vined"] {
+            let row = app.descendants(matching: .any).matching(identifier: "pack.variant.common.oak.\(variant)").firstMatch
+            XCTAssertTrue(row.waitForExistence(timeout: 5))
+            XCTAssertTrue(row.label.contains("%"))
+            XCTAssertTrue(row.label.contains("Oak"))
+        }
+        XCTAssertFalse(app.buttons["pack.species.common.oak"].exists)
+        XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Within Common:")).firstMatch.exists)
         close.tap()
         XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
         XCTAssertEqual(app.staticTexts["fixture.collectionTokens"].value as? String, "14")

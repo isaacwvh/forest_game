@@ -40,10 +40,10 @@ Form presentation below. Garden/Edit viewport and navigation geometry are unchan
   also fixes Cancel/Purchase below scrolling quantity, exact cost and balance.
   Existing quantity limits, cancellation and submission callbacks are retained.
   Plant inspectors keep their existing default labels and accessibility IDs.
-- Contents use the selected immutable definition, rarity percentages and equal
-  sprout tiles; a selected tile expands its odds below the grid without resizing
-  tiles. Catalog uses the same concise conditional/overall details. Probability
-  precision and legacy pool support are unchanged; later-stage art is not exposed.
+- Contents use the selected immutable definition: rarity name/percentage, then
+  plain "Species (Variant)" rows with each variant's overall percentage. No plant
+  portraits or conditional-probability explanations. Catalog disclosures reuse
+  these concise rows. Probability precision and legacy pool support are unchanged.
 - Packs retains individual owned-pack identity, pagination and one saved last
   opening. The result is a rarity-framed plant card using receipt stage/progress.
   It does not promise current ownership or offer direct placement.
@@ -56,7 +56,10 @@ Form presentation below. Garden/Edit viewport and navigation geometry are unchan
   invented. Selling retains its controls and quote/recovery logic; confirmation is
   "Sell this plant?" / "This action cannot be undone."
 
-No backend, schema, service, wire/domain model, asset, gameplay or economy changes.
+Follow-up: collection refresh finishes independently of the swipe task and treats
+cancellation quietly. Genuine failures remain visible; pending requests retain
+their original identity/body for recovery. Mutation and reward logic is unchanged.
+No backend, schema, wire/domain model, asset, gameplay or economy changes.
 Portable checks pass; native builds, XCTest and visual acceptance remain pending.
 See [STAGE5_UI_ACCEPTANCE.md](STAGE5_UI_ACCEPTANCE.md).
 
