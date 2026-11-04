@@ -179,7 +179,7 @@ struct RootView: View {
                                 .accessibilityLabel("Close collection menu")
                             VStack(alignment: .leading, spacing: 0) {
                                 HStack {
-                                    Text("Your forest").font(.title2.bold())
+                                    Text("Your forest").font(.system(.title2, design: .serif).weight(.semibold))
                                     Spacer()
                                     Button { menuPresented = false } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
                                         .accessibilityLabel("Close menu")
@@ -187,15 +187,23 @@ struct RootView: View {
                                 List(CollectionDestination.allCases) { destination in
                                     Button {
                                         collectionDestination = destination; menuPresented = false
-                                    } label: { Label(destination.rawValue, systemImage: destination.symbol).padding(.vertical, 8) }
+                                    } label: {
+                                        Label(destination.rawValue, systemImage: destination.symbol)
+                                            .font(.system(.headline, design: .serif))
+                                            .frame(minHeight: 44).padding(.vertical, 4)
+                                    }
+                                        .listRowBackground(Color.clear)
+                                        .listRowSeparatorTint(JournalTheme.vine.opacity(0.35))
                                         .accessibilityIdentifier("menu.\(destination.id)")
-                                }.listStyle(.plain)
+                                }.listStyle(.plain).scrollContentBackground(.hidden)
                                 Button("Return to Garden") {
                                     collectionDestination = nil; selectedTab = .garden; menuPresented = false
-                                }.padding()
+                                }.frame(maxWidth: .infinity, minHeight: 44).padding()
+                                    .background(JournalTheme.sage.opacity(0.65))
                             }
                             .frame(width: min(300, geometry.size.width * 0.85))
-                            .background(Color(uiColor: .systemBackground))
+                            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+                            .background(JournalPageBackground().ignoresSafeArea())
                         }
                     }.accessibilityElement(children: .contain)
                 }

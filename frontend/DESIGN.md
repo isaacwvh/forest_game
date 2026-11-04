@@ -23,6 +23,43 @@ plain-language full-capacity reasons beside the existing wallet/actions.
 Native builds, XCTest, VoiceOver, Dynamic Type and device appearance remain explicit
 acceptance checks; Windows syntax/resource/contract validation does not replace them.
 
+## Stage 5 collection journal — implemented locally, 5 November 2026
+
+Exchange, Packs, pack contents, purchase confirmation, the opening presentation,
+Milestones and the collection menu extend the established parchment/sage/forest
+palette and serif headings. This supersedes the older compact pack-row/native
+Form presentation below. Garden/Edit viewport and navigation geometry are unchanged.
+
+- Pack grids share equal-height portrait/name/action slots and neutral botanical
+  borders. Possible contents never assign a rarity to the pack itself. Info is a
+  separate 44-point tap/hold target; Purchase/Open retain their existing guards.
+- A compact summary uses confirmed tokens and relevant global pack/plant capacity,
+  never loaded-page counts. Large text stacks the summary and uses one-column grids.
+  Full-capacity, cached, pending and recovery states remain visible.
+- Purchase and contents use inset journal inspectors with fixed Close; purchase
+  also fixes Cancel/Purchase below scrolling quantity, exact cost and balance.
+  Existing quantity limits, cancellation and submission callbacks are retained.
+  Plant inspectors keep their existing default labels and accessibility IDs.
+- Contents use the selected immutable definition, rarity percentages and equal
+  sprout tiles; a selected tile expands its odds below the grid without resizing
+  tiles. Catalog uses the same concise conditional/overall details. Probability
+  precision and legacy pool support are unchanged; later-stage art is not exposed.
+- Packs retains individual owned-pack identity, pagination and one saved last
+  opening. The result is a rarity-framed plant card using receipt stage/progress.
+  It does not promise current ownership or offer direct placement.
+- Opening retains the exact submission/recovery and two-tap state machine, timings,
+  rarity lighting and interruption behavior. A dark local artwork area sits on
+  parchment; a rarity frame surrounds the revealed plant. Action controls stay
+  below the scrolling art/status; final copy is "Saved to Storage."
+- Milestones use botanical checklist cards, existing eligibility/claimed/pending
+  states, short reward amounts and expandable requirements. No numeric progress is
+  invented. Selling retains its controls and quote/recovery logic; confirmation is
+  "Sell this plant?" / "This action cannot be undone."
+
+No backend, schema, service, wire/domain model, asset, gameplay or economy changes.
+Portable checks pass; native builds, XCTest and visual acceptance remain pending.
+See [STAGE5_UI_ACCEPTANCE.md](STAGE5_UI_ACCEPTANCE.md).
+
 ## Stage 1 botanical journal — implemented locally, 31 October 2026
 
 The user's approved plant/catalog renders now govern My plants, owned inspection

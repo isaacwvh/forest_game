@@ -387,12 +387,16 @@ enum CatalogSpeciesCopy {
 struct JournalInspector<Content: View, Footer: View>: View {
     let title: String
     let close: () -> Void
+    let closeLabel: String
+    let identifier: String
     let content: Content
     let footer: Footer
     @AccessibilityFocusState private var titleFocused: Bool
-    init(title: String, close: @escaping () -> Void, @ViewBuilder content: () -> Content,
+    init(title: String, close: @escaping () -> Void, closeLabel: String = "Close plant details",
+         identifier: String = "plantDetails", @ViewBuilder content: () -> Content,
          @ViewBuilder footer: () -> Footer) {
-        self.title = title; self.close = close; self.content = content(); self.footer = footer()
+        self.title = title; self.close = close; self.closeLabel = closeLabel; self.identifier = identifier
+        self.content = content(); self.footer = footer()
     }
     var body: some View {
         ZStack {
@@ -405,11 +409,11 @@ struct JournalInspector<Content: View, Footer: View>: View {
                     Button(action: close) {
                         Image(systemName: "xmark").font(.title3).frame(width: 44, height: 44)
                             .background(JournalTheme.sage, in: Circle())
-                    }.accessibilityLabel("Close plant details").accessibilityIdentifier("plantDetails.close")
+                    }.accessibilityLabel(closeLabel).accessibilityIdentifier(identifier + ".close")
                 }.padding(.leading, 24).padding(.trailing, 14).padding(.vertical, 10)
                 ScrollView {
                     VStack(spacing: 18) { content }.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 24)
-                }.accessibilityIdentifier("plantDetails.content")
+                }.accessibilityIdentifier(identifier + ".content")
                 footer
             }
             .frame(maxWidth: 520, maxHeight: .infinity)

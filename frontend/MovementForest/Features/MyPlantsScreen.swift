@@ -131,7 +131,7 @@ struct PlantSaleControls: View {
                     }
                 }
             } message: {
-                Text("This move cannot be undone.")
+                Text("This action cannot be undone.")
             }
     }
     @ViewBuilder private var placeButton: some View {

@@ -47,10 +47,11 @@ struct PackOpeningScreen: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.92).ignoresSafeArea()
+            JournalPageBackground().ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 20) {
-                    Text(packName).font(.title2.bold()).multilineTextAlignment(.center)
+                    Text(packName).font(.system(.title2, design: .serif).weight(.semibold))
+                        .multilineTextAlignment(.center).accessibilityAddTraits(.isHeader)
                     ZStack {
                         if showsLight && showsPlant {
                             Ellipse().fill(RadialGradient(colors: [rarityColour.opacity(0.85), rarityColour.opacity(0)],
@@ -63,6 +64,7 @@ struct PackOpeningScreen: View {
                                     Image(uiImage: image).resizable().scaledToFit()
                                 } else {
                                     VStack { Image(systemName: "shippingbox.fill").font(.system(size: 100)); Text(packName) }
+                                        .foregroundStyle(JournalTheme.paper)
                                 }
                             }.frame(width: 210, height: 300)
                                 .overlay {
@@ -81,45 +83,42 @@ struct PackOpeningScreen: View {
                             }
                         }
                         if showsPlant, let plant = receipt?.plant, let catalogue = store.catalogue {
-                            PlantThumbnail(plant: plant.rendered(catalogue: catalogue, assets: assets), catalog: assets)
-                                .frame(width: 210, height: 260)
+                            JournalPlantFrame(rarity: receipt?.rarity) {
+                                JournalPlantImage(plant: plant.rendered(catalogue: catalogue, assets: assets),
+                                                  catalog: assets, maximumPixels: 600)
+                                    .frame(height: 236).padding(12)
+                            }.frame(width: 210)
                                 .offset(y: lifted || reduceMotion ? 0 : 60).opacity(lifted ? 1 : 0)
                         }
                     }
                     .frame(maxWidth: .infinity).frame(height: 320)
+                    .background(JournalTheme.ink, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(JournalVines(size: 36).padding(4))
                     .contentShape(Rectangle())
                     .onTapGesture { advance() }
                     .accessibilityHidden(true)
-                    if step == .waiting {
-                        if !submitted || store.busy { ProgressView("Confirming your pack…").tint(.white) }
-                        else {
-                            Text(store.message ?? "The opening is awaiting confirmation.")
-                            if store.state.pending != nil {
-                                Button("Retry saved opening") { Task { await store.refresh(); acceptResult(recovered: true) } }
-                                    .buttonStyle(.borderedProminent).frame(minHeight: 44)
-                            } else { Text("Return to Packs to try again. No new opening will be submitted here.") }
+                    if step == .waiting, submitted, !store.busy {
+                        Text(store.message ?? "Awaiting confirmation.").font(.callout)
+                        if store.state.pending == nil {
+                            Text("Return to Packs to try again.").font(.callout).foregroundStyle(JournalTheme.secondary)
                         }
-                    } else if step == .sealed || step == .opened {
-                        Button(step == .sealed ? "Tap to open" : "Tap to reveal") { advance() }
-                            .buttonStyle(.borderedProminent).controlSize(.large).frame(minHeight: 44)
-                            .accessibilityFocused($actionFocused)
-                            .accessibilityIdentifier(step == .sealed ? "pack.tear" : "pack.reveal")
-                        if step == .opened { Text(PackRevealStep.rarityName(receipt?.rarity)).font(.headline) }
-                    } else if step == .result, let result = receipt, let plant = result.plant {
-                        PlantNameText("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)", rarity: result.rarity,
-                            onDarkBackground: true, announcesRarity: false).font(.title2.bold()).multilineTextAlignment(.center)
-                        Text(PackRevealStep.rarityName(result.rarity)).font(.headline)
-                        Text("Your sprout is saved in Storage. Plant it from Edit → Storage → plant details → Place.").multilineTextAlignment(.center)
-                        Button("Continue") { dismiss() }.buttonStyle(.borderedProminent).controlSize(.large)
-                            .frame(minHeight: 44).accessibilityFocused($actionFocused).accessibilityIdentifier("pack.continue")
-                    } else { ProgressView().tint(.white).accessibilityLabel("Opening pack") }
-                    if step == .waiting {
-                        Button("Return to Packs") { interrupt() }
-                            .frame(minHeight: 44)
                     }
-                }.padding(24).foregroundStyle(.white)
+                    if step == .opened { Text(PackRevealStep.rarityName(receipt?.rarity)).font(.headline) }
+                    if step == .result, let result = receipt, let plant = result.plant {
+                        PlantNameText("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)",
+                                      rarity: result.rarity, announcesRarity: false)
+                            .font(.system(.title2, design: .serif).weight(.semibold)).multilineTextAlignment(.center)
+                        Text(PackRevealStep.rarityName(result.rarity)).font(.headline)
+                        Text("Saved to Storage.").font(.callout).foregroundStyle(JournalTheme.secondary)
+                    }
+                }.padding(24)
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            openingActions.padding(.horizontal, 24).padding(.vertical, 12)
+                .frame(maxWidth: .infinity).background(JournalTheme.paper)
+        }
+        .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
         .task {
             guard !submissionStarted, !interrupted else { return }
             submissionStarted = true
@@ -142,6 +141,32 @@ struct PackOpeningScreen: View {
         }
         .onChange(of: phase) { if $0 == .background { interrupt() } }
         .onDisappear { interrupted = true; transition?.cancel(); sealed = nil; opened = nil; strip = nil }
+    }
+
+    @ViewBuilder private var openingActions: some View {
+        VStack(spacing: 10) {
+            if step == .waiting {
+                if !submitted || store.busy { ProgressView("Confirming…") }
+                else {
+                    if store.state.pending != nil {
+                        Button("Retry saved opening") { Task { await store.refresh(); acceptResult(recovered: true) } }
+                            .buttonStyle(.borderedProminent).frame(minHeight: 44)
+                    }
+                }
+                Button("Return to Packs") { interrupt() }.frame(minHeight: 44)
+            } else if step == .sealed || step == .opened {
+                Button { advance() } label: {
+                    Text(step == .sealed ? "Tap to open" : "Tap to reveal").frame(maxWidth: .infinity, minHeight: 44)
+                }.buttonStyle(.borderedProminent).controlSize(.large)
+                    .accessibilityFocused($actionFocused)
+                    .accessibilityIdentifier(step == .sealed ? "pack.tear" : "pack.reveal")
+            } else if step == .result, receipt?.plant != nil {
+                Button { dismiss() } label: {
+                    Text("Continue").frame(maxWidth: .infinity, minHeight: 44)
+                }.buttonStyle(.borderedProminent).controlSize(.large)
+                    .accessibilityFocused($actionFocused).accessibilityIdentifier("pack.continue")
+            } else { ProgressView().accessibilityLabel("Opening pack") }
+        }.multilineTextAlignment(.center)
     }
 
     private func interrupt() {

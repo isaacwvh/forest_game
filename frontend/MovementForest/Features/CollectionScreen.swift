@@ -26,8 +26,10 @@ struct CollectionHostScreen: View {
                 CollectionScreen(store: store, destination: destination, assets: assets, navigate: navigate,
                                  openingChanged: openingChanged).id(store.id)
             } else {
-                Text("Connect to your account in Settings to use Exchange, Catalog, Packs and Milestones.")
-                    .foregroundStyle(.secondary).padding()
+                Text("Connect your account in Settings.")
+                    .foregroundStyle(JournalTheme.secondary).padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(JournalPageBackground().ignoresSafeArea())
             }
         }.navigationTitle(destination.rawValue).navigationBarTitleDisplayMode(.inline)
     }
@@ -75,23 +77,22 @@ struct CollectionScreen: View {
         .alert("Open pack?", isPresented: Binding(get: { confirmingPack != nil }, set: { if !$0 { confirmingPack = nil } }), presenting: confirmingPack) { pack in
             Button("Cancel", role: .cancel) { confirmingPack = nil }
             Button("Open") { openingPack = pack; confirmingPack = nil }
-        } message: { _ in Text("This opens one pack and saves its sprout in Storage.") }
+        } message: { _ in Text("Saves one sprout to Storage.") }
         .fullScreenCover(item: $openingPack, onDismiss: {
             openingChanged?(false)
             resultFocused = store.state.pending == nil && latestOpening != nil
         }) { pack in
             PackOpeningScreen(store: store, pack: pack, assets: assets)
         }
-        .sheet(item: $inspectingPack) { definition in
-            NavigationStack {
-                PackContentsScreen(pack: definition)
-                    .toolbar { ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { inspectingPack = nil }
-                    } }
-            }
+        .fullScreenCover(item: $inspectingPack) { definition in
+            JournalInspector(title: definition.displayName, close: { inspectingPack = nil },
+                             closeLabel: "Close pack contents", identifier: "packContents") {
+                PackContentsScreen(pack: definition, catalogue: store.catalogue, assets: assets)
+            } footer: { EmptyView() }
+                .journalModalBackground()
         }
-        .sheet(item: $purchasingOffer) { offer in
-            PurchasePackScreen(store: store, offer: offer)
+        .fullScreenCover(item: $purchasingOffer) { offer in
+            PurchasePackScreen(store: store, offer: offer).journalModalBackground()
         }
         .onChange(of: hasPackModal) { openingChanged?($0) }
         .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || hasPackModal }
@@ -103,94 +104,122 @@ struct CollectionScreen: View {
         await collection
     }
     private var content: some View {
-        List {
-            Section {
-                if let balance = store.tokenBalance { QuantityLabel(metric: "tokens", text: "\(balance) visitor tokens").monospacedDigit() }
-                if let capacity = store.capacity, destination == .exchange || destination == .draws {
-                    LabeledContent("Unopened packs", value: "\(capacity.unopenedPacks) / \(capacity.packLimit)")
-                        .font(.system(.subheadline, design: .serif)).foregroundStyle(JournalTheme.ink)
-                    if capacity.packsFull && destination == .exchange {
-                        Text("Pack storage full. Open a pack before buying more.").font(.callout)
-                    }
-                    if capacity.plantFull {
-                        Text("Plant collection full. Sell a stored plant in My plants to open a pack.").font(.callout)
-                    }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                CollectionWalletSummary(balance: store.tokenBalance, capacity: store.capacity,
+                    showsCapacity: destination == .exchange || destination == .draws,
+                    showsPlants: destination == .draws, cached: store.refreshFailed)
+                collectionStatus
+                switch destination {
+                case .milestones: milestonesContent
+                case .exchange: exchangeContent
+                case .draws: packsContent
+                case .catalog: EmptyView()
                 }
-                if store.offers.contains(where: { $0.pack.isFixture }) {
-                    Text("Development prices and odds · provisional").font(.caption).foregroundStyle(.secondary)
-                }
-                if store.busy { ProgressView("Confirming with server…") }
-                if let message = store.message, store.refreshFailed || store.recoveryLocked {
-                    Text(message).font(.callout).accessibilityIdentifier("collection.status")
-                }
-                if store.state.pending != nil {
-                    Text("Awaiting confirmation").font(.callout)
-                    Button("Retry saved request") { Task { await store.refresh() } }.disabled(store.busy)
+            }.padding(16).padding(.bottom, 20)
+        }
+        .background(JournalPageBackground().ignoresSafeArea())
+        .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(destination.rawValue).font(.system(.title2, design: .serif).weight(.semibold))
+                    .foregroundStyle(JournalTheme.ink)
+            }
+        }
+    }
+    @ViewBuilder private var collectionStatus: some View {
+        if let capacity = store.capacity, destination == .exchange || destination == .draws {
+            if capacity.packsFull && destination == .exchange {
+                Text("Pack storage full. Open a pack to make room.").font(.callout)
+            }
+            if capacity.plantFull {
+                Text("Plant collection full. Sell a stored plant to make room.").font(.callout)
+            }
+        }
+        if store.offers.contains(where: { $0.pack.isFixture }) {
+            Text("Development prices and odds").font(.caption).foregroundStyle(JournalTheme.secondary)
+        }
+        if store.busy { ProgressView("Confirming…").tint(JournalTheme.action) }
+        if let message = store.message, store.refreshFailed || store.recoveryLocked {
+            Text(message).font(.callout).accessibilityIdentifier("collection.status")
+        }
+        if store.state.pending != nil {
+            Text("Awaiting confirmation").font(.callout)
+            Button("Retry saved request") { Task { await store.refresh() } }
+                .disabled(store.busy).frame(minHeight: 44)
+        }
+    }
+    private var milestonesContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            JournalSectionHeading(title: "Your first garden")
+            if let confirmedAt = store.milestonesConfirmedAt {
+                Text("\(store.refreshFailed ? "Cached milestones" : "Last confirmed") · \(confirmedAt.formatted(date: .abbreviated, time: .shortened))")
+                    .font(.caption).foregroundStyle(JournalTheme.secondary)
+            }
+            if store.refreshFailed {
+                Button("Retry refresh") { Task { await store.refresh() } }.disabled(store.busy).frame(minHeight: 44)
+            }
+            if store.milestones.isEmpty && !store.busy && !store.refreshFailed && store.milestonesConfirmedAt != nil {
+                Text("No milestones available.").foregroundStyle(JournalTheme.secondary)
+            }
+            ForEach(store.milestones) { milestone in milestoneRow(milestone) }
+            if let receipt = store.state.result, receipt.milestoneId != nil {
+                ReceiptRow(receipt: receipt, catalogue: store.catalogue, assets: assets)
+            }
+            if !store.confirmedMilestoneIDs.isEmpty {
+                Button("Browse Exchange") { navigate?(.exchange) }.frame(minHeight: 44)
+            }
+        }
+    }
+    private var exchangeContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            JournalSectionHeading(title: "Packs")
+            if store.offers.isEmpty && !store.busy {
+                Text("No packs available.").foregroundStyle(JournalTheme.secondary)
+            }
+            JournalGrid(minimumWidth: 142) {
+                ForEach(store.offers) { offer in
+                    ExchangeOfferRow(store: store, offer: offer,
+                        inspect: { inspectingPack = offer.pack }, purchase: { purchasingOffer = offer })
                 }
             }
-            switch destination {
-            case .milestones:
-                Section("Your first garden") {
-                    if let confirmedAt = store.milestonesConfirmedAt {
-                        Text("\(store.refreshFailed ? "Cached milestones" : "Last confirmed") · \(confirmedAt.formatted(date: .abbreviated, time: .shortened))")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    if store.refreshFailed {
-                        Text("Milestones couldn’t refresh. Previously confirmed rewards are retained.")
-                        Button("Retry refresh") { Task { await store.refresh() } }.disabled(store.busy)
-                    }
-                    if store.milestones.isEmpty && !store.busy && !store.refreshFailed && store.milestonesConfirmedAt != nil {
-                        Text("No milestones are currently available.")
-                    }
-                    ForEach(store.milestones) { milestone in
-                        milestoneRow(milestone)
-                    }
-                    if let receipt = store.state.result, receipt.milestoneId != nil {
-                        ReceiptRow(receipt: receipt, catalogue: store.catalogue, assets: assets)
-                    }
-                    if !store.confirmedMilestoneIDs.isEmpty {
-                        Button("Spend tokens in Exchange") { navigate?(.exchange) }.frame(minHeight: 44)
-                    }
-                }
-            case .exchange:
-                Section("Packs") {
-                    if store.offers.isEmpty && !store.busy { Text("No exchange offers are currently available.") }
-                    ForEach(store.offers) { offer in
-                        ExchangeOfferRow(store: store, offer: offer, navigate: navigate,
-                            inspect: { inspectingPack = offer.pack }, purchase: { purchasingOffer = offer })
+            ForEach(store.offers) { offer in
+                ExchangeOfferFeedback(store: store, offer: offer, navigate: navigate)
+            }
+        }
+    }
+    private var packsContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            JournalSectionHeading(title: "Unopened packs")
+            if store.packs.isEmpty && !store.busy {
+                Text("No unopened packs.").foregroundStyle(JournalTheme.secondary)
+                Button("Browse Exchange") { navigate?(.exchange) }.frame(minHeight: 44)
+            }
+            JournalGrid(minimumWidth: 142) {
+                ForEach(store.packs) { pack in
+                    CollectionPackCard(packID: pack.packId,
+                        name: store.definitions[pack.definitionID]?.displayName ?? pack.packId,
+                        infoID: "collection.contents.\(pack.id)",
+                        canInspect: store.definitions[pack.definitionID] != nil,
+                        inspect: { inspectingPack = store.definitions[pack.definitionID] }) {
+                        Button { confirmingPack = pack } label: {
+                            Text("Open").frame(maxWidth: .infinity, minHeight: 44)
+                        }.accessibilityLabel("Open pack")
+                            .buttonStyle(.borderedProminent)
+                            .disabled(!store.canOpenPack).accessibilityIdentifier("collection.open.\(pack.id)")
                     }
                 }
-            case .draws:
-                Section("Unopened packs") {
-                    if store.packs.isEmpty && !store.busy {
-                        Text("No unopened packs.").foregroundStyle(.secondary)
-                        Button("Browse Exchange") { navigate?(.exchange) }.frame(minHeight: 44)
-                    }
-                    ForEach(store.packs) { pack in
-                        CompactPackRow(packID: pack.packId,
-                            name: store.definitions[pack.definitionID]?.displayName ?? pack.packId,
-                            infoID: "collection.contents.\(pack.id)",
-                            canInspect: store.definitions[pack.definitionID] != nil,
-                            inspect: { inspectingPack = store.definitions[pack.definitionID] }) {
-                            Button("Open pack") { confirmingPack = pack }
-                                .buttonStyle(.borderedProminent).frame(minHeight: 44)
-                                .disabled(!store.canOpenPack).accessibilityIdentifier("collection.open.\(pack.id)")
-                        }
-                    }
-                    if store.packCursor != nil {
-                        Button("Load more packs") { Task { await store.loadMore() } }.disabled(store.busy)
-                    }
-                }
-                Section("Last confirmed result") {
-                    if let result = latestOpening {
-                        ReceiptRow(receipt: result, catalogue: store.catalogue, assets: assets)
-                            .accessibilityElement(children: .combine).accessibilityFocused($resultFocused)
-                        Button("Go to Garden") { navigate?(nil) }.frame(minHeight: 44)
-                    } else {
-                        Text("No confirmed opening yet.").foregroundStyle(.secondary)
-                    }
-                }
-            case .catalog: EmptyView()
+            }
+            if store.packCursor != nil {
+                Button("Load more packs") { Task { await store.loadMore() } }.disabled(store.busy).frame(minHeight: 44)
+            }
+            JournalSectionHeading(title: "Last confirmed result")
+            if let result = latestOpening {
+                ReceiptRow(receipt: result, catalogue: store.catalogue, assets: assets)
+                    .frame(maxWidth: .infinity).accessibilityFocused($resultFocused)
+                Button("Go to Garden") { navigate?(nil) }.frame(minHeight: 44)
+            } else {
+                Text("No confirmed opening yet.").foregroundStyle(JournalTheme.secondary)
             }
         }
     }
@@ -257,26 +286,40 @@ struct CollectionScreen: View {
     private func milestoneRow(_ milestone: APIIntroMilestone) -> some View {
         let claimed = milestone.claimed || store.confirmedMilestoneIDs.contains(milestone.id)
         let pending = store.state.pending?.kind == .milestone && store.state.pending?.milestoneID == milestone.id
-        return VStack(alignment: .leading, spacing: 6) {
-            DisclosureGroup {
-                Text(milestone.description).font(.callout).foregroundStyle(.secondary)
-            } label: { Text(milestone.title).font(.headline) }
-            QuantityLabel(metric: "tokens", text: "Reward: \(milestone.rewardTokens) visitor tokens")
-            if pending {
-                Label(store.busy ? "Confirming claim…" : "Claim awaiting confirmation", systemImage: "clock")
-                if !store.busy {
-                    Button("Retry saved claim") { Task { await store.refresh() } }.frame(minHeight: 44)
+        return CollectionJournalFrame {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: claimed ? "checkmark.seal.fill" : "leaf")
+                        .font(.title2).frame(width: 44, height: 44).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(milestone.title).font(.system(.headline, design: .serif))
+                            .fixedSize(horizontal: false, vertical: true)
+                        QuantityLabel(metric: "tokens", text: "+\(milestone.rewardTokens)")
+                            .font(.subheadline).monospacedDigit()
+                            .accessibilityLabel("\(milestone.rewardTokens) tokens")
+                    }
                 }
-            } else if claimed {
-                Label("Claimed", systemImage: "checkmark.circle")
-            } else if milestone.eligible {
-                Button("Claim reward") { Task { await store.claim(milestone) } }
-                    .disabled(!store.canMutate).frame(minHeight: 44)
-                    .accessibilityIdentifier("milestone.\(milestone.id)")
-            } else {
-                Label("Not yet eligible", systemImage: "lock")
-            }
-        }.padding(.vertical, 4)
+                DisclosureGroup("Requirement") {
+                    Text(milestone.description).font(.callout).foregroundStyle(JournalTheme.secondary)
+                        .fixedSize(horizontal: false, vertical: true).padding(.top, 6)
+                }.frame(minHeight: 44)
+                if pending {
+                    Label(store.busy ? "Confirming…" : "Awaiting confirmation", systemImage: "clock")
+                    if !store.busy {
+                        Button("Retry saved claim") { Task { await store.refresh() } }.frame(minHeight: 44)
+                    }
+                } else if claimed {
+                    Label("Claimed", systemImage: "checkmark.circle")
+                } else if milestone.eligible {
+                    Button("Claim") { Task { await store.claim(milestone) } }
+                        .buttonStyle(.borderedProminent).disabled(!store.canMutate).frame(minHeight: 44)
+                        .accessibilityLabel("Claim reward")
+                        .accessibilityIdentifier("milestone.\(milestone.id)")
+                } else {
+                    Label("Not yet eligible", systemImage: "lock")
+                }
+            }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 
@@ -284,18 +327,28 @@ struct CollectionScreen: View {
 private struct ExchangeOfferRow: View {
     @ObservedObject var store: CollectionCoordinator
     let offer: APIExchangeOffer
-    var navigate: ((CollectionDestination?) -> Void)? = nil
     let inspect: () -> Void
     let purchase: () -> Void
     var body: some View {
+        CollectionPackCard(packID: offer.pack.packId, name: offer.pack.displayName,
+            price: offer.tokenCost, infoID: "collection.offerContents.\(offer.offerId)", inspect: inspect) {
+            Button(action: purchase) {
+                Text("Purchase").frame(maxWidth: .infinity, minHeight: 44)
+            }.accessibilityLabel("Purchase pack")
+                .disabled(!store.canMutate || !store.canAfford(offer, quantity: 1) || !store.canBuy(quantity: 1))
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("collection.exchange.\(offer.offerId)")
+        }
+    }
+}
+
+@MainActor
+private struct ExchangeOfferFeedback: View {
+    @ObservedObject var store: CollectionCoordinator
+    let offer: APIExchangeOffer
+    var navigate: ((CollectionDestination?) -> Void)? = nil
+    var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            CompactPackRow(packID: offer.pack.packId, name: offer.pack.displayName,
-                price: offer.tokenCost, infoID: "collection.offerContents.\(offer.offerId)", inspect: inspect) {
-                Button("Purchase pack", action: purchase)
-                    .disabled(!store.canMutate || !store.canAfford(offer, quantity: 1) || !store.canBuy(quantity: 1))
-                    .buttonStyle(.borderedProminent).frame(minHeight: 44)
-                    .accessibilityIdentifier("collection.exchange.\(offer.offerId)")
-            }
             if store.exchangeOfferID == offer.offerId, store.confirmedExchange == nil, let message = store.exchangeMessage {
                 Text(message).font(.callout).accessibilityIdentifier("collection.exchangeFeedback")
             }
@@ -306,7 +359,7 @@ private struct ExchangeOfferRow: View {
                 Button("Open packs") { navigate?(.draws) }.frame(minHeight: 44)
             }
             if store.tokenBalance != nil && !store.canAfford(offer, quantity: 1) {
-                Text("Not enough tokens").font(.caption).foregroundStyle(.secondary)
+                Text("\(offer.pack.displayName): Not enough tokens").font(.caption).foregroundStyle(JournalTheme.secondary)
             }
         }
     }
@@ -322,37 +375,6 @@ enum PackResultPresentation {
     }
 }
 
-private struct CompactPackRow<Action: View>: View {
-    let packID: String
-    let name: String
-    var price: String? = nil
-    let infoID: String
-    var canInspect = true
-    let inspect: () -> Void
-    @ViewBuilder var action: () -> Action
-    @Environment(\.dynamicTypeSize) private var textSize
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            PackThumbnail(packID: packID)
-            VStack(alignment: .leading, spacing: 6) {
-                Text(name).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
-                if let price = price { QuantityLabel(metric: "tokens", text: "\(price) tokens").monospacedDigit() }
-                if textSize.isAccessibilitySize { action() }
-            }.padding(.top, 8)
-            VStack(alignment: .trailing, spacing: 0) {
-                Button(action: inspect) {
-                    Image(systemName: "info.circle").frame(width: 44, height: 44)
-                }.buttonStyle(.borderless).disabled(!canInspect)
-                    .accessibilityLabel("Contents and odds for \(name)")
-                    .accessibilityHint(canInspect ? "View without purchasing or opening" : "Refresh to load contents")
-                    .accessibilityIdentifier(infoID)
-                if !textSize.isAccessibilitySize { action() }
-            }
-        }.padding(.vertical, 4)
-    }
-}
-
 @MainActor
 private struct PurchasePackScreen: View {
     @ObservedObject var store: CollectionCoordinator
@@ -360,97 +382,109 @@ private struct PurchasePackScreen: View {
     @State private var quantity = 1
     @State private var submitted = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var textSize
     private var totalCost: String {
         guard let cost = ExactAmount.integer(offer.tokenCost) else { return "Unavailable" }
         return (cost * Decimal(quantity)).formatted()
     }
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    HStack(spacing: 12) {
-                        PackThumbnail(packID: offer.pack.packId)
-                        Text(offer.pack.displayName).font(.headline)
-                    }
-                    Stepper("Quantity: \(quantity)", value: $quantity, in: 1...max(1, min(20, store.capacity?.packRoom ?? 20)))
-                        .disabled(submitted || !store.canMutate).accessibilityIdentifier("purchase.quantity")
-                    QuantityLabel(metric: "tokens", text: "Total: \(totalCost) tokens").monospacedDigit()
-                    if let balance = store.tokenBalance {
-                        LabeledContent("Available tokens", value: balance)
-                    }
-                    if !store.canAfford(offer, quantity: quantity) {
-                        Text("Not enough tokens").foregroundStyle(.secondary)
-                    }
-                    if !store.canBuy(quantity: quantity) {
-                        Text("Pack storage full. Open a pack before buying more.").foregroundStyle(.secondary)
-                    }
+        JournalInspector(title: "Purchase pack?", close: { if !submitted { dismiss() } },
+                         closeLabel: "Cancel purchase", identifier: "purchase") {
+            CollectionPackArtwork(packID: offer.pack.packId, height: 160)
+            Text(offer.pack.displayName).font(.system(.title3, design: .serif).weight(.semibold))
+                .multilineTextAlignment(.center)
+            VStack(alignment: .leading, spacing: 16) {
+                QuantityLabel(metric: "tokens", text: "\(offer.tokenCost) per pack").monospacedDigit()
+                Stepper("Quantity: \(quantity)", value: $quantity, in: 1...max(1, min(20, store.capacity?.packRoom ?? 20)))
+                    .disabled(submitted || !store.canMutate).accessibilityIdentifier("purchase.quantity")
+                    .frame(minHeight: 44)
+                QuantityLabel(metric: "tokens", text: "Total: \(totalCost)").monospacedDigit()
+                    .font(.headline).accessibilityLabel("Total: \(totalCost) tokens")
+                if let balance = store.tokenBalance {
+                    LabeledContent("Available tokens", value: balance).monospacedDigit()
                 }
-                Section {
-                    Button("Purchase") {
-                        guard !submitted, store.canMutate, store.canAfford(offer, quantity: quantity),
-                              store.canBuy(quantity: quantity) else { return }
-                        submitted = true
-                        let count = quantity
-                        dismiss()
-                        Task { await store.exchange(offer, quantity: count) }
-                    }.buttonStyle(.borderedProminent).frame(minHeight: 44)
-                        .disabled(submitted || !store.canMutate || !store.canAfford(offer, quantity: quantity) || !store.canBuy(quantity: quantity))
-                        .accessibilityIdentifier("purchase.confirm")
+                if !store.canAfford(offer, quantity: quantity) {
+                    Text("Not enough tokens").foregroundStyle(JournalTheme.secondary)
                 }
-            }.navigationTitle("Purchase pack?").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }.disabled(submitted)
-                } }
+                if !store.canBuy(quantity: quantity) {
+                    Text("Pack storage full.").foregroundStyle(JournalTheme.secondary)
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        } footer: {
+            let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 12))
+            layout { purchaseActions }.padding(16).background(JournalTheme.sage.opacity(0.65))
         }
     }
-}
-
-private struct PackThumbnail: View {
-    let packID: String
-    @State private var image: UIImage?
-    var body: some View {
-        Group {
-            if let image = image { Image(uiImage: image).resizable().scaledToFit() }
-            else { Image(systemName: "shippingbox").font(.title) }
-        }.frame(width: 48, height: 64).accessibilityHidden(true)
-            .task {
-                if let path = PresentationAssets.packPath(packID: packID, part: "sealed") {
-                    image = PresentationAssets.image(path, maximumPixels: 180)
-                }
-            }
+    @ViewBuilder private var purchaseActions: some View {
+        Button("Cancel") { dismiss() }.disabled(submitted)
+            .frame(maxWidth: .infinity, minHeight: 44).accessibilityIdentifier("purchase.cancel")
+        Button {
+            guard !submitted, store.canMutate, store.canAfford(offer, quantity: quantity),
+                  store.canBuy(quantity: quantity) else { return }
+            submitted = true
+            let count = quantity
+            dismiss()
+            Task { await store.exchange(offer, quantity: count) }
+        } label: {
+            Text("Purchase").frame(maxWidth: .infinity, minHeight: 44)
+        }.buttonStyle(.borderedProminent)
+            .disabled(submitted || !store.canMutate || !store.canAfford(offer, quantity: quantity) || !store.canBuy(quantity: quantity))
+            .accessibilityIdentifier("purchase.confirm")
     }
 }
 
 struct PackContentsScreen: View {
     let pack: APIPackDefinition
+    var catalogue: APICatalogue? = nil
+    var assets: (any AssetCatalogProviding)? = nil
+    @State private var expandedOdds: String?
     var body: some View {
-        List {
+        VStack(alignment: .leading, spacing: 18) {
+            CollectionPackArtwork(packID: pack.packId, height: 144)
             ForEach(pack.rarities) { pool in
-                Section {
-                    ForEach(pack.speciesOdds.filter { $0.rarity == pool.rarity }) { odds in SpeciesOddsView(odds: odds) }
-                } header: {
-                    PlantNameText(pool.rarity.capitalized, rarity: pool.rarity, announcesRarity: false,
-                        suffix: " · \(pack.probability(pool))").textCase(nil)
+                raritySection(pool)
+            }
+        }.foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+    }
+    private func raritySection(_ pool: APIRarityPool) -> some View {
+        let species = pack.speciesOdds.filter { $0.rarity == pool.rarity }
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                PlantNameText(pool.rarity.capitalized, rarity: pool.rarity, announcesRarity: false)
+                    .font(.system(.title3, design: .serif).weight(.semibold)).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+                Text(pack.probability(pool)).font(.subheadline.weight(.medium)).monospacedDigit()
+            }.accessibilityElement(children: .combine)
+            JournalGrid(minimumWidth: 112) {
+                ForEach(species) { odds in
+                    CollectionSpeciesOddsTile(odds: odds, catalogue: catalogue, assets: assets,
+                        expanded: expandedOdds == odds.id) {
+                        expandedOdds = expandedOdds == odds.id ? nil : odds.id
+                    }
                 }
             }
-        }.navigationTitle(pack.displayName)
+            if let odds = species.first(where: { $0.id == expandedOdds }) {
+                VStack(alignment: .leading, spacing: 10) {
+                    PlantNameText(catalogue?.species.first { $0.speciesId == odds.speciesId }?.displayName
+                                  ?? odds.speciesId.capitalized,
+                                  rarity: odds.rarity, announcesRarity: false)
+                        .font(.system(.headline, design: .serif))
+                    CollectionOddsDetails(odds: odds)
+                }.padding(12).background(JournalTheme.sage.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
+            }
+        }
     }
 }
 
 struct SpeciesOddsView: View {
     let odds: SpeciesDrawOdds
-    private func percent(_ value: Double) -> String { value.formatted(.percent.precision(.fractionLength(0...4))) }
     var body: some View {
         DisclosureGroup {
-            Text("Species: \(percent(odds.withinRarity)) within \(odds.rarity.capitalized) · \(percent(odds.overall)) overall")
-                .font(.callout)
-            ForEach(odds.variants) { variant in
-                Text("\(variant.variantId.capitalized): \(percent(variant.conditional)) after this species · \(percent(variant.overall)) overall")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
+            CollectionOddsDetails(odds: odds).padding(.top, 8)
         } label: {
             PlantNameText(odds.speciesId.capitalized, rarity: odds.rarity, announcesRarity: false)
-        }.padding(.vertical, 4).accessibilityIdentifier("pack.species.\(odds.rarity).\(odds.speciesId)")
+        }.frame(minHeight: 44).padding(.vertical, 4)
+            .accessibilityIdentifier("pack.species.\(odds.rarity).\(odds.speciesId)")
     }
 }
 
@@ -730,22 +764,12 @@ private struct ReceiptRow: View {
     let catalogue: APICatalogue?
     let assets: any AssetCatalogProviding
     var body: some View {
-        if let plant = receipt.plant {
-            HStack {
-                if let catalogue = catalogue {
-                    PlantThumbnail(plant: plant.rendered(catalogue: catalogue, assets: assets), catalog: assets).frame(width: 48, height: 56)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    PlantNameText(plant.speciesId.capitalized,
-                        rarity: receipt.rarity, announcesRarity: false).font(.headline)
-                    Text("\(plant.variantId.capitalized) · \(receipt.rarity?.capitalized ?? "Plant")")
-                        .font(.subheadline).foregroundStyle(.secondary)
-                }
-            }
+        if receipt.plant != nil {
+            CollectionPlantReceiptCard(receipt: receipt, catalogue: catalogue, assets: assets)
         } else if receipt.milestoneId != nil {
-            QuantityLabel(metric: "tokens", text: "Milestone reward: +\(receipt.tokensEarned ?? "0") visitor tokens.")
+            QuantityLabel(metric: "tokens", text: "+\(receipt.tokensEarned ?? "0") tokens")
         } else {
-            QuantityLabel(metric: "tokens", text: "Exchanged \(receipt.tokensSpent ?? "0") tokens for \(receipt.quantity ?? 0) packs.")
+            QuantityLabel(metric: "tokens", text: "\(receipt.tokensSpent ?? "0") tokens · \(receipt.quantity ?? 0) packs")
         }
     }
 }

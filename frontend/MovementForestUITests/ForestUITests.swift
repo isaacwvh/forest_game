@@ -401,16 +401,16 @@ final class ForestUITests: XCTestCase {
         XCTAssertEqual(requests.value as? String, "0")
         XCTAssertEqual(tokens.value as? String, "14")
         app.buttons["collection.offerContents.woodland"].tap()
-        let odds = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Species:")).firstMatch
+        let odds = app.staticTexts["pack.odds.common/oak"]
         XCTAssertFalse(odds.exists)
         app.buttons["pack.species.common.oak"].tap()
         XCTAssertTrue(odds.waitForExistence(timeout: 5))
-        app.navigationBars.buttons["Done"].tap()
+        app.buttons["packContents.close"].tap()
         XCTAssertEqual(requests.value as? String, "0")
 
         purchase.tap()
         XCTAssertTrue(app.buttons["purchase.confirm"].waitForExistence(timeout: 5))
-        app.navigationBars.buttons["Cancel"].tap()
+        app.buttons["purchase.cancel"].tap()
         XCTAssertEqual(requests.value as? String, "0")
         XCTAssertEqual(tokens.value as? String, "14")
         purchase.tap()
@@ -439,6 +439,53 @@ final class ForestUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Opening history"].exists)
         app.swipeUp()
         XCTAssertTrue(app.staticTexts["Last confirmed result"].exists)
+    }
+
+    func testJournalContentsExpansionKeepsCardSizeAndNeverPurchases() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-collection"]; app.launch()
+        let inspect = app.buttons["collection.offerContents.woodland"]
+        XCTAssertTrue(inspect.waitForExistence(timeout: 15))
+        inspect.press(forDuration: 0.7)
+        let close = app.buttons["packContents.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 5))
+        let tile = app.buttons["pack.species.common.oak"]
+        XCTAssertTrue(tile.waitForExistence(timeout: 5))
+        let initial = tile.frame
+        tile.tap()
+        XCTAssertTrue(app.staticTexts["pack.odds.common/oak"].waitForExistence(timeout: 5))
+        XCTAssertEqual(tile.frame.height, initial.height, accuracy: 1)
+        XCTAssertEqual(tile.frame.width, initial.width, accuracy: 1)
+        tile.tap()
+        XCTAssertFalse(app.staticTexts["pack.odds.common/oak"].exists)
+        close.tap()
+        XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
+        XCTAssertEqual(app.staticTexts["fixture.collectionTokens"].value as? String, "14")
+    }
+
+    func testJournalPurchaseKeepsFooterReachableWithAccessibilityText() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-collection",
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let purchase = app.buttons["collection.exchange.woodland"]
+        XCTAssertTrue(purchase.waitForExistence(timeout: 15))
+        for _ in 0..<4 {
+            if purchase.isHittable { break }
+            app.swipeUp()
+        }
+        purchase.tap()
+        let confirm = app.buttons["purchase.confirm"], cancel = app.buttons["purchase.cancel"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(confirm.isHittable); XCTAssertTrue(cancel.isHittable)
+        XCTAssertGreaterThanOrEqual(confirm.frame.height, 44)
+        XCTAssertLessThanOrEqual(confirm.frame.maxY, app.frame.maxY)
+        let content = app.scrollViews["purchase.content"]
+        XCTAssertTrue(content.exists)
+        content.swipeUp()
+        XCTAssertTrue(confirm.isHittable); XCTAssertTrue(cancel.isHittable)
+        cancel.tap()
+        XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
     }
 
     func testFixtureActivityWorksWithoutSystemPermissionSheet() {

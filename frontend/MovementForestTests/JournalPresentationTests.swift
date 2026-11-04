@@ -86,4 +86,53 @@ final class JournalPresentationTests: XCTestCase {
         let unknown = APISpecies(speciesId: "unknown", displayName: "Unknown", clearanceRadius: 1, variants: [])
         XCTAssertNil(CatalogSpeciesCopy.description(for: unknown))
     }
+    @MainActor
+    func testPackCardsKeepEqualHeightsForLongNamesAndPrices() {
+        func size(_ name: String, price: String, textSize: DynamicTypeSize, width: CGFloat) -> CGSize {
+            let host = UIHostingController(rootView:
+                CollectionPackCard(packID: "generic", name: name, price: price, infoID: "test.info", inspect: {}) {
+                    Text("Purchase").frame(maxWidth: .infinity, minHeight: 44)
+                }.environment(\.dynamicTypeSize, textSize))
+            return host.sizeThatFits(in: CGSize(width: width, height: 2000))
+        }
+        for textSize: DynamicTypeSize in [.large, .xxxLarge, .accessibility3] {
+            let width: CGFloat = textSize.isAccessibilitySize ? 288 : 142
+            let short = size("Woodland", price: "5", textSize: textSize, width: width)
+            let long = size("Moonwillow woodland collection pack", price: "1000000000", textSize: textSize, width: width)
+            XCTAssertEqual(long.height, short.height, accuracy: 1, "Names/prices must not change card height")
+            XCTAssertLessThanOrEqual(long.width, width + 1)
+            XCTAssertGreaterThan(short.height, 200)
+        }
+    }
+    @MainActor
+    func testExpandedOddsKeepTheSameSpeciesTileDimensions() {
+        let odds = SpeciesDrawOdds(speciesId: "moonwillow", rarity: "epic", withinRarity: 0.5, overall: 0.0000001,
+                                  variants: [VariantDrawOdds(variantId: "standard", conditional: 1, overall: 0.0000001)])
+        func size(_ expanded: Bool) -> CGSize {
+            let host = UIHostingController(rootView:
+                CollectionSpeciesOddsTile(odds: odds, catalogue: nil, assets: nil, expanded: expanded, select: {})
+                    .environment(\.dynamicTypeSize, .large))
+            return host.sizeThatFits(in: CGSize(width: 112, height: 1000))
+        }
+        let collapsed = size(false), expanded = size(true)
+        XCTAssertEqual(collapsed.height, expanded.height, accuracy: 1)
+        XCTAssertEqual(collapsed.width, expanded.width, accuracy: 1)
+        XCTAssertLessThanOrEqual(expanded.width, 113)
+    }
+    @MainActor
+    func testCollectionSummaryFitsNarrowScreensWithLargeTextAndOverLimitCounts() {
+        let capacity = APIInventoryCapacity(ownedPlants: 125, plantedPlants: 25, storedPlants: 100,
+                                           plantLimit: 50, plantedLimit: 20, unopenedPacks: 110, packLimit: 50)
+        for textSize: DynamicTypeSize in [.large, .accessibility3] {
+            for balance: String? in [nil, "0", "9223372036854775807"] {
+                let host = UIHostingController(rootView:
+                    CollectionWalletSummary(balance: balance, capacity: capacity, showsPlants: true, cached: true)
+                        .environment(\.dynamicTypeSize, textSize))
+                let size = host.sizeThatFits(in: CGSize(width: 288, height: 2000))
+                XCTAssertLessThanOrEqual(size.width, 289)
+                XCTAssertTrue(size.height.isFinite)
+                XCTAssertGreaterThan(size.height, 44)
+            }
+        }
+    }
 }
