@@ -24,22 +24,23 @@ struct PlantInventoryHeading: View {
 struct PlantCapacitySummary: View {
     let capacity: APIInventoryCapacity
     var cached = false
+    var compact = false
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if textSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 12) { counts }
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: 20) { counts }
+                HStack(alignment: .firstTextBaseline, spacing: compact ? 12 : 20) { counts }
             }
             if cached { Text("Last confirmed capacity").font(.caption).foregroundStyle(JournalTheme.secondary) }
-            if capacity.plantFull {
+            if capacity.plantFull && !compact {
                 Text("Collection full. Sell a stored plant to open another pack.")
                     .font(.callout).foregroundStyle(JournalTheme.ink)
             }
-        }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        }.padding(compact ? 10 : 16).frame(maxWidth: .infinity, alignment: .leading)
             .background(JournalTheme.sage.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
-            .accessibilityIdentifier("myplants.capacity")
+            .accessibilityIdentifier(compact ? "editor.capacity" : "myplants.capacity")
     }
     @ViewBuilder private var counts: some View {
         count("Plants", value: "\(capacity.ownedPlants) / \(capacity.plantLimit)")
@@ -48,9 +49,9 @@ struct PlantCapacitySummary: View {
     }
     private func count(_ title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title).font(.system(.subheadline, design: .serif).weight(.semibold))
+            Text(title).font(.system(compact ? .caption : .subheadline, design: .serif).weight(.semibold))
                 .foregroundStyle(JournalTheme.secondary)
-            Text(value).font(.body.weight(.medium)).monospacedDigit().foregroundStyle(JournalTheme.ink)
+            Text(value).font((compact ? Font.callout : Font.body).weight(.medium)).monospacedDigit().foregroundStyle(JournalTheme.ink)
         }.frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
     }
 }
@@ -60,6 +61,10 @@ struct PlantSaleControls: View {
     @ObservedObject var store: CollectionCoordinator
     let plant: APIOwnedPlant
     var enabled = true
+    var onPlace: (() -> Void)? = nil
+    var placementDisabled = false
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var textSize
     @State private var quote: APIPlantSaleQuote?
     @State private var loading = false
     @State private var issue: String?
@@ -69,34 +74,35 @@ struct PlantSaleControls: View {
     private var sold: Bool { store.state.result?.saleId != nil && store.state.result?.plantId == plant.id }
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            JournalSectionHeading(title: "Sell plant")
+            if onPlace == nil { JournalSectionHeading(title: "Sell plant") }
             if sold {
                 Label("Sold for \(store.state.result?.tokensEarned ?? "0") tokens", systemImage: "checkmark.circle")
-            } else if plant.placement != nil {
-                Text("Store this plant before selling it.").font(.callout).foregroundStyle(JournalTheme.secondary)
             } else if let pending = store.state.pending {
                 Text("A collection request is awaiting confirmation.").font(.callout)
-                Button("Retry saved request") { Task { await store.refresh() } }
+                Button("Retry saved request") { Task { await store.refresh(); await loadQuote() } }
                     .frame(minHeight: 44).disabled(store.busy)
                     .accessibilityIdentifier("plantSale.retry.\(pending.id)")
             } else if loading {
                 ProgressView("Checking resale value…")
             } else if let quote = quote {
-                DisclosureGroup("Resale value") {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("\(quote.rarity.capitalized) base: \(quote.rarityBase) tokens")
-                        Text("Variant multiplier: \((Double(quote.variantBasisPoints) / 10000).formatted())×")
-                        Text("Water: \(ExactAmount.water(quote.growthMicroUnits)) / \(ExactAmount.water(quote.adultWaterMicroUnits))")
-                        Text("Resale returns 25% of the adjusted value at sprout, rising to 50% at adulthood.")
-                    }.font(.callout).foregroundStyle(JournalTheme.secondary).padding(.top, 8)
+                if plant.placement != nil {
+                    Text("Store this plant before selling it.").font(.callout).foregroundStyle(JournalTheme.secondary)
+                    QuantityLabel(metric: "tokens", text: "Sell value: \(quote.tokens) tokens")
+                        .accessibilityIdentifier("plantSale.value")
+                } else {
+                    let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 12))
+                    layout {
+                        placeButton
+                        Button { confirming = true } label: {
+                            QuantityLabel(metric: "tokens", text: "Sell for \(quote.tokens) tokens")
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                        }.buttonStyle(.bordered).tint(JournalTheme.action)
+                            .disabled(!enabled || !store.canMutate || submitting)
+                            .accessibilityIdentifier("plantSale.sell")
+                    }
                 }
-                Button { confirming = true } label: {
-                    QuantityLabel(metric: "tokens", text: "Sell for \(quote.tokens) tokens")
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }.buttonStyle(.bordered).tint(JournalTheme.action)
-                    .disabled(!enabled || !store.canMutate || submitting)
-                    .accessibilityIdentifier("plantSale.sell")
             }
+            if quote == nil && !sold { placeButton }
             if let issue = issue {
                 Text(issue).font(.callout).foregroundStyle(JournalTheme.secondary)
                 if retryable {
@@ -108,7 +114,10 @@ struct PlantSaleControls: View {
                 Text(message).font(.callout).foregroundStyle(JournalTheme.secondary)
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
-            .task(id: plant.growthMicroUnits) { await loadQuote() }
+            .task(id: plant.growthMicroUnits + (plant.placement == nil ? "/stored" : "/planted")) { await loadQuote() }
+            .onReceive(store.$state) { state in
+                if state.result?.saleId != nil && state.result?.plantId == plant.id { dismiss() }
+            }
             .alert("Sell this plant?", isPresented: $confirming) {
                 Button("Cancel", role: .cancel) { }
                 if let quote = quote {
@@ -122,11 +131,20 @@ struct PlantSaleControls: View {
                     }
                 }
             } message: {
-                Text("This permanently removes this copy. Your discovered artwork and earned milestones are kept.")
+                Text("This move cannot be undone.")
             }
     }
+    @ViewBuilder private var placeButton: some View {
+        if let onPlace = onPlace {
+            Button(action: onPlace) {
+                Text("Place").frame(maxWidth: .infinity, minHeight: 44).foregroundStyle(JournalTheme.paper)
+            }.buttonStyle(.borderedProminent).controlSize(.large)
+                .disabled(placementDisabled || store.busy || store.state.pending != nil)
+                .accessibilityIdentifier("editor.place")
+        }
+    }
     private func loadQuote() async {
-        guard plant.placement == nil, !sold else { return }
+        guard !sold else { return }
         loading = true; issue = nil; quote = nil; retryable = true
         defer { loading = false }
         do {
@@ -369,7 +387,10 @@ struct OwnedPlantDetailScreen: View {
                 PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false, owned: copy,
                     catalogue: store.catalogue, onPlace: placementAction,
                     placementDisabled: !store.editing || !store.canEdit || copy.placement != nil,
-                    collection: collection, saleEnabled: store.canReadInventory && !store.showingCached && !store.editing)
+                    collection: collection, saleEnabled: store.canReadInventory && !store.showingCached &&
+                        !store.connectionBusy && (!store.editing || store.canEdit) && store.candidate == nil)
+            } else if collection?.state.result?.saleId != nil && collection?.state.result?.plantId == copyID {
+                Color.clear.onAppear { dismiss() }
             } else {
                 JournalInspector(title: "Plant details", close: { dismiss() }) {
                     Text("This copy is no longer available here. Return to My plants and refresh.")

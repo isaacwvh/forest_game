@@ -12,6 +12,7 @@ struct ConnectedGardenScreen: View {
     var active: Bool
     var activitySync: ActivitySyncCoordinator? = nil
     var visitors: VisitorCoordinator? = nil
+    var collection: CollectionCoordinator? = nil
     @StateObject private var renderSession = GardenRenderSession()
     private var renderer: RealityGardenRenderer { renderSession.renderer }
     @State private var sheet: GardenEditorSheet?
@@ -132,9 +133,11 @@ struct ConnectedGardenScreen: View {
             }
         }
         .fullScreenCover(item: detailInspection) { selection in
-            OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog).journalModalBackground()
+            OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
+                collection: collection).journalModalBackground()
         }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
+        .task(id: collection?.id) { await collection?.refresh() }
         .onChange(of: store.candidate?.plant.id) { if $0 == nil { positionControlsPresented = false } }
         .onChange(of: store.canEdit) { if !$0 && !store.preparingMembership { store.cancelCandidate() } }
         .onChange(of: active) { value in
@@ -204,6 +207,9 @@ struct ConnectedGardenScreen: View {
     private var statusPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Editing garden", systemImage: "pencil").font(.headline)
+            if let capacity = store.capacity {
+                PlantCapacitySummary(capacity: capacity, cached: store.showingCached, compact: true)
+            }
             if store.showingCached { Label("Saved garden · Connect to refresh", systemImage: "wifi.slash").font(.caption) }
             if let candidate = store.candidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
@@ -356,7 +362,8 @@ struct ConnectedGardenScreen: View {
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Garden plants")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
             .fullScreenCover(item: $browsingInspection) { selection in
-                OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog).journalModalBackground()
+                OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
+                    collection: collection).journalModalBackground()
             }
     }
 
@@ -378,6 +385,9 @@ struct ConnectedGardenScreen: View {
     private var storageList: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                if let capacity = store.capacity {
+                    PlantCapacitySummary(capacity: capacity, cached: store.showingCached)
+                }
                 if store.showingCached { Label("Saved plants · Connect to refresh", systemImage: "wifi.slash").font(.callout) }
                 if let message = store.message { Text(message).font(.callout) }
                 if store.inventory.isEmpty { Text("No stored copies in the saved inventory.") }
@@ -400,7 +410,7 @@ struct ConnectedGardenScreen: View {
                 }
             }) { selection in
                 OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog, context: .storagePlacement,
-                    placed: { placedFromStorageInspector = true; storageInspection = nil })
+                    placed: { placedFromStorageInspector = true; storageInspection = nil }, collection: collection)
                     .journalModalBackground()
             }
     }
@@ -534,7 +544,7 @@ struct GardenHostScreen: View {
     var body: some View {
         if let editor = connection.editor {
             ConnectedGardenScreen(store: editor, catalog: catalog, active: active, activitySync: connection.activitySync,
-                                  visitors: connection.visitors).id(editor.id)
+                                  visitors: connection.visitors, collection: connection.collection).id(editor.id)
         } else if connection.connecting {
             ProgressView("Connecting to your garden…")
         } else if !connection.savedURL.isEmpty {

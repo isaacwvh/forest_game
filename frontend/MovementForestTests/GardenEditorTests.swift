@@ -104,6 +104,7 @@ private final class EditorTestService: GardenServing {
     var pages: [String: APIInventory] = [:]
     var pauseInventory = false
     var inventoryGate: CheckedContinuation<Void, Never>?
+    var includesCapacity = false
 
     init(_ fixture: EditorContract) {
         self.fixture = fixture; current = fixture.emptyGarden; catalogueValue = fixture.catalogue
@@ -120,7 +121,12 @@ private final class EditorTestService: GardenServing {
         if let page = pages[after?.uuidString ?? "first"] { return page }
         let placed = Set(current.plants.map(\.id))
         let copies = fixture.inventory.plants + extraInventory
-        return APIInventory(plants: copies.filter { !placed.contains($0.id) }, nextCursor: nil)
+        let count = Set((copies + current.plants).map(\.id)).count
+        let capacity = includesCapacity ? APIInventoryCapacity(ownedPlants: count,
+            plantedPlants: placed.count, storedPlants: count - placed.count, plantLimit: 50,
+            plantedLimit: 20, unopenedPacks: 0, packLimit: 50) : nil
+        return APIInventory(plants: copies.filter { !placed.contains($0.id) }, nextCursor: nil,
+            capacity: capacity)
     }
     func edit(body: Data) async throws -> GardenEditResult {
         bodies.append(body)
@@ -375,6 +381,28 @@ final class GardenEditorTests: XCTestCase {
         XCTAssertNil(actions[0]["rotationDegrees"])
         XCTAssertEqual(try JSONDecoder().decode(GardenEditRequest.self, from: data), request)
         XCTAssertTrue(String(decoding: data, as: UTF8.self).contains("3.201"))
+    }
+
+    func testEditCapacityTracksConfirmedPlaceAndStoreWithoutCountingPreview() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        service.includesCapacity = true
+        let store = try makeStore(service)
+        await store.start()
+        store.editing = true
+        let before = try XCTUnwrap(store.capacity)
+        let copy = try XCTUnwrap(store.inventory.first)
+        store.begin(copy, kind: .plant)
+        store.updatePosition(x: 2, y: 2)
+        XCTAssertEqual(store.capacity, before, "A preview must not change confirmed capacity")
+        await store.releaseCandidate()
+        XCTAssertEqual(store.capacity?.ownedPlants, before.ownedPlants)
+        XCTAssertEqual(store.capacity?.plantedPlants, before.plantedPlants + 1)
+        XCTAssertEqual(store.capacity?.storedPlants, before.storedPlants - 1)
+        store.selectedID = copy.id
+        await store.storeSelected()
+        XCTAssertEqual(store.capacity, before)
+        XCTAssertEqual(store.capacity?.plantLimit, 50)
+        XCTAssertEqual(store.capacity?.plantedLimit, 20)
     }
 
     func testPlaceMoveRotateStoreAndReplantKeepTheSameCopy() async throws {

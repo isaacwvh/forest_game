@@ -167,6 +167,9 @@ def test_starter_planted_and_foreign_copies_cannot_be_sold(economy, register, he
         "/v1/me/garden/edits", headers=economy["headers"], json=edit_body(plant_action(plant))
     )
     assert placed.status_code == 200, placed.text
+    planted_value = quote(economy, plant)
+    assert planted_value.status_code == 200, planted_value.text
+    assert planted_value.json()["tokens"] == body["expectedTokens"]
     assert sell(economy, plant, body).json()["error"]["code"] == "plant_is_planted"
     stored = economy["client"].post(
         "/v1/me/garden/edits",

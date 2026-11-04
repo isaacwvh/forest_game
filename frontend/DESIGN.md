@@ -10,11 +10,14 @@ there are no dot separators. Counts are global confirmed server quantities, not
 filtered or loaded-page totals. Saved/offline data remains explicitly identified.
 
 My plants owned inspection adds a stored-copy Sell section using the existing
-forest-green action tint, token icon and an expandable exact-price breakdown.
-Native destructive confirmation names the payout and permanent removal. Pending,
+forest-green action tint and token amount, with no calculation breakdown.
+Confirmation says “Sell this plant?” and “This move cannot be undone.” Pending,
 unavailable, protected-starter and recovery states stay visible; uncertain sales
-retain their account/server-scoped request. Other placement/sample inspection
-contexts retain their existing actions. Exchange/Packs show unopened counts and
+retain their account/server-scoped request. Confirmed sales dismiss the inspector.
+Edit shows compact live capacity counts; Storage repeats the summary and offers
+Sell alongside Place in the fixed inspector footer. Planted copies show their
+current sell value and store-first note with no Sell button. Sample inspection
+retains its existing actions. Exchange/Packs show unopened counts and
 plain-language full-capacity reasons beside the existing wallet/actions.
 
 Native builds, XCTest, VoiceOver, Dynamic Type and device appearance remain explicit

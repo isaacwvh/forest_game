@@ -192,19 +192,24 @@ struct PlantDetailScreen: View {
                 }
             }
             if isSample { Text("Sample plant").font(.caption).foregroundStyle(JournalTheme.secondary) }
-            if let collection = collection, let owned = owned {
+            if onPlace == nil, let collection = collection, let owned = owned {
                 PlantSaleControls(store: collection, plant: owned, enabled: saleEnabled)
             }
         } footer: {
             if let onPlace = onPlace {
                 VStack(spacing: 0) {
                     Divider()
-                    Button(action: onPlace) {
-                        Text("Place").frame(maxWidth: .infinity, minHeight: 44).foregroundStyle(JournalTheme.paper)
+                    if let collection = collection, let owned = owned {
+                        PlantSaleControls(store: collection, plant: owned, enabled: saleEnabled,
+                            onPlace: onPlace, placementDisabled: placementDisabled).padding(14)
+                    } else {
+                        Button(action: onPlace) {
+                            Text("Place").frame(maxWidth: .infinity, minHeight: 44).foregroundStyle(JournalTheme.paper)
+                        }
+                            .buttonStyle(.borderedProminent).controlSize(.large)
+                            .padding(14)
+                            .disabled(placementDisabled).accessibilityIdentifier("editor.place")
                     }
-                        .buttonStyle(.borderedProminent).controlSize(.large)
-                        .padding(14)
-                        .disabled(placementDisabled).accessibilityIdentifier("editor.place")
                 }.background(JournalTheme.paper)
             }
         }

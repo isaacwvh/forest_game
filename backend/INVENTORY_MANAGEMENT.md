@@ -23,8 +23,9 @@ Native Xcode/device validation is separate from Windows portable validation.
 
 ## Selling and valuation
 
-My plants inspection offers sale for stored copies only, with an explicit
-confirmation and exact token amount. Store a planted copy using the existing
+My plants and Edit Storage inspection offer sale for stored copies only, with an
+explicit confirmation and exact token amount. Planted copies can read their
+current resale quote but cannot sell. Store a planted copy using the existing
 membership/activity/visitor settlement path first. The original starter cannot
 be sold. Discovery, lifetime progression and awarded milestones remain permanent.
 

@@ -80,8 +80,6 @@ def quote(session, owner, plant):
     identity = session.get(PlantIdentity, plant.id)
     if identity.acquisition_source == "starter":
         raise ApiError(409, "starter_protected", "Your original starter stays with your garden")
-    if session.get(GardenPlacement, plant.id) is not None:
-        raise ApiError(409, "plant_is_planted", "Store this plant before selling it")
     base = RARITY_BASES.get(identity.valuation_rarity)
     if (
         identity.owner_id != owner
@@ -132,6 +130,8 @@ def sell(session, settings, identity, plant_id, body, clock):
             return previous.receipt
         garden = services.lock_garden(session, user.id, write=True)
         plant = services.owned_plant(session, user.id, plant_id, lock=True)
+        if session.get(GardenPlacement, plant.id) is not None:
+            raise ApiError(409, "plant_is_planted", "Store this plant before selling it")
         current = quote(session, user.id, plant)
         if (
             current["valuationVersion"] != body.valuation_version
