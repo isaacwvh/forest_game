@@ -26,6 +26,7 @@ final class CollectionCoordinator: ObservableObject {
     let id = UUID()
     let discovery: CatalogDiscoveryStore
     @Published private(set) var offers: [APIExchangeOffer] = []
+    @Published private(set) var capacity: APIInventoryCapacity?
     @Published private(set) var milestones: [APIIntroMilestone] = []
     @Published private(set) var milestonesConfirmedAt: Date?
     @Published private(set) var refreshFailed = false
@@ -75,6 +76,8 @@ final class CollectionCoordinator: ObservableObject {
         return PlayerMessage.failure(error, fallback: "The collection couldn’t update. Retry to recover any saved request.")
     }
     var canMutate: Bool { attached && !busy && !recoveryLocked && state.pending == nil && tokenBalance != nil }
+    var canOpenPack: Bool { canMutate && capacity?.plantFull != true }
+    func canBuy(quantity: Int) -> Bool { quantity > 0 && quantity <= (capacity?.packRoom ?? 20) }
     func canAfford(_ offer: APIExchangeOffer, quantity: Int) -> Bool {
         guard let balance = tokenBalance.flatMap(ExactAmount.integer), let cost = ExactAmount.integer(offer.tokenCost) else { return false }
         return (1...20).contains(quantity) && balance >= cost * Decimal(quantity)
@@ -97,6 +100,10 @@ final class CollectionCoordinator: ObservableObject {
             let isOpening = pending.kind == .open
             let matchesOperation: Bool
             switch pending.kind {
+            case .sell:
+                let body = try ActivityWire.decoder().decode(CollectionSellBody.self, from: pending.body)
+                matchesOperation = receipt.requestId == pending.id && receipt.saleId != nil &&
+                    receipt.plantId == pending.target && receipt.tokensEarned == body.expectedTokens
             case .open: matchesOperation = receipt.ownedPackId == pending.target && receipt.plant != nil && receipt.openingId != nil
             case .exchange: matchesOperation = receipt.requestId == pending.id && receipt.exchangeId != nil && receipt.packs?.isEmpty == false
             case .milestone: matchesOperation = receipt.requestId == pending.id && receipt.milestoneId == pending.milestoneID && receipt.milestoneEventId != nil && receipt.tokensEarned != nil
@@ -114,10 +121,14 @@ final class CollectionCoordinator: ObservableObject {
                 exchangeMessage = "Purchase confirmed. Your packs are saved."
             }
             applyWallet(receipt.tokenBalance, version: receipt.economyVersion)
+            if receipt.economyVersion == economyVersion, let capacity = receipt.capacity {
+                self.capacity = capacity
+            }
             DiagnosticHistory.shared.record("Collection", "confirmed \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
-            message = pending.kind == .milestone ? "Milestone confirmed: +\(receipt.tokensEarned ?? "0") visitor tokens." :
+            message = pending.kind == .sell ? "Plant sold for \(receipt.tokensEarned ?? "0") tokens." :
+                pending.kind == .milestone ? "Milestone confirmed: +\(receipt.tokensEarned ?? "0") visitor tokens." :
                 (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
-            if isOpening { await onPlantAwarded?() }
+            if isOpening || pending.kind == .sell { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
                     ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
             guard attached else { return }
@@ -129,6 +140,7 @@ final class CollectionCoordinator: ObservableObject {
         let summary = try await service.summary()
         guard attached else { return }
         applyWallet(summary.tokenBalance, version: summary.economyVersion)
+        if summary.economyVersion == economyVersion { capacity = summary.capacity }
         offers = summary.offers
         milestones = summary.milestones ?? []
         milestonesConfirmedAt = Date()
@@ -185,7 +197,7 @@ final class CollectionCoordinator: ObservableObject {
         } }
     }
     func exchange(_ offer: APIExchangeOffer, quantity: Int) async {
-        guard canMutate, canAfford(offer, quantity: quantity) else { return }
+        guard canMutate, canAfford(offer, quantity: quantity), canBuy(quantity: quantity) else { return }
         exchangeOfferID = offer.offerId; exchangeMessage = "Confirming purchase…"; confirmedExchange = nil
         let id = UUID()
         do {
@@ -206,6 +218,7 @@ final class CollectionCoordinator: ObservableObject {
             if pending.kind == .open && pending.target == pack.id { await refresh() }
             return
         }
+        guard canOpenPack else { return }
         let id = UUID()
         do {
             let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))
@@ -220,6 +233,27 @@ final class CollectionCoordinator: ObservableObject {
             let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))
             await submit(PendingCollectionOperation(id: id, kind: .milestone, target: nil,
                                                      body: body, milestoneID: milestone.id))
+        } catch { message = displayFailure(error) }
+    }
+    func saleQuote(plant: UUID) async throws -> APIPlantSaleQuote {
+        guard attached, !recoveryLocked, state.pending == nil else {
+            throw ForestError.invalidData("Recover the saved collection request before selling.")
+        }
+        let quote = try await service.saleQuote(plant: plant)
+        guard attached, quote.plantId == plant, ExactAmount.integer(quote.tokens) != nil,
+              ExactAmount.integer(quote.growthMicroUnits) != nil else {
+            throw ForestError.invalidData("The plant's resale value could not be verified.")
+        }
+        return quote
+    }
+    func sell(_ quote: APIPlantSaleQuote) async {
+        guard canMutate else { return }
+        let id = UUID()
+        do {
+            let body = try ActivityWire.encoder().encode(CollectionSellBody(requestId: id,
+                valuationVersion: quote.valuationVersion, expectedTokens: quote.tokens,
+                expectedGrowthMicroUnits: quote.growthMicroUnits))
+            await submit(PendingCollectionOperation(id: id, kind: .sell, target: quote.plantId, body: body))
         } catch { message = displayFailure(error) }
     }
     func dismissResult() {

@@ -41,17 +41,24 @@ private final class FakeCollection: CollectionServing {
     var failSummary = false
     var blockOpening = false
     var openingContinuation: CheckedContinuation<Void, Never>?
+    var capacity: APIInventoryCapacity?
+    var saleReceiptCapacity: APIInventoryCapacity?
     init(_ contract: CollectionContract) { self.contract = contract }
     func summary() async throws -> APICollectionSummary {
         if failSummary { throw URLError(.notConnectedToInternet) }
         if failSummaryAfterMutation && !operations.isEmpty { throw URLError(.networkConnectionLost) }
-        var value = contract.summary; value.milestones = milestones; return value
+        var value = contract.summary; value.milestones = milestones; value.capacity = capacity; return value
     }
     func catalogue() async throws -> APICatalogue { contract.catalogue }
     func packs(after: UUID?) async throws -> APIPackPage { contract.packs }
     func openings(after: UUID?) async throws -> APIOpeningPage { APIOpeningPage(openings: [contract.opening], nextCursor: nil) }
     func definition(pack: String, version: Int) async throws -> APIPackDefinition {
         try XCTUnwrap(contract.summary.offers.first { $0.pack.packId == pack && $0.pack.version == version }?.pack)
+    }
+    func saleQuote(plant: UUID) async throws -> APIPlantSaleQuote {
+        APIPlantSaleQuote(plantId: plant, valuationVersion: "plant-resale-v1", rarity: "common",
+            rarityBase: "240", variantBasisPoints: 10000, growthMicroUnits: "0",
+            adultWaterMicroUnits: "1000000000", tokens: "60")
     }
     func mutate(_ operation: PendingCollectionOperation) async throws -> APICollectionReceipt {
         try operation.validate(); operations.append(operation); onMutation?()
@@ -60,6 +67,12 @@ private final class FakeCollection: CollectionServing {
         }
         if let reject = reject { throw reject }
         if loseResponse { throw URLError(.networkConnectionLost) }
+        if operation.kind == .sell {
+            let body = try ActivityWire.decoder().decode(CollectionSellBody.self, from: operation.body)
+            return APICollectionReceipt(requestId: operation.id, tokenBalance: "160", economyVersion: 100,
+                tokensEarned: body.expectedTokens, saleId: UUID(), plantId: operation.target,
+                capacity: saleReceiptCapacity)
+        }
         if operation.kind == .milestone {
             return APICollectionReceipt(requestId: operation.id, tokenBalance: "30", economyVersion: 100,
                 milestoneId: operation.milestoneID, milestoneEventId: UUID(), tokensEarned: "30")
@@ -76,6 +89,97 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testInventoryFailuresExplainTheRequiredAction() {
+        let messages = [
+            "starter_protected": "cannot be sold",
+            "plant_capacity_full": "Sell a stored plant",
+            "pack_capacity_full": "Open a pack",
+            "stale_sale_quote": "Review the updated price"
+        ]
+        for (code, expected) in messages {
+            XCTAssertTrue(PlayerMessage.failure(APIError(status: 409, code: code, message: "internal payload"))
+                .contains(expected))
+        }
+    }
+    func testFullPlantCapacityBlocksOpeningButStillAllowsPackPurchases() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        service.capacity = APIInventoryCapacity(ownedPlants: 50, plantedPlants: 12, storedPlants: 38,
+            plantLimit: 50, plantedLimit: 20, unopenedPacks: 2, packLimit: 50)
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+        await store.refresh()
+        XCTAssertFalse(store.canOpenPack)
+        XCTAssertTrue(store.canBuy(quantity: 1))
+        await store.open(try XCTUnwrap(store.packs.first))
+        XCTAssertTrue(service.operations.isEmpty)
+    }
+
+    func testFullPackCapacityBlocksPurchaseAndLimitsQuantity() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        service.capacity = APIInventoryCapacity(ownedPlants: 4, plantedPlants: 2, storedPlants: 2,
+            plantLimit: 50, plantedLimit: 20, unopenedPacks: 50, packLimit: 50)
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+        await store.refresh()
+        XCTAssertTrue(store.canOpenPack)
+        XCTAssertFalse(store.canBuy(quantity: 1))
+        await store.exchange(try XCTUnwrap(store.offers.first), quantity: 1)
+        XCTAssertTrue(service.operations.isEmpty)
+        service.capacity = APIInventoryCapacity(ownedPlants: 4, plantedPlants: 2, storedPlants: 2,
+            plantLimit: 50, plantedLimit: 20, unopenedPacks: 49, packLimit: 50)
+        await store.refresh()
+        XCTAssertTrue(store.canBuy(quantity: 1))
+        XCTAssertFalse(store.canBuy(quantity: 2))
+    }
+
+    func testSaleRecoveryRetainsExactRequestAcrossRelaunchAndDoesNotRewindWallet() async throws {
+        let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
+        service.capacity = APIInventoryCapacity(ownedPlants: 50, plantedPlants: 12, storedPlants: 38,
+            plantLimit: 50, plantedLimit: 20, unopenedPacks: 2, packLimit: 50)
+        service.saleReceiptCapacity = service.capacity
+        let user = UUID(), plant = UUID()
+        let store = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await store.refresh()
+        let quote = try await store.saleQuote(plant: plant)
+        service.loseResponse = true
+        await store.sell(quote)
+        let pending = try XCTUnwrap(store.state.pending)
+        XCTAssertEqual(pending.kind, .sell)
+        let restored = CollectionCoordinator(userID: user, service: service, journal: journal)
+        restored.applyWallet("300", version: 200)
+        service.loseResponse = false
+        var refreshedPlants = 0
+        restored.onPlantAwarded = { refreshedPlants += 1 }
+        await restored.refresh()
+        XCTAssertEqual(service.operations, [pending, pending])
+        XCTAssertNil(restored.state.pending)
+        XCTAssertEqual(restored.state.result?.plantId, plant)
+        XCTAssertEqual(restored.state.result?.tokensEarned, "60")
+        XCTAssertEqual(restored.tokenBalance, "300")
+        XCTAssertNil(restored.capacity) // Older receipts/reads cannot replace newer accounting state.
+        XCTAssertEqual(refreshedPlants, 1)
+    }
+
+    func testSaleCompletionDiskFailureKeepsOperationAndDetachedResultStaysScoped() async throws {
+        let service = FakeCollection(try CollectionContract.load()), journal = MemoryCollectionJournal()
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: journal)
+        await store.refresh()
+        let quote = try await store.saleQuote(plant: UUID())
+        journal.failCompletionSave = true
+        await store.sell(quote)
+        let pending = try XCTUnwrap(store.state.pending)
+        journal.failCompletionSave = false
+        service.onMutation = { store.deactivate() }
+        await store.refresh()
+        XCTAssertEqual(journal.value.pending, pending)
+        XCTAssertNil(journal.value.result)
+    }
+
+    func testSavedSaleRejectsTamperedAmountsAndIdentity() throws {
+        let id = UUID()
+        let body = try ActivityWire.encoder().encode(CollectionSellBody(requestId: id,
+            valuationVersion: "plant-resale-v1", expectedTokens: "-60", expectedGrowthMicroUnits: "0"))
+        XCTAssertThrowsError(try PendingCollectionOperation(id: id, kind: .sell, target: UUID(), body: body).validate())
+    }
+
     func testLatestPackResultIgnoresPurchasesAndMilestonesAndUsesSavedHistory() throws {
         let contract = try CollectionContract.load()
         let opening = contract.opening

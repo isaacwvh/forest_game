@@ -16,7 +16,9 @@ class Database:
             connect_args={"connect_timeout": 5},
             hide_parameters=True,
         )
-        self.sessions = sessionmaker(self.engine, expire_on_commit=False, autoflush=False)
+        self.sessions = sessionmaker(
+            self.engine, expire_on_commit=False, autoflush=False, info={"settings": settings}
+        )
         from forest_api.operation_metrics import instrument
 
         instrument(self.engine)

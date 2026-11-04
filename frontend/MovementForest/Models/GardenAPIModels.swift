@@ -120,6 +120,7 @@ enum ExactAmount {
 struct APIInventory: Codable {
     let plants: [APIOwnedPlant]
     let nextCursor: UUID?
+    var capacity: APIInventoryCapacity? = nil
 }
 
 struct APIStageAsset: Codable, Equatable {

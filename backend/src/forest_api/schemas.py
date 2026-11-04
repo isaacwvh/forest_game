@@ -222,6 +222,7 @@ class PlantDTO(DTO):
 
 
 class InventoryDTO(DTO):
+    capacity: dict[str, int] | None = None
     plants: list[PlantDTO]
     next_cursor: UUID | None
 

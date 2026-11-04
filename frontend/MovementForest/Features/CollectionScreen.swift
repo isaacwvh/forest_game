@@ -106,6 +106,16 @@ struct CollectionScreen: View {
         List {
             Section {
                 if let balance = store.tokenBalance { QuantityLabel(metric: "tokens", text: "\(balance) visitor tokens").monospacedDigit() }
+                if let capacity = store.capacity, destination == .exchange || destination == .draws {
+                    LabeledContent("Unopened packs", value: "\(capacity.unopenedPacks) / \(capacity.packLimit)")
+                        .font(.system(.subheadline, design: .serif)).foregroundStyle(JournalTheme.ink)
+                    if capacity.packsFull && destination == .exchange {
+                        Text("Pack storage full. Open a pack before buying more.").font(.callout)
+                    }
+                    if capacity.plantFull {
+                        Text("Plant collection full. Sell a stored plant in My plants to open a pack.").font(.callout)
+                    }
+                }
                 if store.offers.contains(where: { $0.pack.isFixture }) {
                     Text("Development prices and odds · provisional").font(.caption).foregroundStyle(.secondary)
                 }
@@ -164,7 +174,7 @@ struct CollectionScreen: View {
                             inspect: { inspectingPack = store.definitions[pack.definitionID] }) {
                             Button("Open pack") { confirmingPack = pack }
                                 .buttonStyle(.borderedProminent).frame(minHeight: 44)
-                                .disabled(!store.canMutate).accessibilityIdentifier("collection.open.\(pack.id)")
+                                .disabled(!store.canOpenPack).accessibilityIdentifier("collection.open.\(pack.id)")
                         }
                     }
                     if store.packCursor != nil {
@@ -282,7 +292,7 @@ private struct ExchangeOfferRow: View {
             CompactPackRow(packID: offer.pack.packId, name: offer.pack.displayName,
                 price: offer.tokenCost, infoID: "collection.offerContents.\(offer.offerId)", inspect: inspect) {
                 Button("Purchase pack", action: purchase)
-                    .disabled(!store.canMutate || !store.canAfford(offer, quantity: 1))
+                    .disabled(!store.canMutate || !store.canAfford(offer, quantity: 1) || !store.canBuy(quantity: 1))
                     .buttonStyle(.borderedProminent).frame(minHeight: 44)
                     .accessibilityIdentifier("collection.exchange.\(offer.offerId)")
             }
@@ -362,7 +372,7 @@ private struct PurchasePackScreen: View {
                         PackThumbnail(packID: offer.pack.packId)
                         Text(offer.pack.displayName).font(.headline)
                     }
-                    Stepper("Quantity: \(quantity)", value: $quantity, in: 1...20)
+                    Stepper("Quantity: \(quantity)", value: $quantity, in: 1...max(1, min(20, store.capacity?.packRoom ?? 20)))
                         .disabled(submitted || !store.canMutate).accessibilityIdentifier("purchase.quantity")
                     QuantityLabel(metric: "tokens", text: "Total: \(totalCost) tokens").monospacedDigit()
                     if let balance = store.tokenBalance {
@@ -371,16 +381,20 @@ private struct PurchasePackScreen: View {
                     if !store.canAfford(offer, quantity: quantity) {
                         Text("Not enough tokens").foregroundStyle(.secondary)
                     }
+                    if !store.canBuy(quantity: quantity) {
+                        Text("Pack storage full. Open a pack before buying more.").foregroundStyle(.secondary)
+                    }
                 }
                 Section {
                     Button("Purchase") {
-                        guard !submitted, store.canMutate, store.canAfford(offer, quantity: quantity) else { return }
+                        guard !submitted, store.canMutate, store.canAfford(offer, quantity: quantity),
+                              store.canBuy(quantity: quantity) else { return }
                         submitted = true
                         let count = quantity
                         dismiss()
                         Task { await store.exchange(offer, quantity: count) }
                     }.buttonStyle(.borderedProminent).frame(minHeight: 44)
-                        .disabled(submitted || !store.canMutate || !store.canAfford(offer, quantity: quantity))
+                        .disabled(submitted || !store.canMutate || !store.canAfford(offer, quantity: quantity) || !store.canBuy(quantity: quantity))
                         .accessibilityIdentifier("purchase.confirm")
                 }
             }.navigationTitle("Purchase pack?").navigationBarTitleDisplayMode(.inline)

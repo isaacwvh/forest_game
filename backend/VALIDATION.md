@@ -1,5 +1,41 @@
 # B1–B6 implementation verification
 
+## Inventory management — 5 November 2026
+
+Implemented schema `0012_inventory_management`: 50 live owned plants total,
+20 planted and 50 unopened packs; atomic stored-copy sale with exact versioned
+rarity/variant/water valuation. Compact immutable identity/sale facts retain
+original openings and growth accounting after live-state removal. Maintenance
+wallet reconciliation includes sale credits without counting them as visits.
+
+Executed against generated disposable `forest_test_*` databases on the dedicated
+loopback PostgreSQL 17 validation cluster, never the personal game database:
+
+- Final complete suite: **539 passed, 3 skipped**, 427.17 seconds. The three skips
+  are the explicitly opt-in physical storage workload benchmarks; they were not
+  rerun and no new physical-capacity claim is made.
+- Focused inventory/history/migration run: **56 passed**, 67.21 seconds. Covers
+  full/partial quantities, cross-device acquisition/sale races, protected starter,
+  stored-only sale, stale quote, exact fractional rounding, old pinned threshold,
+  immutable valuation, preserved discovery/progress/openings/growth summaries,
+  seven-day response cleanup, durable replay, wallet-overflow rollback, configured
+  internal-award guard, pre-existing database backfill and protected downgrade.
+- Real HTTP launch smoke: nonfixture publication, activity/workouts, discovery,
+  milestones, visitor conversion/welcome/restart plus a 400-water Standard Oak
+  sale for 84 tokens. Confirmed live-state removal, unchanged hosted counters,
+  wallet reconciliation, seven-day cached-response cleanup and exact sale replay
+  after an actual API process restart.
+- Real HTTP activity, visitor and Sleeping Dew/skill walkthroughs all passed,
+  including placement/storage, recap, exchange/opening and restart/replay.
+- Ruff lint and formatting: passed, 104 Python files formatted. Dependency check,
+  frontend asset/project/contracts, all 78 Swift syntax parses and diff whitespace
+  checks passed.
+
+Native Xcode build, XCTest and device appearance/interaction acceptance remain
+pending; source syntax checks do not establish Apple SDK correctness. No push,
+CI run, personal-database upgrade or live-maintenance reconfiguration was performed.
+See [inventory rules and explicit upgrade](INVENTORY_MANAGEMENT.md).
+
 ## F8.7 catalog discovery — 30 October 2026
 
 **473 backend tests passed** on the dedicated local PostgreSQL 17 validation

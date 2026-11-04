@@ -132,6 +132,17 @@ enum PlayerMessage {
     }
     static func failure(_ error: Error, fallback: String = "This couldn’t be completed. Please try again.") -> String {
         if let error = error as? APIError {
+            switch error.code {
+            case "plant_capacity_full": return "Plant collection full. Sell a stored plant to open a pack."
+            case "pack_capacity_full": return "Pack storage full. Open a pack before buying more."
+            case "garden_capacity_full": return "Garden full. Store a planted copy before planting another."
+            case "starter_protected": return "Your original starter stays with your garden and cannot be sold."
+            case "plant_is_planted": return "Store this plant before selling it."
+            case "sale_unavailable": return "This plant does not have an approved resale value yet."
+            case "stale_sale_quote": return "The sale price changed. Review the updated price before selling."
+            case "plant_not_found": return "This plant is no longer available. Refresh My plants."
+            default: break
+            }
             switch error.status {
             case 401: return "Sign in again to continue. Your saved requests are retained."
             case 409: return "This information changed. Refresh and try again."

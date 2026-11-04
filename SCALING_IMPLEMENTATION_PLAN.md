@@ -1,5 +1,12 @@
 # Efficient game state and database usage: implementation draft
 
+**Inventory extension, 5 November 2026:** source now caps live owned plants at 50,
+planted copies at 20 and unopened packs at 50. Sales remove live state while
+preserving compact immutable identity/sale facts and existing history references.
+Wallet reconciliation includes sale credits. This bounds live inventory, not
+lifetime receipts or total database size. See
+[inventory management](backend/INVENTORY_MANAGEMENT.md) for migration and acceptance.
+
 Prepared 30 October 2026 from the V1 spec v0.28, implementation plan, new scaling
 plan, retention proposal and current backend/iOS source. **S1–S3 completed and
 functionally accepted by the user on iPhone on 30 October 2026. S4–S6 are source

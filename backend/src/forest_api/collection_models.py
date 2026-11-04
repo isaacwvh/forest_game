@@ -115,6 +115,6 @@ class PackOpening(Base):
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
     pack_id: Mapped[UUID] = mapped_column(ForeignKey("owned_packs.id"), unique=True)
     event_id: Mapped[UUID] = mapped_column(ForeignKey("collection_events.id"), unique=True)
-    plant_id: Mapped[UUID] = mapped_column(ForeignKey("owned_plants.id"), unique=True)
+    plant_id: Mapped[UUID] = mapped_column(ForeignKey("plant_identities.id"), unique=True)
     rarity: Mapped[str] = mapped_column(String(32))
     opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

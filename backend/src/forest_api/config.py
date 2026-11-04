@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     db_pool_size: int = Field(default=5, ge=1, le=50)
     db_max_overflow: int = Field(default=5, ge=0, le=50)
     operation_metrics_enabled: bool = False
+    plant_capacity: int = Field(default=50, ge=1, le=10000)
+    planted_capacity: int = Field(default=20, ge=1, le=10000)
+    pack_capacity: int = Field(default=50, ge=1, le=10000)
     maintenance_responses_enabled: bool = False
     maintenance_visitors_enabled: bool = False
     maintenance_growth_enabled: bool = False

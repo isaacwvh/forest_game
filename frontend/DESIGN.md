@@ -1,5 +1,25 @@
 # Native baseline conventions
 
+## Inventory capacity and selling — 5 November 2026
+
+My plants uses a single pale-sage summary on parchment: separate serif Plants,
+Planted and Stored labels with readable, aligned numeric values. Large Dynamic
+Type stacks the three groups vertically. Planted/Stored section headings use
+native leaf/tray symbols, the existing olive divider and a quiet count badge;
+there are no dot separators. Counts are global confirmed server quantities, not
+filtered or loaded-page totals. Saved/offline data remains explicitly identified.
+
+My plants owned inspection adds a stored-copy Sell section using the existing
+forest-green action tint, token icon and an expandable exact-price breakdown.
+Native destructive confirmation names the payout and permanent removal. Pending,
+unavailable, protected-starter and recovery states stay visible; uncertain sales
+retain their account/server-scoped request. Other placement/sample inspection
+contexts retain their existing actions. Exchange/Packs show unopened counts and
+plain-language full-capacity reasons beside the existing wallet/actions.
+
+Native builds, XCTest, VoiceOver, Dynamic Type and device appearance remain explicit
+acceptance checks; Windows syntax/resource/contract validation does not replace them.
+
 ## Stage 1 botanical journal — implemented locally, 31 October 2026
 
 The user's approved plant/catalog renders now govern My plants, owned inspection

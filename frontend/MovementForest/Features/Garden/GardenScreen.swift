@@ -95,6 +95,8 @@ struct PlantDetailScreen: View {
     var catalogue: APICatalogue? = nil
     var onPlace: (() -> Void)? = nil
     var placementDisabled = false
+    var collection: CollectionCoordinator? = nil
+    var saleEnabled = true
     @Environment(\.dismiss) private var dismiss
     private var rarity: String? { isSample ? SamplePlantPresentation.rarities[plant.speciesId] : catalogue?.rarity(for: plant.speciesId) }
     private var name: String {
@@ -190,6 +192,9 @@ struct PlantDetailScreen: View {
                 }
             }
             if isSample { Text("Sample plant").font(.caption).foregroundStyle(JournalTheme.secondary) }
+            if let collection = collection, let owned = owned {
+                PlantSaleControls(store: collection, plant: owned, enabled: saleEnabled)
+            }
         } footer: {
             if let onPlace = onPlace {
                 VStack(spacing: 0) {

@@ -1,5 +1,12 @@
 # Movement Forest — native frontend, activity, authentication and visitors
 
+**Inventory capacity and selling, 5 November 2026:** My plants shows themed global
+capacity counts and stored-copy sales with exact-price confirmation and durable
+recovery. Exchange/Packs enforce the server's plant/pack storage gates. Upgrade
+the backend explicitly to `0012_inventory_management` before using the feature;
+see [rules and acceptance](../backend/INVENTORY_MANAGEMENT.md). Windows portable
+checks pass; native Xcode/XCTest/device acceptance remains separate.
+
 **F6 visitor implementation:** one shared butterfly controller, server sessions,
 stored-visit collection, confirmed tokens/hosted counts and account-scoped durable
 recovery are implemented. Use [F6_VISITOR_ACCEPTANCE.md](F6_VISITOR_ACCEPTANCE.md)

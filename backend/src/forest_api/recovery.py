@@ -9,6 +9,7 @@ from forest_api.models import ApiRequest, User
 
 CONTROLS = {"visitor_start", "visitor_heartbeat", "visitor_end"}
 ORDINARY = {
+    "plant_sell",
     "register_account",
     "update_profile",
     "garden_edits",
@@ -27,6 +28,7 @@ def retention(operation):
     if operation in {"activity_sync", "activity_enrolment"}:
         return timedelta(days=30)
     if operation in {
+        "plant_sell",
         "register_account",
         "update_profile",
         "garden_edits",
@@ -48,8 +50,8 @@ def completion(operation, response):
         "activity_enrolment",
     } or operation.startswith(("recap_ack:", "milestone_claim:")):
         outcome = response
-    elif operation in {"token_exchange", "pack_open"}:
-        outcome = {k: response[k] for k in ("exchangeId", "openingId") if k in response}
+    elif operation in {"token_exchange", "pack_open", "plant_sell"}:
+        outcome = {k: response[k] for k in ("exchangeId", "openingId", "saleId") if k in response}
     elif operation in CONTROLS:
         outcome = {"sessionId": (response.get("session") or {}).get("sessionId")}
     else:

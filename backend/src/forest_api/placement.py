@@ -154,6 +154,12 @@ def edit_garden(
                     final[action.plant_id] = Transform(action.x, action.y, rotation)
 
         species_ids = {plants[plant_id].species_id for plant_id in final}
+        if len(final) > max(settings.planted_capacity, len(initial)):
+            raise ApiError(
+                409,
+                "garden_capacity_full",
+                "Garden full. Store a planted copy before planting another.",
+            )
         radii = {
             row.id: length_units(row.clearance_radius)
             for row in session.scalars(select(Species).where(Species.id.in_(species_ids)))

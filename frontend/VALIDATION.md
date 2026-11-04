@@ -1,5 +1,28 @@
 # Validation record
 
+## Inventory capacity and selling — 5 November 2026
+
+Implemented 50 total plants, 20 planted and 50 unopened packs, global capacity
+snapshots, stored-copy sale quote/confirmation, account/server-scoped pending sale
+recovery and wallet-version checks. My plants uses parchment/sage capacity groups,
+serif labels, native leaf/tray section headings and count badges without dot
+separators. Full storage and protected/stale sale states have specific player copy.
+
+Executed on Windows:
+- `python -X utf8 frontend/scripts/validate_frontend.py`: passed project freshness,
+  assets/checksums, journal contrast, fixtures and existing gameplay contracts.
+- `python -X utf8 frontend/scripts/check_swift_syntax.py`: all 78 Swift files parse.
+- `python -X utf8 frontend/scripts/generate_project.py --check`: current.
+- Impeccable detector on the three changed view files: empty findings; this is a
+  source check and does not establish native appearance or SDK correctness.
+
+Added six XCTest cases for storage gates, remaining purchase quantity, sale journal
+relaunch/recovery, disk failure, detached-account responses, tampered requests and
+specific capacity/sale messages. They were syntax-parsed, **not executed** here.
+Xcode/Apple SDK build, XCTest, VoiceOver, Dynamic Type and actual iPhone appearance
+are pending. Follow [the acceptance checklist](../backend/INVENTORY_MANAGEMENT.md).
+No game database migration, push or CI run was performed by portable validation.
+
 Prepared on Windows; native acceptance is pending.
 
 ## F8.7 catalog discovery — 30 October 2026

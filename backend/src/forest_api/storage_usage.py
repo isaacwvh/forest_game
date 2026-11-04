@@ -21,6 +21,8 @@ GROUPS = {
         "visitor_controls",
     },
     "durable_recovery": {
+        "plant_identities",
+        "plant_sales",
         "visitor_day_summaries",
         "growth_day_summaries",
         "api_requests",

@@ -35,6 +35,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     @Published private(set) var confirmed: APIGarden?
     @Published private(set) var rendered: GardenSnapshot?
     @Published private(set) var inventory: [APIOwnedPlant] = []
+    @Published private(set) var capacity: APIInventoryCapacity?
     @Published private(set) var nextCursor: UUID?
     @Published private(set) var candidate: GardenCandidate?
     @Published private(set) var pending: PendingGardenEdit?
@@ -150,6 +151,11 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         let snapshot = try garden.rendered(catalogue: catalogue, assets: assets)
         if let requestID = activityRequestID { effects.recordActivity(requestID: requestID, before: confirmed, after: garden) }
         confirmed = garden; rendered = snapshot
+        if let old = capacity {
+            capacity = APIInventoryCapacity(ownedPlants: old.ownedPlants, plantedPlants: garden.plants.count,
+                storedPlants: max(0, old.ownedPlants - garden.plants.count), plantLimit: old.plantLimit,
+                plantedLimit: old.plantedLimit, unopenedPacks: old.unopenedPacks, packLimit: old.packLimit)
+        }
         inventory = filtered(inventory.filter { old in !updatedPlants.contains(where: { $0.id == old.id }) } + updatedPlants, garden: garden)
         confirmedAt = date; showingCached = false
         if selectedPlanted == nil && (!editing || candidate == nil) { selectedID = nil }
@@ -202,6 +208,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 _ = try PlacementGeometry.units(after.depth)
                 catalogue = catalog; confirmed = after; rendered = snapshot
                 inventory = filtered(page.plants, garden: after); nextCursor = page.nextCursor
+                capacity = page.capacity
                 confirmedAt = Date(); showingCached = false
                 try persistConfirmed()
                 needsRefresh = false; state = .ready

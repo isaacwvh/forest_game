@@ -229,6 +229,8 @@ def read(session, settings, identity, *, kind="summary", limit=30, after=None):
         user = services.get_user(session, identity, lock=True)
         wallet = wallet_for(session, user.id)
         if kind == "summary":
+            from forest_api.inventory_management import capacity
+
             offers = []
             for offer in session.scalars(
                 select(ExchangeOffer).where(ExchangeOffer.active).order_by(ExchangeOffer.id)
@@ -248,6 +250,7 @@ def read(session, settings, identity, *, kind="summary", limit=30, after=None):
 
             return {
                 **wallet_dto(wallet),
+                "capacity": capacity(session, user.id, settings),
                 "offers": offers,
                 "milestones": milestones.summary(
                     session, user.id, services.get_catalogue_state(session, settings), wallet
@@ -325,6 +328,13 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
         event_id = uuid4()
         delta = 0
         if pack_id is None:
+            from forest_api.inventory_management import capacity
+
+            limits = capacity(session, user.id, settings)
+            if limits["unopenedPacks"] + body.quantity > settings.pack_capacity:
+                raise ApiError(
+                    409, "pack_capacity_full", "Pack storage full. Open a pack before buying more."
+                )
             offer = session.get(ExchangeOffer, (body.offer_id, body.offer_version))
             if offer is None or not offer.active:
                 raise ApiError(409, "stale_offer", "Refresh Exchange to see the current offer")
@@ -370,6 +380,9 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 receipt = session.get(CollectionEvent, opening.event_id).receipt
                 services.record_request(session, user.id, body, operation, digest, receipt)
                 return receipt
+            from forest_api.inventory_management import require_plant_room
+
+            require_plant_room(session, user.id, settings)
             row, definition = pack_contract(session, settings, pack.pack_id, pack.pack_version)
             validate_dependencies(session, definition)
             rarity, outcome = choose(definition, **({"randbelow": randbelow} if randbelow else {}))
@@ -389,6 +402,8 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 setattr(plant, f"{kind}_profile_version", ref.version)
             session.add(plant)
             session.flush()
+            garden = services.lock_garden(session, user.id, write=True)
+            garden.state_version = checked(garden.state_version + 1)
             # UUID ordering is not used for time semantics, only bounded pagination.
             opening_id = uuid4()
             receipt = {

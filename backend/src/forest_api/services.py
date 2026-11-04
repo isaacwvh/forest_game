@@ -127,6 +127,10 @@ def award_plant(
     reference: str,
 ) -> OwnedPlant:
     """Internal, transaction-required award; never accepts client growth/profile values."""
+    from forest_api.inventory_management import require_plant_room
+
+    session.scalar(select(User).where(User.id == owner_id).with_for_update())
+    require_plant_room(session, owner_id, session.info.get("settings"))
     species = session.get(Species, species_id)
     variant = session.get(Variant, (species_id, variant_id))
     if species is None or variant is None or not species.enabled or not variant.enabled:
@@ -232,6 +236,13 @@ def replay(
         event = session.get(CollectionEvent, UUID(str(event_id))) if event_id else None
         if event is None or event.owner_id != user_id:
             raise ApiError(503, "recovery_unavailable", "The original receipt is unavailable")
+        return event.receipt
+    if operation == "plant_sell":
+        from forest_api.models import PlantSale
+
+        event = session.get(PlantSale, UUID(record.completion["outcome"]["saleId"]))
+        if event is None or event.owner_id != user_id:
+            raise ApiError(503, "recovery_unavailable", "The original sale receipt is unavailable")
         return event.receipt
     raise RequestRecovery(recovery.envelope(record))
 
@@ -473,9 +484,12 @@ def read_inventory(
             query = query.where(OwnedPlant.id > after)
         plants = session.scalars(query.order_by(OwnedPlant.id).limit(limit + 1)).all()
         presenter = PlantPresenter(session)
+        from forest_api.inventory_management import capacity
+
         return InventoryDTO(
             plants=[presenter.plant(plant, None) for plant in plants[:limit]],
             next_cursor=plants[limit - 1].id if len(plants) > limit else None,
+            capacity=capacity(session, user.id, session.info["settings"]),
         )
 
 

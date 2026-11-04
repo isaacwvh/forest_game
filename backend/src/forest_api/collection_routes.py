@@ -3,13 +3,50 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
-from forest_api import collection
+from forest_api import collection, inventory_management
 from forest_api.auth import Identity
 from forest_api.collection_schemas import ExchangeRequest, OpenPackRequest
 from forest_api.dependencies import get_identity, get_session
+from forest_api.inventory_management import SellPlant
 from forest_api.server_clock import request_clock
 
 router = APIRouter(tags=["collection"])
+
+
+@router.get("/v1/me/capacity")
+def capacity(
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+):
+    return inventory_management.read_capacity(session, request.app.state.settings, identity)
+
+
+@router.get("/v1/me/plants/{plant_id}/sale-quote")
+def sale_quote(
+    plant_id: UUID,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+):
+    return inventory_management.read_quote(session, identity, plant_id)
+
+
+@router.post("/v1/me/plants/{plant_id}/sell")
+def sell_plant(
+    plant_id: UUID,
+    body: SellPlant,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+):
+    return inventory_management.sell(
+        session,
+        request.app.state.settings,
+        identity,
+        plant_id,
+        body,
+        request_clock(request, session),
+    )
 
 
 @router.post("/v1/me/milestones/{milestone_id}/claim")

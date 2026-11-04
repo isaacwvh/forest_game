@@ -14,7 +14,7 @@ import urllib.error
 import urllib.request
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
 from alembic import command
@@ -22,6 +22,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
+from forest_api import history, recovery, services
 from forest_api.auth import issue_development_token
 from forest_api.config import Settings
 from forest_api.database import Database
@@ -83,8 +84,10 @@ def main():
             port = listener.getsockname()[1]
         base = f"http://127.0.0.1:{port}"
 
-        def request(path, body=None, *, authenticated=True):
+        def request(path, body=None, *, authenticated=True, recoverable=False):
             headers = {"Content-Type": "application/json"}
+            if recoverable:
+                headers["X-Forest-Recovery"] = "1"
             if authenticated:
                 headers["Authorization"] = "Bearer " + token
             req = urllib.request.Request(
@@ -266,10 +269,52 @@ def main():
             assert request("/v1/me/collection")["tokenBalance"] == "601"
             with database.sessions() as session:
                 assert visitor_rescale.publish(session, settings)["alreadyPublished"]
+            # A stored copy can retire without breaking wallet accounting or
+            # recovery. The trusted setup is confined to this disposable database.
+            with database.sessions.begin() as session:
+                copy = services.award_plant(
+                    session,
+                    UUID(account["profile"]["userId"]),
+                    "oak",
+                    "standard",
+                    "http_validation",
+                    str(uuid4()),
+                )
+                copy.growth_micro_units = 400_000_000
+                copy_id = copy.id
+            sale_quote = request(f"/v1/me/plants/{copy_id}/sale-quote")
+            assert sale_quote["tokens"] == "84"
+            sale_body = {
+                "requestId": str(uuid4()),
+                "valuationVersion": sale_quote["valuationVersion"],
+                "expectedTokens": sale_quote["tokens"],
+                "expectedGrowthMicroUnits": sale_quote["growthMicroUnits"],
+            }
+            sale_path = f"/v1/me/plants/{copy_id}/sell"
+            sale = request(sale_path, sale_body, recoverable=True)
+            assert sale["tokenBalance"] == "685" and sale["capacity"]["ownedPlants"] == 1
+            assert request(sale_path, sale_body, recoverable=True) == sale
+            with database.sessions() as session:
+                recovery.maintain(session, apply=True, now=datetime.now(UTC) + timedelta(days=8))
+            with database.sessions.begin() as session:
+                history.reconcile(
+                    session, UUID(account["profile"]["userId"]), UUID(account["gardenId"])
+                )
+            server.terminate()
+            server.wait(timeout=10)
+            server = start()
+            assert request(sale_path, sale_body, recoverable=True) == sale
+            assert request("/v1/me/collection")["tokenBalance"] == "685"
+            try:
+                request(f"/v1/me/plants/{copy_id}")
+                raise AssertionError("A sold live copy must not return")
+            except urllib.error.HTTPError as error:
+                assert error.code == 404
             print(
                 "PASS: HTTP nonfixture launch, typed daily/workout growth, seedling, "
                 "variant-stage discovery, milestone ledger, ×10 conversion, "
-                "scheduled/early welcome guards, restart/replay."
+                "scheduled/early welcome guards, stored sale/retirement/accounting, "
+                "seven-day sale response cleanup and restart/replay."
             )
     finally:
         if server is not None:

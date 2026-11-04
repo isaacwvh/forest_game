@@ -1,5 +1,14 @@
 # Movement Forest implementation plan
 
+**Inventory management — source implemented locally, 5 November 2026:** 50 owned
+plants total, 20 planted and 50 unopened packs; stored-copy sales use exact
+versioned rarity/variant/water valuation and durable recovery. Compact identity
+keeps prior openings and growth records valid after live-state removal. My plants
+uses sage/parchment capacity counts and serif section headings with count badges,
+without dot separators. Source validation, explicit schema upgrade and native
+acceptance are separate; see [inventory delivery](backend/INVENTORY_MANAGEMENT.md)
+and the backend/frontend validation records. No push or CI run is included.
+
 Revised 30 October 2026 against `forest_game_v1_spec.md`, version 0.30.
 This delivery plan is not a source of approved balance values. B1–B6 and F1–F6 are accepted as complete for the current steps/email-authentication development slice, with the explicit F5a provider exceptions below. B7/F7 collection source is implemented with native acceptance pending; wider inputs, progression rewards, social, deployment and final visual polish remain future work.
 

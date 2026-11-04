@@ -35,7 +35,7 @@ class GrowthProvenance(Base):
 class GrowthDaySummary(Base):
     __tablename__ = "growth_day_summaries"
     __table_args__ = (CheckConstraint("awarded >= 0 AND credit_count > 0", name="amounts"),)
-    plant_id: Mapped[UUID] = mapped_column(ForeignKey("owned_plants.id"), primary_key=True)
+    plant_id: Mapped[UUID] = mapped_column(ForeignKey("plant_identities.id"), primary_key=True)
     day: Mapped[date] = mapped_column(Date, primary_key=True)
     rule_version: Mapped[str] = mapped_column(
         ForeignKey("economy_configs.version"), primary_key=True

@@ -1,5 +1,20 @@
 # Movement Forest: V1 Working Specification
 
+**Inventory management — source implemented locally, 5 November 2026:**
+cap live owned plants at 50 total (planted plus stored), planted copies at 20 and
+unopened packs at 50. Plant capacity blocks opening before consumption/draw;
+pack capacity blocks purchasing before spending. Existing over-limit collections
+retain all copies and can reduce their counts. Stored copies can be sold for
+tokens after exact-price confirmation, except the original starter. Species
+rarity, explicit variant multiplier and saved water/pinned adult threshold determine
+the discounted resale value. Sales are an additional token source; this supersedes
+visitor-only token-source statements below. Permanent discoveries, milestones,
+old openings and growth accounting survive sale. Schema `0012_inventory_management`
+separates compact permanent identity from live plant state. Native/device acceptance
+and explicit game-database upgrade remain separate gates. See the rules, formula,
+API, migration and acceptance checklist in
+[inventory management](backend/INVENTORY_MANAGEMENT.md).
+
 Status: planning draft, not a final product or architecture contract  
 Document version: 0.30\
 Date: 30 October 2026\

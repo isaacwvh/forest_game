@@ -1,5 +1,10 @@
 # Movement Forest backend — B1–B7 collection slice
 
+Inventory capacity/selling source is implemented in `0012_inventory_management`.
+Defaults: 50 owned plants total, 20 planted, 50 unopened packs. See
+[inventory rules, resale formula and explicit upgrade](INVENTORY_MANAGEMENT.md).
+The personal database requires that migration before running the updated API.
+
 The first B8 garden-skill/cap increment is implemented; see
 [SKILLS_API.md](SKILLS_API.md) for the explicit existing-server upgrade, immutable
 cap policy, Sleeping Dew publication, repeat-safe adult Moonwillow storage grant

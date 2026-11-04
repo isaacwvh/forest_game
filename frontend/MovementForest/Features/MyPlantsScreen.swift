@@ -1,5 +1,147 @@
 import SwiftUI
 
+struct PlantInventoryHeading: View {
+    let title: String
+    let symbol: String
+    let count: Int?
+    var limit: Int? = nil
+    var body: some View {
+        HStack(spacing: 10) {
+            Label(title, systemImage: symbol)
+                .font(.system(.title3, design: .serif).weight(.semibold))
+            Rectangle().fill(JournalTheme.vine.opacity(0.45)).frame(height: 1).accessibilityHidden(true)
+            if let count = count {
+                Text(limit.map { "\(count) / \($0)" } ?? "\(count)")
+                    .font(.subheadline.weight(.medium)).monospacedDigit()
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(JournalTheme.sage, in: Capsule())
+            }
+        }.foregroundStyle(JournalTheme.ink).padding(.top, 8).padding(.bottom, 4)
+            .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
+    }
+}
+
+struct PlantCapacitySummary: View {
+    let capacity: APIInventoryCapacity
+    var cached = false
+    @Environment(\.dynamicTypeSize) private var textSize
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if textSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 12) { counts }
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 20) { counts }
+            }
+            if cached { Text("Last confirmed capacity").font(.caption).foregroundStyle(JournalTheme.secondary) }
+            if capacity.plantFull {
+                Text("Collection full. Sell a stored plant to open another pack.")
+                    .font(.callout).foregroundStyle(JournalTheme.ink)
+            }
+        }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+            .background(JournalTheme.sage.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
+            .accessibilityIdentifier("myplants.capacity")
+    }
+    @ViewBuilder private var counts: some View {
+        count("Plants", value: "\(capacity.ownedPlants) / \(capacity.plantLimit)")
+        count("Planted", value: "\(capacity.plantedPlants) / \(capacity.plantedLimit)")
+        count("Stored", value: "\(capacity.storedPlants)")
+    }
+    private func count(_ title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title).font(.system(.subheadline, design: .serif).weight(.semibold))
+                .foregroundStyle(JournalTheme.secondary)
+            Text(value).font(.body.weight(.medium)).monospacedDigit().foregroundStyle(JournalTheme.ink)
+        }.frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
+    }
+}
+
+@MainActor
+struct PlantSaleControls: View {
+    @ObservedObject var store: CollectionCoordinator
+    let plant: APIOwnedPlant
+    var enabled = true
+    @State private var quote: APIPlantSaleQuote?
+    @State private var loading = false
+    @State private var issue: String?
+    @State private var retryable = true
+    @State private var confirming = false
+    @State private var submitting = false
+    private var sold: Bool { store.state.result?.saleId != nil && store.state.result?.plantId == plant.id }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            JournalSectionHeading(title: "Sell plant")
+            if sold {
+                Label("Sold for \(store.state.result?.tokensEarned ?? "0") tokens", systemImage: "checkmark.circle")
+            } else if plant.placement != nil {
+                Text("Store this plant before selling it.").font(.callout).foregroundStyle(JournalTheme.secondary)
+            } else if let pending = store.state.pending {
+                Text("A collection request is awaiting confirmation.").font(.callout)
+                Button("Retry saved request") { Task { await store.refresh() } }
+                    .frame(minHeight: 44).disabled(store.busy)
+                    .accessibilityIdentifier("plantSale.retry.\(pending.id)")
+            } else if loading {
+                ProgressView("Checking resale value…")
+            } else if let quote = quote {
+                DisclosureGroup("Resale value") {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("\(quote.rarity.capitalized) base: \(quote.rarityBase) tokens")
+                        Text("Variant multiplier: \((Double(quote.variantBasisPoints) / 10000).formatted())×")
+                        Text("Water: \(ExactAmount.water(quote.growthMicroUnits)) / \(ExactAmount.water(quote.adultWaterMicroUnits))")
+                        Text("Resale returns 25% of the adjusted value at sprout, rising to 50% at adulthood.")
+                    }.font(.callout).foregroundStyle(JournalTheme.secondary).padding(.top, 8)
+                }
+                Button { confirming = true } label: {
+                    QuantityLabel(metric: "tokens", text: "Sell for \(quote.tokens) tokens")
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }.buttonStyle(.bordered).tint(JournalTheme.action)
+                    .disabled(!enabled || !store.canMutate || submitting)
+                    .accessibilityIdentifier("plantSale.sell")
+            }
+            if let issue = issue {
+                Text(issue).font(.callout).foregroundStyle(JournalTheme.secondary)
+                if retryable {
+                    Button("Retry resale value") { Task { await loadQuote() } }
+                        .frame(minHeight: 44).disabled(loading || store.busy)
+                }
+            }
+            if let message = store.message, store.refreshFailed || store.recoveryLocked {
+                Text(message).font(.callout).foregroundStyle(JournalTheme.secondary)
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading)
+            .task(id: plant.growthMicroUnits) { await loadQuote() }
+            .alert("Sell this plant?", isPresented: $confirming) {
+                Button("Cancel", role: .cancel) { }
+                if let quote = quote {
+                    Button("Sell for \(quote.tokens) tokens", role: .destructive) {
+                        submitting = true
+                        Task {
+                            await store.sell(quote)
+                            submitting = false
+                            if !sold && store.state.pending == nil { await loadQuote() }
+                        }
+                    }
+                }
+            } message: {
+                Text("This permanently removes this copy. Your discovered artwork and earned milestones are kept.")
+            }
+    }
+    private func loadQuote() async {
+        guard plant.placement == nil, !sold else { return }
+        loading = true; issue = nil; quote = nil; retryable = true
+        defer { loading = false }
+        do {
+            let result = try await store.saleQuote(plant: plant.id)
+            guard !Task.isCancelled else { return }
+            quote = result
+        } catch {
+            guard !Task.isCancelled else { return }
+            retryable = !["starter_protected", "sale_unavailable", "plant_not_found", "plant_is_planted"]
+                .contains((error as? APIError)?.code ?? "")
+            issue = PlayerMessage.failure(error, fallback: "Resale value couldn’t load. Connect and try again.")
+        }
+    }
+}
+
 @MainActor
 struct MyPlantsHostScreen: View {
     @ObservedObject var connection: GardenConnection
@@ -7,7 +149,7 @@ struct MyPlantsHostScreen: View {
     var body: some View {
         Group {
             if let editor = connection.editor {
-                MyPlantsScreen(store: editor, catalog: catalog).id(editor.id)
+                MyPlantsScreen(store: editor, catalog: catalog, collection: connection.collection).id(editor.id)
             } else if connection.connecting {
                 ProgressView("Loading your plants…")
             } else {
@@ -19,6 +161,7 @@ struct MyPlantsHostScreen: View {
                 }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }.background(JournalPageBackground().ignoresSafeArea()).navigationTitle("My plants")
+            .task(id: connection.collection?.id) { await connection.collection?.refresh() }
     }
 }
 
@@ -26,6 +169,7 @@ struct MyPlantsHostScreen: View {
 struct MyPlantsScreen: View {
     @ObservedObject var store: GardenEditorStore
     let catalog: any AssetCatalogProviding
+    var collection: CollectionCoordinator? = nil
     @State private var inspecting: PlantInspection?
     @State private var search = ""
     @State private var rarity = "All"
@@ -42,7 +186,11 @@ struct MyPlantsScreen: View {
             VStack(alignment: .leading, spacing: 14) {
                 JournalSearchField(text: $search)
                 status
-                JournalSectionHeading(title: "Planted")
+                if let capacity = store.capacity {
+                    PlantCapacitySummary(capacity: capacity, cached: store.showingCached)
+                }
+                PlantInventoryHeading(title: "Planted", symbol: "leaf", count: store.confirmed?.plants.count,
+                    limit: store.capacity?.plantedLimit)
                 if let garden = store.confirmed {
                     let plants = garden.plants.filter(matches)
                     if plants.isEmpty {
@@ -53,7 +201,7 @@ struct MyPlantsScreen: View {
                 } else {
                     Text("Your planted copies will appear when your garden loads.").foregroundStyle(JournalTheme.secondary)
                 }
-                JournalSectionHeading(title: "Stored")
+                PlantInventoryHeading(title: "Stored", symbol: "tray", count: store.capacity?.storedPlants)
                 if store.confirmed == nil {
                     Text("Your stored copies will appear when your garden loads.").foregroundStyle(JournalTheme.secondary)
                 } else {
@@ -93,9 +241,10 @@ struct MyPlantsScreen: View {
                     .accessibilityLabel("Filter plants")
             }
         }
-        .refreshable { await store.refresh() }
+        .refreshable { await store.refresh(); await collection?.refresh() }
         .fullScreenCover(item: $inspecting) { selection in
-            OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog).journalModalBackground()
+            OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
+                collection: collection).journalModalBackground()
         }
         .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || inspecting != nil }
     }
@@ -212,13 +361,15 @@ struct OwnedPlantDetailScreen: View {
     let catalog: any AssetCatalogProviding
     var context: OwnedPlantDetailContext = .readOnly
     var placed: (() -> Void)? = nil
+    var collection: CollectionCoordinator? = nil
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         Group {
             if let copy = store.ownedCopy(copyID), let rendered = store.render(copy) {
                 PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false, owned: copy,
                     catalogue: store.catalogue, onPlace: placementAction,
-                    placementDisabled: !store.editing || !store.canEdit || copy.placement != nil)
+                    placementDisabled: !store.editing || !store.canEdit || copy.placement != nil,
+                    collection: collection, saleEnabled: store.canReadInventory && !store.showingCached && !store.editing)
             } else {
                 JournalInspector(title: "Plant details", close: { dismiss() }) {
                     Text("This copy is no longer available here. Return to My plants and refresh.")

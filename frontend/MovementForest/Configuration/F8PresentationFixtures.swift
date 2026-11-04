@@ -143,6 +143,8 @@ private final class CleanupCollectionService: ObservableObject, CollectionServin
         if let receipt = receipts[operation.id] { return receipt }
         let receipt: APICollectionReceipt
         switch operation.kind {
+        case .sell:
+            throw ForestError.invalidData("Plant selling is outside this presentation fixture.")
         case .exchange:
             let body = try ActivityWire.decoder().decode(CollectionExchangeBody.self, from: operation.body)
             guard let offer = contract.summary.offers.first(where: { $0.offerId == body.offerId && $0.offerVersion == body.offerVersion }),

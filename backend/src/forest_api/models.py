@@ -203,10 +203,46 @@ class PlantStage(Base):
     thumbnail_key: Mapped[str] = mapped_column(Text)
 
 
+class PlantIdentity(Base):
+    """Small permanent identity; historical facts do not retain live plant state."""
+
+    __tablename__ = "plant_identities"
+    __table_args__ = (
+        UniqueConstraint("id", "owner_id"),
+        UniqueConstraint("owner_id", "acquisition_source", "acquisition_reference"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    acquisition_source: Mapped[str] = mapped_column(String(64))
+    acquisition_reference: Mapped[str] = mapped_column(String(255))
+    valuation_version: Mapped[str] = mapped_column(String(100))
+    valuation_rarity: Mapped[str | None] = mapped_column(String(32))
+    variant_basis_points: Mapped[int | None] = mapped_column(Integer)
+
+
+class PlantSale(Base):
+    __tablename__ = "plant_sales"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "request_id"),
+        CheckConstraint("tokens > 0", name="tokens"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    plant_id: Mapped[UUID] = mapped_column(ForeignKey("plant_identities.id"), unique=True)
+    request_id: Mapped[UUID] = mapped_column()
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    tokens: Mapped[int] = mapped_column(BigInteger)
+    receipt: Mapped[dict] = mapped_column(JSONB)
+    sold_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class OwnedPlant(Timestamps, Base):
     __tablename__ = "owned_plants"
     __table_args__ = (
         *profile_foreign_keys(),
+        ForeignKeyConstraint(
+            ["id", "owner_id"], ["plant_identities.id", "plant_identities.owner_id"]
+        ),
         ForeignKeyConstraint(
             ["species_id", "variant_id"], ["plant_variants.species_id", "plant_variants.variant_id"]
         ),
@@ -432,7 +468,7 @@ class PlantGrowthCredit(Base):
         Index("ix_plant_growth_credits_provenance_id", "provenance_id"),
         CheckConstraint("before_growth >= 0 AND after_growth >= before_growth", name="growth"),
     )
-    plant_id: Mapped[UUID] = mapped_column(ForeignKey("owned_plants.id"), primary_key=True)
+    plant_id: Mapped[UUID] = mapped_column(ForeignKey("plant_identities.id"), primary_key=True)
     activity_credit_id: Mapped[UUID] = mapped_column(
         ForeignKey("activity_credits.id"), primary_key=True
     )
