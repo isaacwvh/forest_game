@@ -23,7 +23,7 @@ struct GardenConnectionScreen: View {
                         await connection.connect(url: url, token: token, assets: catalog)
                         token = ""
                     }
-                }.disabled(connection.busy)
+                }.buttonStyle(.journalPrimary).disabled(connection.busy)
                     .accessibilityIdentifier("connection.connect")
                 if let status = connection.status { Text(status).font(.callout).accessibilityIdentifier("connection.status") }
             }
@@ -34,6 +34,7 @@ struct GardenConnectionScreen: View {
                     Button("Create account and starter") { Task {
                         await connection.createAccount(username: username, displayName: displayName, assets: catalog)
                     } }.disabled(connection.busy || username.count < 3 || displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .buttonStyle(.journalPrimary)
                     Text("The game timezone is set from this iPhone when the account is created. Your starter enters storage.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
@@ -45,6 +46,7 @@ struct GardenConnectionScreen: View {
             if connection.editor != nil || !connection.savedURL.isEmpty {
                 Section {
                     Button("Disconnect and view sample garden", role: .destructive) { connection.disconnect() }
+                        .buttonStyle(.journalQuiet)
                         .disabled(connection.busy)
                     Text("Pending saves stay associated with their original account and API address.")
                         .font(.footnote).foregroundStyle(.secondary)

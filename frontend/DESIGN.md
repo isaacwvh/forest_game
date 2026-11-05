@@ -1,5 +1,43 @@
 # Native baseline conventions
 
+## Botanical bookplate buttons — 6 November 2026
+
+App-owned buttons now share `JournalButtonStyle` in BotanicalJournal.swift.
+This supersedes the older default prominent/bordered button treatments. The
+existing journal palette, plant/rarity frames, page layouts and native navigation
+remain the visual authority.
+
+- Primary actions use a matte forest-green bookplate, 10-point continuous corners,
+  a fine inset parchment rim and a shallow 2-point shadow. Featured footer actions
+  reuse one existing 24-point vine ornament; grid actions omit it. Secondary
+  actions use paper with an olive outline. Quiet actions retain text emphasis.
+- Icon/tool controls use 8-point corners and the existing 44-point minimum target.
+  Metric/rarity explanation icons use an unframed pressed treatment so their
+  artwork and rarity meaning remain distinct. Selection uses a sage surface and
+  forest underline; it never borrows species-rarity colours.
+- System text styles, wrapping, existing larger-text reflow and accessibility
+  labels are retained. Featured ornaments and their extra horizontal allowance
+  disappear at accessibility text sizes. Ornaments and outlines never intercept
+  input or contribute accessibility labels.
+- Pressed primary controls darken/depress by one point and lose their shadow.
+  Reduce Motion removes the movement/animation. Disabled framed controls use
+  readable secondary ink on sage with a dashed outline. Increased Contrast uses
+  a 2-point outline. Native destructive account actions use a contrast-checked
+  warm red; final sale/device confirmations retain native destructive roles.
+- All styles are explicit at app-owned controls. Native alerts, context-menu
+  items, list navigation, switches, sliders, steppers, pickers, keyboard controls
+  and Sign in with Apple keep their platform behavior. Loading/request state
+  remains owned by each existing screen; the style adds no tasks or gestures.
+- Shared styles cover Garden/Edit, inspectors/storage, Catalog, Exchange/Packs,
+  opening/results, Milestones, Activity/recap, account/settings, menu/navigation,
+  recovery and internal tool actions. Garden viewport/camera/render ownership,
+  callbacks, guards, confirmations and service/model/backend code are unchanged.
+
+Portable project/assets/contracts, palette/outline contrast, all 79 Swift syntax
+parses and an exact source-token UI-scope comparison pass. Apple SDK typechecking,
+XCTest and native visual/device acceptance remain pending; Windows parsing does
+not certify them. See [BUTTON_UI_ACCEPTANCE.md](BUTTON_UI_ACCEPTANCE.md).
+
 ## Inventory capacity and selling — 5 November 2026
 
 My plants uses a single pale-sage summary on parchment: separate serif Plants,

@@ -21,7 +21,7 @@ struct SettingsScreen: View {
                     .accessibilityIdentifier("settings.developer")
             }
             #endif
-        }.navigationTitle("Settings")
+        }.tint(JournalTheme.action).navigationTitle("Settings")
     }
 
     private var dataInformation: some View {

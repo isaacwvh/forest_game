@@ -95,8 +95,8 @@ struct SceneLabScreen: View {
                     Toggle("Wind", isOn: $wind)
                     Toggle("Visual bounds guides", isOn: $bounds)
                     Toggle("Tap ground beneath foliage", isOn: $ground)
-                    Button("Reset camera") { renderer.resetCamera() }
-                    Button("Reload scene") { renderer.retry(preset.garden(), catalog: catalog) }
+                    Button("Reset camera") { renderer.resetCamera() }.buttonStyle(.journalSecondary)
+                    Button("Reload scene") { renderer.retry(preset.garden(), catalog: catalog) }.buttonStyle(.journalSecondary)
                 }
                 RenderDiagnostics(renderer: renderer)
             }
@@ -139,8 +139,8 @@ struct AssetInspectorScreen: View {
                     Picker("Stage", selection: $stage) { ForEach(GrowthStage.allCases) { Text($0.title).tag($0) } }
                     Toggle("Wind", isOn: $wind)
                     Toggle("Visual bounds guides", isOn: $bounds)
-                    Button("Reset camera") { renderer.resetCamera() }
-                    Button("Reload asset") { renderer.retry(garden, catalog: catalog) }
+                    Button("Reset camera") { renderer.resetCamera() }.buttonStyle(.journalSecondary)
+                    Button("Reload asset") { renderer.retry(garden, catalog: catalog) }.buttonStyle(.journalSecondary)
                     PlantThumbnail(plant: garden.plants[0], catalog: catalog).frame(height: 100).frame(maxWidth: .infinity)
                     Text("Stage changes preserve the ground anchor and true relative scale. Bounds guides describe foliage, not reserved clearance.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -164,8 +164,8 @@ struct HealthDiagnosticsScreen: View {
                 DetailRow(title: "Diagnostic timezone", value: store.timeZone.identifier)
                 Text("These are observations, not rewarded activity. No baseline, upload or workout reward deduplication runs here.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Button("Request access") { Task { await store.connect() } }.disabled(store.isLoading || !store.provider.isAvailable)
-                Button("Refresh") { Task { await store.refresh() } }.disabled(store.isLoading || !store.hasRequestedAccess)
+                Button("Request access") { Task { await store.connect() } }.buttonStyle(.journalSecondary).disabled(store.isLoading || !store.provider.isAvailable)
+                Button("Refresh") { Task { await store.refresh() } }.buttonStyle(.journalSecondary).disabled(store.isLoading || !store.hasRequestedAccess)
                 if store.isLoading { ProgressView("Reading…") }
                 if let issue = store.requestIssue { Text(issue) }
             }

@@ -33,7 +33,7 @@ struct GardenScreen: View {
                         if !renderer.errors.isEmpty {
                             Button { errorsPresented = true } label: {
                                 Label("Some plants need attention", systemImage: "exclamationmark.triangle").frame(minHeight: 44)
-                            }.gardenOverlayTarget()
+                            }.buttonStyle(.journalSecondary).gardenOverlayTarget()
                         }
                     }.padding(12).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
                 } controls: {
@@ -58,7 +58,7 @@ struct GardenScreen: View {
                             }.padding(20)
                         }.navigationTitle("Garden information")
                             .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { informationPresented = false } } }
+                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { informationPresented = false }.buttonStyle(.journalQuiet) } }
                     }
                 }
                 .sheet(isPresented: $errorsPresented) {
@@ -67,11 +67,11 @@ struct GardenScreen: View {
                             VStack(alignment: .leading, spacing: 16) {
                                 Text("Some plants couldn’t be displayed. Try loading the artwork again.")
                                 Button("Reload plants") { errorsPresented = false; renderer.retry(garden, catalog: catalog) }
-                                    .frame(minHeight: 44).buttonStyle(.bordered)
+                                    .frame(minHeight: 44).buttonStyle(.journalSecondary)
                             }.padding(20)
                         }.navigationTitle("Loading plants")
                             .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { errorsPresented = false } } }
+                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { errorsPresented = false }.buttonStyle(.journalQuiet) } }
                     }
                 }
             } else if store.error != nil {
@@ -204,9 +204,9 @@ struct PlantDetailScreen: View {
                             onPlace: onPlace, placementDisabled: placementDisabled).padding(14)
                     } else {
                         Button(action: onPlace) {
-                            Text("Place").frame(maxWidth: .infinity, minHeight: 44).foregroundStyle(JournalTheme.paper)
+                            Text("Place").frame(maxWidth: .infinity, minHeight: 44)
                         }
-                            .buttonStyle(.borderedProminent).controlSize(.large)
+                            .buttonStyle(.journalFeatured).controlSize(.large)
                             .padding(14)
                             .disabled(placementDisabled).accessibilityIdentifier("editor.place")
                     }
@@ -234,7 +234,7 @@ struct GardenPlantList: View {
             }.padding(16)
         }.navigationTitle("Garden plants").background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() }.buttonStyle(.journalQuiet) } }
             .fullScreenCover(item: $inspecting) { plant in
                 PlantDetailScreen(plant: plant, catalog: catalog, isSample: garden.isSample).journalModalBackground()
             }

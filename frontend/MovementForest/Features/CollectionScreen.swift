@@ -64,6 +64,7 @@ struct CollectionScreen: View {
         .refreshable { await refresh() }
         .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
             Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise").frame(width: 44, height: 44) }
+                .buttonStyle(.journalIcon)
                 .accessibilityLabel("Refresh collection").disabled(store.busy || store.recoveryLocked)
         } }
         .task(id: destination) {
@@ -146,6 +147,7 @@ struct CollectionScreen: View {
         if store.state.pending != nil {
             Text("Awaiting confirmation").font(.callout)
             Button("Retry saved request") { Task { await store.refresh() } }
+                .buttonStyle(.journalSecondary)
                 .disabled(store.busy).frame(minHeight: 44)
         }
     }
@@ -157,7 +159,7 @@ struct CollectionScreen: View {
                     .font(.caption).foregroundStyle(JournalTheme.secondary)
             }
             if store.refreshFailed {
-                Button("Retry refresh") { Task { await store.refresh() } }.disabled(store.busy).frame(minHeight: 44)
+                Button("Retry refresh") { Task { await store.refresh() } }.buttonStyle(.journalSecondary).disabled(store.busy).frame(minHeight: 44)
             }
             if store.milestones.isEmpty && !store.busy && !store.refreshFailed && store.milestonesConfirmedAt != nil {
                 Text("No milestones available.").foregroundStyle(JournalTheme.secondary)
@@ -167,7 +169,7 @@ struct CollectionScreen: View {
                 ReceiptRow(receipt: receipt, catalogue: store.catalogue, assets: assets)
             }
             if !store.confirmedMilestoneIDs.isEmpty {
-                Button("Browse Exchange") { navigate?(.exchange) }.frame(minHeight: 44)
+                Button("Browse Exchange") { navigate?(.exchange) }.buttonStyle(.journalSecondary).frame(minHeight: 44)
             }
         }
     }
@@ -193,7 +195,7 @@ struct CollectionScreen: View {
             JournalSectionHeading(title: "Unopened packs")
             if store.packs.isEmpty && !store.busy {
                 Text("No unopened packs.").foregroundStyle(JournalTheme.secondary)
-                Button("Browse Exchange") { navigate?(.exchange) }.frame(minHeight: 44)
+                Button("Browse Exchange") { navigate?(.exchange) }.buttonStyle(.journalSecondary).frame(minHeight: 44)
             }
             JournalGrid(minimumWidth: 142) {
                 ForEach(store.packs) { pack in
@@ -205,19 +207,19 @@ struct CollectionScreen: View {
                         Button { confirmingPack = pack } label: {
                             Text("Open").frame(maxWidth: .infinity, minHeight: 44)
                         }.accessibilityLabel("Open pack")
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.journalPrimary)
                             .disabled(!store.canOpenPack).accessibilityIdentifier("collection.open.\(pack.id)")
                     }
                 }
             }
             if store.packCursor != nil {
-                Button("Load more packs") { Task { await store.loadMore() } }.disabled(store.busy).frame(minHeight: 44)
+                Button("Load more packs") { Task { await store.loadMore() } }.buttonStyle(.journalSecondary).disabled(store.busy).frame(minHeight: 44)
             }
             JournalSectionHeading(title: "Last confirmed result")
             if let result = latestOpening {
                 ReceiptRow(receipt: result, catalogue: store.catalogue, assets: assets)
                     .frame(maxWidth: .infinity).accessibilityFocused($resultFocused)
-                Button("Go to Garden") { navigate?(nil) }.frame(minHeight: 44)
+                Button("Go to Garden") { navigate?(nil) }.buttonStyle(.journalQuiet).frame(minHeight: 44)
             } else {
                 Text("No confirmed opening yet.").foregroundStyle(JournalTheme.secondary)
             }
@@ -259,7 +261,7 @@ struct CollectionScreen: View {
                     Text(message).font(.callout).accessibilityIdentifier("collection.status")
                 }
                 if store.refreshFailed {
-                    Button("Retry refresh") { Task { await refresh() } }.frame(minHeight: 44)
+                    Button("Retry refresh") { Task { await refresh() } }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                 }
                 JournalGrid {
                     ForEach(filteredSpecies, id: \.speciesId) { species in
@@ -306,13 +308,13 @@ struct CollectionScreen: View {
                 if pending {
                     Label(store.busy ? "Confirming…" : "Awaiting confirmation", systemImage: "clock")
                     if !store.busy {
-                        Button("Retry saved claim") { Task { await store.refresh() } }.frame(minHeight: 44)
+                        Button("Retry saved claim") { Task { await store.refresh() } }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                     }
                 } else if claimed {
                     Label("Claimed", systemImage: "checkmark.circle")
                 } else if milestone.eligible {
                     Button("Claim") { Task { await store.claim(milestone) } }
-                        .buttonStyle(.borderedProminent).disabled(!store.canMutate).frame(minHeight: 44)
+                        .buttonStyle(.journalPrimary).disabled(!store.canMutate).frame(minHeight: 44)
                         .accessibilityLabel("Claim reward")
                         .accessibilityIdentifier("milestone.\(milestone.id)")
                 } else {
@@ -336,7 +338,7 @@ private struct ExchangeOfferRow: View {
                 Text("Purchase").frame(maxWidth: .infinity, minHeight: 44)
             }.accessibilityLabel("Purchase pack")
                 .disabled(!store.canMutate || !store.canAfford(offer, quantity: 1) || !store.canBuy(quantity: 1))
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.journalPrimary)
                 .accessibilityIdentifier("collection.exchange.\(offer.offerId)")
         }
     }
@@ -356,7 +358,7 @@ private struct ExchangeOfferFeedback: View {
                receipt.packs?.contains(where: { $0.packId == offer.pack.packId && $0.version == offer.pack.version }) == true {
                 Label("\(receipt.quantity ?? 0) \(receipt.quantity == 1 ? "pack" : "packs") added", systemImage: "checkmark.circle.fill")
                     .accessibilityIdentifier("collection.exchangeSuccess")
-                Button("Open packs") { navigate?(.draws) }.frame(minHeight: 44)
+                Button("Open packs") { navigate?(.draws) }.buttonStyle(.journalQuiet).frame(minHeight: 44)
             }
             if store.tokenBalance != nil && !store.canAfford(offer, quantity: 1) {
                 Text("\(offer.pack.displayName): Not enough tokens").font(.caption).foregroundStyle(JournalTheme.secondary)
@@ -417,6 +419,7 @@ private struct PurchasePackScreen: View {
     }
     @ViewBuilder private var purchaseActions: some View {
         Button("Cancel") { dismiss() }.disabled(submitted)
+            .buttonStyle(.journalSecondary)
             .frame(maxWidth: .infinity, minHeight: 44).accessibilityIdentifier("purchase.cancel")
         Button {
             guard !submitted, store.canMutate, store.canAfford(offer, quantity: quantity),
@@ -427,7 +430,7 @@ private struct PurchasePackScreen: View {
             Task { await store.exchange(offer, quantity: count) }
         } label: {
             Text("Purchase").frame(maxWidth: .infinity, minHeight: 44)
-        }.buttonStyle(.borderedProminent)
+        }.buttonStyle(.journalFeatured)
             .disabled(submitted || !store.canMutate || !store.canAfford(offer, quantity: quantity) || !store.canBuy(quantity: quantity))
             .accessibilityIdentifier("purchase.confirm")
     }
@@ -491,7 +494,7 @@ private struct CatalogDiscoveryNotice: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(discovery.snapshot == nil ? "Discovery unavailable" : "Last confirmed discovery")
                     .font(.callout).foregroundStyle(.secondary)
-                Button("Retry discovery") { Task { await discovery.refresh() } }.frame(minHeight: 44)
+                Button("Retry discovery") { Task { await discovery.refresh() } }.buttonStyle(.journalSecondary).frame(minHeight: 44)
             }
         } else if discovery.snapshot != nil && discovery.lastConfirmed {
             Text("Last confirmed discovery").font(.caption).foregroundStyle(.secondary)
@@ -676,13 +679,11 @@ private struct CatalogDetailScreen: View {
                     Button { variantID = variant.variantId } label: {
                         Text(variant.displayName).font(.subheadline.weight(.medium))
                             .fixedSize().padding(.horizontal, 12).frame(minHeight: 44)
-                            .foregroundStyle(variantID == variant.variantId ? JournalTheme.paper : JournalTheme.ink)
-                            .background(variantID == variant.variantId ? JournalTheme.action : Color.clear, in: Capsule())
-                    }.buttonStyle(.plain)
+                    }.buttonStyle(.journalSelection(variantID == variant.variantId))
                         .accessibilityAddTraits(variantID == variant.variantId ? [.isSelected] : [])
                         .accessibilityIdentifier("catalog.variant.\(variant.variantId)")
                 }
-            }.padding(4).background(JournalTheme.sage, in: Capsule())
+            }.padding(4).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
             Picker("Variant", selection: $variantID) {
                 ForEach(row.species.variants, id: \.variantId) { Text($0.displayName).tag($0.variantId) }
             }.pickerStyle(.menu).frame(minHeight: 44)

@@ -100,9 +100,7 @@ struct CollectionPackCard<Action: View>: View {
                     .overlay(alignment: .topTrailing) {
                         Button(action: inspect) {
                             Image(systemName: "info.circle").frame(width: 44, height: 44)
-                                .background(JournalTheme.paper.opacity(0.95), in: Circle())
-                        }.buttonStyle(.plain).disabled(!canInspect)
-                            .opacity(canInspect ? 1 : 0.45)
+                        }.buttonStyle(.journalIcon).disabled(!canInspect)
                             .accessibilityLabel("Contents and odds for \(name)")
                             .simultaneousGesture(LongPressGesture(minimumDuration: 0.45).onEnded { _ in
                                 if canInspect { inspect() }

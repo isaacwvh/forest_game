@@ -308,9 +308,8 @@ struct GardenSummaryHeader: View {
                 if collecting { ProgressView().controlSize(.small) }
                 else { Image(systemName: "tray.and.arrow.down") }
             }.frame(width: 44, height: 44).contentShape(Rectangle())
-        }.buttonStyle(.plain).font(.body)
+        }.buttonStyle(.journalIcon).font(.body)
             .disabled(!canCollect).foregroundStyle(canCollect ? JournalTheme.action : JournalTheme.secondary)
-            .opacity(canCollect ? 1 : 0.45)
             .accessibilityLabel("Collect stored visits")
             .accessibilityValue(collecting ? "Confirming collection" : "")
             .accessibilityIdentifier("visitors.claim").gardenOverlayTarget()
@@ -353,6 +352,7 @@ struct VisitorRecoveryNotice: View {
                         Text("Sign in again through Settings → Account and sign-in. Your saved request is retained.").font(.caption)
                     } else {
                         Button("Retry visitors") { Task { await store.tick(force: true) } }
+                            .buttonStyle(.journalSecondary)
                             .disabled(store.busy).frame(minHeight: 44).accessibilityIdentifier("visitors.retry")
                     }
                 }

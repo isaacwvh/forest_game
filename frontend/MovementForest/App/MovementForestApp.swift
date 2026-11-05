@@ -182,6 +182,7 @@ struct RootView: View {
                                     Text("Your forest").font(.system(.title2, design: .serif).weight(.semibold))
                                     Spacer()
                                     Button { menuPresented = false } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                                        .buttonStyle(.journalIcon)
                                         .accessibilityLabel("Close menu")
                                 }.padding()
                                 List(CollectionDestination.allCases) { destination in
@@ -192,13 +193,14 @@ struct RootView: View {
                                             .font(.system(.headline, design: .serif))
                                             .frame(minHeight: 44).padding(.vertical, 4)
                                     }
+                                        .buttonStyle(.journalQuiet)
                                         .listRowBackground(Color.clear)
                                         .listRowSeparatorTint(JournalTheme.vine.opacity(0.35))
                                         .accessibilityIdentifier("menu.\(destination.id)")
                                 }.listStyle(.plain).scrollContentBackground(.hidden)
                                 Button("Return to Garden") {
                                     collectionDestination = nil; selectedTab = .garden; menuPresented = false
-                                }.frame(maxWidth: .infinity, minHeight: 44).padding()
+                                }.buttonStyle(.journalSecondary).frame(maxWidth: .infinity, minHeight: 44).padding()
                                     .background(JournalTheme.sage.opacity(0.65))
                             }
                             .frame(width: min(300, geometry.size.width * 0.85))
@@ -218,7 +220,7 @@ struct RootView: View {
                     NavigationStack {
                         SettingsScreen(catalog: catalog, activity: container.activity, connection: container.connection,
                                        sampleGarden: container.garden.garden)
-                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { settingsPresented = false } } }
+                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { settingsPresented = false }.buttonStyle(.journalQuiet) } }
                     }
                 }
                 .sheet(isPresented: $entryRecap.showing, onDismiss: {
@@ -289,6 +291,7 @@ struct RootView: View {
                             .multilineTextAlignment(.center)
                     }.frame(maxWidth: .infinity, minHeight: 50)
                 }
+                .buttonStyle(.journalNavigation(selectedTab == destination && collectionDestination == nil))
                 .foregroundStyle(selectedTab == destination && collectionDestination == nil ? Color.forestTint : Color.secondary)
                 .disabled(destination == .edit && connection.editor?.canEdit != true)
                 .accessibilityIdentifier("navigation." + destination.id)
@@ -307,6 +310,7 @@ struct RootView: View {
     private var settingsButton: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             Button { settingsPresented = true } label: { Image(systemName: "gearshape").frame(width: 44, height: 44) }
+                .buttonStyle(.journalIcon)
                 .accessibilityLabel("Settings")
         }
     }
@@ -314,6 +318,7 @@ struct RootView: View {
     private var menuButton: some ToolbarContent {
         ToolbarItem(placement: .navigationBarLeading) {
             Button { menuPresented = true } label: { Image(systemName: "line.3.horizontal").frame(width: 44, height: 44) }
+                .buttonStyle(.journalIcon)
                 .accessibilityLabel("Open collection menu").accessibilityIdentifier("collection.menu")
         }
     }

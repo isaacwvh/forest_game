@@ -45,10 +45,11 @@ struct ActivitySyncScreen: View {
                         DetailRow(title: "Awaiting confirmation", value: String(sync.pendingCount))
                     }
                     Button("Sync now") { Task { _ = await sync.synchronize() } }.frame(minHeight: 44)
-                        .buttonStyle(.borderedProminent).controlSize(.large)
+                        .buttonStyle(.journalFeatured).controlSize(.large)
                         .disabled(sync.busy || sync.recoveryLocked).accessibilityIdentifier("sync.now")
                     if sync.otherDeviceActive {
                         Button("Use this iPhone for activity") { replacing = true }
+                            .buttonStyle(.journalSecondary)
                             .frame(minHeight: 44).disabled(sync.busy || !sync.enabled).accessibilityIdentifier("sync.replace")
                     }
                     if sync.recoveryLocked {
@@ -73,7 +74,7 @@ struct ActivitySyncScreen: View {
                         .accessibilityIdentifier("sync.enabled")
                     if sync.enabled && !sync.includesOptionalActivity {
                         Text("Steps-only sync").font(.caption).foregroundStyle(.secondary)
-                        Button("Enable optional quantities and workouts") { showingConsent = true }.frame(minHeight: 44)
+                        Button("Enable optional quantities and workouts") { showingConsent = true }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                     }
                     DisclosureGroup("About activity sync") {
                         Text("Supported activity waters planted copies. Stored plants keep their progress without growing. Only new activity after enabling sync earns growth; activity does not award visitor tokens.")
@@ -83,6 +84,7 @@ struct ActivitySyncScreen: View {
                 if !sync.recaps.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Button("Dismiss recap") { Task { await sync.dismissRecaps() } }
+                            .buttonStyle(.journalQuiet)
                             .frame(minHeight: 44).disabled(sync.busy).accessibilityIdentifier("sync.recapDone")
                         Text("Activity and growth are already saved.")
                             .font(.footnote).foregroundStyle(.secondary)

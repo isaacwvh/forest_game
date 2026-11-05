@@ -150,20 +150,20 @@ struct PackOpeningScreen: View {
                 else {
                     if store.state.pending != nil {
                         Button("Retry saved opening") { Task { await store.refresh(); acceptResult(recovered: true) } }
-                            .buttonStyle(.borderedProminent).frame(minHeight: 44)
+                            .buttonStyle(.journalSecondary).frame(minHeight: 44)
                     }
                 }
-                Button("Return to Packs") { interrupt() }.frame(minHeight: 44)
+                Button("Return to Packs") { interrupt() }.buttonStyle(.journalQuiet).frame(minHeight: 44)
             } else if step == .sealed || step == .opened {
                 Button { advance() } label: {
                     Text(step == .sealed ? "Tap to open" : "Tap to reveal").frame(maxWidth: .infinity, minHeight: 44)
-                }.buttonStyle(.borderedProminent).controlSize(.large)
+                }.buttonStyle(.journalFeatured).controlSize(.large)
                     .accessibilityFocused($actionFocused)
                     .accessibilityIdentifier(step == .sealed ? "pack.tear" : "pack.reveal")
             } else if step == .result, receipt?.plant != nil {
                 Button { dismiss() } label: {
                     Text("Continue").frame(maxWidth: .infinity, minHeight: 44)
-                }.buttonStyle(.borderedProminent).controlSize(.large)
+                }.buttonStyle(.journalFeatured).controlSize(.large)
                     .accessibilityFocused($actionFocused).accessibilityIdentifier("pack.continue")
             } else { ProgressView().accessibilityLabel("Opening pack") }
         }.multilineTextAlignment(.center)

@@ -119,7 +119,9 @@ struct DiagnosticsScreen: View {
             }
             Section("Share diagnostics") {
                 Button(copied ? "Copied diagnostics" : "Copy diagnostics") { UIPasteboard.general.string = exportText; copied = true }
+                    .buttonStyle(.journalSecondary)
                 Button("Export diagnostics") { exported = DiagnosticExport(text: exportText) }
+                    .buttonStyle(.journalSecondary)
                 Text("Local recent history: up to 1,000 events, 2 MiB or seven days. Only the current account and general lifecycle events are shown. Health details remain in the explicit Health inspector. Nothing is uploaded automatically.")
                     .font(.footnote).foregroundStyle(.secondary)
             }

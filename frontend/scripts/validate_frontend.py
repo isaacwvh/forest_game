@@ -265,11 +265,15 @@ def main():
     journal_source = (ROOT / "MovementForest/Features/BotanicalJournal.swift").read_text(encoding="utf-8")
     theme = {key: [float(number) for number in rgb] for key, *rgb in re.findall(
         r"static let (\w+) = Color\(red: ([\d.]+), green: ([\d.]+), blue: ([\d.]+)\)", journal_source)}
-    require({"paper", "sage", "ink", "secondary", "action", "vine"} <= theme.keys(), "Incomplete journal theme")
-    for foreground in ["ink", "secondary", "action"]:
+    require({"paper", "sage", "ink", "secondary", "action", "vine", "danger"} <= theme.keys(), "Incomplete journal theme")
+    for foreground in ["ink", "secondary", "action", "danger"]:
         for background in ["paper", "sage"]:
             low, high = sorted([luminance(theme[foreground]), luminance(theme[background])])
             require((high + 0.05) / (low + 0.05) >= 4.5, f"Journal {foreground} text contrast is too low")
+    for background in ["paper", "sage"]:
+        low, high = sorted([luminance(theme["vine"]), luminance(theme[background])])
+        require((high + 0.05) / (low + 0.05) >= 3, "Journal button outline contrast is too low")
+    print("PASS: bookplate button text, pressed/disabled/destructive palettes and control outlines meet contrast targets.")
     frames = re.findall(r"case \.(common|rare|epic|legendary): return Color\(red: ([\d.]+), green: ([\d.]+), blue: ([\d.]+)\)",
                         journal_source)
     require(len(frames) == 4, "Incomplete journal rarity frame palette")

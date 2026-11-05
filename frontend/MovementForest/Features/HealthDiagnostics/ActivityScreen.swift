@@ -26,6 +26,7 @@ struct ActivityScreen: View {
                     Section {
                         Text("Choose which activity quantities and recorded workouts to share. Missing optional data does not prevent steps from growing your garden.")
                         Button(store.provider.isFixture ? "Load sample activity" : "Connect Apple Health") { Task { await store.connect() } }
+                            .buttonStyle(.journalFeatured)
                             .disabled(store.isLoading).accessibilityIdentifier("activity.connect")
                     }
                 }
@@ -80,8 +81,8 @@ struct ActivityScreen: View {
                 }
                 if store.hasRequestedAccess {
                     Section {
-                        Button("Refresh activity") { Task { await store.refresh() } }.disabled(store.isLoading)
-                        Button("Review Health access") { Task { await store.connect() } }.disabled(store.isLoading)
+                        Button("Refresh activity") { Task { await store.refresh() } }.buttonStyle(.journalSecondary).disabled(store.isLoading)
+                        Button("Review Health access") { Task { await store.connect() } }.buttonStyle(.journalQuiet).disabled(store.isLoading)
                         DisclosureGroup("Health access help") {
                             Text("An empty result can mean there is no data or it isn’t shared with this app. Change access in Health → profile → Apps → Movement Forest. Workouts may arrive after your tracker syncs.")
                                 .font(.footnote).foregroundStyle(.secondary)

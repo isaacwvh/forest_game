@@ -46,15 +46,15 @@ struct RewardEffectsFixtureScreen: View {
                     Button("Reward +1") { reward(1) }.disabled(tokenReward != nil)
                         .accessibilityIdentifier("effects.rewardOne")
                     Button("Reset") { reset() }.accessibilityIdentifier("effects.reset")
-                }.buttonStyle(.bordered).frame(minHeight: 44)
+                }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                 HStack {
                     Button("Growth recap") { recap(count: 5, advance: false) }.accessibilityIdentifier("effects.growth")
                     Button("No growth") { recap(count: 0, advance: false) }.accessibilityIdentifier("effects.zero")
-                }.buttonStyle(.bordered).frame(minHeight: 44)
+                }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                 HStack {
                     Button("Stage recap") { recap(count: 3, advance: true) }.accessibilityIdentifier("effects.stage")
                     Button("Water 15") { recap(count: 15, advance: false) }.accessibilityIdentifier("effects.fifteen")
-                }.buttonStyle(.bordered).frame(minHeight: 44)
+                }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                 Text("Last recap recipients: \(lastRecipients)").font(.caption)
                     .accessibilityIdentifier("effects.recipients").accessibilityValue(String(lastRecipients))
             }

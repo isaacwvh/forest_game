@@ -105,7 +105,7 @@ struct ConnectedGardenScreen: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { sheet = nil; store.endEditing() } label: {
                         Label("Done", systemImage: "checkmark").frame(minHeight: 44)
-                    }.accessibilityLabel("Done editing").accessibilityIdentifier("editor.done")
+                    }.buttonStyle(.journalSecondary).accessibilityLabel("Done editing").accessibilityIdentifier("editor.done")
                 }
             }
         }
@@ -123,12 +123,12 @@ struct ConnectedGardenScreen: View {
                             Button("Reload plants") {
                                 sheet = nil
                                 if let garden = store.rendered { renderer.retry(garden, catalog: catalog) }
-                            }.frame(minHeight: 44).buttonStyle(.bordered)
+                            }.frame(minHeight: 44).buttonStyle(.journalSecondary)
                         }.padding(20)
                     }.navigationTitle("Plant artwork")
                         .background(JournalPageBackground().ignoresSafeArea())
                         .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-                        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
+                        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil }.buttonStyle(.journalQuiet) } }
                 }
             }
         }
@@ -183,9 +183,10 @@ struct ConnectedGardenScreen: View {
                     if store.state.busy { ProgressView(store.state == .saving ? "Saving edit…" : "Refreshing garden…") }
                     if store.state == .unknown {
                         Button("Retry saved edit") { Task { await store.retryPending() } }
+                            .buttonStyle(.journalSecondary)
                             .frame(minHeight: 44).accessibilityIdentifier("editor.retry")
                     } else if store.state == .blocked && !store.recoveryLocked && store.pending == nil {
-                        Button("Refresh garden") { Task { await store.refresh() } }.frame(minHeight: 44)
+                        Button("Refresh garden") { Task { await store.refresh() } }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                     }
                     if store.state == .authenticationRequired || store.recoveryLocked {
                         Text("Sign in again through Settings → Account and sign-in. Your saved requests are retained.").font(.caption)
@@ -193,10 +194,10 @@ struct ConnectedGardenScreen: View {
                     if renderer.isLoading { ProgressView("Loading plants…") }
                     if renderer.visitorAssetIssue != nil {
                         Text("Butterfly artwork is unavailable. You can still welcome visitors.").font(.caption)
-                        Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.frame(minHeight: 44)
+                        Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                     }
                     if !renderer.errors.isEmpty {
-                        Button("Some plants couldn’t load") { sheet = .errors }.frame(minHeight: 44)
+                        Button("Some plants couldn’t load") { sheet = .errors }.buttonStyle(.journalQuiet).frame(minHeight: 44)
                     }
                 }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
                     .modifier(GardenOutline()).gardenOverlayTarget().padding(.horizontal, 12)
@@ -221,19 +222,20 @@ struct ConnectedGardenScreen: View {
             if store.state.busy { ProgressView(store.state == .saving ? "Saving edit…" : "Refreshing garden…") }
             if store.state == .unknown {
                 Button("Retry saved edit") { Task { await store.retryPending() } }
+                    .buttonStyle(.journalSecondary)
                     .frame(minHeight: 44).accessibilityIdentifier("editor.retry")
             } else if store.state == .blocked && store.pending == nil && !store.recoveryLocked {
-                Button("Refresh garden") { Task { await store.refresh() } }.frame(minHeight: 44)
+                Button("Refresh garden") { Task { await store.refresh() } }.buttonStyle(.journalSecondary).frame(minHeight: 44)
             } else if store.state == .authenticationRequired {
                 Text("Sign in again through Settings → Account and sign-in. Your saved requests are retained.").font(.caption)
             }
             if renderer.isLoading { ProgressView("Loading plants…") }
             if renderer.visitorAssetIssue != nil {
                 Text("Butterfly artwork is unavailable. You can still welcome visitors.").font(.caption)
-                Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.frame(minHeight: 44)
+                Button("Retry visitor artwork") { renderer.setVisitors(visitors) }.buttonStyle(.journalSecondary).frame(minHeight: 44)
             }
             if !renderer.errors.isEmpty {
-                Button("Some plants couldn’t load") { sheet = .errors }.frame(minHeight: 44)
+                Button("Some plants couldn’t load") { sheet = .errors }.buttonStyle(.journalQuiet).frame(minHeight: 44)
             }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal).padding(.vertical, 10)
             .foregroundStyle(JournalTheme.ink).background(JournalTheme.paper)
@@ -269,7 +271,7 @@ struct ConnectedGardenScreen: View {
             }.padding(20)
         }.navigationTitle("Garden information")
             .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil }.buttonStyle(.journalQuiet) } }
     }
 
     private var controls: some View {
@@ -286,8 +288,9 @@ struct ConnectedGardenScreen: View {
                         Button("Cancel") { store.cancelCandidate() }.accessibilityIdentifier("editor.cancel")
                         Button("Position…") { positionControlsPresented = true }.accessibilityIdentifier("editor.position")
                         Button("Apply") { Task { await store.releaseCandidate() } }
+                            .buttonStyle(.journalPrimary)
                             .disabled(candidate.validity != .valid || !store.canEdit).accessibilityIdentifier("editor.apply")
-                    }.buttonStyle(.bordered).controlSize(.large).padding(.horizontal, 12)
+                    }.buttonStyle(.journalSecondary).controlSize(.large).padding(.horizontal, 12)
                     if candidate.kind == .plant {
                         Toggle("Show adult preview", isOn: $store.adultPreview).font(.callout).padding(.horizontal, 12)
                             .disabled(candidate.plant.growthStage == .adult).accessibilityIdentifier("editor.adult")
@@ -360,7 +363,7 @@ struct ConnectedGardenScreen: View {
             }.padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Garden plants")
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil }.buttonStyle(.journalQuiet) } }
             .fullScreenCover(item: $browsingInspection) { selection in
                 OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
                     collection: collection).journalModalBackground()
@@ -403,7 +406,7 @@ struct ConnectedGardenScreen: View {
             }.padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Storage")
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil }.buttonStyle(.journalQuiet) } }
             .fullScreenCover(item: $storageInspection, onDismiss: {
                 if placedFromStorageInspector {
                     placedFromStorageInspector = false; sheet = nil
@@ -449,10 +452,11 @@ struct GardenRotationControls: View {
                     .frame(minHeight: 44).accessibilityIdentifier("editor.cancel")
                 Spacer(minLength: 0)
                 Button("Apply") { editingAngle = false; Task { await store.releaseCandidate() } }
+                    .buttonStyle(.journalPrimary)
                     .frame(minHeight: 44)
                     .disabled(store.candidate?.validity != .valid || !store.canEdit)
                     .accessibilityIdentifier("editor.apply")
-            }.buttonStyle(.bordered).controlSize(.regular)
+            }.buttonStyle(.journalSecondary).controlSize(.regular)
         }.padding(.horizontal, 16).padding(.bottom, 8)
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
             .accessibilityIdentifier("editor.rotationPanel")
@@ -508,9 +512,9 @@ private struct CandidateControlsScreen: View {
                 Button("Apply and save") {
                     focusedField = nil; applying = true
                     Task { await store.releaseCandidate(); close() }
-                }.frame(minHeight: 44).disabled(applying || store.candidate?.validity != .valid || !store.canEdit)
+                }.buttonStyle(.journalPrimary).frame(minHeight: 44).disabled(applying || store.candidate?.validity != .valid || !store.canEdit)
                     .accessibilityIdentifier("editor.savePosition")
-            }.buttonStyle(.bordered)
+            }.buttonStyle(.journalSecondary)
         }.padding(12).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
             .accessibilityIdentifier("editor.positionPanel")
             .toolbar { ToolbarItemGroup(placement: .keyboard) {

@@ -36,7 +36,7 @@ struct ActivityRecapScreen: View {
             }
             Divider()
             Button("Continue") { recap.showing = false }
-                .frame(maxWidth: .infinity, minHeight: 44).buttonStyle(.borderedProminent)
+                .frame(maxWidth: .infinity, minHeight: 44).buttonStyle(.journalFeatured)
                 .accessibilityIdentifier("recap.continue").padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)

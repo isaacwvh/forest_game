@@ -938,3 +938,26 @@ No new iPhone build is required for this backend batch. Upgrade a test backend t
 history removal. Check normal state, compacted/alias welcome recovery, interrupted
 claims/exchanges/openings/sync/edits, pending recaps and worker interruption. Live
 cleanup/device acceptance remains pending; nothing was committed or pushed.
+
+## Botanical bookplate buttons — 6 November 2026
+
+Presentation-only shared SwiftUI button styles replace default prominent/bordered
+actions across the existing routes. Features include a matte forest bookplate,
+paper secondary actions, coordinated icon/tool tiles, selected-state underlines,
+readable disabled states and reduced-motion press feedback. Existing bundled vine
+art supplies featured ornaments; no new runtime assets or project edits are needed.
+
+Passed on Windows: frontend project/assets/contracts validation, expanded button
+text/destructive/outline contrast checks, all 79 Swift syntax parses and scoped
+diff whitespace checks. An exact token comparison against clean pre-change Swift
+source passes for all 20 edited Swift files after excluding visual modifiers and
+the new style/palette. Existing callbacks, disabled guards, labels, confirmations,
+request/recovery/lifecycle operations and navigation actions remain identical.
+Backend source/migrations, models, services, rendering, native tests, resources and
+Xcode project settings are unchanged. Existing unrelated edits are retained.
+
+Not executed on Windows: Apple SDK typechecking, XCTest/UI, Release/InternalRelease
+builds, native screenshots and iPhone accessibility/interaction acceptance. Run
+`bash frontend/scripts/test-mac.sh` on Mac and follow
+[BUTTON_UI_ACCEPTANCE.md](BUTTON_UI_ACCEPTANCE.md). No commit, push, CI, migration
+or live game operation was performed.

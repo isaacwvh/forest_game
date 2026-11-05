@@ -11,8 +11,7 @@ struct GardenActionButton: View {
         Button(action: action) {
             Image(systemName: symbol).font(.body).frame(minWidth: 44, minHeight: 44)
                 .frame(maxWidth: .infinity).contentShape(Rectangle())
-        }.buttonStyle(.plain).foregroundStyle(enabled ? JournalTheme.action : JournalTheme.secondary)
-            .opacity(enabled ? 1 : 0.45)
+        }.buttonStyle(.journalTool)
             .accessibilityLabel(title).accessibilityIdentifier(identifier)
             .contextMenu { Button(title) { }.disabled(true) }
     }
@@ -68,7 +67,7 @@ struct GardenSelectionPopup: View {
                     }.frame(maxWidth: .infinity, alignment: .leading)
                     JournalRarity(rarity: rarity)
                     Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                        .buttonStyle(.plain).accessibilityLabel("Close plant selection")
+                        .buttonStyle(.journalIcon).accessibilityLabel("Close plant selection")
                         .accessibilityIdentifier("garden.selection.close")
                 }.padding(.horizontal, 8).padding(.top, 6)
                 HStack(spacing: 4) {

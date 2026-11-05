@@ -80,6 +80,7 @@ struct PlantSaleControls: View {
             } else if let pending = store.state.pending {
                 Text("A collection request is awaiting confirmation.").font(.callout)
                 Button("Retry saved request") { Task { await store.refresh(); await loadQuote() } }
+                    .buttonStyle(.journalSecondary)
                     .frame(minHeight: 44).disabled(store.busy)
                     .accessibilityIdentifier("plantSale.retry.\(pending.id)")
             } else if loading {
@@ -96,7 +97,7 @@ struct PlantSaleControls: View {
                         Button { confirming = true } label: {
                             QuantityLabel(metric: "tokens", text: "Sell for \(quote.tokens) tokens")
                                 .frame(maxWidth: .infinity, minHeight: 44)
-                        }.buttonStyle(.bordered).tint(JournalTheme.action)
+                        }.buttonStyle(.journalSecondary).tint(JournalTheme.action)
                             .disabled(!enabled || !store.canMutate || submitting)
                             .accessibilityIdentifier("plantSale.sell")
                     }
@@ -107,6 +108,7 @@ struct PlantSaleControls: View {
                 Text(issue).font(.callout).foregroundStyle(JournalTheme.secondary)
                 if retryable {
                     Button("Retry resale value") { Task { await loadQuote() } }
+                        .buttonStyle(.journalSecondary)
                         .frame(minHeight: 44).disabled(loading || store.busy)
                 }
             }
@@ -137,8 +139,8 @@ struct PlantSaleControls: View {
     @ViewBuilder private var placeButton: some View {
         if let onPlace = onPlace {
             Button(action: onPlace) {
-                Text("Place").frame(maxWidth: .infinity, minHeight: 44).foregroundStyle(JournalTheme.paper)
-            }.buttonStyle(.borderedProminent).controlSize(.large)
+                Text("Place").frame(maxWidth: .infinity, minHeight: 44)
+            }.buttonStyle(.journalFeatured).controlSize(.large)
                 .disabled(placementDisabled || store.busy || store.state.pending != nil)
                 .accessibilityIdentifier("editor.place")
         }
@@ -256,6 +258,7 @@ struct MyPlantsScreen: View {
                     }
                     if filtering { Button("Clear filters") { search = ""; rarity = "All"; stage = "All" } }
                 } label: { Image(systemName: "slider.horizontal.3").frame(width: 44, height: 44) }
+                    .buttonStyle(.journalIcon)
                     .accessibilityLabel("Filter plants")
             }
         }
@@ -281,10 +284,12 @@ struct MyPlantsScreen: View {
         if let message = store.message { Text(message).font(.callout) }
         if store.state == .unknown {
             Button("Retry saved edit") { Task { await store.retryPending() } }
+                .buttonStyle(.journalSecondary)
         } else if store.state == .authenticationRequired {
             Text("Sign in again through Settings → Account and sign-in. Your saved edits are retained.").font(.callout)
         } else if store.state == .blocked && !store.recoveryLocked {
             Button("Try again") { Task { await store.refresh() } }
+                .buttonStyle(.journalSecondary)
         }
     }
 }
@@ -364,6 +369,7 @@ struct InventoryPagination: View {
     var body: some View {
         if store.nextCursor != nil {
             Button(store.inventoryLoading ? "Loading…" : "Load more") { Task { await store.loadMore() } }
+                .buttonStyle(.journalSecondary)
                 .disabled(store.inventoryLoading || !store.canReadInventory)
                 .frame(minHeight: 44).accessibilityIdentifier("inventory.more")
         }

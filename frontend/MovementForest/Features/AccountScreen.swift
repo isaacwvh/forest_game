@@ -40,6 +40,7 @@ private struct ManagedAccountScreen: View {
                 Section("Choose a new password") {
                     passwordFields
                     Button("Save new password") { Task { await auth.updatePassword(password); clearPasswords() } }
+                        .buttonStyle(.journalPrimary)
                         .disabled(!validPassword || auth.busy)
                 }
             } else if let user = auth.user {
@@ -59,12 +60,14 @@ private struct ManagedAccountScreen: View {
                         Button("Create account and starter") { Task {
                             await connection.createAccount(username: username, displayName: displayName, assets: catalog)
                         } }.disabled(connection.busy || auth.busy || username.count < 3 || displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            .buttonStyle(.journalPrimary)
                             .accessibilityIdentifier("account.createProfile")
                     }
                 } else {
                     Section("Your garden") {
                         if let editor = connection.editor { Text("Playing as \(editor.profile.displayName)") }
                         Button("Reconnect to game") { Task { await connection.connectManaged(assets: catalog) } }
+                            .buttonStyle(.journalSecondary)
                             .disabled(connection.busy || auth.busy).accessibilityIdentifier("account.reconnect")
                     }
                 }
@@ -73,7 +76,7 @@ private struct ManagedAccountScreen: View {
                         Text("Linked methods open this same garden. A method already used for a different account cannot merge the two gardens.")
                             .font(.footnote).foregroundStyle(.secondary)
                         if auth.configuration.googleEnabled && !user.methods.contains("google") {
-                            Button("Link Google") { Task { await auth.google(link: true) } }.disabled(auth.busy)
+                            Button("Link Google") { Task { await auth.google(link: true) } }.buttonStyle(.journalSecondary).disabled(auth.busy)
                         }
                         if auth.configuration.appleEnabled && !user.methods.contains("apple") {
                             AppleAccountButton(auth: auth, link: true)
@@ -86,11 +89,13 @@ private struct ManagedAccountScreen: View {
                             .font(.footnote)
                         passwordFields
                         Button("Save password") { Task { await auth.updatePassword(password); clearPasswords() } }
+                            .buttonStyle(.journalPrimary)
                             .disabled(auth.busy || !validPassword)
                     }
                     DisclosureGroup("Change account email") {
                         TextField("New email", text: $newEmail).keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
                         Button("Send email verification") { Task { await auth.updateEmail(newEmail) } }
+                            .buttonStyle(.journalSecondary)
                             .disabled(auth.busy || newEmail.isEmpty)
                     }
                 }
@@ -110,22 +115,23 @@ private struct ManagedAccountScreen: View {
                         else { await auth.signIn(email: email, password: password) }
                         clearPasswords()
                     } }.disabled(auth.busy || email.isEmpty || password.isEmpty || (creating && !validPassword))
+                        .buttonStyle(.journalFeatured)
                         .accessibilityIdentifier("account.submit")
                     Button(creating ? "Already have an account? Sign in" : "New here? Create an account") {
                         creating.toggle(); clearPasswords()
-                    }.disabled(auth.busy)
+                    }.buttonStyle(.journalQuiet).disabled(auth.busy)
                 }
                 if auth.configuration.googleEnabled || auth.configuration.appleEnabled {
                     Section("Or continue with") {
                         if auth.configuration.googleEnabled {
-                            Button("Continue with Google") { Task { await auth.google(link: false) } }.disabled(auth.busy)
+                            Button("Continue with Google") { Task { await auth.google(link: false) } }.buttonStyle(.journalSecondary).disabled(auth.busy)
                         }
                         if auth.configuration.appleEnabled { AppleAccountButton(auth: auth, link: false) }
                     }
                 }
                 Section("Account help") {
-                    Button("Forgot password?") { Task { await auth.resetPassword(email: email) } }.disabled(auth.busy || email.isEmpty)
-                    Button("Resend confirmation email") { Task { await auth.resendConfirmation(email: email) } }.disabled(auth.busy || email.isEmpty)
+                    Button("Forgot password?") { Task { await auth.resetPassword(email: email) } }.buttonStyle(.journalQuiet).disabled(auth.busy || email.isEmpty)
+                    Button("Resend confirmation email") { Task { await auth.resendConfirmation(email: email) } }.buttonStyle(.journalQuiet).disabled(auth.busy || email.isEmpty)
                     Text("Open email links on this iPhone. Health uploads are a separate choice after sign-in.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
@@ -135,6 +141,7 @@ private struct ManagedAccountScreen: View {
             if auth.user != nil {
                 Section {
                     Button("Sign out", role: .destructive) { Task { await connection.signOut(); clearPasswords() } }
+                        .buttonStyle(.journalQuiet)
                         .disabled(auth.busy).accessibilityIdentifier("account.signOut")
                     Text("Saved requests resume when you sign back into this account.")
                         .font(.footnote).foregroundStyle(.secondary)

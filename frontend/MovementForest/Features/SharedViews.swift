@@ -173,7 +173,7 @@ struct RecoveryView: View {
             Image(systemName: "leaf").font(.largeTitle).foregroundStyle(Color.forestTint)
             Text(title).font(.title2).bold()
             Text(message).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            Button(actionTitle, action: action).buttonStyle(.borderedProminent)
+            Button(actionTitle, action: action).buttonStyle(.journalFeatured)
         }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

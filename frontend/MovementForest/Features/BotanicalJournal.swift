@@ -10,6 +10,7 @@ enum JournalTheme {
     static let secondary = Color(red: 0.325, green: 0.388, blue: 0.310)
     static let action = Color(red: 0.200, green: 0.373, blue: 0.259)
     static let vine = Color(red: 0.420, green: 0.467, blue: 0.329)
+    static let danger = Color(red: 0.576, green: 0.227, blue: 0.176)
 
     static func frame(_ rarity: String?) -> Color {
         switch PlantRarity(label: rarity) {
@@ -30,6 +31,113 @@ enum JournalTheme {
         case nil: return "questionmark"
         }
     }
+}
+
+/// Visual roles only. Button actions, availability and request state stay with the caller.
+struct JournalButtonStyle: ButtonStyle {
+    enum Kind: Equatable { case primary, secondary, quiet, icon, glyph, tool, selection, navigation }
+    let kind: Kind
+    var ornament = false
+    var selected = false
+    @Environment(\.isEnabled) private var enabled
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var textSize
+
+    private var framed: Bool { kind != .quiet && kind != .glyph && kind != .navigation }
+    private var compact: Bool { kind == .icon || kind == .glyph || kind == .tool || kind == .navigation }
+    private var filled: Bool { kind == .primary }
+    private var radius: CGFloat { compact ? 8 : 10 }
+    private var horizontalPadding: CGFloat {
+        if compact { return 0 }
+        if kind == .quiet { return 4 }
+        return ornament && !textSize.isAccessibilitySize ? 32 : 12
+    }
+
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = enabled && configuration.isPressed
+        let textColor = foreground(destructive: configuration.role == .destructive)
+        return configuration.label
+            .font(.body.weight(.semibold))
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, compact || kind == .quiet ? 0 : 6)
+            .frame(minWidth: 44, minHeight: 44)
+            .foregroundStyle(textColor).tint(textColor)
+            .background {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(background(pressed: pressed))
+                    .shadow(color: JournalTheme.ink.opacity(enabled && filled && !pressed ? 0.16 : 0),
+                            radius: 2, x: 0, y: 2)
+            }
+            .overlay {
+                if framed {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(enabled && filled ? JournalTheme.action : JournalTheme.vine,
+                                      style: StrokeStyle(lineWidth: contrast == .increased ? 2 : 1,
+                                                        dash: enabled ? [] : [3, 3]))
+                        .allowsHitTesting(false)
+                    if filled && enabled {
+                        RoundedRectangle(cornerRadius: max(0, radius - 3), style: .continuous)
+                            .inset(by: 3)
+                            .strokeBorder(JournalTheme.paper.opacity(contrast == .increased ? 0.65 : 0.32), lineWidth: 0.75)
+                            .allowsHitTesting(false)
+                    }
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if selected {
+                    RoundedRectangle(cornerRadius: 1).fill(JournalTheme.action)
+                        .frame(width: 22, height: 2).padding(.bottom, kind == .navigation ? 1 : 4)
+                        .allowsHitTesting(false).accessibilityHidden(true)
+                }
+            }
+            .overlay(alignment: .trailing) {
+                if ornament && !textSize.isAccessibilitySize,
+                   let image = JournalArtwork.images["vine-corner-top-right"] {
+                    Image(uiImage: image).renderingMode(.template).resizable().scaledToFit()
+                        .foregroundStyle(enabled && filled ? JournalTheme.paper.opacity(0.65) : JournalTheme.vine)
+                        .frame(width: 24, height: 24).padding(.trailing, 5)
+                        .allowsHitTesting(false).accessibilityHidden(true)
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .offset(y: pressed && filled && !reduceMotion ? 1 : 0)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: pressed)
+    }
+
+    private func foreground(destructive: Bool) -> Color {
+        if !enabled { return JournalTheme.secondary }
+        if destructive { return JournalTheme.danger }
+        if filled { return JournalTheme.paper }
+        if kind == .navigation && !selected { return JournalTheme.secondary }
+        return JournalTheme.action
+    }
+
+    private func background(pressed: Bool) -> Color {
+        if !enabled { return framed ? JournalTheme.sage : .clear }
+        if filled { return pressed ? JournalTheme.ink : JournalTheme.action }
+        if pressed || selected { return JournalTheme.sage }
+        switch kind {
+        case .primary: return JournalTheme.action
+        case .secondary, .tool: return JournalTheme.paper
+        case .icon, .selection: return JournalTheme.sage.opacity(0.65)
+        case .quiet, .glyph, .navigation: return .clear
+        }
+    }
+}
+
+extension ButtonStyle where Self == JournalButtonStyle {
+    static var journalPrimary: Self { Self(kind: .primary) }
+    static var journalFeatured: Self { Self(kind: .primary, ornament: true) }
+    static var journalSecondary: Self { Self(kind: .secondary) }
+    static var journalQuiet: Self { Self(kind: .quiet) }
+    static var journalIcon: Self { Self(kind: .icon) }
+    static var journalGlyph: Self { Self(kind: .glyph) }
+    static var journalTool: Self { Self(kind: .tool) }
+    static func journalSelection(_ selected: Bool) -> Self { Self(kind: .selection, selected: selected) }
+    static func journalNavigation(_ selected: Bool) -> Self { Self(kind: .navigation, selected: selected) }
 }
 
 private enum JournalArtwork {
@@ -109,7 +217,7 @@ struct JournalSearchField: View {
             if !text.isEmpty {
                 Button { text = "" } label: {
                     Image(systemName: "xmark.circle.fill").frame(width: 44, height: 44)
-                }.accessibilityLabel("Clear search")
+                }.buttonStyle(.journalGlyph).accessibilityLabel("Clear search")
             }
         }.foregroundStyle(JournalTheme.secondary)
             .padding(.leading, 14).padding(.trailing, text.isEmpty ? 14 : 0)
@@ -133,7 +241,7 @@ struct JournalInfoIcon: View {
                 else { Image(systemName: symbol).font(.body).foregroundStyle(color) }
             }.frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.journalGlyph)
         .accessibilityLabel(title).accessibilityHint("Show explanation")
         .simultaneousGesture(LongPressGesture(minimumDuration: 0.45).onEnded { _ in explaining = true })
         .popover(isPresented: $explaining) {
@@ -164,6 +272,7 @@ private struct JournalExplanation: View {
                 Text(title).font(.headline).accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 8)
                 Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                    .buttonStyle(.journalIcon)
                     .accessibilityLabel("Close explanation")
             }
             if !explanation.isEmpty {
@@ -408,8 +517,7 @@ struct JournalInspector<Content: View, Footer: View>: View {
                     Spacer(minLength: 8)
                     Button(action: close) {
                         Image(systemName: "xmark").font(.title3).frame(width: 44, height: 44)
-                            .background(JournalTheme.sage, in: Circle())
-                    }.accessibilityLabel(closeLabel).accessibilityIdentifier(identifier + ".close")
+                    }.buttonStyle(.journalIcon).accessibilityLabel(closeLabel).accessibilityIdentifier(identifier + ".close")
                 }.padding(.leading, 24).padding(.trailing, 14).padding(.vertical, 10)
                 ScrollView {
                     VStack(spacing: 18) { content }.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 24)
