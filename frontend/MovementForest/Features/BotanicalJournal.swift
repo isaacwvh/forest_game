@@ -44,47 +44,47 @@ struct JournalButtonStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var textSize
 
-    private var framed: Bool { kind != .quiet && kind != .glyph && kind != .navigation }
+    private var framed: Bool { kind == .primary || kind == .secondary || kind == .selection }
     private var compact: Bool { kind == .icon || kind == .glyph || kind == .tool || kind == .navigation }
     private var filled: Bool { kind == .primary }
-    private var radius: CGFloat { compact ? 8 : 10 }
+    private var radius: CGFloat { 8 }
     private var horizontalPadding: CGFloat {
         if compact { return 0 }
         if kind == .quiet { return 4 }
-        return ornament && !textSize.isAccessibilitySize ? 32 : 12
+        return ornament && !textSize.isAccessibilitySize ? 22 : 10
     }
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = enabled && configuration.isPressed
         let textColor = foreground(destructive: configuration.role == .destructive)
         return configuration.label
-            .font(.body.weight(.semibold))
+            .font((compact ? Font.body : Font.subheadline).weight(.medium))
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, horizontalPadding)
-            .padding(.vertical, compact || kind == .quiet ? 0 : 6)
+            .padding(.vertical, compact || kind == .quiet ? 0 : textSize.isAccessibilitySize ? 6 : 2)
             .frame(minWidth: 44, minHeight: 44)
             .foregroundStyle(textColor).tint(textColor)
             .background {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(background(pressed: pressed))
-                    .shadow(color: JournalTheme.ink.opacity(enabled && filled && !pressed ? 0.16 : 0),
-                            radius: 2, x: 0, y: 2)
-            }
-            .overlay {
-                if framed {
+                ZStack {
                     RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .strokeBorder(enabled && filled ? JournalTheme.action : JournalTheme.vine,
-                                      style: StrokeStyle(lineWidth: contrast == .increased ? 2 : 1,
-                                                        dash: enabled ? [] : [3, 3]))
-                        .allowsHitTesting(false)
-                    if filled && enabled {
-                        RoundedRectangle(cornerRadius: max(0, radius - 3), style: .continuous)
-                            .inset(by: 3)
-                            .strokeBorder(JournalTheme.paper.opacity(contrast == .increased ? 0.65 : 0.32), lineWidth: 0.75)
-                            .allowsHitTesting(false)
+                        .fill(background(pressed: pressed))
+                        .shadow(color: JournalTheme.ink.opacity(enabled && filled && !pressed ? 0.06 : 0),
+                                radius: 1, x: 0, y: 1)
+                    if framed {
+                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                            .strokeBorder(enabled && filled ? JournalTheme.action : JournalTheme.vine,
+                                          style: StrokeStyle(lineWidth: contrast == .increased ? 2 : 1,
+                                                            dash: enabled ? [] : [3, 3]))
+                        if enabled {
+                            RoundedRectangle(cornerRadius: max(0, radius - 3), style: .continuous)
+                                .inset(by: 3)
+                                .strokeBorder(filled ? JournalTheme.paper.opacity(contrast == .increased ? 0.65 : 0.22) :
+                                    JournalTheme.vine.opacity(0.18), lineWidth: 0.5)
+                        }
                     }
-                }
+                }.padding(framed && !textSize.isAccessibilitySize ? 2 : 0)
+                    .allowsHitTesting(false).accessibilityHidden(true)
             }
             .overlay(alignment: .bottom) {
                 if selected {
@@ -97,8 +97,8 @@ struct JournalButtonStyle: ButtonStyle {
                 if ornament && !textSize.isAccessibilitySize,
                    let image = JournalArtwork.images["vine-corner-top-right"] {
                     Image(uiImage: image).renderingMode(.template).resizable().scaledToFit()
-                        .foregroundStyle(enabled && filled ? JournalTheme.paper.opacity(0.65) : JournalTheme.vine)
-                        .frame(width: 24, height: 24).padding(.trailing, 5)
+                        .foregroundStyle(enabled && filled ? JournalTheme.paper.opacity(0.45) : JournalTheme.vine.opacity(0.6))
+                        .frame(width: 16, height: 16).padding(.trailing, 6)
                         .allowsHitTesting(false).accessibilityHidden(true)
                 }
             }
@@ -121,17 +121,17 @@ struct JournalButtonStyle: ButtonStyle {
         if pressed || selected { return JournalTheme.sage }
         switch kind {
         case .primary: return JournalTheme.action
-        case .secondary, .tool: return JournalTheme.paper
-        case .icon, .selection: return JournalTheme.sage.opacity(0.65)
-        case .quiet, .glyph, .navigation: return .clear
+        case .secondary: return JournalTheme.paper
+        case .selection: return JournalTheme.sage.opacity(0.65)
+        case .quiet, .icon, .glyph, .tool, .navigation: return .clear
         }
     }
 }
 
 extension ButtonStyle where Self == JournalButtonStyle {
-    static var journalPrimary: Self { Self(kind: .primary) }
+    static var journalPrimary: Self { Self(kind: .primary, ornament: true) }
     static var journalFeatured: Self { Self(kind: .primary, ornament: true) }
-    static var journalSecondary: Self { Self(kind: .secondary) }
+    static var journalSecondary: Self { Self(kind: .secondary, ornament: true) }
     static var journalQuiet: Self { Self(kind: .quiet) }
     static var journalIcon: Self { Self(kind: .icon) }
     static var journalGlyph: Self { Self(kind: .glyph) }

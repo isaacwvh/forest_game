@@ -679,11 +679,13 @@ private struct CatalogDetailScreen: View {
                     Button { variantID = variant.variantId } label: {
                         Text(variant.displayName).font(.subheadline.weight(.medium))
                             .fixedSize().padding(.horizontal, 12).frame(minHeight: 44)
-                    }.buttonStyle(.journalSelection(variantID == variant.variantId))
+                            .foregroundStyle(variantID == variant.variantId ? JournalTheme.paper : JournalTheme.ink)
+                            .background(variantID == variant.variantId ? JournalTheme.action : Color.clear, in: Capsule())
+                    }.buttonStyle(.plain)
                         .accessibilityAddTraits(variantID == variant.variantId ? [.isSelected] : [])
                         .accessibilityIdentifier("catalog.variant.\(variant.variantId)")
                 }
-            }.padding(4).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
+            }.padding(4).background(JournalTheme.sage, in: Capsule())
             Picker("Variant", selection: $variantID) {
                 ForEach(row.species.variants, id: \.variantId) { Text($0.displayName).tag($0.variantId) }
             }.pickerStyle(.menu).frame(minHeight: 44)

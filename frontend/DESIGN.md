@@ -7,14 +7,15 @@ This supersedes the older default prominent/bordered button treatments. The
 existing journal palette, plant/rarity frames, page layouts and native navigation
 remain the visual authority.
 
-- Primary actions use a matte forest-green bookplate, 10-point continuous corners,
-  a fine inset parchment rim and a shallow 2-point shadow. Featured footer actions
-  reuse one existing 24-point vine ornament; grid actions omit it. Secondary
-  actions use paper with an olive outline. Quiet actions retain text emphasis.
-- Icon/tool controls use 8-point corners and the existing 44-point minimum target.
-  Metric/rarity explanation icons use an unframed pressed treatment so their
-  artwork and rarity meaning remain distinct. Selection uses a sage surface and
-  forest underline; it never borrows species-rarity colours.
+- Follow-up after iPhone review: text actions use 8-point bookplates, medium
+  subheadline text, 2-point normal vertical padding and a quieter 1-point shadow.
+  The visible face is inset 2 points while touch targets remain at least 44 points.
+  Primary/secondary actions reuse a subtle 16-point vine and fine inset rim;
+  secondary actions retain paper with an olive outline. Quiet actions stay plain.
+- Icon/tool controls are unframed with no resting background; press feedback and
+  44-point targets remain. Metric/rarity icons retain their artwork and meaning.
+  Catalog variants restore the original sage capsule strip and selected forest
+  capsule, with the existing native-menu fallback. Navigation selection is unchanged.
 - System text styles, wrapping, existing larger-text reflow and accessibility
   labels are retained. Featured ornaments and their extra horizontal allowance
   disappear at accessibility text sizes. Ornaments and outlines never intercept

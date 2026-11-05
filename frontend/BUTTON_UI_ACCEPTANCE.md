@@ -21,6 +21,14 @@ No commit, push, CI run, server mutation or migration is part of this work.
 
 These checks do not compile against Apple SDKs or establish native appearance.
 
+## Compact follow-up after iPhone review
+
+Remove resting frames/backgrounds from icon/tool controls. Reduce normal text
+button font/padding, inset the visible face, soften its shadow and use a subtle
+16-point vine on primary/secondary actions. Keep 44-point targets and existing
+callbacks/guards. Catalog restores the exact variant selector from `44fd669`.
+Repeat the portable checks below; native appearance still requires the Mac/iPhone.
+
 ## Mac build and native tests — pending
 
 From the repository on a Mac with Xcode and an iPhone simulator:
@@ -48,7 +56,7 @@ normal text and a large accessibility text size in the shipped light appearance.
    Place and exact-price Sell must fit or stack without clipped text. Selling
    still requires the existing native destructive confirmation; cancel preserves
    the copy. Use a disposable test account for any actual sale.
-4. Catalog: selected variants have a sage plate and underline, retain their
+4. Catalog: selected variants use the original capsule strip, retain their
    selected accessibility trait, and fall back to the native menu when needed.
    Rarity frames, discovery masks and explanation actions remain distinct.
 5. Exchange/Packs/Milestones: check compact card actions, Purchase/Cancel, info
@@ -67,7 +75,7 @@ normal text and a large accessibility text size in the shipped light appearance.
    unchanged focus order and Close/Escape. Decorative vines are silent and never
    intercept touches. All app button targets remain at least 44 × 44 points.
 10. Enable Reduce Motion and Increase Contrast. Primary presses must not move
-    with Reduce Motion; outlines strengthen with Increase Contrast. Disabled
+    with Reduce Motion; text-button outlines strengthen with Increase Contrast. Disabled
     labels remain readable, and confirming Collect stays the same target size.
 
 Batch any native findings, fix them together and confirm once. Native acceptance
