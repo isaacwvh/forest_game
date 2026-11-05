@@ -105,7 +105,7 @@ struct ConnectedGardenScreen: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { sheet = nil; store.endEditing() } label: {
                         Label("Done", systemImage: "checkmark").frame(minHeight: 44)
-                    }.buttonStyle(.journalSecondary).accessibilityLabel("Done editing").accessibilityIdentifier("editor.done")
+                    }.buttonStyle(.journalIcon).accessibilityLabel("Done editing").accessibilityIdentifier("editor.done")
                 }
             }
         }
