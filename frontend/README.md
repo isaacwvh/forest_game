@@ -148,8 +148,10 @@ backend. Historical diagnostic reads grant nothing.
   must be visually verified against every delivered model on the Mac/iPhone.
 - Bounds guides are visual foliage envelopes. They are not gameplay clearance.
 - A yellow square marks selection; it does not communicate a reserved radius.
-- The temporary board can be replaced inside `makeBoard` while retaining a top
-  surface at world Y=0 and the same logical coordinate mapping.
+- The approved floating island keeps its top surface at world Y=0 and the same
+  logical coordinate mapping. Its top-centre pivot is independent of underside
+  bounds. The static mountain/mist image is camera-relative decorative scenery;
+  neither artwork participates in picking. See [garden environment acceptance](GARDEN_ENVIRONMENT_ACCEPTANCE.md).
 - Fifteen plants is a scene fixture, not an enforced active-plant limit.
 
 ## Development and tests

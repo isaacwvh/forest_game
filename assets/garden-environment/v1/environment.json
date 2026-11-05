@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "units": "metres",
+  "upAxis": "Y",
+  "anchor": "top_center",
+  "plantingSurfaceY": 0,
+  "plantingFootprint": {
+    "width": 10,
+    "depth": 10
+  },
+  "clouds": "static",
+  "collisionGeometry": false,
+  "files": [
+    {
+      "file": "floating-island.usdz",
+      "bytes": 2881831,
+      "sha256": "ee7d724f44ea52fdc688673847e888ac3e946dd1220b22dca799d87d46197572"
+    },
+    {
+      "file": "mountain-mist-backdrop.png",
+      "bytes": 1459879,
+      "sha256": "f6415afed5498c7be781162e9a6dcc61d534c1cf017eaf85c50f6067826313aa"
+    }
+  ]
+}

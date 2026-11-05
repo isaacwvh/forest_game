@@ -1,5 +1,24 @@
 # Validation record
 
+## Floating garden environment — 6 November 2026
+
+Integrates the user-approved USDZ island and static mountain/mist PNG into the
+existing renderer. The top planting plane remains Y=0; dimensions, plant anchors,
+camera, lighting, picking/selection, editing, visitors, effects and all game/service
+code remain unchanged. Pending/failed artwork retains the former flat surface and
+sage background. Only runtime scenery and its checksum manifest are bundled.
+
+Passed on Windows: full portable frontend validation (including the new scenery
+checksums/archive/embedded texture/footprint checks), all 81 Swift syntax parses,
+generated project freshness, exported USDZ world-axis/ground validation, and the
+pre-integration source/approved-artwork byte comparison. Four new native regressions
+cover rectangular ground/footprint, delayed import/cache behavior, cancellation,
+and backdrop coverage. They were syntax-parsed, not executed here.
+
+Apple SDK typechecking, native XCTest/UI, Debug/Release/InternalRelease builds and
+device appearance/performance remain pending Mac/iPhone checks. Follow
+[GARDEN_ENVIRONMENT_ACCEPTANCE.md](GARDEN_ENVIRONMENT_ACCEPTANCE.md). No native or CI results are claimed.
+
 ## Inventory capacity and selling — 5 November 2026
 
 Implemented 50 total plants, 20 planted and 50 unopened packs, global capacity

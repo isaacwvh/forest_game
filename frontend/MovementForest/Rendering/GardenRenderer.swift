@@ -83,6 +83,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private let root = AnchorEntity(world: .zero)
     private let rig = AnchorEntity(world: .zero)
     private let camera = PerspectiveCamera()
+    private let environment = GardenEnvironment()
     private let loader = PlantModelLoader()
     private let visitorModels: VisitorModelLibrary
     private let visitorRoot = AnchorEntity(world: .zero)
@@ -154,6 +155,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         camera.camera.fieldOfViewInDegrees = 42
         camera.name = "garden-camera"
         rig.addChild(camera)
+        environment.attachBackdrop(to: camera)
         let sun = DirectionalLight()
         sun.light.color = UIColor(red: 1, green: 0.95, blue: 0.85, alpha: 1)
         sun.light.intensity = 1700
@@ -367,10 +369,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private func makeBoard(_ garden: GardenSnapshot) {
         let width = Float(garden.width * garden.gardenUnitMetres)
         let depth = Float(garden.depth * garden.gardenUnitMetres)
-        let board = ModelEntity(mesh: .generateBox(size: [width, 0.22, depth], cornerRadius: 0.10),
-                                materials: [SimpleMaterial(color: UIColor(red: 0.45, green: 0.57, blue: 0.36, alpha: 1), roughness: 1, isMetallic: false)])
-        board.name = "temporary-shared-board"
-        board.position = [width / 2, -0.11, depth / 2]
+        let board = environment.makeIsland(width: width, depth: depth)
         root.addChild(board)
         self.board = board
     }
@@ -442,6 +441,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     func stop() {
         guard !disposed else { return }
         setActive(false); disposed = true; visitorGeneration = UUID()
+        environment.stop()
         settleGrowthEffects(); growthUpdates?.cancel(); growthUpdates = nil; growthEffects = nil
         LifecycleDiagnostics.event("renderer disposed id=\(diagnosticID)")
         visitorLoadTask?.cancel(); visitorLoadTask = nil
@@ -614,6 +614,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
 
     private func recordFrame(_ delta: TimeInterval) {
         guard isActive, delta > 0, delta < 1 else { return }
+        environment.updateBackdrop(in: view, camera: camera)
         sharedEffects.tick(delta)
         updateVisitors()
         frameTime += delta

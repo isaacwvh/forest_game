@@ -1,5 +1,16 @@
 # Native baseline conventions
 
+## Floating garden environment — 6 November 2026
+
+The approved floating island and static mountain/mist backdrop replace the temporary
+plate/blank sage field in the shared RealityKit renderer. The usable rectangle and
+planting plane remain at world Y=0. Rock, roots and moss extend below that surface;
+the irregular rim sits outside the usable footprint. Existing camera, lighting,
+plants, interactions, viewport, navigation and journal UI remain unchanged.
+The camera-relative image preserves its aspect ratio, uses no collision/accessibility
+targets, and introduces no cloud animation. See GARDEN_ENVIRONMENT_ACCEPTANCE.md
+for validation scope and pending Mac/iPhone acceptance.
+
 ## Botanical bookplate buttons — 6 November 2026
 
 App-owned buttons now share `JournalButtonStyle` in BotanicalJournal.swift.

@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 import argparse
 import ast
 import re
+from validate_garden_environment import validate_garden_environment
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parent
@@ -67,6 +68,7 @@ def main():
             models += 1
     for folder in ["packs", "butterfly"]:
         require(f"../assets/{folder}" in project_text, f"Presentation resources missing: {folder}")
+    validate_garden_environment(REPO, project_text)
     require("../assets/quantity-icons-v1/png-128" in project_text, "Quantity icon exports are not bundled")
     require("../assets/quantity-icons-v1/sources" not in project_text, "Original icon canvases must not be bundled")
     require("../assets/journal" in project_text, "Journal ornaments are not bundled")
