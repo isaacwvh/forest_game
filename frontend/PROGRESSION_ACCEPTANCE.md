@@ -3,7 +3,20 @@
 Requires backend schema `0013_account_progression`; follow
 [the backend upgrade/backfill](../backend/PROGRESSION_API.md). Current capacity,
 pack offers, authentication and garden rendering continue using their existing
-rules. Profile, visible Home bars and badges are subsequent UI stages.
+rules. Profile and Home bars are covered in
+[the stage-3/4 acceptance flow](PROFILE_HOME_ACCEPTANCE.md); badge awards remain
+a later stage.
+
+## Status: stages 1 and 2 complete and user accepted
+
+On 6 November 2026, the user confirmed that Diagnostics displays the current
+account's progression and pressing Sync produces a new Progression diagnostic
+entry. This confirms the on-device account-summary and sync-refresh integration.
+The user accepted these two foundation stages as complete.
+
+This manual evidence accompanies the recorded 559 passing backend tests and
+portable frontend checks. Native automated test results remain separately
+recorded; the checklist below remains a regression reference for future changes.
 
 ## Shared-state behavior
 

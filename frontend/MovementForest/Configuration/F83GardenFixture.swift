@@ -17,6 +17,49 @@ final class PresentationEditJournal: PendingEditPersisting {
 }
 
 @MainActor
+private struct PresentationAccountService: AccountSummaryServing {
+    let serverID = "https://account-presentation-fixture.invalid"
+    let value: APIAccountSummary
+    let offline: Bool
+    func accountSummary() async throws -> APIAccountSummary {
+        if offline { throw URLError(.notConnectedToInternet) }
+        return value
+    }
+}
+
+@MainActor
+private final class PresentationAccountCache: AccountSummaryPersisting {
+    var value: AccountSummaryCache?
+    init(_ snapshot: APIAccountSummary?) {
+        value = snapshot.map { AccountSummaryCache(snapshot: $0, confirmedAt: $0.serverTime) }
+    }
+    func load(server: String, user: UUID) throws -> AccountSummaryCache? { value }
+    func save(_ value: AccountSummaryCache, server: String, user: UUID) throws { self.value = value }
+}
+
+@MainActor
+enum PresentationAccountFixture {
+    static func store(profile: APIProfile) throws -> AccountSummaryStore {
+        guard let url = Bundle.main.url(forResource: "account-summary-contract", withExtension: "json", subdirectory: "Fixtures") else {
+            throw ForestError.missingResource("account-summary-contract")
+        }
+        let values = try ActivityWire.decoder().decode([String: APIAccountSummary].self, from: Data(contentsOf: url))
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let source = values[arguments.contains("--fixture-account-fresh") ? "fresh" : "grown"] else {
+            throw ForestError.invalidData("Account presentation fixture is missing.")
+        }
+        let identity = APIAccountIdentity(userId: profile.userId, username: profile.username, displayName: profile.displayName,
+            gameTimezone: profile.gameTimezone, createdAt: source.profile.createdAt)
+        let value = try APIAccountSummary(serverTime: source.serverTime, profile: identity,
+            progression: source.progression, wallet: source.wallet).validated(user: profile.userId)
+        let offline = arguments.contains("--fixture-account-offline") || arguments.contains("--fixture-account-failed")
+        return AccountSummaryStore(userID: profile.userId,
+            service: PresentationAccountService(value: value, offline: offline),
+            cache: PresentationAccountCache(arguments.contains("--fixture-account-offline") ? value : nil))
+    }
+}
+
+@MainActor
 final class PresentationGardenService: GardenServing {
     let serverID = "https://garden-presentation-fixture.invalid"
     private let contract: PresentationGardenContract

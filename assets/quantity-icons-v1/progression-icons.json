@@ -1,0 +1,29 @@
+{
+  "tool": "built-in image_gen",
+  "transparent_background": true,
+  "style_references": [
+    "assets/quantity-icons-v1/sources/tokens.png",
+    "assets/quantity-icons-v1/sources/water.png"
+  ],
+  "status": "Approved icons integrated for progression stages 3 and 4",
+  "icons": [
+    {
+      "key": "gems",
+      "path": "png-128/gems.png",
+      "width": 128,
+      "height": 128,
+      "sha256": "4a780df89be7d405d54ae95f0288fba18bdf89104a5eed82944d04bea90de741",
+      "prompt": "Use case: style-transfer. Asset type: one transparent square game quantity icon, matching the supplied existing token coin and water drop. Image 1 is a reference for warm miniature 3D material, bevel softness, lighting and object scale; Image 2 is a reference for smooth colored shading. Transform that same visual treatment into a standalone GREEN EMERALD GEM icon. The emerald is a chunky vertically oriented emerald-cut stone: broad octagonal rectangular front table with clipped corners, a few broad stepped beveled faces and a small visible lower-right thickness. Rich forest emerald green, fresh medium-green front, muted mint upper-left highlights and deeper green side faces. Satin-smooth rounded bevels, soft continuous shading on each broad face, readable thick silhouette. Match the cozy smooth miniature style of the reference icons, almost front orthographic with very mild three-quarter depth, soft upper-left light. The entire emerald centered on a square canvas, occupies around 78-82 percent of canvas width/height, generous even transparent padding. Native transparent alpha background. No coin, no metal setting, no text, no extra sparkles, no floor, no detached cast shadow, no card, no border, no glow, no checkerboard painted into the image, no watermark. One object only. A recognizable emerald-cut gem, rather than a round jewel or teardrop. The broad cut faces describe the object geometry, without fine triangulation, surface tessellation or texture noise. Keep it legible as a 24-pixel UI icon.",
+      "source": "Approved progression-ui-v1 review exports; centered transparent artwork at 82% maximum occupancy"
+    },
+    {
+      "key": "xp",
+      "path": "png-128/xp.png",
+      "width": 128,
+      "height": 128,
+      "sha256": "70af1cd95ecbfa12a850842187698bf0b74f18dea4e7c97a7f3d53f5526af7b8",
+      "prompt": "Use case: style-transfer. Asset type: one transparent square game quantity icon, matching the supplied existing token coin and water drop. Image 1 is the reference for the exact warm buttery gold palette, smooth miniature 3D finish, softly beveled edge and upper-left lighting. Image 2 supports rounded simplified rendering. Transform that visual treatment into a standalone chunky FIVE-POINT GOLD STAR with the letters XP inside. The star has softly rounded tips, a broad simple front face, subtle raised/beveled rim and slight lower-right thickness. Warm golden-yellow face, pale warm upper-left highlight and muted ochre side shading, smooth satin finish matching the reference coin. Almost front orthographic, very mild three-quarter depth, with the lettering facing the viewer squarely. Text verbatim: \"XP\". Exactly two large uppercase letters X and P, centered horizontally on the broad middle of the star, bold simple block lettering, dark warm bronze-brown fill with very shallow inset shading. Make XP strong and easily readable at small UI sizes; no decorative font. The complete star is centered on a square canvas and occupies around 78-82 percent of its width/height, generous even transparent padding. Native transparent alpha background. No coin or circular backing, no scene, no floor, no detached shadow, no extra stars or sparkles, no outlines around the canvas, no ribbons, no text beyond XP, no watermark, no checkerboard baked in. One compact icon only.",
+      "source": "Approved progression-ui-v1 review exports; centered transparent artwork at 82% maximum occupancy"
+    }
+  ]
+}

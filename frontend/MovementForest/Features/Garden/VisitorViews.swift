@@ -251,6 +251,7 @@ struct GardenSummaryHeader: View {
     var tokenReward: ConfirmedTokenReward? = nil
     var tokenRewardFinished: (UUID) -> Void = { _ in }
     var tokenReduceMotion = false
+    var showsTokens = true
     let information: () -> Void
     let collect: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
@@ -260,7 +261,7 @@ struct GardenSummaryHeader: View {
         VStack(spacing: 6) {
             if textSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 6) {
-                    metric("Tokens", key: "tokens", value: tokens)
+                    if showsTokens { metric("Tokens", key: "tokens", value: tokens) }
                     metric("Attraction", key: "attraction", value: attraction)
                     metric("Stored visits", key: "offline_capacity", value: stored)
                 }
@@ -270,12 +271,12 @@ struct GardenSummaryHeader: View {
                 }
             } else {
                 HStack(alignment: .center, spacing: 4) {
-                    metric("Tokens", key: "tokens", value: tokens)
+                    if showsTokens { metric("Tokens", key: "tokens", value: tokens) }
                     metric("Attraction", key: "attraction", value: attraction)
                     metric("Stored visits", key: "offline_capacity", value: stored)
                     infoButton.frame(width: 44)
                     collectButton.frame(width: 44)
-                }.padding(.bottom, feedbackSpace)
+                }.padding(.bottom, showsTokens ? feedbackSpace : 0)
             }
         }.padding(.horizontal, 12).padding(.vertical, 4)
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
@@ -321,6 +322,7 @@ struct GardenSummaryHeader: View {
 struct VisitorSummaryHeader: View {
     @ObservedObject var store: VisitorCoordinator
     let attraction: String?
+    var showsTokens = true
     let information: () -> Void
     var body: some View {
         GardenSummaryHeader(tokens: store.summary == nil && store.confirmedTokenBalance == nil ? nil : store.tokenBalance,
@@ -328,7 +330,8 @@ struct VisitorSummaryHeader: View {
             stored: store.summary.map { "\($0.claimableVisits)/\($0.capacity)" },
             storedAccessibility: store.summary.map { "\($0.claimableVisits) stored visits, capacity \($0.capacity)" },
             canCollect: store.canCollect, collecting: store.collecting,
-            tokenReward: store.tokenRewards.first, tokenRewardFinished: { store.finishTokenFeedback($0) }, information: information,
+            tokenReward: store.tokenRewards.first, tokenRewardFinished: { store.finishTokenFeedback($0) },
+            showsTokens: showsTokens, information: information,
             collect: { Task { await store.claim() } })
     }
 }

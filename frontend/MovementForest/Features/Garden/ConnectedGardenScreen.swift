@@ -13,6 +13,8 @@ struct ConnectedGardenScreen: View {
     var activitySync: ActivitySyncCoordinator? = nil
     var visitors: VisitorCoordinator? = nil
     var collection: CollectionCoordinator? = nil
+    var accountSummary: AccountSummaryStore? = nil
+    var openProfile: (ProfileSection) -> Void = { _ in }
     @StateObject private var renderSession = GardenRenderSession()
     private var renderer: RealityGardenRenderer { renderSession.renderer }
     @State private var sheet: GardenEditorSheet?
@@ -161,14 +163,14 @@ struct ConnectedGardenScreen: View {
 
     private var browsingStatus: some View {
         VStack(spacing: 8) {
-            if let visitors = visitors {
-                VisitorSummaryHeader(store: visitors,
-                    attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
-                    information: { sheet = .information })
-                VisitorRecoveryNotice(store: visitors)
+            if verticalSizeClass == .compact, accountSummary != nil, !textSize.isAccessibilitySize {
+                HStack(alignment: .top, spacing: 0) {
+                    accountHeader.frame(maxWidth: .infinity)
+                    visitorHeader.frame(maxWidth: .infinity)
+                }
             } else {
-                GardenSummaryHeader(attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
-                    information: { sheet = .information }, collect: {})
+                accountHeader
+                visitorHeader
             }
             if store.showingCached || store.gardenMessage != nil || store.state.busy ||
                 store.state == .unknown || store.state == .authenticationRequired || store.recoveryLocked ||
@@ -203,6 +205,28 @@ struct ConnectedGardenScreen: View {
                     .modifier(GardenOutline()).gardenOverlayTarget().padding(.horizontal, 12)
             }
         }.padding(.bottom, 8)
+    }
+
+    @ViewBuilder private var accountHeader: some View {
+        if let accountSummary = accountSummary {
+            HomeAccountHeader(store: accountSummary, visitors: visitors, openProfile: openProfile)
+        }
+    }
+
+    private var visitorHeader: some View {
+        VStack(spacing: 8) {
+            if let visitors = visitors {
+                VisitorSummaryHeader(store: visitors,
+                    attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
+                    showsTokens: accountSummary?.snapshot == nil,
+                    information: { sheet = .information })
+                VisitorRecoveryNotice(store: visitors)
+            } else {
+                GardenSummaryHeader(attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
+                    showsTokens: accountSummary?.snapshot == nil,
+                    information: { sheet = .information }, collect: {})
+            }
+        }
     }
 
     private var statusPanel: some View {
@@ -545,10 +569,12 @@ struct GardenHostScreen: View {
     @ObservedObject var sample: GardenStore
     let catalog: any AssetCatalogProviding
     var active: Bool
+    var openProfile: (ProfileSection) -> Void = { _ in }
     var body: some View {
         if let editor = connection.editor {
             ConnectedGardenScreen(store: editor, catalog: catalog, active: active, activitySync: connection.activitySync,
-                                  visitors: connection.visitors, collection: connection.collection).id(editor.id)
+                                  visitors: connection.visitors, collection: connection.collection,
+                                  accountSummary: connection.accountSummary, openProfile: openProfile).id(editor.id)
         } else if connection.connecting {
             ProgressView("Connecting to your garden…")
         } else if !connection.savedURL.isEmpty {

@@ -96,7 +96,7 @@ enum QuantityArtwork {
     static let keys = ["steps", "walking_running_distance_km", "active_energy_kcal", "flights_climbed",
                        "workout_minutes.running", "workout_minutes.cycling", "workout_minutes.swimming",
                        "workout_minutes.strength_training", "water", "attraction", "active_visitor_rate",
-                       "offline_visitor_rate", "offline_capacity", "tokens"]
+                       "offline_visitor_rate", "offline_capacity", "tokens", "gems", "xp"]
     static func path(_ key: String) -> String? {
         keys.contains(key) ? "png-128/\(key).png" : nil
     }
@@ -114,6 +114,8 @@ enum QuantityArtwork {
     }
     static func symbol(_ key: String) -> String {
         switch key {
+        case "gems": return "diamond.fill"
+        case "xp": return "star.fill"
         case "workout_minutes.walking": return "figure.walk"
         case "workout_minutes.hiking": return "figure.hiking"
         case "workout_minutes.yoga": return "figure.yoga"

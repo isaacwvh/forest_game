@@ -106,7 +106,7 @@ def main():
     icon_names = {"steps", "walking_running_distance_km", "active_energy_kcal", "flights_climbed",
                   "workout_minutes.running", "workout_minutes.cycling", "workout_minutes.swimming",
                   "workout_minutes.strength_training", "water", "attraction", "active_visitor_rate",
-                  "offline_visitor_rate", "offline_capacity", "tokens"}
+                  "offline_visitor_rate", "offline_capacity", "tokens", "gems", "xp"}
     icon_folder = REPO / "assets/quantity-icons-v1/png-128"
     require({p.stem for p in icon_folder.iterdir()} == icon_names, "Unexpected/missing runtime icons")
     for name in icon_names:
@@ -114,6 +114,13 @@ def main():
         require(png[:8] == b"\x89PNG\r\n\x1a\n", f"Invalid quantity PNG: {name}")
         width, height, _, colour = struct.unpack(">IIBB", png[16:26])
         require((width, height, colour) == (128, 128, 6), f"Quantity image budget/alpha mismatch: {name}")
+    progression_art = json.loads((icon_folder.parent / "progression-icons.json").read_text(encoding="utf-8"))
+    require({item["key"] for item in progression_art["icons"]} == {"gems", "xp"}, "Progression icon provenance missing")
+    for item in progression_art["icons"]:
+        path = icon_folder / f"{item['key']}.png"
+        require(hashlib.sha256(path.read_bytes()).hexdigest() == item["sha256"], f"Approved progression icon changed: {path.name}")
+        require(item["prompt"] and path.stat().st_size < 64 * 1024, "Progression icon prompt/budget mismatch")
+    print("PASS: 16 runtime quantity icons, including approved emerald/XP artwork, RGBA budgets and provenance.")
     pack_bytes = 0
     pack_dimensions = set()
     for part in ["sealed", "opened", "top-strip"]:
@@ -178,6 +185,23 @@ def main():
         revealed[key] = entry["stages"]
     require(revealed[("oak", "standard")] == STAGES[1:] and revealed[("oak", "blue")] == ["seedling"], "Discovery leaks between variants")
     print("PASS: variant-specific permanent discovery contract, intermediate stages and zero-row sprout preview.")
+    accounts = json.loads((ROOT / "MovementForest/Resources/Fixtures/account-summary-contract.json").read_text(encoding="utf-8"))
+    require(accounts["fresh"]["profile"]["userId"] == accounts["grown"]["profile"]["userId"], "Account fixture identity mismatch")
+    for account in accounts.values():
+        p, w = account["progression"], account["wallet"]
+        steps, xp, level = int(p["lifetimeRecordedSteps"]), int(p["totalXp"]), p["level"]
+        require(xp == steps // 100 == int(p["stepXp"]), "Account XP fixture mismatch")
+        require(int(p["xpIntoLevel"]) == xp - 25 * (level - 1) * (level + 2) // 2 and
+                int(p["xpForNextLevel"]) == 50 + 25 * (level - 1), "Account level remainder mismatch")
+        require(p["stepsIntoNextGem"] == steps % p["stepsPerGem"] and
+                p["stepsToNextGem"] + p["stepsIntoNextGem"] == p["stepsPerGem"], "Gem display remainder mismatch")
+        require(int(w["lifetimeGemsEarned"]) == int(w["gemBalance"]) == steps // p["stepsPerGem"], "Account gem balance mismatch")
+        require(int(w["hostedTotal"]) == int(w["hostedActive"]) + int(w["hostedOffline"]), "Hosted visitor display fixture mismatch")
+    grown = accounts["grown"]
+    require(grown["progression"]["level"] == 5 and grown["progression"]["xpIntoLevel"] == "22" and
+            grown["progression"]["xpForNextLevel"] == "150" and grown["progression"]["stepsIntoNextGem"] == 7250 and
+            grown["wallet"]["gemBalance"] == "3", "Progression presentation scenario changed")
+    print("PASS: account presentation contract: level 5, 22/150 XP, 3 gems, 7,250/10,000 steps; real zero-account fixture.")
     collection = json.loads((ROOT / "MovementForest/Resources/Fixtures/collection-contract.json").read_text(encoding="utf-8"))
     bought, opened = collection["exchange"], collection["opening"]
     require(len(bought["packs"]) == bought["quantity"] == 2, "Collection pack quantity mismatch")

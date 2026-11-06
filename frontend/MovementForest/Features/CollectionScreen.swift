@@ -24,7 +24,7 @@ struct CollectionHostScreen: View {
         Group {
             if let store = connection.collection {
                 CollectionScreen(store: store, destination: destination, assets: assets, navigate: navigate,
-                                 openingChanged: openingChanged).id(store.id)
+                                 openingChanged: openingChanged, accountSummary: connection.accountSummary).id(store.id)
             } else {
                 Text("Connect your account in Settings.")
                     .foregroundStyle(JournalTheme.secondary).padding()
@@ -42,6 +42,7 @@ struct CollectionScreen: View {
     let assets: any AssetCatalogProviding
     var navigate: ((CollectionDestination?) -> Void)? = nil
     var openingChanged: ((Bool) -> Void)? = nil
+    var accountSummary: AccountSummaryStore? = nil
     @State private var search = ""
     @State private var rarity = "All"
     @State private var confirmingPack: APIOwnedPack?
@@ -101,15 +102,22 @@ struct CollectionScreen: View {
     }
     private func refresh() async {
         async let collection: Void = store.refresh()
+        async let account: Void? = accountSummary?.refresh()
         if destination == .catalog { await store.discovery.refresh() }
         await collection
+        _ = await account
     }
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                CollectionWalletSummary(balance: store.tokenBalance, capacity: store.capacity,
-                    showsCapacity: destination == .exchange || destination == .draws,
-                    showsPlants: destination == .draws, cached: store.refreshFailed)
+                if let accountSummary = accountSummary, destination == .exchange || destination == .draws {
+                    AccountCollectionWallet(account: accountSummary, balance: store.tokenBalance, capacity: store.capacity,
+                        showsPlants: destination == .draws, cached: store.refreshFailed)
+                } else {
+                    CollectionWalletSummary(balance: store.tokenBalance, capacity: store.capacity,
+                        showsCapacity: destination == .exchange || destination == .draws,
+                        showsPlants: destination == .draws, cached: store.refreshFailed)
+                }
                 collectionStatus
                 switch destination {
                 case .milestones: milestonesContent

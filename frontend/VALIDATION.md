@@ -1,5 +1,22 @@
 # Validation record
 
+## Profile and Home progression — 6 November 2026
+
+Implemented stages 3 and 4 as frontend presentation/navigation over the existing
+account-summary store: Profile beside Settings, Home XP/wallet/next-gem progress,
+gem balances on Exchange/Packs, approved emerald/XP artwork, distinct saved/failed/
+preparing/loading states and account/visitor/entry-sheet lifecycle guards.
+The mounted scene/camera, economy, packs, progression rules and backend are unchanged.
+[Scope and walkthrough](PROFILE_HOME_ACCEPTANCE.md).
+
+Passed here: portable frontend project/assets/contracts validation (including 16
+quantity icons and the real zero/grown account-summary fixture), all **88 Swift
+syntax parses**, generated-project freshness, Python script compilation and
+`git diff --check`. Added seven AccountPresentationTests and three UI regressions.
+They are bundled and syntax-parsed, **not executed on Windows**. Native Debug/
+Release/InternalRelease builds, XCTest/UI and device visual/accessibility checks
+remain pending on a Mac. No native or CI pass is claimed.
+
 ## Account summary foundation — 6 November 2026
 
 Added shared account-summary models/store, protected per-account/server caching,
@@ -17,9 +34,15 @@ Added **12 native AccountSummaryTests** for backend contract/progress, offline a
 real-disk cache restoration, cached-only identity setup, account isolation, stale
 and conflicting versions, missing legacy fields, refresh coalescing/invalidation,
 late detached responses, cache-write failure and malformed progression. These
-tests were syntax-parsed, **not executed** on Windows. Apple SDK typechecking,
-native XCTest and hands-on iPhone acceptance remain Mac/device checks. No CI push
-or native/device success is claimed.
+tests were syntax-parsed, **not executed** on Windows. Apple SDK typechecking and
+native XCTest remain separate Mac checks; no native automated or CI result is
+inferred from the portable checks.
+
+**Subsequent user acceptance, 6 November 2026:** the user confirmed that the
+current account's progression appears in Diagnostics and pressing Sync adds a
+new Progression entry. Stages 1 and 2 are functionally complete and user accepted.
+This records the reported on-device summary/read-refresh behavior; other manual
+cases and native automated results retain their separately recorded status.
 
 ## Floating garden environment — 6 November 2026
 

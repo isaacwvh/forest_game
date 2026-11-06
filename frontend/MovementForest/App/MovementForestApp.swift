@@ -60,13 +60,18 @@ enum ForestDestination: String, CaseIterable, Identifiable {
     }
 }
 
+private enum RootAccountSheet: String, Identifiable {
+    case settings, profile, gems
+    var id: String { rawValue }
+}
+
 @MainActor
 struct RootView: View {
     @ObservedObject var container: AppContainer
     @ObservedObject private var connection: GardenConnection
     @Environment(\.scenePhase) private var phase
     @State private var selectedTab = ForestDestination.garden
-    @State private var settingsPresented = false
+    @State private var accountSheet: RootAccountSheet?
     @State private var menuPresented = false
     @State private var collectionDestination: CollectionDestination?
     @State private var packOpeningPresented = false
@@ -83,7 +88,7 @@ struct RootView: View {
     private var focusedEditing: Bool { connection.editor?.editing == true }
 
     private var entryAllowed: Bool {
-        resume.foreground && !settingsPresented && !menuPresented && !packOpeningPresented && !childEntryBlocked && !focusedEditing
+        resume.foreground && accountSheet == nil && !menuPresented && !packOpeningPresented && !childEntryBlocked && !focusedEditing
     }
 
     private func sceneChanged(to value: ScenePhase) {
@@ -138,8 +143,9 @@ struct RootView: View {
                     // Always mounted: browsing and Edit use this same renderer/camera.
                     NavigationStack {
                         GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
-                            active: selectedTab == .garden && !settingsPresented && !menuPresented && collectionDestination == nil && !entryRecap.showing)
-                            .toolbar { if !focusedEditing { menuButton; settingsButton } }
+                            active: selectedTab == .garden && accountSheet == nil && !menuPresented && collectionDestination == nil && !entryRecap.showing,
+                            openProfile: presentProfile)
+                            .toolbar { if !focusedEditing { menuButton; accountButtons } }
                     }
                     .opacity(selectedTab == .garden ? 1 : 0)
                     .allowsHitTesting(selectedTab == .garden)
@@ -147,13 +153,13 @@ struct RootView: View {
                     if selectedTab == .myPlants {
                         NavigationStack {
                             MyPlantsHostScreen(connection: connection, catalog: catalog)
-                                .toolbar { menuButton; settingsButton }
+                                .toolbar { menuButton; accountButtons }
                         }
                     }
                     if selectedTab == .activity {
                         NavigationStack {
                             ConnectedActivityScreen(connection: connection, store: container.activity, assets: catalog)
-                                .toolbar { menuButton; settingsButton }
+                                .toolbar { menuButton; accountButtons }
                         }
                     }
                 }
@@ -167,7 +173,7 @@ struct RootView: View {
                                              openingChanged: { packOpeningPresented = $0 })
                             .toolbar {
                                 menuButton
-                                settingsButton
+                                accountButtons
                             }
                     }.id(destination)
                         .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
@@ -216,11 +222,20 @@ struct RootView: View {
                 }
                 .environment(\.gardenBottomNavigationTop, bottomNavigationTop)
                 .onPreferenceChange(GardenBottomNavigationTop.self) { bottomNavigationTop = $0 }
-                .sheet(isPresented: $settingsPresented) {
+                .sheet(item: $accountSheet) { destination in
                     NavigationStack {
-                        SettingsScreen(catalog: catalog, activity: container.activity, connection: container.connection,
-                                       sampleGarden: container.garden.garden)
-                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { settingsPresented = false }.buttonStyle(.journalQuiet) } }
+                        Group {
+                            if destination == .settings {
+                                SettingsScreen(catalog: catalog, activity: container.activity, connection: container.connection,
+                                               sampleGarden: container.garden.garden)
+                            } else {
+                                ProfileHostScreen(connection: connection, catalog: catalog,
+                                    section: destination == .gems ? .currency : .overview)
+                            }
+                        }.toolbar { ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { accountSheet = nil }.buttonStyle(.journalQuiet)
+                                .accessibilityIdentifier("accountSheet.done")
+                        } }
                     }
                 }
                 .sheet(isPresented: $entryRecap.showing, onDismiss: {
@@ -239,6 +254,7 @@ struct RootView: View {
                     if user == nil { entryRecap.signOut() }
                     DiagnosticHistory.shared.setScope(connection.editor?.diagnosticScope)
                     selectedTab = .garden; menuPresented = false; collectionDestination = nil
+                    if accountSheet != .settings { accountSheet = nil }
                 }
                 .onChange(of: entryAllowed) { _ in presentEntryIfReady() }
                 .onPreferenceChange(EntryPresentationBlocker.self) { childEntryBlocked = $0 }
@@ -307,9 +323,16 @@ struct RootView: View {
             .overlay(alignment: .top) { Divider() }
     }
 
-    private var settingsButton: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarTrailing) {
-            Button { settingsPresented = true } label: { Image(systemName: "gearshape").frame(width: 44, height: 44) }
+    private func presentProfile(_ section: ProfileSection) {
+        guard accountSheet == nil, !entryRecap.showing, !packOpeningPresented, !childEntryBlocked, !focusedEditing else { return }
+        accountSheet = section == .currency ? .gems : .profile
+    }
+
+    private var accountButtons: some ToolbarContent {
+        ToolbarItemGroup(placement: .navigationBarTrailing) {
+            Button { presentProfile(.overview) } label: { Image(systemName: "person.crop.circle").frame(width: 44, height: 44) }
+                .buttonStyle(.journalIcon).accessibilityLabel("Profile").accessibilityIdentifier("account.profile")
+            Button { accountSheet = .settings } label: { Image(systemName: "gearshape").frame(width: 44, height: 44) }
                 .buttonStyle(.journalIcon)
                 .accessibilityLabel("Settings")
         }

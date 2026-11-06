@@ -20,6 +20,7 @@ struct CollectionWalletSummary: View {
     var showsCapacity = true
     var showsPlants = false
     var cached = false
+    var gems: String? = nil
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -40,6 +41,7 @@ struct CollectionWalletSummary: View {
     }
     @ViewBuilder private var metrics: some View {
         metric("Tokens", value: balance ?? "Unavailable", symbol: "tokens", quantity: true)
+        if let gems = gems { metric("Gems", value: gems, symbol: "gems", quantity: true) }
         if showsCapacity, let capacity = capacity {
             metric("Packs", value: "\(capacity.unopenedPacks) / \(capacity.packLimit)", symbol: "shippingbox")
             if showsPlants {

@@ -3,6 +3,62 @@ import XCTest
 final class ForestUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    func testProfileAndHomeShareConfirmedProgressAndReturnToTheSameGarden() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-progression"]
+        app.launch()
+        let level = app.buttons["home.profile"]
+        XCTAssertTrue(level.waitForExistence(timeout: 15))
+        let garden = app.descendants(matching: .any).matching(identifier: "garden.scene").firstMatch
+        let originalFrame = garden.frame
+        XCTAssertTrue(app.buttons["account.profile"].exists)
+        XCTAssertTrue(app.buttons["home.gems"].exists)
+        level.tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+        let progress = app.descendants(matching: .any).matching(identifier: "profile.levelProgress").firstMatch
+        XCTAssertTrue(progress.exists)
+        XCTAssertEqual(progress.label, "Account Level 5")
+        XCTAssertEqual(progress.value as? String, "22 / 150 XP, towards Level 6, 372 total XP")
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "profile.gems").firstMatch.exists)
+        app.buttons["accountSheet.done"].tap()
+        XCTAssertTrue(level.waitForExistence(timeout: 5))
+        XCTAssertEqual(garden.frame, originalFrame)
+        app.buttons["home.gems"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "profile.gemProgress").firstMatch.waitForExistence(timeout: 5))
+        app.buttons["accountSheet.done"].tap()
+        app.buttons["navigation.Activity"].tap()
+        app.buttons["account.profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+        app.buttons["accountSheet.done"].tap()
+        XCTAssertTrue(app.buttons["navigation.Activity"].isSelected)
+    }
+
+    func testProfileRetainsCachedProgressWhenRefreshFails() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-progression", "--fixture-account-offline"]
+        app.launch()
+        XCTAssertTrue(app.buttons["home.profile"].waitForExistence(timeout: 15))
+        app.buttons["account.profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["accountProgress.retry"].exists)
+        let progress = app.descendants(matching: .any).matching(identifier: "profile.levelProgress").firstMatch
+        XCTAssertEqual(progress.label, "Account Level 5")
+        app.buttons["accountProgress.retry"].tap()
+        XCTAssertEqual(progress.value as? String, "22 / 150 XP, towards Level 6, 372 total XP")
+    }
+
+    func testUncachedFailedProfileDoesNotInventBalances() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-progression", "--fixture-account-failed"]
+        app.launch()
+        XCTAssertTrue(app.buttons["account.profile"].waitForExistence(timeout: 15))
+        app.buttons["account.profile"].tap()
+        XCTAssertTrue(app.staticTexts["Your profile is unavailable"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["accountProgress.retry"].exists)
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "profile.gems").firstMatch.exists)
+        XCTAssertTrue(app.buttons["profile.accountAccess"].exists)
+    }
+
     func testRewardEffectsFixtureFiltersRecapsAndUpdatesConfirmedCounter() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-effects"]; app.launch()

@@ -50,6 +50,12 @@ final class GardenConnection: ObservableObject {
             let store = GardenEditorStore(profile: profile, service: service, assets: assets, journal: PresentationEditJournal())
             editor = store
             editorUpdates = store.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+            if ProcessInfo.processInfo.arguments.contains("--fixture-progression") {
+                let summary = try PresentationAccountFixture.store(profile: profile)
+                accountSummary = summary
+                accountSummaryUpdates = summary.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+                await summary.refresh()
+            }
             await store.start()
         } catch { status = "Presentation fixture couldn’t load." }
     }
