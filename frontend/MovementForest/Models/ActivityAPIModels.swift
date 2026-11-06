@@ -133,6 +133,8 @@ struct APIActivityStatus: Codable {
     let firstMaturityCount: Int64
     let lastSyncAt: Date?
     var activityMetrics: [String: String]? = nil
+    var progression: APIAccountProgression? = nil
+    var wallet: APIAccountWallet? = nil
 }
 
 struct ActivityDayUpload: Codable, Equatable {
@@ -215,6 +217,8 @@ struct APIActivitySyncResult: Codable {
     let activitySteps: String
     let firstMaturityCount: Int64
     let recapId: UUID?
+    var progression: APIAccountProgression? = nil
+    var wallet: APIAccountWallet? = nil
 }
 
 struct APIRewardRecap: Codable, Identifiable {

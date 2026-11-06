@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import AwareDatetime, Field, field_validator, model_validator
 
+from forest_api.progression_schemas import AccountWallet, ProgressionSnapshot
 from forest_api.schemas import DTO, GardenDTO
 
 
@@ -142,6 +143,8 @@ class SyncResult(DTO):
     recap_id: UUID | None
     workouts: list[dict] = Field(default_factory=list)
     activity_metrics: dict = Field(default_factory=dict)
+    progression: ProgressionSnapshot | None = None
+    wallet: AccountWallet | None = None
 
 
 class ActivityStatus(DTO):
@@ -155,6 +158,8 @@ class ActivityStatus(DTO):
     first_maturity_count: int
     last_sync_at: datetime | None
     activity_metrics: dict = Field(default_factory=dict)
+    progression: ProgressionSnapshot | None = None
+    wallet: AccountWallet | None = None
 
 
 class AcknowledgeRecap(DTO):

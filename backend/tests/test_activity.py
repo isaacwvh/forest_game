@@ -471,8 +471,11 @@ def test_sync_failure_rolls_back_everything(app, settings, client, headers, acto
     with app.state.database.sessions() as session:
         assert session.get(OwnedPlant, actor["plant"]).growth_micro_units == 0
         assert session.get(ActivityDay, (actor["owner"], date(2026, 10, 22))).credited_steps == 0
-        for model in [ActivityCredit, PlantGrowthCredit, RewardEvent, RewardRecap, PlayerProgress]:
+        for model in [ActivityCredit, PlantGrowthCredit, RewardEvent, RewardRecap]:
             assert session.scalar(select(func.count()).select_from(model)) == 0
+        progress = session.get(PlayerProgress, actor["owner"])
+        assert progress.activity_steps == 0
+        assert progress.progression_version == 0
         assert session.get(ApiRequest, (actor["owner"], UUID(body["requestId"]))) is None
     assert submit(client, headers, actor, **body).status_code == 200
 

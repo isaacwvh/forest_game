@@ -1,5 +1,12 @@
 # Movement Forest — native frontend, activity, authentication and visitors
 
+**Account progression foundation, 6 November 2026:** shared, account-scoped gem/
+XP/level state is connected to activity and wallet updates. Existing developer
+diagnostics expose confirmed Progression events for testing. Profile/Home bars
+remain later stages. Backend schema `0013_account_progression` and explicit
+backfill are required; see [upgrade](../backend/PROGRESSION_API.md) and
+[native acceptance](PROGRESSION_ACCEPTANCE.md).
+
 **Inventory capacity and selling, 5 November 2026:** My plants shows themed global
 capacity counts and stored-copy sales with exact-price confirmation and durable
 recovery. Exchange/Packs enforce the server's plant/pack storage gates. Upgrade

@@ -14,6 +14,12 @@ def main() -> None:
     commands = parser.add_subparsers(dest="command", required=True)
     usage = commands.add_parser("storage-report", help="Read-only table/index/TOAST size inventory")
     usage.add_argument("--exact", action="store_true", help="Count every row; may be expensive")
+    progression = commands.add_parser(
+        "backfill-progression",
+        help="Preview existing accounts' step-earned gems; --apply to commit",
+    )
+    progression.add_argument("--apply", action="store_true")
+    progression.add_argument("--limit", type=int, default=500)
     cleanup = commands.add_parser(
         "compact-requests", help="Bounded completion backfill/cache expiry (dry run by default)"
     )
@@ -81,7 +87,11 @@ def main() -> None:
             run(database, settings)
             return
         with database.sessions() as session:
-            if args.command == "update-catalog-descriptions":
+            if args.command == "backfill-progression":
+                from forest_api.progression import backfill
+
+                print(json.dumps(backfill(session, apply=args.apply, limit=args.limit)))
+            elif args.command == "update-catalog-descriptions":
                 from forest_api.catalog_copy import update_descriptions
 
                 print(json.dumps(update_descriptions(session, apply=args.apply)))

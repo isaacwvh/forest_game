@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from forest_api import activity_inputs as inputs
-from forest_api import discovery, services
+from forest_api import discovery, progression, services
 from forest_api.activity_schemas import (
     AcknowledgeRecap,
     ActivityDayInput,
@@ -48,6 +48,7 @@ from forest_api.models import (
     RewardRecap,
 )
 from forest_api.placement import DISABLED_ACCOUNTING, PlacementAccounting, utc_now
+from forest_api.visitor_models import VisitorWallet
 
 RECONCILIATION_DAYS = 7
 QUEUED_MAX_AGE_DAYS = 30
@@ -269,6 +270,7 @@ def sync(
         if progress is None:
             progress = PlayerProgress(owner_id=user.id, activity_steps=0, first_maturity_count=0)
             session.add(progress)
+        previous_xp = progress.activity_steps // progression.STEPS_PER_XP
         presenter = services.PlantPresenter(session)
         presenter.preload(plants)
         before = {
@@ -495,6 +497,11 @@ def sync(
         if accounting_started:
             accounting.after_change(session, garden, boundary)
         progress.last_sync_at = boundary
+        progress.progression_version = checked_add(progress.progression_version or 0, 1)
+        gem_delta, wallet = progression.credit_steps(
+            session, user.id, progress.activity_steps, body.request_id, boundary
+        )
+        current_progression = progression.snapshot(progress)
         summary = [
             {
                 "plantId": str(plant.id),
@@ -524,7 +531,7 @@ def sync(
             if day.newly_eligible_steps > 0
             or any(Fraction(metric["newlyEligible"]) > 0 for metric in day.metrics.values())
         ]
-        if credits or newly_accepted_days:
+        if credits or newly_accepted_days or gem_delta:
             event = RewardEvent(
                 id=uuid4(),
                 owner_id=user.id,
@@ -539,12 +546,15 @@ def sync(
                     ],
                     "activitySummaryVersion": 1,
                     "workouts": workout_receipts,
-                    "resourceDeltas": {},
+                    "resourceDeltas": {"gems": str(gem_delta)} if gem_delta else {},
+                    "progressionDeltas": {
+                        "xp": str(progress.activity_steps // progression.STEPS_PER_XP - previous_xp)
+                    },
                 },
             )
             session.add(event)
             session.flush()
-            if summary or newly_accepted_days:
+            if summary or newly_accepted_days or gem_delta:
                 recap_id = uuid4()
                 session.add(
                     RewardRecap(
@@ -569,6 +579,8 @@ def sync(
             recap_id=recap_id,
             workouts=workout_receipts,
             activity_metrics=progress.activity_metrics,
+            progression=current_progression,
+            wallet=progression.wallet_snapshot(wallet),
         )
         services.record_request(session, user.id, body, operation, digest, response)
     return response
@@ -594,6 +606,8 @@ def status(session: Session, identity: Identity, *, clock=utc_now) -> ActivitySt
             first_maturity_count=progress.first_maturity_count if progress else 0,
             last_sync_at=progress.last_sync_at if progress else None,
             activity_metrics=progress.activity_metrics if progress else {},
+            progression=progression.snapshot(progress),
+            wallet=progression.wallet_snapshot(session.get(VisitorWallet, user.id)),
         )
 
 

@@ -2,7 +2,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from forest_api import history_models  # noqa: F401 - register compact-history models
+from forest_api import (
+    history_models,  # noqa: F401 - register compact-history models
+    progression_models,  # noqa: F401 - register durable gem grants
+)
 from forest_api.auth import TokenVerifier
 from forest_api.collection_routes import router as collection_router
 from forest_api.config import Settings

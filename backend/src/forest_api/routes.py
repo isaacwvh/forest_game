@@ -1,11 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from forest_api import activity, discovery, services
+from forest_api import activity, discovery, progression, services
 from forest_api.activity_schemas import (
     AcknowledgeRecap,
     ActivityStatus,
@@ -21,6 +21,7 @@ from forest_api.dependencies import get_identity, get_session
 from forest_api.errors import ApiError
 from forest_api.exact_json import ExactJSONRoute
 from forest_api.placement import edit_garden
+from forest_api.progression_schemas import AccountSummary
 from forest_api.schemas import (
     AccountDTO,
     CatalogueDTO,
@@ -37,7 +38,7 @@ from forest_api.server_clock import request_clock
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0012_inventory_management"
+SCHEMA_REVISION = "0013_account_progression"
 
 
 @router.get("/health/live", tags=["health"])
@@ -83,6 +84,17 @@ def patch_me(
     session: Session = Depends(get_session),
 ) -> UserDTO:
     return services.update_profile(session, identity, body)
+
+
+@router.get("/v1/me/account-summary", response_model=AccountSummary, tags=["account"])
+def account_summary(
+    request: Request,
+    response: Response,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> AccountSummary:
+    response.headers["Cache-Control"] = "no-store"
+    return progression.read_summary(session, identity, clock=request_clock(request, session))
 
 
 @router.get("/v1/catalog", response_model=CatalogueDTO, tags=["catalogue"])

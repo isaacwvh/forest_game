@@ -1,5 +1,26 @@
 # Validation record
 
+## Account summary foundation — 6 November 2026
+
+Added shared account-summary models/store, protected per-account/server caching,
+independent progression/wallet version guards, coalesced refresh, cached-only cold
+restoration before remote identity verification, activity/recovery/wallet hooks,
+and local Progression diagnostic events. There is no new Profile/Home UI in these
+two stages. [Acceptance flow](PROGRESSION_ACCEPTANCE.md).
+
+Executed on Windows: portable frontend resource/contract/project checks pass;
+all **84 Swift files syntax-parse**; generated project/schemes are current. The
+new account-summary fixture was exported by the successful disposable real-HTTP
+smoke, and both fixture snapshots pass backend schema validation.
+
+Added **12 native AccountSummaryTests** for backend contract/progress, offline and
+real-disk cache restoration, cached-only identity setup, account isolation, stale
+and conflicting versions, missing legacy fields, refresh coalescing/invalidation,
+late detached responses, cache-write failure and malformed progression. These
+tests were syntax-parsed, **not executed** on Windows. Apple SDK typechecking,
+native XCTest and hands-on iPhone acceptance remain Mac/device checks. No CI push
+or native/device success is claimed.
+
 ## Floating garden environment — 6 November 2026
 
 Integrates the user-approved USDZ island and static mountain/mist PNG into the

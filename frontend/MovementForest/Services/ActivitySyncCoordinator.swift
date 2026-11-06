@@ -15,6 +15,7 @@ final class ActivitySyncCoordinator: ObservableObject {
     @Published private(set) var recoveryLocked = false
     let installationID: UUID
     var onConfirmedGrowth: (() -> Void)?
+    var onAccountProgression: ((APIAccountProgression?, APIAccountWallet?) -> Void)?
     private let editor: GardenEditorStore
     private let health: ActivityStore
     private var service: any ActivityServing
@@ -248,6 +249,7 @@ final class ActivitySyncCoordinator: ObservableObject {
             throw ForestError.invalidData("The account's activity policy is unavailable. Reconnect before uploading.")
         }
         var next = saved; next.status = value; try save(next)
+        onAccountProgression?(value.progression, value.wallet)
     }
 
     /// A local Health read only; never changes upload consent or queues activity.
@@ -359,6 +361,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                     try editor.applyConfirmed(result.garden, at: result.acceptedAt,
                         activityRequestID: runID != nil && runID == presentationSuppressedRun ? nil : operation.id)
                     onConfirmedGrowth?()
+                    onAccountProgression?(result.progression, result.wallet)
                 case .acknowledgement:
                     guard let recap = operation.recapID else { throw ForestError.invalidData("Invalid recap request.") }
                     let result = try await service.acknowledge(recap: recap, body: operation.body)

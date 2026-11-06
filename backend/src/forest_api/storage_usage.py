@@ -21,6 +21,7 @@ GROUPS = {
         "visitor_controls",
     },
     "durable_recovery": {
+        "gem_grants",
         "plant_identities",
         "plant_sales",
         "visitor_day_summaries",

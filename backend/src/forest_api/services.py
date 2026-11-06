@@ -322,6 +322,9 @@ def register_account(
                 session.add(user)
                 session.flush()
                 session.add(CatalogDiscoveryState(owner_id=user.id))
+                from forest_api.progression import initialize_account
+
+                initialize_account(session, user.id)
                 catalogue = get_catalogue_state(session, settings)
                 session.add(
                     Garden(

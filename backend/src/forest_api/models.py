@@ -482,9 +482,11 @@ class PlayerProgress(Base):
     __tablename__ = "player_progress"
     __table_args__ = (
         CheckConstraint("activity_steps >= 0 AND first_maturity_count >= 0", name="counters"),
+        CheckConstraint("progression_version >= 0", name="progression_version"),
     )
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
     activity_steps: Mapped[int] = mapped_column(BigInteger, default=0)
+    progression_version: Mapped[int] = mapped_column(BigInteger, server_default="0")
     first_maturity_count: Mapped[int] = mapped_column(BigInteger, default=0)
     last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     first_seedling_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

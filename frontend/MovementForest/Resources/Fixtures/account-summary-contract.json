@@ -1,0 +1,72 @@
+{
+  "fresh": {
+    "serverTime": "2026-11-06T04:00:00Z",
+    "profile": {
+      "userId": "1986a619-c246-4de3-943f-91d42b9839a1",
+      "username": "progression_smoke",
+      "displayName": "Progression smoke",
+      "gameTimezone": "Asia/Singapore",
+      "createdAt": "2026-11-06T14:58:38.858402+08:00"
+    },
+    "progression": {
+      "rulesVersion": "step-progression-v1",
+      "version": 0,
+      "lifetimeRecordedSteps": "0",
+      "stepXp": "0",
+      "totalXp": "0",
+      "level": 1,
+      "xpIntoLevel": "0",
+      "xpForNextLevel": "50",
+      "stepsIntoNextGem": 0,
+      "stepsPerGem": 10000,
+      "stepsToNextGem": 10000,
+      "plantsGrownToAdulthood": "0",
+      "lastSyncAt": null
+    },
+    "wallet": {
+      "economyVersion": 0,
+      "tokenBalance": "0",
+      "gemBalance": "0",
+      "lifetimeGemsEarned": "0",
+      "initialized": true,
+      "hostedActive": "0",
+      "hostedOffline": "0",
+      "hostedTotal": "0"
+    }
+  },
+  "grown": {
+    "serverTime": "2026-11-06T04:00:00Z",
+    "profile": {
+      "userId": "1986a619-c246-4de3-943f-91d42b9839a1",
+      "username": "progression_smoke",
+      "displayName": "Progression smoke",
+      "gameTimezone": "Asia/Singapore",
+      "createdAt": "2026-11-06T14:58:38.858402+08:00"
+    },
+    "progression": {
+      "rulesVersion": "step-progression-v1",
+      "version": 3,
+      "lifetimeRecordedSteps": "37250",
+      "stepXp": "372",
+      "totalXp": "372",
+      "level": 5,
+      "xpIntoLevel": "22",
+      "xpForNextLevel": "150",
+      "stepsIntoNextGem": 7250,
+      "stepsPerGem": 10000,
+      "stepsToNextGem": 2750,
+      "plantsGrownToAdulthood": "0",
+      "lastSyncAt": "2026-11-06T12:00:00+08:00"
+    },
+    "wallet": {
+      "economyVersion": 2,
+      "tokenBalance": "0",
+      "gemBalance": "3",
+      "lifetimeGemsEarned": "3",
+      "initialized": true,
+      "hostedActive": "0",
+      "hostedOffline": "0",
+      "hostedTotal": "0"
+    }
+  }
+}

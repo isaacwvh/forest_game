@@ -146,6 +146,9 @@ def locked(session, owner, garden):
 def reconcile(session, owner, garden):
     wallet = session.get(VisitorWallet, owner)
     if wallet:
+        from forest_api.progression import reconcile as reconcile_progression
+
+        reconcile_progression(session, owner, wallet)
         from forest_api.collection_models import CollectionEvent
 
         income = session.scalar(

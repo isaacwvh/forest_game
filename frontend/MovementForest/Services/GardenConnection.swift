@@ -60,6 +60,7 @@ final class GardenConnection: ObservableObject {
     @Published private(set) var activitySync: ActivitySyncCoordinator?
     @Published private(set) var visitors: VisitorCoordinator?
     @Published private(set) var collection: CollectionCoordinator?
+    @Published private(set) var accountSummary: AccountSummaryStore?
     @Published private(set) var accountRequired = false
     @Published private(set) var connecting = false
     @Published private(set) var status: String?
@@ -74,6 +75,7 @@ final class GardenConnection: ObservableObject {
     private var syncUpdates: AnyCancellable?
     private var visitorUpdates: AnyCancellable?
     private var collectionUpdates: AnyCancellable?
+    private var accountSummaryUpdates: AnyCancellable?
     private var authUpdates: AnyCancellable?
     private var managedTokens: ScopedAuthTokenProvider?
     private var managedProfileVerified = false
@@ -196,6 +198,7 @@ final class GardenConnection: ObservableObject {
     }
 
     private func detachManaged() {
+        accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil
         collection?.deactivate(); collection = nil; collectionUpdates = nil
         visitors?.deactivate(); visitors = nil; visitorUpdates = nil
         managedGeneration = UUID(); managedTokens?.invalidate(); managedTokens = nil
@@ -231,6 +234,8 @@ final class GardenConnection: ObservableObject {
                 let cached = GardenEditorStore(profile: saved.profile, service: repository, assets: assets, cache: disk)
                 editor = cached
                 await cached.start(refreshRemote: false)
+                guard managedGeneration == operation else { cached.deactivate(); return }
+                _ = installAccountSummary(client: client, store: cached, remoteEnabled: false)
                 // No queued mutations are sent until /me confirms the game identity.
             }
             let profile: APIProfile
@@ -239,6 +244,7 @@ final class GardenConnection: ObservableObject {
             catch let error as APIError where error.code == "account_required" {
                 guard managedGeneration == operation else { return }
                 editor?.deactivate(); editor = nil
+                accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil
                 defaults.removeObject(forKey: "supabase.gameProfile.v1")
                 pendingIdentity = tokens.identity; pendingClient = client; accountRequired = true
                 status = "Choose your game username and display name."
@@ -278,10 +284,24 @@ final class GardenConnection: ObservableObject {
         } else { disconnect() }
     }
 
+    private func installAccountSummary(client: APIClient, store: GardenEditorStore,
+                                       remoteEnabled: Bool) -> AccountSummaryStore {
+        accountSummary?.deactivate()
+        let service: any AccountSummaryServing = remoteEnabled ? APIAccountSummaryRepository(client: client) :
+            UnavailableAccountSummaryRepository(serverID: client.baseURL.absoluteString)
+        let summary = AccountSummaryStore(userID: store.profile.userId,
+            service: service, cache: AccountSummaryDiskStore(disk: disk))
+        accountSummary = summary
+        accountSummaryUpdates = summary.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+        if remoteEnabled { Task { [weak summary] in await summary?.refresh() } }
+        return summary
+    }
+
     private func installActivity(client: APIClient, store: GardenEditorStore, visitorsEnabled: Bool = true) {
         var client = client
         client.diagnosticScope = store.diagnosticScope
         DiagnosticHistory.shared.setScope(store.diagnosticScope)
+        let summary = installAccountSummary(client: client, store: store, remoteEnabled: visitorsEnabled)
         collection?.deactivate(); collection = nil; collectionUpdates = nil
         if visitorsEnabled {
             let discovery = CatalogDiscoveryStore(userID: store.profile.userId,
@@ -291,6 +311,7 @@ final class GardenConnection: ObservableObject {
             self.collection = collection
             collectionUpdates = collection.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
             collection.onPlantAwarded = { [weak store] in await store?.refresh() }
+            collection.onWallet = { [weak summary] _, version in summary?.economyChanged(version) }
         }
         editorUpdates = store.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
         visitors?.deactivate(); visitors = nil; visitorUpdates = nil
@@ -299,10 +320,14 @@ final class GardenConnection: ObservableObject {
                 let visitor = VisitorCoordinator(userID: store.profile.userId,
                     installationID: try InstallationIdentity.load(disk: disk), service: APIVisitorRepository(client: client))
                 visitors = visitor
-                visitor.onWallet = { [weak collection = self.collection] balance, version in
+                visitor.onWallet = { [weak collection = self.collection, weak summary] balance, version in
                     collection?.applyWallet(balance, version: version)
+                    summary?.economyChanged(version)
                 }
-                collection?.onWallet = { [weak visitor] balance, version in visitor?.applyWallet(balance, version: version) }
+                collection?.onWallet = { [weak visitor, weak summary] balance, version in
+                    visitor?.applyWallet(balance, version: version)
+                    summary?.economyChanged(version)
+                }
                 visitorUpdates = visitor.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
                 visitor.start()
             } catch {
@@ -310,12 +335,21 @@ final class GardenConnection: ObservableObject {
                 status = "Visitors couldn’t start on this iPhone. Reconnect to try again."
             }
         }
+        summary.onWallet = { [weak collection = self.collection, weak visitor = self.visitors] balance, version in
+            collection?.applyWallet(balance, version: version)
+            visitor?.applyWallet(balance, version: version)
+        }
         guard let health = health else { return }
         do {
             let coordinator = ActivitySyncCoordinator(editor: store, health: health,
                                                        service: APIActivityRepository(client: client),
                                                        installationID: try InstallationIdentity.load(disk: disk))
             activitySync = coordinator
+            if visitorsEnabled {
+                coordinator.onAccountProgression = { [weak summary] progression, wallet in
+                    summary?.receive(progression: progression, wallet: wallet)
+                }
+            }
             coordinator.onConfirmedGrowth = { [weak discovery = collection?.discovery] in discovery?.invalidate() }
             syncUpdates = coordinator.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
             store.prepareMembershipChange = { [weak coordinator] in
@@ -412,6 +446,7 @@ final class GardenConnection: ObservableObject {
         guard authentication == nil else { return }
         guard !busy else { return }
         do {
+            accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil
             collection?.deactivate(); collection = nil; collectionUpdates = nil
             visitors?.deactivate(); visitors = nil; visitorUpdates = nil
             try DevelopmentCredential.remove()

@@ -1,5 +1,32 @@
 # B1–B6 implementation verification
 
+## Account progression stages 1–2 — 6 November 2026
+
+Implemented `0013_account_progression`: step-earned gem balances and durable
+grants, integer-derived XP/levels, repeat-safe explicit backfill, atomic activity
+integration, a read-only owner account-summary API, and history reconciliation.
+Existing request bodies/UUIDs, token packs, plant growth and capacity rules remain
+compatible. See [implementation and upgrade](PROGRESSION_API.md).
+
+Executed against randomly named disposable PostgreSQL 17.11 databases in an
+isolated local cluster, without altering the personal game database:
+
+- Full backend suite: **559 passed, 3 skipped**, 622.94 seconds. The skips are the
+  existing opt-in physical-storage benchmarks.
+- Disposable real-HTTP smoke: 37,250 steps -> 3 gems, level 5, 22/150 XP; ordinary
+  replay, ledger reconciliation and compacted completion recovery passed.
+- Progression tests cover threshold/bigint math, cap/empty-garden independence,
+  rollback, concurrent syncs/backfill, read-only/account-isolated summaries,
+  legacy migration preservation, and token exchange retaining gems.
+- Alembic metadata agreement, upgrade/downgrade/re-upgrade and readiness tests
+  passed in the full suite.
+- Ruff lint and formatting (112 Python files), compilation, dependency checks,
+  Compose configuration and diff whitespace checks passed.
+
+Docker Desktop's daemon returned an API error during this session. Consequently
+the existing Docker game instance was not rebuilt or migrated. Apply the explicit
+upgrade/backfill in PROGRESSION_API.md when Docker is healthy. No CI push was made.
+
 ## Inventory management — 5 November 2026
 
 Implemented schema `0012_inventory_management`: 50 live owned plants total,

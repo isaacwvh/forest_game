@@ -10,6 +10,7 @@ from forest_api import (
     activity_models,  # noqa: F401 - register typed activity and milestone metadata
     collection_models,  # noqa: F401 - register B7 metadata
     history_models,  # noqa: F401 - compact accounting and temporary provenance
+    progression_models,  # noqa: F401 - durable step-earned gem accounting
     visitor_models,  # noqa: F401 - register B6 metadata
 )
 from forest_api.models import Base

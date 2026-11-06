@@ -10,7 +10,10 @@ from forest_api.main import create_app
 from forest_api.models import Base
 
 # Compare original domain data across additive request-cache schema changes.
-LEGACY_ROW = "(to_jsonb(t) - 'completion' - 'response_expires_at' - 'recovery_version')"
+LEGACY_ROW = (
+    "(to_jsonb(t) - 'completion' - 'response_expires_at' - 'recovery_version' "
+    "- 'gems' - 'lifetime_gems_earned' - 'progression_initialized' - 'progression_version')"
+)
 
 
 def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
@@ -23,7 +26,7 @@ def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
             with engine.connect() as connection:
                 assert set(Base.metadata.tables) <= set(inspect(connection).get_table_names())
                 assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-                    "0012_inventory_management"
+                    "0013_account_progression"
                 )
             engine.dispose()
             command.downgrade(configuration, "base")
@@ -172,7 +175,8 @@ def test_b7_upgrade_preserves_b6_balances_and_history(database_factory):
                     text(
                         "INSERT INTO visitor_wallets "
                         "(owner_id, tokens, hosted_active, hosted_offline) "
-                        "VALUES (:owner, 37, 12, 25)"
+                        "VALUES (:owner, 37, 12, 25) ON CONFLICT (owner_id) DO UPDATE "
+                        "SET tokens = 37, hosted_active = 12, hosted_offline = 25"
                     ),
                     {"owner": account.profile.user_id},
                 )
@@ -249,14 +253,7 @@ def test_species_rarity_migration_preserves_b7_packs_and_receipts(database_facto
                     ),
                 )
             with database.sessions.begin() as session:
-                session.add(
-                    VisitorWallet(
-                        owner_id=account.profile.user_id,
-                        tokens=20,
-                        hosted_active=0,
-                        hosted_offline=0,
-                    )
-                )
+                session.get(VisitorWallet, account.profile.user_id).tokens = 20
             with database.sessions() as session:
                 bought = collection.mutate(
                     session,

@@ -143,5 +143,5 @@ def economy(app, client, register, headers):
         seed_legacy_collection(session, app.state.settings)
     # Synthetic initial funds are deliberately local to tests, never a runtime API.
     with app.state.database.sessions.begin() as session:
-        session.add(VisitorWallet(owner_id=owner, tokens=100, hosted_active=0, hosted_offline=0))
+        session.get(VisitorWallet, owner).tokens = 100
     return {"owner": owner, "headers": headers(), "client": client, "app": app}

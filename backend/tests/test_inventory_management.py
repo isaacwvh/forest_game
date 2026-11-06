@@ -442,7 +442,9 @@ def test_sale_keeps_discovery_and_progress(economy):
         assert progress.activity_steps == 1000 and progress.first_maturity_count == 1
 
 
-def test_existing_database_backfill_preserves_live_state_and_pins_value(database_factory):
+def test_existing_database_backfill_preserves_live_state_and_pins_value(
+    database_factory, monkeypatch
+):
     from alembic import command
     from conftest import TEST_SECRET, migration_config, migration_url
 
@@ -465,7 +467,11 @@ def test_existing_database_backfill_preserves_live_state_and_pins_value(database
         try:
             with database.sessions() as session:
                 seed_development_catalogue(session, settings)
-            with database.sessions() as session:
+            from forest_api import progression
+
+            # Reproduce the pre-progression registration path against its old schema.
+            with database.sessions() as session, monkeypatch.context() as legacy:
+                legacy.setattr(progression, "initialize_account", lambda *args: None)
                 account = services.register_account(
                     session,
                     settings,

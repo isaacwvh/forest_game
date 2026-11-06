@@ -1,5 +1,10 @@
 # Movement Forest backend — B1–B7 collection slice
 
+**Account progression stages 1–2, 6 November 2026:** step-earned gems, derived
+account XP/levels and a read-only account-summary API are implemented. Current
+schema: `0013_account_progression`. Follow [rules, explicit upgrade/backfill and
+disposable validation](PROGRESSION_API.md) before running the updated server.
+
 Inventory capacity/selling source is implemented in `0012_inventory_management`.
 Defaults: 50 owned plants total, 20 planted, 50 unopened packs. See
 [inventory rules, resale formula and explicit upgrade](INVENTORY_MANAGEMENT.md).
