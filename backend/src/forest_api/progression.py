@@ -74,6 +74,9 @@ def initialize_account(session, owner):
     wallet.progression_initialized = True
     if session.get(PlayerProgress, owner) is None:
         session.add(PlayerProgress(owner_id=owner, activity_steps=0, first_maturity_count=0))
+    from forest_api.level_benefits import initialize
+
+    initialize(session, owner)
 
 
 def credit_steps(session, owner, steps, source_id, boundary):
@@ -118,14 +121,19 @@ def reconcile(session, owner, wallet):
         raise ValueError("Unreconciled gem wallet; history retained")
 
 
-def read_summary(session, identity, *, clock=lambda: datetime.now(UTC)):
+def read_summary(session, identity, settings=None, *, clock=lambda: datetime.now(UTC)):
+    from forest_api import level_benefits
+
     with session.begin():
         user = services.get_user(session, identity, lock=True)
+        boundary = clock()
         return AccountSummary(
-            server_time=clock(),
+            server_time=boundary,
             profile=services.user_dto(user),
             progression=snapshot(session.get(PlayerProgress, user.id)),
             wallet=wallet_snapshot(session.get(VisitorWallet, user.id)),
+            benefits=level_benefits.snapshot(session, user.id, settings, boundary),
+            level_up_notice=level_benefits.pending_notice(session, user.id),
         )
 
 

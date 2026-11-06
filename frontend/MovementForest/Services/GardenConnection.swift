@@ -50,11 +50,22 @@ final class GardenConnection: ObservableObject {
             let store = GardenEditorStore(profile: profile, service: service, assets: assets, journal: PresentationEditJournal())
             editor = store
             editorUpdates = store.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
-            if ProcessInfo.processInfo.arguments.contains("--fixture-progression") {
+            if ProcessInfo.processInfo.arguments.contains("--fixture-progression") || ProcessInfo.processInfo.arguments.contains("--fixture-level-up") {
                 let summary = try PresentationAccountFixture.store(profile: profile)
                 accountSummary = summary
                 accountSummaryUpdates = summary.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
                 await summary.refresh()
+                if ProcessInfo.processInfo.arguments.contains("--fixture-level-up"), let snapshot = summary.snapshot {
+                    let coordinator = try PresentationLevelFixture.coordinator(summary: snapshot)
+                    levelUps = coordinator
+                    levelUpUpdates = coordinator.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+                    coordinator.onConsumed = { [weak summary] in summary?.invalidate() }
+                    summary.onSummary = { [weak coordinator, weak store] value in
+                        coordinator?.receive(value.levelUpNotice)
+                        if let benefits = value.benefits { store?.applyLevelPlantLimit(benefits.plantLimit) }
+                    }
+                    summary.onSummary?(snapshot)
+                }
             }
             await store.start()
         } catch { status = "Presentation fixture couldn’t load." }
@@ -67,6 +78,7 @@ final class GardenConnection: ObservableObject {
     @Published private(set) var visitors: VisitorCoordinator?
     @Published private(set) var collection: CollectionCoordinator?
     @Published private(set) var accountSummary: AccountSummaryStore?
+    @Published private(set) var levelUps: LevelUpCoordinator?
     @Published private(set) var accountRequired = false
     @Published private(set) var connecting = false
     @Published private(set) var status: String?
@@ -82,6 +94,11 @@ final class GardenConnection: ObservableObject {
     private var visitorUpdates: AnyCancellable?
     private var collectionUpdates: AnyCancellable?
     private var accountSummaryUpdates: AnyCancellable?
+    private var levelUpUpdates: AnyCancellable?
+
+    private func clearLevelUps() {
+        levelUps?.deactivate(); levelUps = nil; levelUpUpdates = nil
+    }
     private var authUpdates: AnyCancellable?
     private var managedTokens: ScopedAuthTokenProvider?
     private var managedProfileVerified = false
@@ -204,7 +221,7 @@ final class GardenConnection: ObservableObject {
     }
 
     private func detachManaged() {
-        accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil
+        accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil; clearLevelUps()
         collection?.deactivate(); collection = nil; collectionUpdates = nil
         visitors?.deactivate(); visitors = nil; visitorUpdates = nil
         managedGeneration = UUID(); managedTokens?.invalidate(); managedTokens = nil
@@ -250,7 +267,7 @@ final class GardenConnection: ObservableObject {
             catch let error as APIError where error.code == "account_required" {
                 guard managedGeneration == operation else { return }
                 editor?.deactivate(); editor = nil
-                accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil
+                accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil; clearLevelUps()
                 defaults.removeObject(forKey: "supabase.gameProfile.v1")
                 pendingIdentity = tokens.identity; pendingClient = client; accountRequired = true
                 status = "Choose your game username and display name."
@@ -293,11 +310,19 @@ final class GardenConnection: ObservableObject {
     private func installAccountSummary(client: APIClient, store: GardenEditorStore,
                                        remoteEnabled: Bool) -> AccountSummaryStore {
         accountSummary?.deactivate()
+        clearLevelUps()
         let service: any AccountSummaryServing = remoteEnabled ? APIAccountSummaryRepository(client: client) :
             UnavailableAccountSummaryRepository(serverID: client.baseURL.absoluteString)
         let summary = AccountSummaryStore(userID: store.profile.userId,
             service: service, cache: AccountSummaryDiskStore(disk: disk))
         accountSummary = summary
+        if remoteEnabled, let installation = try? InstallationIdentity.load(disk: disk) {
+            let coordinator = LevelUpCoordinator(user: store.profile.userId, server: client.baseURL.absoluteString,
+                installation: installation, service: APILevelUpRepository(client: client), persistence: LevelUpDiskStore(disk: disk))
+            coordinator.onConsumed = { [weak summary] in summary?.invalidate() }
+            levelUps = coordinator
+            levelUpUpdates = coordinator.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+        }
         accountSummaryUpdates = summary.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
         if remoteEnabled { Task { [weak summary] in await summary?.refresh() } }
         return summary
@@ -345,6 +370,20 @@ final class GardenConnection: ObservableObject {
             collection?.applyWallet(balance, version: version)
             visitor?.applyWallet(balance, version: version)
         }
+        var previousCapacity: Int?
+        summary.onSummary = { [weak store, weak collection = self.collection, weak visitor = self.visitors,
+                               weak levels = self.levelUps] value in
+            levels?.receive(value.levelUpNotice)
+            if let benefits = value.benefits {
+                store?.applyLevelPlantLimit(benefits.plantLimit)
+                collection?.applyLevelPlantLimit(benefits.plantLimit)
+                if previousCapacity != benefits.effectiveOfflineCapacity {
+                    previousCapacity = benefits.effectiveOfflineCapacity
+                    Task { await visitor?.tick(force: true) }
+                }
+            }
+        }
+        if let cached = summary.snapshot { summary.onSummary?(cached) }
         guard let health = health else { return }
         do {
             let coordinator = ActivitySyncCoordinator(editor: store, health: health,
@@ -452,7 +491,7 @@ final class GardenConnection: ObservableObject {
         guard authentication == nil else { return }
         guard !busy else { return }
         do {
-            accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil
+            accountSummary?.deactivate(); accountSummary = nil; accountSummaryUpdates = nil; clearLevelUps()
             collection?.deactivate(); collection = nil; collectionUpdates = nil
             visitors?.deactivate(); visitors = nil; visitorUpdates = nil
             try DevelopmentCredential.remove()

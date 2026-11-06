@@ -40,6 +40,8 @@ struct APIAccountSummary: Codable, Equatable {
     let profile: APIAccountIdentity
     var progression: APIAccountProgression
     var wallet: APIAccountWallet
+    var benefits: APILevelBenefits? = nil
+    var levelUpNotice: APILevelUpNotice? = nil
 
     static func amount(_ text: String) -> Int64? {
         guard let value = Int64(text), value >= 0, String(value) == text else { return nil }
@@ -72,6 +74,11 @@ struct APIAccountSummary: Codable, Equatable {
               p.stepsToNextGem == 10_000 - p.stepsIntoNextGem,
               (w.initialized ? earned == steps / 10_000 : (earned == 0 && gems == 0)) else {
             throw ForestError.invalidData("Account progression could not be verified.")
+        }
+        try benefits?.validate(progression: p)
+        try levelUpNotice?.validate()
+        guard levelUpNotice.map({ $0.toLevel <= p.level }) ?? true else {
+            throw ForestError.invalidData("The level-up is ahead of confirmed progress.")
         }
         return self
     }

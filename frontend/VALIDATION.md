@@ -1060,3 +1060,19 @@ builds, native screenshots and iPhone accessibility/interaction acceptance. Run
 `bash frontend/scripts/test-mac.sh` on Mac and follow
 [BUTTON_UI_ACCEPTANCE.md](BUTTON_UI_ACCEPTANCE.md). No commit, push, CI, migration
 or live game operation was performed.
+
+## Account level benefits and popup — 7 November 2026
+
+Added server-backed offline/owned-plant capacities, Profile benefit details and a
+compact one-time level-up card. Passed Windows portable project/assets/contracts
+validation, the HTTP-derived 4 → 5 benefit fixture, all 92 Swift syntax parses and
+scoped whitespace checks. The generated project references all 70 app sources.
+Source review accepted the final intrinsic-height/scrolling card, monotonic plant
+capacity merging and presentation eligibility/recovery behavior.
+
+New unit/UI tests cover claim/relaunch/disk-failure/account isolation, stale
+capacity, summary merging, card gains, normal height, largest text and navigation
+without replay. Apple SDK typechecking, XCTest/UI execution, Release builds,
+screenshots, VoiceOver and real-device acceptance have not run on Windows.
+Follow [LEVEL_BENEFITS_ACCEPTANCE.md](LEVEL_BENEFITS_ACCEPTANCE.md) on Mac/iPhone,
+including backend migration and explicit policy activation. No push or CI run.

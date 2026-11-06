@@ -271,6 +271,7 @@ def sync(
             progress = PlayerProgress(owner_id=user.id, activity_steps=0, first_maturity_count=0)
             session.add(progress)
         previous_xp = progress.activity_steps // progression.STEPS_PER_XP
+        previous_level = progression.snapshot(progress).level
         presenter = services.PlantPresenter(session)
         presenter.preload(plants)
         before = {
@@ -502,6 +503,17 @@ def sync(
             session, user.id, progress.activity_steps, body.request_id, boundary
         )
         current_progression = progression.snapshot(progress)
+        from forest_api.level_benefits import record_level_up
+
+        record_level_up(
+            session,
+            user.id,
+            previous_level,
+            current_progression.level,
+            body.request_id,
+            settings,
+            boundary,
+        )
         summary = [
             {
                 "plantId": str(plant.id),

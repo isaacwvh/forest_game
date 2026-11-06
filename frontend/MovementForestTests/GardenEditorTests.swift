@@ -165,6 +165,24 @@ private final class EditorTestService: GardenServing {
 
 @MainActor
 final class GardenEditorTests: XCTestCase {
+    func testConfirmedLevelCapacitySurvivesLaterStaleInventory() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service, journal: MemoryEditJournal())
+        let initial = APIInventoryCapacity(ownedPlants: 50, plantedPlants: 20, storedPlants: 30,
+            plantLimit: 50, plantedLimit: 20, unopenedPacks: 12, packLimit: 50)
+        store.applyLevelPlantLimit(60)
+        service.pages["first"] = APIInventory(plants: service.fixture.inventory.plants,
+            nextCursor: nil, capacity: initial.applyingPlantLimit(75))
+        await store.start()
+        XCTAssertEqual(store.capacity?.plantLimit, 75)
+        service.pages["first"] = APIInventory(plants: service.fixture.inventory.plants,
+            nextCursor: nil, capacity: initial)
+        await store.refresh()
+        store.applyLevelPlantLimit(60)
+        XCTAssertEqual(store.capacity?.plantLimit, 75)
+        XCTAssertEqual(store.capacity?.ownedPlants, 50)
+    }
+
     func testCompactEditCompletionRefreshesCurrentLayoutWithoutResubmission() async throws {
         let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
         let journal = MemoryEditJournal()

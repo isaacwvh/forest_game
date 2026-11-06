@@ -54,6 +54,25 @@ final class AccountSummaryTests: XCTestCase {
         XCTAssertEqual(value.progression.stepsToNextGem, 2750)
     }
 
+    func testLevelBenefitsHTTPContractAndOlderReceiptCannotRollbackTheTier() async throws {
+        let url = try XCTUnwrap(Bundle.main.url(forResource: "level-benefits-contract", withExtension: "json", subdirectory: "Fixtures"))
+        let values = try ActivityWire.decoder().decode([String: APIAccountSummary].self, from: Data(contentsOf: url))
+        let before = try XCTUnwrap(values["before"]), after = try XCTUnwrap(values["after"])
+        XCTAssertNoThrow(try after.validated(user: after.profile.userId))
+        XCTAssertEqual(after.benefits?.baseOfflineCapacity, 900)
+        XCTAssertEqual(after.benefits?.plantLimit, 60)
+        XCTAssertEqual(after.levelUpNotice?.fromLevel, 4)
+        XCTAssertEqual(after.levelUpNotice?.toLevel, 5)
+        let service = FakeAccountSummary(after)
+        let store = AccountSummaryStore(userID: after.profile.userId, service: service, cache: MemoryAccountSummaryCache())
+        await store.refresh()
+        store.receive(progression: before.progression, wallet: before.wallet)
+        await store.refresh()
+        XCTAssertEqual(store.snapshot?.progression.level, 5)
+        XCTAssertEqual(store.snapshot?.benefits?.plantLimit, 60)
+        XCTAssertFalse(store.failed)
+    }
+
     func testCachedStateSurvivesOfflineRefresh() async throws {
         let value = try fixture(), service = FakeAccountSummary(try fixture())
         let cache = MemoryAccountSummaryCache()

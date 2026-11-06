@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from forest_api import collection, services
 from forest_api.collection_models import OwnedPack, PackOpening
 from forest_api.errors import ApiError
+from forest_api.level_benefits import owned_limit
 from forest_api.models import GardenPlacement, GrowthProfile, OwnedPlant, PlantIdentity, PlantSale
 from forest_api.schemas import DTO
 
@@ -41,7 +42,7 @@ def capacity(session, owner, settings):
         "ownedPlants": owned,
         "plantedPlants": planted,
         "storedPlants": owned - planted,
-        "plantLimit": settings.plant_capacity,
+        "plantLimit": owned_limit(session, owner, settings.plant_capacity),
         "plantedLimit": settings.planted_capacity,
         "unopenedPacks": packs,
         "packLimit": settings.pack_capacity,
@@ -53,7 +54,7 @@ def require_plant_room(session, owner, settings=None, quantity=1):
     count = session.scalar(
         select(func.count()).select_from(OwnedPlant).where(OwnedPlant.owner_id == owner)
     )
-    limit = settings.plant_capacity if settings is not None else 50
+    limit = owned_limit(session, owner, settings.plant_capacity if settings is not None else 50)
     if count + quantity > limit:
         raise ApiError(
             409,

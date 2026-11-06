@@ -21,7 +21,7 @@ from forest_api.dependencies import get_identity, get_session
 from forest_api.errors import ApiError
 from forest_api.exact_json import ExactJSONRoute
 from forest_api.placement import edit_garden
-from forest_api.progression_schemas import AccountSummary
+from forest_api.progression_schemas import AccountSummary, ClaimLevelUp, LevelUpClaimResult
 from forest_api.schemas import (
     AccountDTO,
     CatalogueDTO,
@@ -38,7 +38,7 @@ from forest_api.server_clock import request_clock
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0013_account_progression"
+SCHEMA_REVISION = "0014_level_benefits"
 
 
 @router.get("/health/live", tags=["health"])
@@ -94,7 +94,9 @@ def account_summary(
     session: Session = Depends(get_session),
 ) -> AccountSummary:
     response.headers["Cache-Control"] = "no-store"
-    return progression.read_summary(session, identity, clock=request_clock(request, session))
+    return progression.read_summary(
+        session, identity, request.app.state.settings, clock=request_clock(request, session)
+    )
 
 
 @router.get("/v1/catalog", response_model=CatalogueDTO, tags=["catalogue"])
@@ -223,6 +225,23 @@ def acknowledge_recap(
     return activity.acknowledge(
         session, identity, recap_id, body, clock=request_clock(request, session)
     )
+
+
+@placement_router.post(
+    "/v1/me/level-up-notices/{notice_id}/present",
+    response_model=LevelUpClaimResult,
+    tags=["account"],
+)
+def present_level_up(
+    notice_id: UUID,
+    body: ClaimLevelUp,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> LevelUpClaimResult:
+    from forest_api.level_benefits import claim
+
+    return claim(session, identity, notice_id, body, clock=request_clock(request, session))
 
 
 router.include_router(placement_router)

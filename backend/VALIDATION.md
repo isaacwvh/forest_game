@@ -687,3 +687,24 @@ data, real .env/Auth/signing setup and unrelated art were preserved. Native
 XCTest/Apple SDK/build and live backend/device cleanup acceptance are not claimed
 by Windows checks. No Swift source changed in this batch; reuse the already
 updated S1-S3 app. See SCALING_S4_S6.md for upgrade/maintenance/device acceptance.
+
+## Account level benefits — 7 November 2026
+
+Implemented `0014_level_benefits`, explicit policy activation, the approved base
+offline/owned-plant tiers, transactional sync notices and owner-locked one-time
+presentation claims. See [LEVEL_BENEFITS.md](LEVEL_BENEFITS.md) for formulas,
+contracts, existing-backend upgrade commands and activation semantics.
+
+Final PostgreSQL suite: **576 passed, 3 skipped** in 580.82 seconds. The skips are
+the existing opt-in physical-storage benchmarks. The old-schema backfill fixture
+explicitly disables the new policy helper until migration; model parity and the
+existing-data migration path pass. Also passed: 50 focused progression/benefit/
+summary/migration cases; real HTTP 4 → 5 (offline 825 → 900, plants 50 → 60), sync
+replay and cross-device claim smoke; Ruff lint/format for 104 Python files,
+dependency check, byte compilation and scoped whitespace checks.
+
+All database validation used generated disposable `forest_test_*` databases on
+the dedicated loopback PostgreSQL validation cluster. The cluster was stopped
+after the run. No personal game migration/activation, commit, push or CI run was
+performed. Native Apple SDK/XCTest/device results are not inferred from backend
+or Windows frontend validation; follow the linked frontend acceptance flow.

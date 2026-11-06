@@ -3,6 +3,45 @@ import XCTest
 final class ForestUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    func testLevelUpPopupUsesConfirmedBenefitsAndDoesNotReplayOnNavigation() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-level-up"]
+        app.launch()
+        let dismiss = app.buttons["levelUp.continue"]
+        XCTAssertTrue(dismiss.waitForExistence(timeout: 15))
+        let offline = app.descendants(matching: .any).matching(identifier: "levelUp.offlineBenefit").firstMatch
+        let plants = app.descendants(matching: .any).matching(identifier: "levelUp.plantBenefit").firstMatch
+        XCTAssertTrue(offline.label.contains("Base offline capacity"))
+        XCTAssertTrue(offline.label.contains("+75 → 900 total"))
+        XCTAssertTrue(plants.label.contains("Plant capacity"))
+        XCTAssertTrue(plants.label.contains("+10 → 60 total"))
+        let popup = app.descendants(matching: .any).matching(identifier: "levelUp.popup").firstMatch
+        XCTAssertLessThan(popup.frame.height, app.windows.firstMatch.frame.height * 0.85,
+                          "The ordinary-text celebration should remain a compact card")
+        dismiss.tap()
+        XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 5))
+        app.buttons["account.profile"].tap()
+        XCTAssertTrue(app.staticTexts["Level benefits"].waitForExistence(timeout: 5))
+        app.buttons["accountSheet.done"].tap()
+        app.buttons["navigation.Activity"].tap()
+        app.buttons["navigation.Garden"].tap()
+        XCTAssertFalse(dismiss.exists)
+    }
+
+    func testLevelUpPopupKeepsContinueReachableAtLargestTextSize() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-level-up",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let dismiss = app.buttons["levelUp.continue"]
+        XCTAssertTrue(dismiss.waitForExistence(timeout: 15))
+        XCTAssertTrue(dismiss.isHittable)
+        XCTAssertGreaterThanOrEqual(dismiss.frame.height, 44)
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(dismiss.frame))
+        dismiss.tap()
+        XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 5))
+    }
+
     func testProfileAndHomeShareConfirmedProgressAndReturnToTheSameGarden() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-progression"]

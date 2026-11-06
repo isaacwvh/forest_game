@@ -95,6 +95,23 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testConfirmedLevelCapacitySurvivesLaterStaleSummary() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+        let initial = APIInventoryCapacity(ownedPlants: 50, plantedPlants: 20, storedPlants: 30,
+            plantLimit: 50, plantedLimit: 20, unopenedPacks: 12, packLimit: 50)
+        store.applyLevelPlantLimit(60)
+        service.capacity = initial.applyingPlantLimit(75)
+        await store.refresh()
+        XCTAssertEqual(store.capacity?.plantLimit, 75)
+        service.capacity = initial
+        await store.refresh()
+        store.applyLevelPlantLimit(60)
+        XCTAssertEqual(store.capacity?.plantLimit, 75)
+        XCTAssertEqual(store.capacity?.ownedPlants, 50)
+        XCTAssertFalse(store.capacity?.plantFull ?? true)
+    }
+
     func testCancelledSwipeStillCompletesCollectionRefresh() async throws {
         let service = FakeCollection(try CollectionContract.load())
         service.checkRefreshCancellation = true

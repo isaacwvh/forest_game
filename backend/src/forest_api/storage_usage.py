@@ -6,6 +6,7 @@ from forest_api.models import Base
 
 GROUPS = {
     "current_state": {
+        "account_level_state",
         "users",
         "gardens",
         "owned_plants",
@@ -21,6 +22,7 @@ GROUPS = {
         "visitor_controls",
     },
     "durable_recovery": {
+        "level_up_notices",
         "gem_grants",
         "plant_identities",
         "plant_sales",
@@ -52,6 +54,7 @@ GROUPS = {
         "visitor_opportunities",
     },
     "shared_configuration": {
+        "level_benefits_policy",
         "alembic_version",
         "game_catalogue",
         "growth_profiles",

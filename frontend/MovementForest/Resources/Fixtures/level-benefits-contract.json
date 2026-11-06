@@ -1,0 +1,112 @@
+{
+  "before": {
+    "serverTime": "2026-11-06T16:20:57.808988Z",
+    "profile": {
+      "userId": "19f13107-4761-4d9f-b776-c43f81050606",
+      "username": "level_smoke",
+      "displayName": "Level benefits smoke",
+      "gameTimezone": "Asia/Singapore",
+      "createdAt": "2026-11-07T00:20:58.101540+08:00"
+    },
+    "progression": {
+      "rulesVersion": "step-progression-v1",
+      "version": 1,
+      "lifetimeRecordedSteps": "34999",
+      "stepXp": "349",
+      "totalXp": "349",
+      "level": 4,
+      "xpIntoLevel": "124",
+      "xpForNextLevel": "125",
+      "stepsIntoNextGem": 4999,
+      "stepsPerGem": 10000,
+      "stepsToNextGem": 5001,
+      "plantsGrownToAdulthood": "0",
+      "lastSyncAt": "2026-11-07T00:20:57.808988+08:00"
+    },
+    "wallet": {
+      "economyVersion": 1,
+      "tokenBalance": "0",
+      "gemBalance": "3",
+      "lifetimeGemsEarned": "3",
+      "initialized": true,
+      "hostedActive": "0",
+      "hostedOffline": "0",
+      "hostedTotal": "0"
+    },
+    "benefits": {
+      "policyVersion": "level-benefits-v1",
+      "progressionVersion": 1,
+      "gardenStateVersion": 0,
+      "level": 4,
+      "baseOfflineCapacity": 825,
+      "effectiveOfflineCapacity": 825,
+      "maximumOfflineCapacity": 2475,
+      "plantLimit": 50,
+      "plantedLimit": 20,
+      "nextBaseIncrease": 75,
+      "nextPlantLevel": 5,
+      "nextPlantLimit": 60
+    },
+    "levelUpNotice": null
+  },
+  "after": {
+    "serverTime": "2026-11-06T16:20:57.808988Z",
+    "profile": {
+      "userId": "19f13107-4761-4d9f-b776-c43f81050606",
+      "username": "level_smoke",
+      "displayName": "Level benefits smoke",
+      "gameTimezone": "Asia/Singapore",
+      "createdAt": "2026-11-07T00:20:58.101540+08:00"
+    },
+    "progression": {
+      "rulesVersion": "step-progression-v1",
+      "version": 2,
+      "lifetimeRecordedSteps": "35000",
+      "stepXp": "350",
+      "totalXp": "350",
+      "level": 5,
+      "xpIntoLevel": "0",
+      "xpForNextLevel": "150",
+      "stepsIntoNextGem": 5000,
+      "stepsPerGem": 10000,
+      "stepsToNextGem": 5000,
+      "plantsGrownToAdulthood": "0",
+      "lastSyncAt": "2026-11-07T00:20:57.808988+08:00"
+    },
+    "wallet": {
+      "economyVersion": 1,
+      "tokenBalance": "0",
+      "gemBalance": "3",
+      "lifetimeGemsEarned": "3",
+      "initialized": true,
+      "hostedActive": "0",
+      "hostedOffline": "0",
+      "hostedTotal": "0"
+    },
+    "benefits": {
+      "policyVersion": "level-benefits-v1",
+      "progressionVersion": 2,
+      "gardenStateVersion": 0,
+      "level": 5,
+      "baseOfflineCapacity": 900,
+      "effectiveOfflineCapacity": 900,
+      "maximumOfflineCapacity": 2700,
+      "plantLimit": 60,
+      "plantedLimit": 20,
+      "nextBaseIncrease": 60,
+      "nextPlantLevel": 10,
+      "nextPlantLimit": 75
+    },
+    "levelUpNotice": {
+      "id": "a26eadf9-1ec8-406b-a831-f09b146f02a0",
+      "policyVersion": "level-benefits-v1",
+      "fromLevel": 4,
+      "toLevel": 5,
+      "baseOfflineBefore": 825,
+      "baseOfflineAfter": 900,
+      "effectiveOfflineAfter": 900,
+      "plantLimitBefore": 50,
+      "plantLimitAfter": 60
+    }
+  }
+}

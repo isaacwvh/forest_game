@@ -26,6 +26,7 @@ final class AccountSummaryStore: ObservableObject {
     @Published private(set) var lastConfirmed = true
     @Published private(set) var failed = false
     var onWallet: ((String, Int64) -> Void)?
+    var onSummary: ((APIAccountSummary) -> Void)?
     private let userID: UUID
     private let service: any AccountSummaryServing
     private let cache: any AccountSummaryPersisting
@@ -74,7 +75,9 @@ final class AccountSummaryStore: ObservableObject {
         if let p = progression, let w = wallet, let current = snapshot {
             do {
                 let incoming = APIAccountSummary(serverTime: current.serverTime, profile: current.profile,
-                                                 progression: p, wallet: w)
+                    progression: p, wallet: w,
+                    benefits: current.benefits?.level == p.level && current.benefits?.progressionVersion == p.version ? current.benefits : nil,
+                    levelUpNotice: current.levelUpNotice.flatMap { $0.toLevel <= p.level ? $0 : nil })
                 try merge(incoming)
             } catch { failed = true }
         }
@@ -101,6 +104,7 @@ final class AccountSummaryStore: ObservableObject {
         if let current = snapshot {
             if incoming.progression.version < current.progression.version {
                 merged.progression = current.progression
+                merged.levelUpNotice = current.levelUpNotice
             } else if incoming.progression.version == current.progression.version {
                 // The disk wire codec preserves milliseconds. Compare its canonical form so
                 // sub-millisecond timestamp precision cannot turn a valid cache into a conflict.
@@ -117,9 +121,16 @@ final class AccountSummaryStore: ObservableObject {
             } else if incoming.wallet.economyVersion == current.wallet.economyVersion && incoming.wallet != current.wallet {
                 throw ForestError.invalidData("Conflicting account wallet version.")
             }
+            if let old = current.benefits, let next = incoming.benefits,
+               old.progressionVersion > next.progressionVersion ||
+                (old.progressionVersion == next.progressionVersion && old.gardenStateVersion > next.gardenStateVersion) {
+                merged.benefits = old
+            }
+            if merged.benefits?.progressionVersion != merged.progression.version { merged.benefits = nil }
         }
         let previous = snapshot
         snapshot = try merged.validated(user: userID)
+        onSummary?(merged)
         if previous?.progression != merged.progression || previous?.wallet != merged.wallet {
             let p = merged.progression
             DiagnosticHistory.shared.record("Progression",

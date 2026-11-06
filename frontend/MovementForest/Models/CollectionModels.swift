@@ -181,6 +181,11 @@ struct APIInventoryCapacity: Codable, Equatable {
     var plantFull: Bool { ownedPlants >= plantLimit }
     var packsFull: Bool { unopenedPacks >= packLimit }
     var packRoom: Int { max(0, packLimit - unopenedPacks) }
+    func applyingPlantLimit(_ limit: Int?) -> Self {
+        guard let limit = limit else { return self }
+        return Self(ownedPlants: ownedPlants, plantedPlants: plantedPlants, storedPlants: storedPlants,
+            plantLimit: max(plantLimit, limit), plantedLimit: plantedLimit, unopenedPacks: unopenedPacks, packLimit: packLimit)
+    }
 }
 
 struct APIPlantSaleQuote: Codable {

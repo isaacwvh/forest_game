@@ -104,9 +104,19 @@ def create_context(session, settings, garden, boundary):
     )
     attraction = skills.attraction()
     parameters = visitor_parameters(attraction, len(sources), definition.curve)
+    from forest_api import level_benefits
+
+    level = (
+        level_benefits.account_level(session, garden.owner_id)
+        if level_benefits.active(session, boundary)
+        else None
+    )
+    base = (
+        level_benefits.base_capacity(level) if level is not None else definition.curve.base_capacity
+    )
     parameters["capacity"] = skills.capacity(
-        definition.curve.base_capacity,
-        definition.curve.maximum_capacity,
+        base,
+        3 * base if level is not None else definition.curve.maximum_capacity,
         flat_multiplier=definition.capacity_flat_multiplier,
     )
     context = VisitorContext(
@@ -121,6 +131,17 @@ def create_context(session, settings, garden, boundary):
             "activeRate": fraction_json(parameters["active_rate"]),
             "offlineRate": fraction_json(parameters["offline_rate"]),
             "capacity": parameters["capacity"],
+            **(
+                {
+                    "levelBenefits": {
+                        "version": level_benefits.POLICY_VERSION,
+                        "level": level,
+                        "base": base,
+                    }
+                }
+                if level is not None
+                else {}
+            ),
             "rules": definition.model_dump(mode="json"),
             "skills": skills.summary(),
         },

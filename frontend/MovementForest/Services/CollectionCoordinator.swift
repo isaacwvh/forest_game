@@ -27,6 +27,18 @@ final class CollectionCoordinator: ObservableObject {
     let discovery: CatalogDiscoveryStore
     @Published private(set) var offers: [APIExchangeOffer] = []
     @Published private(set) var capacity: APIInventoryCapacity?
+    private var levelPlantLimit: Int?
+    func applyLevelPlantLimit(_ limit: Int) {
+        let confirmed = max(limit, capacity?.plantLimit ?? limit)
+        guard confirmed > (levelPlantLimit ?? 0) else { return }
+        levelPlantLimit = confirmed; capacity = capacity?.applyingPlantLimit(confirmed)
+    }
+    private func acceptCapacity(_ incoming: APIInventoryCapacity?) {
+        if let known = levelPlantLimit, let incoming = incoming {
+            levelPlantLimit = max(known, incoming.plantLimit)
+        }
+        capacity = incoming?.applyingPlantLimit(levelPlantLimit)
+    }
     @Published private(set) var milestones: [APIIntroMilestone] = []
     @Published private(set) var milestonesConfirmedAt: Date?
     @Published private(set) var refreshFailed = false
@@ -122,7 +134,7 @@ final class CollectionCoordinator: ObservableObject {
             }
             applyWallet(receipt.tokenBalance, version: receipt.economyVersion)
             if receipt.economyVersion == economyVersion, let capacity = receipt.capacity {
-                self.capacity = capacity
+                acceptCapacity(capacity)
             }
             DiagnosticHistory.shared.record("Collection", "confirmed \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
             message = pending.kind == .sell ? "Plant sold for \(receipt.tokensEarned ?? "0") tokens." :
@@ -140,7 +152,7 @@ final class CollectionCoordinator: ObservableObject {
         let summary = try await service.summary()
         guard attached else { return }
         applyWallet(summary.tokenBalance, version: summary.economyVersion)
-        if summary.economyVersion == economyVersion { capacity = summary.capacity }
+        if summary.economyVersion == economyVersion { acceptCapacity(summary.capacity) }
         offers = summary.offers
         milestones = summary.milestones ?? []
         milestonesConfirmedAt = Date()

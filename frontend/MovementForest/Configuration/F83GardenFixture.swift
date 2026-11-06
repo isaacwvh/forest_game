@@ -40,22 +40,53 @@ private final class PresentationAccountCache: AccountSummaryPersisting {
 @MainActor
 enum PresentationAccountFixture {
     static func store(profile: APIProfile) throws -> AccountSummaryStore {
-        guard let url = Bundle.main.url(forResource: "account-summary-contract", withExtension: "json", subdirectory: "Fixtures") else {
+        let arguments = ProcessInfo.processInfo.arguments
+        let levelFixture = arguments.contains("--fixture-level-up")
+        let name = levelFixture ? "level-benefits-contract" : "account-summary-contract"
+        guard let url = Bundle.main.url(forResource: name, withExtension: "json", subdirectory: "Fixtures") else {
             throw ForestError.missingResource("account-summary-contract")
         }
         let values = try ActivityWire.decoder().decode([String: APIAccountSummary].self, from: Data(contentsOf: url))
-        let arguments = ProcessInfo.processInfo.arguments
-        guard let source = values[arguments.contains("--fixture-account-fresh") ? "fresh" : "grown"] else {
+        let key = levelFixture ? "after" : arguments.contains("--fixture-account-fresh") ? "fresh" : "grown"
+        guard let source = values[key] else {
             throw ForestError.invalidData("Account presentation fixture is missing.")
         }
         let identity = APIAccountIdentity(userId: profile.userId, username: profile.username, displayName: profile.displayName,
             gameTimezone: profile.gameTimezone, createdAt: source.profile.createdAt)
         let value = try APIAccountSummary(serverTime: source.serverTime, profile: identity,
-            progression: source.progression, wallet: source.wallet).validated(user: profile.userId)
+            progression: source.progression, wallet: source.wallet, benefits: source.benefits,
+            levelUpNotice: source.levelUpNotice).validated(user: profile.userId)
         let offline = arguments.contains("--fixture-account-offline") || arguments.contains("--fixture-account-failed")
         return AccountSummaryStore(userID: profile.userId,
             service: PresentationAccountService(value: value, offline: offline),
             cache: PresentationAccountCache(arguments.contains("--fixture-account-offline") ? value : nil))
+    }
+}
+
+@MainActor
+private final class PresentationLevelCache: LevelUpPersisting {
+    var value: LevelUpPresentationCache?
+    func load(server: String, user: UUID) throws -> LevelUpPresentationCache? { value }
+    func save(_ value: LevelUpPresentationCache) throws { self.value = value }
+}
+
+@MainActor
+private final class PresentationLevelClaims: LevelUpServing {
+    let notice: APILevelUpNotice
+    private var winner: UUID?
+    init(_ notice: APILevelUpNotice) { self.notice = notice }
+    func claim(notice: UUID, request: UUID, installation: UUID) async throws -> APILevelUpClaim {
+        if winner == nil { winner = request }
+        return APILevelUpClaim(notice: self.notice, mayPresent: winner == request)
+    }
+}
+
+@MainActor
+enum PresentationLevelFixture {
+    static func coordinator(summary: APIAccountSummary) throws -> LevelUpCoordinator {
+        guard let notice = summary.levelUpNotice else { throw ForestError.missingResource("level-up notice") }
+        return LevelUpCoordinator(user: summary.profile.userId, server: "https://level-fixture.invalid",
+            installation: UUID(), service: PresentationLevelClaims(notice), persistence: PresentationLevelCache())
     }
 }
 

@@ -1,6 +1,7 @@
 """Additive account progression contracts. All large quantities use decimal strings."""
 
 from datetime import datetime
+from uuid import UUID
 
 from forest_api.schemas import DTO, UserDTO
 
@@ -37,3 +38,45 @@ class AccountSummary(DTO):
     profile: UserDTO
     progression: ProgressionSnapshot
     wallet: AccountWallet
+    benefits: "LevelBenefitsSnapshot | None" = None
+    level_up_notice: "LevelUpNoticeDTO | None" = None
+
+
+class LevelBenefitsSnapshot(DTO):
+    policy_version: str
+    progression_version: int
+    garden_state_version: int
+    level: int
+    base_offline_capacity: int
+    effective_offline_capacity: int
+    maximum_offline_capacity: int
+    plant_limit: int
+    planted_limit: int
+    next_base_increase: int
+    next_plant_level: int | None
+    next_plant_limit: int | None
+
+
+class LevelUpNoticeDTO(DTO):
+    id: UUID
+    policy_version: str
+    from_level: int
+    to_level: int
+    base_offline_before: int
+    base_offline_after: int
+    effective_offline_after: int
+    plant_limit_before: int
+    plant_limit_after: int
+
+
+class ClaimLevelUp(DTO):
+    request_id: UUID
+    installation_id: UUID
+
+
+class LevelUpClaimResult(DTO):
+    notice: LevelUpNoticeDTO
+    may_present: bool
+
+
+AccountSummary.model_rebuild()

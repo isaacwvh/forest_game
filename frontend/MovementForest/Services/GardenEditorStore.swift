@@ -36,6 +36,18 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     @Published private(set) var rendered: GardenSnapshot?
     @Published private(set) var inventory: [APIOwnedPlant] = []
     @Published private(set) var capacity: APIInventoryCapacity?
+    private var levelPlantLimit: Int?
+    func applyLevelPlantLimit(_ limit: Int) {
+        let confirmed = max(limit, capacity?.plantLimit ?? limit)
+        guard confirmed > (levelPlantLimit ?? 0) else { return }
+        levelPlantLimit = confirmed; capacity = capacity?.applyingPlantLimit(confirmed)
+    }
+    private func acceptCapacity(_ incoming: APIInventoryCapacity?) {
+        if let known = levelPlantLimit, let incoming = incoming {
+            levelPlantLimit = max(known, incoming.plantLimit)
+        }
+        capacity = incoming?.applyingPlantLimit(levelPlantLimit)
+    }
     @Published private(set) var nextCursor: UUID?
     @Published private(set) var candidate: GardenCandidate?
     @Published private(set) var pending: PendingGardenEdit?
@@ -219,7 +231,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 _ = try PlacementGeometry.units(after.depth)
                 catalogue = catalog; confirmed = after; rendered = snapshot
                 inventory = filtered(page.plants, garden: after); nextCursor = page.nextCursor
-                capacity = page.capacity
+                acceptCapacity(page.capacity)
                 confirmedAt = Date(); showingCached = false
                 try persistConfirmed()
                 needsRefresh = false; state = .ready

@@ -472,6 +472,7 @@ def test_existing_database_backfill_preserves_live_state_and_pins_value(
             # Reproduce the pre-progression registration path against its old schema.
             with database.sessions() as session, monkeypatch.context() as legacy:
                 legacy.setattr(progression, "initialize_account", lambda *args: None)
+                legacy.setattr("forest_api.level_benefits.active", lambda *args: False)
                 account = services.register_account(
                     session,
                     settings,
@@ -483,7 +484,8 @@ def test_existing_database_backfill_preserves_live_state_and_pins_value(
                         game_timezone="Asia/Singapore",
                     ),
                 )
-            with database.sessions.begin() as session:
+            with database.sessions.begin() as session, monkeypatch.context() as legacy:
+                legacy.setattr("forest_api.level_benefits.active", lambda *args: False)
                 plant = services.award_plant(
                     session, account.profile.user_id, "oak", "blue", "test", "backfill"
                 )

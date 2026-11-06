@@ -46,6 +46,7 @@ private struct ProfileScreen: View {
                         if let summary = store.snapshot {
                             identity(summary).id(ProfileSection.overview)
                             level(summary.progression)
+                            if let benefits = summary.benefits { benefitsSection(benefits) }
                             currency(summary).id(ProfileSection.currency)
                             lifetime(summary)
                             account(summary)
@@ -104,6 +105,22 @@ private struct ProfileScreen: View {
             } else {
                 Text("Your gem progress is being prepared. Sync activity to update it.")
                     .font(.footnote).foregroundStyle(JournalTheme.secondary)
+            }
+        }
+    }
+
+    private func benefitsSection(_ value: APILevelBenefits) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            JournalSectionHeading(title: "Level benefits")
+            DetailRow(title: "Base offline capacity", value: value.baseOfflineCapacity.formatted())
+            DetailRow(title: "With active skills", value: value.effectiveOfflineCapacity.formatted())
+            DetailRow(title: "Plant capacity", value: "\(value.plantLimit.formatted()) total")
+            Text("Plant capacity includes planted and stored copies.").font(.footnote).foregroundStyle(JournalTheme.secondary)
+            if value.nextBaseIncrease > 0 {
+                Text("Next level: +\(value.nextBaseIncrease) base offline capacity").font(.footnote)
+            }
+            if let level = value.nextPlantLevel, let limit = value.nextPlantLimit {
+                Text("Level \(level): \(limit) plant capacity").font(.footnote)
             }
         }
     }

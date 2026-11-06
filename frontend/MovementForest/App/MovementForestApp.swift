@@ -88,7 +88,14 @@ struct RootView: View {
     private var focusedEditing: Bool { connection.editor?.editing == true }
 
     private var entryAllowed: Bool {
-        resume.foreground && accountSheet == nil && !menuPresented && !packOpeningPresented && !childEntryBlocked && !focusedEditing
+        resume.foreground && accountSheet == nil && !menuPresented && !packOpeningPresented && !childEntryBlocked && !focusedEditing && connection.levelUps?.presented == nil
+    }
+
+    private var levelUpAllowed: Bool {
+        resume.foreground && accountSheet == nil && !menuPresented && !packOpeningPresented &&
+            !childEntryBlocked && !focusedEditing && !entryRecap.showing &&
+            (connection.levelUps?.presented != nil ||
+                (connection.activitySync?.busy != true && connection.editor?.connectionBusy != true))
     }
 
     private func sceneChanged(to value: ScenePhase) {
@@ -143,7 +150,7 @@ struct RootView: View {
                     // Always mounted: browsing and Edit use this same renderer/camera.
                     NavigationStack {
                         GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
-                            active: selectedTab == .garden && accountSheet == nil && !menuPresented && collectionDestination == nil && !entryRecap.showing,
+                            active: selectedTab == .garden && accountSheet == nil && !menuPresented && collectionDestination == nil && !entryRecap.showing && connection.levelUps?.presented == nil,
                             openProfile: presentProfile)
                             .toolbar { if !focusedEditing { menuButton; accountButtons } }
                     }
@@ -222,6 +229,15 @@ struct RootView: View {
                 }
                 .environment(\.gardenBottomNavigationTop, bottomNavigationTop)
                 .onPreferenceChange(GardenBottomNavigationTop.self) { bottomNavigationTop = $0 }
+                .allowsHitTesting(connection.levelUps?.presented == nil)
+                .accessibilityHidden(connection.levelUps?.presented != nil)
+                .overlay {
+                    if let coordinator = connection.levelUps, let notice = coordinator.presented {
+                        LevelUpPopup(notice: notice, dismiss: coordinator.dismiss)
+                    }
+                }
+                .task(id: connection.levelUps?.id) { connection.levelUps?.setEligible(levelUpAllowed) }
+                .onChange(of: levelUpAllowed) { connection.levelUps?.setEligible($0) }
                 .sheet(item: $accountSheet) { destination in
                     NavigationStack {
                         Group {

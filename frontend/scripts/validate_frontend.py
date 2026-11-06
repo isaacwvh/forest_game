@@ -202,6 +202,25 @@ def main():
             grown["progression"]["xpForNextLevel"] == "150" and grown["progression"]["stepsIntoNextGem"] == 7250 and
             grown["wallet"]["gemBalance"] == "3", "Progression presentation scenario changed")
     print("PASS: account presentation contract: level 5, 22/150 XP, 3 gems, 7,250/10,000 steps; real zero-account fixture.")
+    benefits = json.loads((ROOT / "MovementForest/Resources/Fixtures/level-benefits-contract.json").read_text(encoding="utf-8"))
+    before, after = benefits["before"], benefits["after"]
+    require(before["profile"]["userId"] == after["profile"]["userId"], "Level benefits account mismatch")
+    require(before["progression"]["level"] == 4 and after["progression"]["level"] == 5 and
+            before["levelUpNotice"] is None, "Level benefits activation baseline mismatch")
+    for account, base, limit in [(before, 825, 50), (after, 900, 60)]:
+        value = account["benefits"]
+        require(value["policyVersion"] == "level-benefits-v1" and
+                value["progressionVersion"] == account["progression"]["version"] and
+                value["level"] == account["progression"]["level"], "Level benefits version mismatch")
+        require(value["baseOfflineCapacity"] == value["effectiveOfflineCapacity"] == base and
+                value["maximumOfflineCapacity"] == base * 3 and value["plantLimit"] == limit and
+                value["plantedLimit"] == 20, "Level benefits tier mismatch")
+    notice = after["levelUpNotice"]
+    require(notice["fromLevel"] == 4 and notice["toLevel"] == 5 and
+            notice["baseOfflineBefore"] == 825 and notice["baseOfflineAfter"] == 900 and
+            notice["plantLimitBefore"] == 50 and notice["plantLimitAfter"] == 60,
+            "Level-up benefit receipt mismatch")
+    print("PASS: real HTTP level benefits contract: 4 to 5, offline 825 to 900, owned plants 50 to 60.")
     collection = json.loads((ROOT / "MovementForest/Resources/Fixtures/collection-contract.json").read_text(encoding="utf-8"))
     bought, opened = collection["exchange"], collection["opening"]
     require(len(bought["packs"]) == bought["quantity"] == 2, "Collection pack quantity mismatch")
