@@ -74,7 +74,7 @@ struct AccountSummaryNotice: View {
                     .buttonStyle(.journalQuiet).disabled(store.refreshing)
                     .accessibilityIdentifier("accountProgress.retry")
             }.foregroundStyle(JournalTheme.secondary)
-        } else if store.lastConfirmed && store.snapshot != nil {
+        } else if store.showsSavedProgress {
             Label("Saved progress · Values last confirmed", systemImage: "clock")
                 .font(.caption).foregroundStyle(JournalTheme.secondary)
         }
@@ -123,7 +123,7 @@ struct HomeAccountHeader: View {
                     attraction: attraction, gems: AccountDisplay.gemBalance(store.snapshot?.wallet),
                     openGems: { openProfile(.currency) }, information: information, collect: {})
             }
-            if store.failed || (store.lastConfirmed && store.snapshot != nil) {
+            if store.failed || store.showsSavedProgress {
                 AccountSummaryNotice(store: store).padding(.horizontal, 12)
             }
         }

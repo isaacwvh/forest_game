@@ -17,11 +17,15 @@ there is no new migration, endpoint, earning rule, pack or level benefit.
   and stored visits, followed by Garden info and Collect. The detailed next-gem
   bar stays in Profile, reached by tapping the gem balance. Metrics reflow when
   they cannot fit; confirmed visitor token feedback keeps its existing ownership.
-  Exchange and Packs include gems in their summary.
+  Normal text uses three tight 44-point rows without extra footer padding;
+  larger text retains scaled reward clearance. Exchange and Packs include gems.
 - Shared views read server-confirmed values from AccountSummaryStore. Loading,
   cached/offline, failed, preparing and initialized-zero states are distinct.
   Retry/pull-to-refresh only reads the account summary; it never requests Health
   access or uploads activity.
+- Routine reward/account/garden refreshes keep the confirmed Home display quiet.
+  Restored cache, obsolete server responses and genuine errors retain their
+  saved/recovery notices. Initial loading and edit-save feedback remain visible.
 - Profile shares the Settings sheet coordinator, pauses active visitor interaction,
   blocks automatic entry recaps and closes on account changes. Settings retains
   its existing sign-in flow. The mounted garden scene, camera and edit controls
@@ -41,7 +45,7 @@ prompt provenance. The actual 128px icons were visually inspected.
 
 Added eight AccountPresentationTests covering exact large-number formatting,
 backend-derived progress ratios, real zero and preparing wallets, gem/XP boundary
-remainders, bundled artwork, a 150-point normal-text compact-header budget and
+remainders, bundled artwork, a 132-point normal-text compact-header budget and
 large-text overlay clipping without scene resizing. Four UI tests cover Home/
 Profile/navigation consistency, cached offline Retry, uncached failure without
 invented balances and My plants swipe-refresh. GardenEditorTests adds regressions
@@ -94,6 +98,8 @@ These fixtures are Debug-only and keep summary state in memory.
    Confirm token feedback and collection eligibility remain correct. Hosted
    lifetime counters update; current Stored visits still shows uncollected visits.
    Exchange/Packs show gems without changing any prices or purchase actions.
+   Repeated butterfly taps/claims must not flash a Saved progress or Refreshing
+   garden banner after a successful live account read; errors still show recovery.
 6. Reopen offline with a cached summary: values remain and are identified as saved.
    Retry preserves the values on failure. A missing summary shows recovery, never
    made-up zero balances. A legitimate new account shows level 1 and actual zeros.

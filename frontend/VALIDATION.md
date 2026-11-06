@@ -1,5 +1,22 @@
 # Validation record
 
+## Tighter Home spacing and quiet reward refresh — 6 November 2026
+
+Removed the standard-text metrics/action gap and compact HUD footer padding.
+Standard metrics use their existing 44-point targets; larger text retains scaled
+token-reward space. The normal header measurement target is now 132 points.
+Background refreshes over a confirmed garden no longer insert a loading panel.
+
+The account summary distinguishes a pending refresh after live confirmation from
+restored/stale data for notice presentation. Wallet invalidation stays quiet
+before and during its read; cache restoration, obsolete responses and failures
+retain notices. Versions, refresh requests and currency/reward rules are unchanged.
+Added warm/cold refresh notice regressions and tightened header-size assertions.
+
+Portable frontend/project/assets/contracts checks, all 88 Swift syntax parses and
+diff whitespace validation pass. Native XCTest, reward clearance and the new header
+measurement remain Mac/iPhone checks; no native result is claimed on Windows.
+
 ## Compact Home and My plants refresh correction — 6 November 2026
 
 Follows the user's screenshot/sketch: slim XP strip, a combined icon/value row for

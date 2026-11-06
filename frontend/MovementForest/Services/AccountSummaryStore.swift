@@ -31,8 +31,15 @@ final class AccountSummaryStore: ObservableObject {
     private let cache: any AccountSummaryPersisting
     private var attached = true
     private var dirty = true
+    private var hasLiveConfirmation = false
     private var minimumEconomyVersion: Int64 = 0
     private var refreshTask: Task<Void, Never>?
+
+    // Keep restored/stale data labelled, but do not flash a saved-data banner
+    // while a previously confirmed account updates after an ordinary reward.
+    var showsSavedProgress: Bool {
+        snapshot != nil && lastConfirmed && (!hasLiveConfirmation || (!dirty && !refreshing))
+    }
 
     init(userID: UUID, service: any AccountSummaryServing,
          cache: (any AccountSummaryPersisting)? = nil) {
@@ -141,6 +148,7 @@ final class AccountSummaryStore: ObservableObject {
                 failed = false
                 lastConfirmed = dirty || (snapshot?.wallet.economyVersion ?? -1) < minimumEconomyVersion ||
                     snapshot?.progression != incoming.progression || snapshot?.wallet != incoming.wallet
+                if !lastConfirmed { hasLiveConfirmation = true }
             } catch {
                 guard attached else { return }
                 failed = true; lastConfirmed = true; dirty = true

@@ -64,7 +64,11 @@ final class AccountSummaryTests: XCTestCase {
         let restored = AccountSummaryStore(userID: value.profile.userId, service: service, cache: cache)
         XCTAssertEqual(restored.snapshot, value)
         XCTAssertTrue(restored.lastConfirmed)
+        XCTAssertTrue(restored.showsSavedProgress)
         service.fail = true
+        await store.refresh()
+        XCTAssertTrue(store.failed)
+        XCTAssertEqual(store.snapshot, value)
         await restored.refresh()
         XCTAssertTrue(restored.failed)
         XCTAssertEqual(restored.snapshot, value)
@@ -79,6 +83,44 @@ final class AccountSummaryTests: XCTestCase {
         await store.refresh()
         XCTAssertNil(store.snapshot)
         XCTAssertTrue(store.failed)
+    }
+
+    func testWarmRewardRefreshDoesNotFlashSavedProgress() async throws {
+        let fresh = try fixture("fresh"), grown = try fixture()
+        let service = FakeAccountSummary(fresh)
+        let store = AccountSummaryStore(userID: fresh.profile.userId, service: service, cache: MemoryAccountSummaryCache())
+        await store.refresh()
+        service.hold = true; service.value = grown
+        let suspended = expectation(description: "reward wallet refresh suspended")
+        service.onSuspended = { suspended.fulfill() }
+        store.economyChanged(grown.wallet.economyVersion)
+        XCTAssertTrue(store.lastConfirmed)
+        XCTAssertFalse(store.showsSavedProgress, "Queued reward refresh must stay quiet before its task starts")
+        await fulfillment(of: [suspended], timeout: 2)
+        XCTAssertTrue(store.refreshing)
+        XCTAssertFalse(store.showsSavedProgress)
+        service.continuation?.resume(returning: grown)
+        await store.refresh()
+        XCTAssertFalse(store.lastConfirmed)
+        XCTAssertFalse(store.showsSavedProgress)
+        XCTAssertEqual(store.snapshot, grown)
+    }
+
+    func testRestoredCacheStaysLabelledDuringItsFirstRead() async throws {
+        let value = try fixture(), cache = MemoryAccountSummaryCache()
+        cache.value = AccountSummaryCache(snapshot: value, confirmedAt: Date())
+        let service = FakeAccountSummary(value)
+        service.hold = true
+        let suspended = expectation(description: "restored account read suspended")
+        service.onSuspended = { suspended.fulfill() }
+        let store = AccountSummaryStore(userID: value.profile.userId, service: service, cache: cache)
+        XCTAssertTrue(store.showsSavedProgress)
+        let read = Task { await store.refresh() }
+        await fulfillment(of: [suspended], timeout: 2)
+        XCTAssertTrue(store.showsSavedProgress)
+        service.continuation?.resume(returning: value)
+        await read.value
+        XCTAssertFalse(store.showsSavedProgress)
     }
 
     func testCachedOnlyRepositoryRestoresBeforeRemoteIdentityVerification() async throws {
@@ -120,6 +162,7 @@ final class AccountSummaryTests: XCTestCase {
         XCTAssertEqual(store.snapshot?.progression, grown.progression)
         XCTAssertEqual(store.snapshot?.wallet, grown.wallet)
         XCTAssertTrue(store.lastConfirmed)
+        XCTAssertTrue(store.showsSavedProgress, "An obsolete response must still identify stale values")
         XCTAssertEqual(versions, [grown.wallet.economyVersion])
     }
 

@@ -36,7 +36,7 @@ private struct ProfileScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if store.failed || (store.lastConfirmed && store.snapshot != nil) {
+            if store.failed || store.showsSavedProgress {
                 AccountSummaryNotice(store: store).padding(.horizontal, 20).padding(.vertical, 8)
                     .background(JournalTheme.sage.opacity(0.65))
             }

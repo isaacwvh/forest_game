@@ -171,7 +171,7 @@ struct ConnectedGardenScreen: View {
             } else {
                 visitorHeader
             }
-            if store.showingCached || store.gardenMessage != nil || store.state.busy ||
+            if store.showingCached || store.gardenMessage != nil || store.state == .saving ||
                 store.state == .unknown || store.state == .authenticationRequired || store.recoveryLocked ||
                 !renderer.errors.isEmpty || renderer.isLoading || renderer.visitorAssetIssue != nil {
                 VStack(alignment: .leading, spacing: 6) {
@@ -181,7 +181,7 @@ struct ConnectedGardenScreen: View {
                     if let message = store.gardenMessage {
                         Text(message).font(.callout).accessibilityIdentifier("editor.status")
                     }
-                    if store.state.busy { ProgressView(store.state == .saving ? "Saving edit…" : "Refreshing garden…") }
+                    if store.state == .saving { ProgressView("Saving edit…") }
                     if store.state == .unknown {
                         Button("Retry saved edit") { Task { await store.retryPending() } }
                             .buttonStyle(.journalSecondary)
@@ -203,7 +203,7 @@ struct ConnectedGardenScreen: View {
                 }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
                     .modifier(GardenOutline()).gardenOverlayTarget().padding(.horizontal, 12)
             }
-        }.padding(.bottom, 8)
+        }.padding(.bottom, accountSummary == nil ? 8 : 0)
     }
 
     private var visitorHeader: some View {

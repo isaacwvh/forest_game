@@ -260,7 +260,7 @@ struct GardenSummaryHeader: View {
     @ScaledMetric(relativeTo: .subheadline) private var feedbackSpace: CGFloat = 16
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: gems != nil && !textSize.isAccessibilitySize ? 0 : 6) {
             if textSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 6) {
                     if showsTokens { metric("Tokens", key: "tokens", value: tokens) }
@@ -302,14 +302,16 @@ struct GardenSummaryHeader: View {
         VStack(spacing: 2) {
             if key == "tokens" {
                 TokenRewardCounter(balance: value ?? "Unavailable", reward: tokenReward, finished: tokenRewardFinished,
-                                   reduceMotionOverride: tokenReduceMotion, reservesRewardSpace: textSize.isAccessibilitySize || gems != nil)
+                                   reduceMotionOverride: tokenReduceMotion,
+                                   reservesRewardSpace: textSize.isAccessibilitySize || (gems != nil && textSize > .large))
                     .lineLimit(1).minimumScaleFactor(0.75)
             } else {
                 QuantityLabel(metric: key, text: value ?? (gems == nil ? "Unavailable" : "—"))
                     .font(gems == nil ? .subheadline : .caption).monospacedDigit()
                     .lineLimit(1).minimumScaleFactor(0.75)
             }
-        }.fixedSize(horizontal: gems != nil && !textSize.isAccessibilitySize, vertical: false)
+        }.padding(.top, gems != nil && textSize <= .large ? 6 : 0)
+            .fixedSize(horizontal: gems != nil && !textSize.isAccessibilitySize, vertical: false)
             .frame(maxWidth: .infinity, minHeight: 44,
                 alignment: textSize.isAccessibilitySize ? .leading : gems == nil ? .center : .top)
             .contentShape(Rectangle()).contextMenu { Button(title) { }.disabled(true) }
