@@ -94,28 +94,13 @@ struct AccountCollectionWallet: View {
     }
 }
 
-/// The existing visitor coordinator still owns token feedback and its completion.
-@MainActor
-private struct HomeVisitorTokens: View {
-    @ObservedObject var visitors: VisitorCoordinator
-    let fallbackBalance: String
-    var body: some View {
-        let balance = AccountDisplay.amount(visitors.summary == nil && visitors.confirmedTokenBalance == nil ?
-            fallbackBalance : visitors.tokenBalance)
-        HStack {
-            TokenRewardCounter(balance: "\(balance) tokens", reward: visitors.tokenRewards.first,
-                               finished: { visitors.finishTokenFeedback($0) }, reservesRewardSpace: false)
-        }.frame(minHeight: 44)
-            .accessibilityElement(children: .ignore).accessibilityLabel("Visitor tokens, \(balance)")
-    }
-}
-
 @MainActor
 struct HomeAccountHeader: View {
     @ObservedObject var store: AccountSummaryStore
     var visitors: VisitorCoordinator?
+    var attraction: String? = nil
+    var information: () -> Void = {}
     let openProfile: (ProfileSection) -> Void
-    @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let snapshot = store.snapshot {
@@ -123,38 +108,25 @@ struct HomeAccountHeader: View {
                     AccountLevelProgress(progression: snapshot.progression, compact: true)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .contentShape(Rectangle())
-                }.buttonStyle(.plain).accessibilityHint("Opens your profile")
+                }.buttonStyle(.plain).padding(.horizontal, 12).accessibilityHint("Opens your profile")
                     .accessibilityIdentifier("home.profile")
-                let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0)) :
-                    AnyLayout(HStackLayout(spacing: 12))
-                layout {
-                    if let visitors = visitors { HomeVisitorTokens(visitors: visitors, fallbackBalance: snapshot.wallet.tokenBalance) }
-                    else {
-                        QuantityLabel(metric: "tokens", text: "\(AccountDisplay.amount(snapshot.wallet.tokenBalance)) tokens")
-                            .font(.subheadline).monospacedDigit().frame(minHeight: 44)
-                    }
-                    if !textSize.isAccessibilitySize { Spacer(minLength: 0) }
-                    Button { openProfile(.currency) } label: {
-                        QuantityLabel(metric: "gems", text: snapshot.wallet.initialized ?
-                            "\(AccountDisplay.gemBalance(snapshot.wallet)) gems" : "Preparing gems")
-                            .font(.subheadline).monospacedDigit().frame(minHeight: 44)
-                    }.buttonStyle(.plain).accessibilityHint("Opens gem progress in your profile")
-                        .accessibilityIdentifier("home.gems")
-                }.padding(.bottom, visitors == nil ? 0 : 12)
-                if snapshot.wallet.initialized {
-                    Button { openProfile(.currency) } label: {
-                        AccountGemProgress(progression: snapshot.progression, compact: true)
-                            .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-                    }.buttonStyle(.plain).accessibilityHint("Opens gem progress in your profile")
-                } else {
-                    Text("Gem progress is being prepared.").font(.caption).foregroundStyle(JournalTheme.secondary)
-                        .padding(.vertical, 8)
-                }
             } else if store.refreshing || !store.failed {
-                ProgressView("Loading account progress…").font(.caption).frame(minHeight: 44)
+                ProgressView("Loading account progress…").font(.caption).frame(minHeight: 44).padding(.horizontal, 12)
             }
-            AccountSummaryNotice(store: store)
-        }.padding(.horizontal, 16).padding(.vertical, 4)
+            if let visitors = visitors {
+                VisitorSummaryHeader(store: visitors, attraction: attraction,
+                    gems: AccountDisplay.gemBalance(store.snapshot?.wallet),
+                    fallbackTokens: store.snapshot.map { AccountDisplay.amount($0.wallet.tokenBalance) },
+                    openGems: { openProfile(.currency) }, information: information)
+            } else {
+                GardenSummaryHeader(tokens: store.snapshot.map { AccountDisplay.amount($0.wallet.tokenBalance) },
+                    attraction: attraction, gems: AccountDisplay.gemBalance(store.snapshot?.wallet),
+                    openGems: { openProfile(.currency) }, information: information, collect: {})
+            }
+            if store.failed || (store.lastConfirmed && store.snapshot != nil) {
+                AccountSummaryNotice(store: store).padding(.horizontal, 12)
+            }
+        }
             .foregroundStyle(JournalTheme.ink).background(JournalTheme.paper)
             .gardenOverlayTarget().accessibilityIdentifier("home.accountProgress")
     }

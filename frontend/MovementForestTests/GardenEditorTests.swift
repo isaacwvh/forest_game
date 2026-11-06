@@ -97,6 +97,8 @@ private final class EditorTestService: GardenServing {
     var nextError: APIError?
     var compactError: RequestRecovery?
     var failReads = false
+    var checkReadCancellation = false
+    var readError: Error?
     var pauseNext = false
     var pauseRead = false
     var gate: CheckedContinuation<Void, Never>?
@@ -112,6 +114,8 @@ private final class EditorTestService: GardenServing {
     func profile() async throws -> APIProfile { fixture.profile }
     func catalogue() async throws -> APICatalogue {
         if pauseRead { pauseRead = false; await withCheckedContinuation { gate = $0 } }
+        if checkReadCancellation { try Task.checkCancellation() }
+        if let readError = readError { throw readError }
         if failReads { throw URLError(.notConnectedToInternet) }
         return catalogueValue
     }
@@ -350,6 +354,100 @@ final class GardenEditorTests: XCTestCase {
 
     private func makeStore(_ service: EditorTestService, journal: MemoryEditJournal = MemoryEditJournal()) throws -> GardenEditorStore {
         GardenEditorStore(profile: service.fixture.profile, service: service, assets: try BundleAssetCatalog(), journal: journal)
+    }
+
+    func testCancelledPlantSwipeStillAppliesConfirmedRead() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service)
+        await store.start()
+        service.current = fixture.plantResult.garden
+        service.checkReadCancellation = true
+        let swipe = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            await store.refresh()
+        }
+        await swipe.value
+        XCTAssertEqual(store.state, .ready)
+        XCTAssertEqual(store.confirmed, fixture.plantResult.garden)
+        XCTAssertFalse(store.showingCached)
+        XCTAssertTrue(store.canReadInventory)
+        XCTAssertNil(store.message)
+        XCTAssertTrue(service.bodies.isEmpty)
+    }
+
+    func testPlantReadCancellationKeepsConfirmedStateWithoutFailure() async throws {
+        for error in [CancellationError(), URLError(.cancelled)] as [Error] {
+            let service = EditorTestService(try EditorContract.load())
+            let store = try makeStore(service)
+            await store.start()
+            let confirmed = store.confirmed
+            service.readError = error
+            await store.refresh()
+            XCTAssertEqual(store.state, .ready)
+            XCTAssertEqual(store.confirmed, confirmed)
+            XCTAssertTrue(store.canReadInventory)
+            XCTAssertFalse(store.showingCached)
+            XCTAssertNil(store.message)
+            service.readError = nil
+            await store.refresh()
+            XCTAssertEqual(store.state, .ready)
+            XCTAssertNil(store.message)
+        }
+    }
+
+    func testPlantRefreshFailureRemainsVisibleAndClearsOnSuccess() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service)
+        await store.start()
+        service.readError = URLError(.badServerResponse)
+        await store.refresh()
+        XCTAssertEqual(store.state, .blocked)
+        XCTAssertNotNil(store.message)
+        XCTAssertTrue(store.showingCached)
+        service.readError = nil
+        await store.refresh()
+        XCTAssertEqual(store.state, .ready)
+        XCTAssertNil(store.message)
+        XCTAssertFalse(store.showingCached)
+    }
+
+    func testPlantRefreshDoesNotPublishAfterAccountDeactivation() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service)
+        await store.start()
+        let confirmed = store.confirmed
+        service.current = fixture.plantResult.garden
+        service.pauseRead = true
+        let refresh = Task { await store.refresh() }
+        for _ in 0..<1000 where service.gate == nil { try await Task.sleep(nanoseconds: 1_000_000) }
+        let gate = try XCTUnwrap(service.gate)
+        store.deactivate()
+        gate.resume(); service.gate = nil
+        await refresh.value
+        XCTAssertEqual(store.state, .blocked)
+        XCTAssertEqual(store.confirmed, confirmed)
+        XCTAssertFalse(store.isActive)
+    }
+
+    func testPlantRefreshBlocksQueuedEditingUntilTheReadCompletes() async throws {
+        let service = EditorTestService(try EditorContract.load()), journal = MemoryEditJournal()
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        let copy = try XCTUnwrap(store.inventory.first)
+        service.pauseRead = true
+        let refresh = Task { await store.refresh() }
+        for _ in 0..<1000 where service.gate == nil { try await Task.sleep(nanoseconds: 1_000_000) }
+        let gate = try XCTUnwrap(service.gate)
+        XCTAssertEqual(store.state, .loading)
+        XCTAssertFalse(store.canEdit)
+        let edit = Task { store.begin(copy, kind: .plant); await store.releaseCandidate() }
+        await edit.value
+        XCTAssertNil(store.candidate); XCTAssertNil(store.pending)
+        XCTAssertTrue(journal.edits.isEmpty); XCTAssertTrue(service.bodies.isEmpty)
+        gate.resume(); service.gate = nil
+        await refresh.value
+        XCTAssertEqual(store.state, .ready)
+        XCTAssertTrue(store.canEdit)
     }
 
     func testBackendWireFixtureMapsOwnershipAssetsAndNestedPlacement() throws {

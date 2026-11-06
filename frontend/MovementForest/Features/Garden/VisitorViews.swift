@@ -252,6 +252,8 @@ struct GardenSummaryHeader: View {
     var tokenRewardFinished: (UUID) -> Void = { _ in }
     var tokenReduceMotion = false
     var showsTokens = true
+    var gems: String? = nil
+    var openGems: () -> Void = {}
     let information: () -> Void
     let collect: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
@@ -262,12 +264,25 @@ struct GardenSummaryHeader: View {
             if textSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 6) {
                     if showsTokens { metric("Tokens", key: "tokens", value: tokens) }
+                    if let gems = gems { gemMetric(gems) }
                     metric("Attraction", key: "attraction", value: attraction)
                     metric("Stored visits", key: "offline_capacity", value: stored)
                 }
                 ViewThatFits(in: .horizontal) {
                     HStack { infoButton; Spacer(minLength: 8); collectButton }
                     VStack(alignment: .leading, spacing: 6) { infoButton; collectButton }
+                }
+            } else if let gems = gems {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: 4) { compactMetrics(gems) }
+                    VStack(alignment: .leading, spacing: 4) { compactMetrics(gems) }
+                }
+                HStack(spacing: 8) {
+                    Button(action: information) {
+                        Label("Garden info", systemImage: "info.circle").frame(minHeight: 44)
+                    }.buttonStyle(.journalQuiet).accessibilityIdentifier("garden.info").gardenOverlayTarget()
+                    Spacer(minLength: 0)
+                    collectButton
                 }
             } else {
                 HStack(alignment: .center, spacing: 4) {
@@ -278,7 +293,7 @@ struct GardenSummaryHeader: View {
                     collectButton.frame(width: 44)
                 }.padding(.bottom, showsTokens ? feedbackSpace : 0)
             }
-        }.padding(.horizontal, 12).padding(.vertical, 4)
+        }.padding(.horizontal, 12).padding(.vertical, gems == nil ? 4 : 0)
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
             .gardenOverlayTarget()
     }
@@ -287,17 +302,31 @@ struct GardenSummaryHeader: View {
         VStack(spacing: 2) {
             if key == "tokens" {
                 TokenRewardCounter(balance: value ?? "Unavailable", reward: tokenReward, finished: tokenRewardFinished,
-                                   reduceMotionOverride: tokenReduceMotion, reservesRewardSpace: textSize.isAccessibilitySize)
+                                   reduceMotionOverride: tokenReduceMotion, reservesRewardSpace: textSize.isAccessibilitySize || gems != nil)
                     .lineLimit(1).minimumScaleFactor(0.75)
             } else {
-                QuantityLabel(metric: key, text: value ?? "Unavailable").font(.subheadline).monospacedDigit()
+                QuantityLabel(metric: key, text: value ?? (gems == nil ? "Unavailable" : "—"))
+                    .font(gems == nil ? .subheadline : .caption).monospacedDigit()
                     .lineLimit(1).minimumScaleFactor(0.75)
             }
-        }.frame(maxWidth: .infinity, minHeight: 44, alignment: textSize.isAccessibilitySize ? .leading : .center)
+        }.fixedSize(horizontal: gems != nil && !textSize.isAccessibilitySize, vertical: false)
+            .frame(maxWidth: .infinity, minHeight: 44,
+                alignment: textSize.isAccessibilitySize ? .leading : gems == nil ? .center : .top)
             .contentShape(Rectangle()).contextMenu { Button(title) { }.disabled(true) }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(key == "offline_capacity" ? (storedAccessibility ?? "Stored visits, Unavailable") :
                 "\(key == "tokens" ? "Visitor tokens" : title), \(value ?? "Unavailable")")
+    }
+    @ViewBuilder private func compactMetrics(_ gems: String) -> some View {
+        metric("Tokens", key: "tokens", value: tokens)
+        gemMetric(gems)
+        metric("Attraction", key: "attraction", value: attraction)
+        metric("Stored visits", key: "offline_capacity", value: stored)
+    }
+    private func gemMetric(_ value: String) -> some View {
+        Button(action: openGems) { metric("Gems", key: "gems", value: value) }
+            .buttonStyle(.plain).accessibilityLabel("Gems, \(value)")
+            .accessibilityHint("Opens gem progress in your profile").accessibilityIdentifier("home.gems")
     }
     private var infoButton: some View {
         GardenActionButton(title: "Garden info", symbol: "info.circle",
@@ -323,15 +352,19 @@ struct VisitorSummaryHeader: View {
     @ObservedObject var store: VisitorCoordinator
     let attraction: String?
     var showsTokens = true
+    var gems: String? = nil
+    var fallbackTokens: String? = nil
+    var openGems: () -> Void = {}
     let information: () -> Void
     var body: some View {
-        GardenSummaryHeader(tokens: store.summary == nil && store.confirmedTokenBalance == nil ? nil : store.tokenBalance,
+        GardenSummaryHeader(tokens: store.summary == nil && store.confirmedTokenBalance == nil ? fallbackTokens :
+            (gems == nil ? store.tokenBalance : AccountDisplay.amount(store.tokenBalance)),
             attraction: attraction,
             stored: store.summary.map { "\($0.claimableVisits)/\($0.capacity)" },
             storedAccessibility: store.summary.map { "\($0.claimableVisits) stored visits, capacity \($0.capacity)" },
             canCollect: store.canCollect, collecting: store.collecting,
             tokenReward: store.tokenRewards.first, tokenRewardFinished: { store.finishTokenFeedback($0) },
-            showsTokens: showsTokens, information: information,
+            showsTokens: showsTokens, gems: gems, openGems: openGems, information: information,
             collect: { Task { await store.claim() } })
     }
 }

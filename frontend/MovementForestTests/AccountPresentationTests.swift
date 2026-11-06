@@ -125,4 +125,21 @@ final class AccountPresentationTests: XCTestCase {
             XCTAssertLessThanOrEqual(frame.maxY, 275.5)
         }
     }
+
+    func testCompactHomeHeaderUsesAtMost150PointsOnSmallPortrait() async throws {
+        let value = try fixture()
+        let store = AccountSummaryStore(userID: value.profile.userId, service: PresentationTestService(value: value),
+            cache: PresentationTestCache())
+        await store.refresh()
+        let header = UIHostingController(rootView:
+            HomeAccountHeader(store: store, attraction: "141.3", openProfile: { _ in })
+                .environment(\.dynamicTypeSize, .large))
+        let size = header.sizeThatFits(in: CGSize(width: 320, height: 1000))
+        XCTAssertGreaterThanOrEqual(size.height, 88)
+        XCTAssertLessThanOrEqual(size.height, 150, "XP, metrics and actions must stay compact; detailed gem progress belongs in Profile")
+        let metrics = UIHostingController(rootView:
+            GardenSummaryHeader(tokens: "9,142", attraction: "141.3", stored: "106/1500", gems: "7",
+                information: {}, collect: {}).environment(\.dynamicTypeSize, .large))
+        XCTAssertLessThanOrEqual(metrics.sizeThatFits(in: CGSize(width: 320, height: 1000)).height, 100)
+    }
 }

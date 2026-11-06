@@ -13,6 +13,8 @@ final class ForestUITests: XCTestCase {
         let originalFrame = garden.frame
         XCTAssertTrue(app.buttons["account.profile"].exists)
         XCTAssertTrue(app.buttons["home.gems"].exists)
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "home.gemProgress").firstMatch.exists,
+                       "Detailed gem progress stays in Profile so Home remains compact")
         level.tap()
         XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
         let progress = app.descendants(matching: .any).matching(identifier: "profile.levelProgress").firstMatch
@@ -45,6 +47,24 @@ final class ForestUITests: XCTestCase {
         XCTAssertEqual(progress.label, "Account Level 5")
         app.buttons["accountProgress.retry"].tap()
         XCTAssertEqual(progress.value as? String, "22 / 150 XP, towards Level 6, 372 total XP")
+    }
+
+    func testMyPlantsSwipeRefreshDoesNotLeaveAConnectionFailure() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden"]
+        app.launch()
+        XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 15))
+        app.buttons["navigation.My plants"].tap()
+        let scroll = app.scrollViews.firstMatch
+        XCTAssertTrue(scroll.waitForExistence(timeout: 5))
+        scroll.swipeDown()
+        let loading = app.staticTexts["Loading your plants…"]
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: loading)
+        waitForExpectations(timeout: 5)
+        XCTAssertFalse(app.staticTexts["Your garden couldn’t refresh. Try again when connected."].exists)
+        XCTAssertFalse(app.staticTexts["Saved plants · Connect to refresh"].exists)
+        XCTAssertFalse(app.buttons["Try again"].exists)
+        XCTAssertTrue(app.staticTexts["Stored"].exists)
     }
 
     func testUncachedFailedProfileDoesNotInventBalances() {

@@ -163,13 +163,12 @@ struct ConnectedGardenScreen: View {
 
     private var browsingStatus: some View {
         VStack(spacing: 8) {
-            if verticalSizeClass == .compact, accountSummary != nil, !textSize.isAccessibilitySize {
-                HStack(alignment: .top, spacing: 0) {
-                    accountHeader.frame(maxWidth: .infinity)
-                    visitorHeader.frame(maxWidth: .infinity)
-                }
+            if let accountSummary = accountSummary {
+                HomeAccountHeader(store: accountSummary, visitors: visitors,
+                    attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
+                    information: { sheet = .information }, openProfile: openProfile)
+                if let visitors = visitors { VisitorRecoveryNotice(store: visitors) }
             } else {
-                accountHeader
                 visitorHeader
             }
             if store.showingCached || store.gardenMessage != nil || store.state.busy ||
@@ -205,12 +204,6 @@ struct ConnectedGardenScreen: View {
                     .modifier(GardenOutline()).gardenOverlayTarget().padding(.horizontal, 12)
             }
         }.padding(.bottom, 8)
-    }
-
-    @ViewBuilder private var accountHeader: some View {
-        if let accountSummary = accountSummary {
-            HomeAccountHeader(store: accountSummary, visitors: visitors, openProfile: openProfile)
-        }
     }
 
     private var visitorHeader: some View {

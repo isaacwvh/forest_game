@@ -185,9 +185,20 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     func refresh() async {
         guard isActive, pending == nil, !refreshInFlight, !recoveryLocked else { return }
         refreshInFlight = true
+        let previousState = state, previousNeedsRefresh = needsRefresh
         state = .loading; candidate = nil; needsRefresh = true
         inventoryGeneration = UUID()
         defer { refreshInFlight = false }
+        // A swipe control can cancel its caller while the read is still useful.
+        // Finish independently, retaining the existing account and version guards.
+        let work = Task { @MainActor in
+            await readCurrent(previousState: previousState, previousNeedsRefresh: previousNeedsRefresh)
+        }
+        await work.value
+    }
+
+    private func readCurrent(previousState: GardenSaveState, previousNeedsRefresh: Bool) async {
+        guard isActive, pending == nil, !recoveryLocked else { return }
         do {
             // Individual reads are coherent, but not an atomic bootstrap. Bound retries
             // if another client keeps changing the layout/catalogue during this read.
@@ -220,6 +231,11 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             throw ForestError.invalidData("Your garden changed while loading. Refresh to try again.")
         } catch {
             guard isActive else { return }
+            if error is CancellationError || (error as? URLError)?.code == .cancelled {
+                state = previousState == .loading ? .blocked : previousState
+                needsRefresh = previousNeedsRefresh
+                return
+            }
             showingCached = confirmed != nil
             state = (error as? APIError)?.status == 401 ? .authenticationRequired : .blocked
             PlayerMessage.recordFailure("Garden", error, scope: diagnosticScope)

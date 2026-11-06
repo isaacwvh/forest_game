@@ -1,5 +1,24 @@
 # Validation record
 
+## Compact Home and My plants refresh correction — 6 November 2026
+
+Follows the user's screenshot/sketch: slim XP strip, a combined icon/value row for
+tokens/gems/attraction/stored visits, Garden info and Collect beneath. Detailed
+next-gem progress stays in Profile. Keeps token feedback, larger-text reflow,
+actual overlay exclusion bounds and the mounted viewport/camera.
+
+My plants garden refresh finishes independently of the cancelable swipe caller,
+matching Collection refresh. Cancellation stays quiet and restores the prior
+read state; genuine failures remain visible until a successful read. Account,
+pending-operation and monotonic-version guards remain. Added header-height,
+refresh/cancellation/deactivation and swipe UI regressions. No XP, maturity,
+level-up notice, backend or asset-rule changes.
+
+Portable frontend/project/assets/contracts validation and all 88 Swift syntax
+parses pass. Native XCTest/UI, header measurement and device appearance remain
+Mac checks; Windows parsing does not execute those tests. See
+[the updated walkthrough](PROFILE_HOME_ACCEPTANCE.md).
+
 ## Profile and Home progression — 6 November 2026
 
 Implemented stages 3 and 4 as frontend presentation/navigation over the existing

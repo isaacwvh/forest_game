@@ -13,9 +13,11 @@ there is no new migration, endpoint, earning rule, pack or level benefit.
   steps, hosted visitors, active welcomes, collected stored visits, grown-adult
   copies and gems earned. Joined date, game timezone, last activity sync and the
   existing Account and sign-in route follow.
-- Home puts XP above the combined token/gem wallet and next-gem progress. The
-  attraction/stored-visit/info/Collect row remains. Confirmed visitor token feedback
-  moves with the token balance. Exchange and Packs include gems in their summary.
+- Home keeps a slim XP strip above one icon/value row for tokens, gems, attraction
+  and stored visits, followed by Garden info and Collect. The detailed next-gem
+  bar stays in Profile, reached by tapping the gem balance. Metrics reflow when
+  they cannot fit; confirmed visitor token feedback keeps its existing ownership.
+  Exchange and Packs include gems in their summary.
 - Shared views read server-confirmed values from AccountSummaryStore. Loading,
   cached/offline, failed, preparing and initialized-zero states are distinct.
   Retry/pull-to-refresh only reads the account summary; it never requests Health
@@ -37,11 +39,14 @@ parses, generated project freshness, Python script compilation and diff whitespa
 checks. PNG checks include dimensions, RGBA, budgets, approved-file checksums and
 prompt provenance. The actual 128px icons were visually inspected.
 
-Added seven AccountPresentationTests covering exact large-number formatting,
+Added eight AccountPresentationTests covering exact large-number formatting,
 backend-derived progress ratios, real zero and preparing wallets, gem/XP boundary
-remainders, bundled artwork and large-text overlay clipping without scene resizing.
-Added three UI tests for Home/Profile/navigation consistency, cached offline Retry
-and uncached failure without invented balances. Existing native suites remain.
+remainders, bundled artwork, a 150-point normal-text compact-header budget and
+large-text overlay clipping without scene resizing. Four UI tests cover Home/
+Profile/navigation consistency, cached offline Retry, uncached failure without
+invented balances and My plants swipe-refresh. GardenEditorTests adds regressions
+for canceled swipe callers, quiet transport cancellation, genuine error recovery
+and account deactivation/queued editing during a read. Existing native suites remain.
 
 These XCTest/UI tests are included in the generated project and syntax-parse;
 they have **not been executed here**. Windows has no Xcode, Apple SDK or iPhone
@@ -73,8 +78,9 @@ These fixtures are Debug-only and keep summary state in memory.
 
 ## On-device acceptance flow
 
-1. Open a connected Garden. Check XP is first, tokens/gems follow, and next-gem
-   steps sit below the currencies. Info and Collect still work.
+1. Open a connected Garden. Check XP is first, then one compact row of tokens,
+   gems, attraction and stored visits, with Garden info and Collect underneath.
+   The Home next-gem bar is absent; tapping gems opens that progress in Profile.
 2. Tap the level strip or Profile icon beside Settings. Verify your identity,
    level, XP, currencies, lifetime rows and account information against Diagnostics.
    Tap gems on Home and verify the Profile opens at Your currencies.
@@ -101,3 +107,6 @@ These fixtures are Debug-only and keep summary state in memory.
    VoiceOver includes lifetime XP, units, progress and remaining-step counts.
 9. Open Account and sign-in from Profile and test existing reconnect/sign-out/back
    navigation. No new Apple/Google linking is enabled by these stages.
+10. Pull down to refresh My plants several times while connected. The refresh
+    completes without a stuck connection/cancellation message. Genuine offline
+    failures remain visible and clear after a successful refresh.
