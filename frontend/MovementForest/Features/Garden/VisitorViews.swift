@@ -254,12 +254,30 @@ struct GardenSummaryHeader: View {
     var showsTokens = true
     var gems: String? = nil
     var openGems: () -> Void = {}
+    var floatingActions = false
     let information: () -> Void
     let collect: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
     @ScaledMetric(relativeTo: .subheadline) private var feedbackSpace: CGFloat = 16
 
     var body: some View {
+        if floatingActions {
+            VStack(spacing: 8) {
+                floatingMetrics.padding(.horizontal, 12)
+                    .foregroundStyle(JournalTheme.ink).background(JournalTheme.paper)
+                    .gardenOverlayTarget()
+                HStack {
+                    infoButton.frame(width: 44).background(JournalTheme.paper, in: RoundedRectangle(cornerRadius: 12))
+                    Spacer(minLength: 0)
+                    collectButton.background(JournalTheme.paper, in: RoundedRectangle(cornerRadius: 12))
+                }.padding(.horizontal, 12).tint(JournalTheme.action)
+            }
+        } else {
+            inlineHeader
+        }
+    }
+
+    private var inlineHeader: some View {
         VStack(spacing: gems != nil && !textSize.isAccessibilitySize ? 0 : 6) {
             if textSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 6) {
@@ -298,6 +316,38 @@ struct GardenSummaryHeader: View {
             .gardenOverlayTarget()
     }
 
+    @ViewBuilder private var floatingMetrics: some View {
+        if textSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: 6) {
+                if showsTokens { metric("Tokens", key: "tokens", value: tokens) }
+                if let gems = gems { gemMetric(gems) }
+                metric("Attraction", key: "attraction", value: attraction)
+                metric("Stored visits", key: "offline_capacity", value: stored)
+            }
+        } else if let gems = gems {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 4) { compactMetrics(gems) }
+                VStack(spacing: 0) {
+                    HStack(alignment: .top, spacing: 4) {
+                        if showsTokens { metric("Tokens", key: "tokens", value: tokens) }
+                        gemMetric(gems)
+                    }
+                    HStack(alignment: .top, spacing: 4) {
+                        metric("Attraction", key: "attraction", value: attraction)
+                        metric("Stored visits", key: "offline_capacity", value: stored)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 4) { compactMetrics(gems) }
+            }
+        } else {
+            HStack(spacing: 4) {
+                if showsTokens { metric("Tokens", key: "tokens", value: tokens) }
+                metric("Attraction", key: "attraction", value: attraction)
+                metric("Stored visits", key: "offline_capacity", value: stored)
+            }
+        }
+    }
+
     private func metric(_ title: String, key: String, value: String?) -> some View {
         VStack(spacing: 2) {
             if key == "tokens" {
@@ -307,7 +357,7 @@ struct GardenSummaryHeader: View {
                     .lineLimit(1).minimumScaleFactor(0.75)
             } else {
                 QuantityLabel(metric: key, text: value ?? (gems == nil ? "Unavailable" : "—"))
-                    .font(gems == nil ? .subheadline : .caption).monospacedDigit()
+                    .font(gems == nil || floatingActions ? .subheadline : .caption).monospacedDigit()
                     .lineLimit(1).minimumScaleFactor(0.75)
             }
         }.padding(.top, gems != nil && textSize <= .large ? 6 : 0)
@@ -357,6 +407,7 @@ struct VisitorSummaryHeader: View {
     var gems: String? = nil
     var fallbackTokens: String? = nil
     var openGems: () -> Void = {}
+    var floatingActions = false
     let information: () -> Void
     var body: some View {
         GardenSummaryHeader(tokens: store.summary == nil && store.confirmedTokenBalance == nil ? fallbackTokens :
@@ -366,7 +417,7 @@ struct VisitorSummaryHeader: View {
             storedAccessibility: store.summary.map { "\($0.claimableVisits) stored visits, capacity \($0.capacity)" },
             canCollect: store.canCollect, collecting: store.collecting,
             tokenReward: store.tokenRewards.first, tokenRewardFinished: { store.finishTokenFeedback($0) },
-            showsTokens: showsTokens, gems: gems, openGems: openGems, information: information,
+            showsTokens: showsTokens, gems: gems, openGems: openGems, floatingActions: floatingActions, information: information,
             collect: { Task { await store.claim() } })
     }
 }

@@ -17,20 +17,27 @@ struct AccountProgressTrack: View {
 struct AccountLevelProgress: View {
     let progression: APIAccountProgression
     var compact = false
+    var toolbar = false
+    var showsTotal = true
     @Environment(\.dynamicTypeSize) private var textSize
+    @ScaledMetric(relativeTo: .body) private var iconSize = 24.0
     private var display: AccountProgressDisplay { AccountProgressDisplay(progression: progression) }
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 4 : 10) {
             let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) :
-                AnyLayout(HStackLayout(spacing: 12))
+                AnyLayout(HStackLayout(spacing: toolbar ? 6 : 12))
             layout {
-                QuantityLabel(metric: "xp", text: display.level)
-                    .font(.system(.subheadline, design: .serif).weight(.semibold))
+                HStack(spacing: 4) {
+                    QuantityIcon(metric: "xp").scaleEffect(toolbar ? 0.75 : 1)
+                        .frame(width: toolbar ? iconSize * 0.75 : iconSize, height: toolbar ? iconSize * 0.75 : iconSize)
+                    Text(display.level).fixedSize(horizontal: false, vertical: true)
+                }.font(.system(toolbar ? .caption : .subheadline, design: .serif).weight(.semibold))
                 if !textSize.isAccessibilitySize { Spacer(minLength: 0) }
-                Text(display.xp).font(.caption).monospacedDigit()
+                Text(display.xp).font(toolbar ? .caption2 : .caption).monospacedDigit()
+                    .fixedSize(horizontal: false, vertical: true)
             }
             AccountProgressTrack(fraction: display.xpFraction)
-            if !compact {
+            if !compact && showsTotal {
                 Text("\(AccountDisplay.amount(progression.totalXp)) total XP · Next: \(display.nextLevel)")
                     .font(.footnote).foregroundStyle(JournalTheme.secondary)
             }
@@ -47,12 +54,18 @@ struct AccountGemProgress: View {
     let progression: APIAccountProgression
     var compact = false
     private var display: AccountProgressDisplay { AccountProgressDisplay(progression: progression) }
+    @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 4 : 8) {
-            Text("Next gem · \(display.gemSteps)").font(compact ? .caption : .subheadline).monospacedDigit()
-                .fixedSize(horizontal: false, vertical: true)
+            let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) :
+                AnyLayout(HStackLayout(spacing: 12))
+            layout {
+                Text("Next gem")
+                if !textSize.isAccessibilitySize { Spacer(minLength: 0) }
+                Text("\(AccountDisplay.amount(progression.stepsToNextGem)) steps left").monospacedDigit()
+                    .fixedSize(horizontal: false, vertical: true)
+            }.font(compact ? .caption : .subheadline)
             AccountProgressTrack(fraction: display.gemFraction)
-            if !compact { Text(display.gemRemaining).font(.footnote).foregroundStyle(JournalTheme.secondary) }
         }.foregroundStyle(JournalTheme.ink)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Next gem")
@@ -94,6 +107,58 @@ struct AccountCollectionWallet: View {
     }
 }
 
+/// Replaces the browsing navigation chrome without changing its actions or the scene owner.
+struct HomeNavigationBar<Level: View>: View {
+    let openMenu: () -> Void
+    let openProfile: () -> Void
+    let openSettings: () -> Void
+    @ViewBuilder let level: () -> Level
+    @Environment(\.dynamicTypeSize) private var textSize
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                navigationButton("Open collection menu", symbol: "line.3.horizontal", identifier: "collection.menu", action: openMenu)
+                if textSize.isAccessibilitySize { Spacer(minLength: 0) }
+                else { level().frame(maxWidth: .infinity, minHeight: 44) }
+                navigationButton("Profile", symbol: "person.crop.circle", identifier: "account.profile", action: openProfile)
+                navigationButton("Settings", symbol: "gearshape", identifier: "account.settings", action: openSettings)
+            }
+            if textSize.isAccessibilitySize { level().padding(.horizontal, 4) }
+        }.padding(.horizontal, 8).padding(.vertical, 4)
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+            .background(JournalTheme.paper.ignoresSafeArea(edges: .top))
+            .accessibilityIdentifier("home.navigation")
+    }
+
+    private func navigationButton(_ title: String, symbol: String, identifier: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) { Image(systemName: symbol).frame(width: 44, height: 44) }
+            .buttonStyle(.journalIcon).accessibilityLabel(title).accessibilityIdentifier(identifier)
+    }
+}
+
+@MainActor
+struct HomeLevelProgress: View {
+    @ObservedObject var store: AccountSummaryStore
+    let openProfile: () -> Void
+
+    var body: some View {
+        if let snapshot = store.snapshot {
+            Button(action: openProfile) {
+                AccountLevelProgress(progression: snapshot.progression, compact: true, toolbar: true)
+                    .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityHint("Opens your profile")
+                .accessibilityIdentifier("home.profile")
+        } else if store.refreshing || !store.failed {
+            ProgressView().controlSize(.small).frame(maxWidth: .infinity, minHeight: 44)
+                .accessibilityLabel("Loading account progress")
+        } else {
+            Text("Progress unavailable").font(.caption).foregroundStyle(JournalTheme.secondary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+    }
+}
+
 @MainActor
 struct HomeAccountHeader: View {
     @ObservedObject var store: AccountSummaryStore
@@ -103,31 +168,21 @@ struct HomeAccountHeader: View {
     let openProfile: (ProfileSection) -> Void
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let snapshot = store.snapshot {
-                Button { openProfile(.overview) } label: {
-                    AccountLevelProgress(progression: snapshot.progression, compact: true)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .contentShape(Rectangle())
-                }.buttonStyle(.plain).padding(.horizontal, 12).accessibilityHint("Opens your profile")
-                    .accessibilityIdentifier("home.profile")
-            } else if store.refreshing || !store.failed {
-                ProgressView("Loading account progress…").font(.caption).frame(minHeight: 44).padding(.horizontal, 12)
-            }
             if let visitors = visitors {
                 VisitorSummaryHeader(store: visitors, attraction: attraction,
                     gems: AccountDisplay.gemBalance(store.snapshot?.wallet),
                     fallbackTokens: store.snapshot.map { AccountDisplay.amount($0.wallet.tokenBalance) },
-                    openGems: { openProfile(.currency) }, information: information)
+                    openGems: { openProfile(.currency) }, floatingActions: true, information: information)
             } else {
                 GardenSummaryHeader(tokens: store.snapshot.map { AccountDisplay.amount($0.wallet.tokenBalance) },
                     attraction: attraction, gems: AccountDisplay.gemBalance(store.snapshot?.wallet),
-                    openGems: { openProfile(.currency) }, information: information, collect: {})
+                    openGems: { openProfile(.currency) }, floatingActions: true, information: information, collect: {})
             }
             if store.failed || store.showsSavedProgress {
-                AccountSummaryNotice(store: store).padding(.horizontal, 12)
+                AccountSummaryNotice(store: store).padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(JournalTheme.paper).gardenOverlayTarget()
             }
         }
-            .foregroundStyle(JournalTheme.ink).background(JournalTheme.paper)
-            .gardenOverlayTarget().accessibilityIdentifier("home.accountProgress")
+            .foregroundStyle(JournalTheme.ink).accessibilityIdentifier("home.accountProgress")
     }
 }

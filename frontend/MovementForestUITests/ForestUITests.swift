@@ -21,7 +21,7 @@ final class ForestUITests: XCTestCase {
         dismiss.tap()
         XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 5))
         app.buttons["account.profile"].tap()
-        XCTAssertTrue(app.staticTexts["Level benefits"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Capacity"].waitForExistence(timeout: 5))
         app.buttons["accountSheet.done"].tap()
         app.buttons["navigation.Activity"].tap()
         app.buttons["navigation.Garden"].tap()
@@ -86,6 +86,64 @@ final class ForestUITests: XCTestCase {
         XCTAssertEqual(progress.label, "Account Level 5")
         app.buttons["accountProgress.retry"].tap()
         XCTAssertEqual(progress.value as? String, "22 / 150 XP, towards Level 6, 372 total XP")
+    }
+
+    func testHomeToolbarAlignsItsActionsAndPreservesMenuAndSettingsRoutes() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-progression"]
+        app.launch()
+        let level = app.buttons["home.profile"]
+        XCTAssertTrue(level.waitForExistence(timeout: 15))
+        let menu = app.buttons["collection.menu"], profile = app.buttons["account.profile"], settings = app.buttons["account.settings"]
+        let controls = [menu, level, profile, settings]
+        for control in controls {
+            XCTAssertTrue(control.isHittable)
+            XCTAssertGreaterThanOrEqual(control.frame.height, 44)
+            XCTAssertEqual(control.frame.midY, level.frame.midY, accuracy: 2)
+        }
+        for index in 1..<controls.count { XCTAssertLessThanOrEqual(controls[index - 1].frame.maxX, controls[index].frame.minX) }
+        let info = app.buttons["garden.info"], collect = app.buttons["visitors.claim"]
+        XCTAssertEqual(info.frame.midY, collect.frame.midY, accuracy: 2)
+        XCTAssertLessThanOrEqual(info.frame.width, 44.5)
+        XCTAssertLessThan(info.frame.maxX, collect.frame.minX)
+        settings.tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        app.buttons["accountSheet.done"].tap()
+        menu.tap()
+        XCTAssertTrue(app.buttons["Close menu"].waitForExistence(timeout: 5))
+        app.buttons["Close menu"].tap()
+        XCTAssertTrue(app.buttons["navigation.Garden"].isSelected)
+    }
+
+    func testProfileRemovesRuleCopyAndKeepsSupportingRecordsExpandable() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-progression"]
+        app.launch()
+        XCTAssertTrue(app.buttons["account.profile"].waitForExistence(timeout: 15))
+        app.buttons["account.profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Wallet"].exists)
+        XCTAssertFalse(app.staticTexts["Every 100 recorded steps earns 1 XP."].exists)
+        XCTAssertFalse(app.staticTexts["Earn 1 gem for every 10,000 recorded steps, even when no plant needs water."].exists)
+        XCTAssertFalse(app.staticTexts["Account level"].exists)
+        XCTAssertFalse(app.staticTexts["Joined"].exists)
+        XCTAssertFalse(app.staticTexts["Visitors welcomed"].exists)
+        let statistics = app.buttons["profile.moreStatistics"]
+        for _ in 0..<5 {
+            if statistics.isHittable { break }
+            app.swipeUp()
+        }
+        statistics.tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Visitors welcomed,")).firstMatch.exists)
+        statistics.tap()
+        let details = app.buttons["profile.accountDetails"]
+        for _ in 0..<5 {
+            if details.isHittable { break }
+            app.swipeUp()
+        }
+        details.tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Joined,")).firstMatch.exists)
+        XCTAssertTrue(app.buttons["profile.accountAccess"].exists)
     }
 
     func testMyPlantsSwipeRefreshDoesNotLeaveAConnectionFailure() {

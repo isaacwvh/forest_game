@@ -212,12 +212,12 @@ struct ConnectedGardenScreen: View {
                 VisitorSummaryHeader(store: visitors,
                     attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
                     showsTokens: accountSummary?.snapshot == nil,
-                    information: { sheet = .information })
+                    floatingActions: true, information: { sheet = .information })
                 VisitorRecoveryNotice(store: visitors)
             } else {
                 GardenSummaryHeader(attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
                     showsTokens: accountSummary?.snapshot == nil,
-                    information: { sheet = .information }, collect: {})
+                    floatingActions: true, information: { sheet = .information }, collect: {})
             }
         }
     }
@@ -574,7 +574,9 @@ struct GardenHostScreen: View {
             VStack(spacing: 16) {
                 Text("Your garden connection needs attention").font(.title2)
                 Text("Sign in again through Settings → Account and sign-in to reconnect. Your saved requests are retained.")
-                NavigationLink("Account and sign-in") { AccountScreen(connection: connection, catalog: catalog) }
+                NavigationLink("Account and sign-in") {
+                    AccountScreen(connection: connection, catalog: catalog).toolbar(.visible, for: .navigationBar)
+                }
             }.padding()
         } else {
             GardenScreen(store: sample, catalog: catalog, active: active)

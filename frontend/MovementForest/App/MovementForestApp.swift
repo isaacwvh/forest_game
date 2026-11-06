@@ -152,7 +152,11 @@ struct RootView: View {
                         GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
                             active: selectedTab == .garden && accountSheet == nil && !menuPresented && collectionDestination == nil && !entryRecap.showing && connection.levelUps?.presented == nil,
                             openProfile: presentProfile)
-                            .toolbar { if !focusedEditing { menuButton; accountButtons } }
+                            .toolbar(focusedEditing ? .visible : .hidden, for: .navigationBar)
+                            .safeAreaInset(edge: .top, spacing: 0) {
+                                if !focusedEditing { homeNavigation }
+                            }
+                            .background(JournalTheme.paper.ignoresSafeArea(edges: .top))
                     }
                     .opacity(selectedTab == .garden ? 1 : 0)
                     .allowsHitTesting(selectedTab == .garden)
@@ -324,7 +328,7 @@ struct RootView: View {
                     }.frame(maxWidth: .infinity, minHeight: 50)
                 }
                 .buttonStyle(.journalNavigation(selectedTab == destination && collectionDestination == nil))
-                .foregroundStyle(selectedTab == destination && collectionDestination == nil ? Color.forestTint : Color.secondary)
+                .foregroundStyle(selectedTab == destination && collectionDestination == nil ? JournalTheme.action : JournalTheme.secondary)
                 .disabled(destination == .edit && connection.editor?.canEdit != true)
                 .accessibilityIdentifier("navigation." + destination.id)
                 .accessibilityLabel(destination.rawValue)
@@ -335,8 +339,20 @@ struct RootView: View {
                 Color.clear.preference(key: GardenBottomNavigationTop.self, value: geometry.frame(in: .global).minY)
             })
             .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
-            .background(Color(uiColor: .systemBackground))
-            .overlay(alignment: .top) { Divider() }
+            .background(JournalTheme.paper.ignoresSafeArea(edges: .bottom))
+            .overlay(alignment: .top) { JournalTheme.vine.opacity(0.25).frame(height: 0.5) }
+    }
+
+    private var homeNavigation: some View {
+        HomeNavigationBar(openMenu: { menuPresented = true }, openProfile: { presentProfile(.overview) },
+                          openSettings: { accountSheet = .settings }) {
+            if let store = connection.accountSummary {
+                HomeLevelProgress(store: store, openProfile: { presentProfile(.overview) })
+            } else {
+                Text("Your forest").font(.system(.headline, design: .serif))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+        }
     }
 
     private func presentProfile(_ section: ProfileSection) {

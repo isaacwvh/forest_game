@@ -1,5 +1,34 @@
 # Native baseline conventions
 
+## Compact Home bars and Profile — 7 November 2026
+
+The approved two-row Home concept supersedes the separate native browsing title,
+XP row and full-width Garden info/Collect strip described below. The browsing
+navigation row combines menu, short XP progress, Profile and Settings. Its safe-area
+inset replaces the former native navigation row; the garden retains its mounted
+renderer. The normal-size balance row follows on the same parchment surface.
+Garden info and Collect have individual 44-point parchment corner backings over
+the scene, with no opaque background or visitor exclusion across their clear middle.
+Focused Edit and native detail/sheet navigation keep their existing controls.
+
+Bottom navigation retains its four destinations and measured height, with parchment
+through the home-indicator safe area and a green underline instead of a filled
+selection tile. Existing pressed, disabled and selected accessibility states remain.
+
+Profile groups identity and level, then Wallet, Capacity and Lifetime. Aligned
+label/value rows replace repeated icons and dividers. Earning-rule explanations,
+the repeated total-XP footer and duplicate next-gem progress text are removed.
+Next-gem progress uses the confirmed remaining-step count. Level details, supporting
+statistics and account metadata are native disclosures; Account and sign-in stays
+available. Saved/offline, preparing, failed and Retry states remain explicit.
+
+Views reuse the same account/visitor stores, confirmed quantities, Profile routing
+and collection callbacks. No backend, models, services, rendering, fixtures, game
+rules or reward accounting change. Larger text reflows the navigation and metrics;
+the existing bounded overlay continues clipping actual visitor-exclusion frames.
+See [HOME_PROFILE_UI_ACCEPTANCE.md](HOME_PROFILE_UI_ACCEPTANCE.md) for local evidence
+and the pending native checks. No native screenshot or visual acceptance is claimed.
+
 ## Floating garden environment — 6 November 2026
 
 The approved floating island and static mountain/mist backdrop replace the temporary

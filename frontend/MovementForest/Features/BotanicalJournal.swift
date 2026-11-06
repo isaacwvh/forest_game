@@ -118,7 +118,8 @@ struct JournalButtonStyle: ButtonStyle {
     private func background(pressed: Bool) -> Color {
         if !enabled { return framed ? JournalTheme.sage : .clear }
         if filled { return pressed ? JournalTheme.ink : JournalTheme.action }
-        if pressed || selected { return JournalTheme.sage }
+        if pressed { return JournalTheme.sage }
+        if selected { return kind == .navigation ? .clear : JournalTheme.sage }
         switch kind {
         case .primary: return JournalTheme.action
         case .secondary: return JournalTheme.paper

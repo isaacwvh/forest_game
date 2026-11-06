@@ -126,7 +126,7 @@ final class AccountPresentationTests: XCTestCase {
         }
     }
 
-    func testCompactHomeHeaderUsesAtMost132PointsOnSmallPortrait() async throws {
+    func testCompactHomeNavigationAndBalancesUseTwoFullWidthRows() async throws {
         let value = try fixture()
         let store = AccountSummaryStore(userID: value.profile.userId, service: PresentationTestService(value: value),
             cache: PresentationTestCache())
@@ -136,10 +136,44 @@ final class AccountPresentationTests: XCTestCase {
                 .environment(\.dynamicTypeSize, .large))
         let size = header.sizeThatFits(in: CGSize(width: 320, height: 1000))
         XCTAssertGreaterThanOrEqual(size.height, 88)
-        XCTAssertLessThanOrEqual(size.height, 132.5, "Normal Home must use three tight 44-point rows")
+        XCTAssertLessThanOrEqual(size.height, 96.5, "Balances use one row; the two corner controls share a clear second row")
+        let navigation = UIHostingController(rootView:
+            HomeNavigationBar(openMenu: {}, openProfile: {}, openSettings: {}) {
+                HomeLevelProgress(store: store, openProfile: {})
+            }.environment(\.dynamicTypeSize, .large))
+        let navigationSize = navigation.sizeThatFits(in: CGSize(width: 320, height: 1000))
+        XCTAssertGreaterThanOrEqual(navigationSize.height, 44)
+        XCTAssertLessThanOrEqual(navigationSize.height, 52.5, "Menu, progress, Profile and Settings must fit one comfortable row")
         let metrics = UIHostingController(rootView:
             GardenSummaryHeader(tokens: "9,142", attraction: "141.3", stored: "106/1500", gems: "7",
                 information: {}, collect: {}).environment(\.dynamicTypeSize, .large))
         XCTAssertLessThanOrEqual(metrics.sizeThatFits(in: CGSize(width: 320, height: 1000)).height, 88.5)
+    }
+
+    func testFloatingHomeToolsLeaveTheMiddleOfTheGardenUnobstructed() async throws {
+        var frames: [CGRect] = []
+        let content = GardenViewportLayout(compact: false) {
+            Color.clear
+        } status: {
+            GardenSummaryHeader(tokens: "9,142", attraction: "141.3", stored: "106/1500", gems: "7",
+                floatingActions: true, information: {}, collect: {})
+        } controls: { EmptyView() }
+        .environment(\.dynamicTypeSize, .large)
+        .frame(width: 320, height: 500)
+        .onPreferenceChange(GardenOverlayFrames.self) { frames = $0 }
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = UIHostingController(rootView: content)
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil }
+        for _ in 0..<100 {
+            if !frames.isEmpty { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertFalse(frames.isEmpty)
+        XCTAssertTrue(frames.contains { $0.contains(CGPoint(x: 34, y: 74)) }, "Garden info retains its real exclusion bounds")
+        XCTAssertTrue(frames.contains { $0.contains(CGPoint(x: 286, y: 74)) }, "Collect retains its real exclusion bounds")
+        XCTAssertFalse(frames.contains { $0.contains(CGPoint(x: 160, y: 74)) },
+                       "No full-width header exclusion may bridge the two floating controls")
     }
 }
