@@ -1,3 +1,5 @@
+**Woodland release, 13 November 2026:** migration head is `0015_woodland_release`. Thirty species, three packs, gem spending and extended skills are source-implemented. Use the [preview/apply upgrade and device walkthrough](WOODLAND_RELEASE.md); migrations alone do not activate the release. Earlier delivery records below remain historical.
+
 # Movement Forest backend — B1–B7 collection slice
 
 **Account progression stages 1–2, 6 November 2026:** step-earned gems, derived

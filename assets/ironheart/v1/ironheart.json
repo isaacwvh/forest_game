@@ -1,0 +1,392 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "ironheart",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "hardened"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "sharedBetweenVariants": true,
+    "motion": "Restrained stiff leaf sway, grounded proud rosette; identical motion in both variants"
+  },
+  "materials": {
+    "sharedRefinedAtlasAcrossStages": true,
+    "atlasSizeByVariant": {
+      "standard": [
+        512,
+        512
+      ],
+      "hardened": [
+        1024,
+        1024
+      ]
+    },
+    "hardened": "Broad irregular steel-gray and rust-orange patches, scuffs, closed edge gouges, dents and crooked outer tips; same stage rigs and keyframes"
+  },
+  "growthDesign": {
+    "sprout": "Two thick clasping armor-like leaves cradle a narrow furled spear; bronze tips and silver ridges already present.",
+    "seedling": "Open low three-leaf socket, two rising inner shields and central spear; first bowl-shaped rosette.",
+    "young": "Developing two-tier rosette, six low outer shields, four rising blades and three clasped central blades.",
+    "adult": "Full three-tier agave rosette, eight low outer, seven rising middle, five upright inner shields and central spear."
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/ironheart-sprout-standard.png",
+        "hardened": "ui/ironheart-sprout-hardened.png"
+      },
+      "seedling": {
+        "standard": "ui/ironheart-seedling-standard.png",
+        "hardened": "ui/ironheart-seedling-hardened.png"
+      },
+      "young": {
+        "standard": "ui/ironheart-young-standard.png",
+        "hardened": "ui/ironheart-young-hardened.png"
+      },
+      "adult": {
+        "standard": "ui/ironheart-adult-standard.png",
+        "hardened": "ui/ironheart-adult-hardened.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/ironheart-sprout-standard.usdz",
+      "thumbnail": "ui/ironheart-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.103155,
+          -0.041674,
+          0.0
+        ],
+        "max": [
+          0.102931,
+          0.041674,
+          0.270024
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.103626,
+          -0.041743,
+          0.0
+        ],
+        "max": [
+          0.103608,
+          0.041836,
+          0.270025
+        ]
+      },
+      "animation": "ironheart_sprout_sway",
+      "triangles": 3212,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 169707,
+      "sha256": "30f695c5b93d0d33eede10d451d78c1ac7c9c6b4bbe845e237056a1b96c1fb78",
+      "leafCount": 3,
+      "rosetteTierCount": 1,
+      "attachedWeatheredFlakes": 0
+    },
+    {
+      "stage": "sprout",
+      "variant": "hardened",
+      "file": "models/ironheart-sprout-hardened.usdz",
+      "thumbnail": "ui/ironheart-sprout-hardened.png",
+      "bounds": {
+        "min": [
+          -0.103155,
+          -0.041674,
+          0.0
+        ],
+        "max": [
+          0.099894,
+          0.041674,
+          0.270024
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.103626,
+          -0.041707,
+          0.0
+        ],
+        "max": [
+          0.10051,
+          0.041836,
+          0.270025
+        ]
+      },
+      "animation": "ironheart_sprout_sway",
+      "triangles": 3276,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 359637,
+      "sha256": "284d78c039a2d6ff9bc95696f21ba384169213fa03b9b732d1c19e91a1590c01",
+      "leafCount": 3,
+      "rosetteTierCount": 1,
+      "attachedWeatheredFlakes": 1
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/ironheart-seedling-standard.usdz",
+      "thumbnail": "ui/ironheart-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.246986,
+          -0.285195,
+          0.0
+        ],
+        "max": [
+          0.246986,
+          0.154235,
+          0.430756
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.246998,
+          -0.285477,
+          0.0
+        ],
+        "max": [
+          0.247702,
+          0.154749,
+          0.430761
+        ]
+      },
+      "animation": "ironheart_seedling_sway",
+      "triangles": 6332,
+      "joints": 13,
+      "materials": 1,
+      "bytes": 295507,
+      "sha256": "8179e5e02b2895358456c67ccb432d2764b22a04fbf336c0d9dc2c87114afe70",
+      "leafCount": 6,
+      "rosetteTierCount": 2,
+      "attachedWeatheredFlakes": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "hardened",
+      "file": "models/ironheart-seedling-hardened.usdz",
+      "thumbnail": "ui/ironheart-seedling-hardened.png",
+      "bounds": {
+        "min": [
+          -0.246986,
+          -0.269747,
+          0.0
+        ],
+        "max": [
+          0.246986,
+          0.154235,
+          0.430756
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.246998,
+          -0.270015,
+          0.0
+        ],
+        "max": [
+          0.247702,
+          0.154749,
+          0.430761
+        ]
+      },
+      "animation": "ironheart_seedling_sway",
+      "triangles": 6460,
+      "joints": 13,
+      "materials": 1,
+      "bytes": 488399,
+      "sha256": "57a5c98803f2e2ea9d1f0e8ef5ad0d7c0f7e4d70f9d4d6609b605345b2084537",
+      "leafCount": 6,
+      "rosetteTierCount": 2,
+      "attachedWeatheredFlakes": 2
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/ironheart-young-standard.usdz",
+      "thumbnail": "ui/ironheart-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.553279,
+          -0.619704,
+          0.0
+        ],
+        "max": [
+          0.556858,
+          0.600741,
+          0.840409
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.553421,
+          -0.620565,
+          0.0
+        ],
+        "max": [
+          0.559498,
+          0.602387,
+          0.840467
+        ]
+      },
+      "animation": "ironheart_young_sway",
+      "triangles": 13612,
+      "joints": 27,
+      "materials": 1,
+      "bytes": 587413,
+      "sha256": "04b7b196ecb3e0b93c810818e525fae1096fc6bc8c42196e956d8dcf6e5ca2ab",
+      "leafCount": 13,
+      "rosetteTierCount": 2,
+      "attachedWeatheredFlakes": 0
+    },
+    {
+      "stage": "young",
+      "variant": "hardened",
+      "file": "models/ironheart-young-hardened.usdz",
+      "thumbnail": "ui/ironheart-young-hardened.png",
+      "bounds": {
+        "min": [
+          -0.553279,
+          -0.574588,
+          0.0
+        ],
+        "max": [
+          0.556858,
+          0.600741,
+          0.840409
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.553421,
+          -0.575379,
+          0.0
+        ],
+        "max": [
+          0.559498,
+          0.602387,
+          0.840467
+        ]
+      },
+      "animation": "ironheart_young_sway",
+      "triangles": 13804,
+      "joints": 27,
+      "materials": 1,
+      "bytes": 782816,
+      "sha256": "6cad3e891b895ce79af1eb4ddc5b41fa318da6e41daaf9a02ae6fdc8bb1ae270",
+      "leafCount": 13,
+      "rosetteTierCount": 2,
+      "attachedWeatheredFlakes": 3
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/ironheart-adult-standard.usdz",
+      "thumbnail": "ui/ironheart-adult-standard.png",
+      "bounds": {
+        "min": [
+          -1.0401,
+          -1.082443,
+          0.0
+        ],
+        "max": [
+          1.062906,
+          1.116106,
+          1.210341
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.0401,
+          -1.083543,
+          0.0
+        ],
+        "max": [
+          1.065504,
+          1.11728,
+          1.210399
+        ]
+      },
+      "animation": "ironheart_adult_sway",
+      "triangles": 21932,
+      "joints": 43,
+      "materials": 1,
+      "bytes": 921410,
+      "sha256": "cc78b0715c5ee035697f40f5cce88119ce0d08b7557c9b5f1343585c5fa14056",
+      "leafCount": 21,
+      "rosetteTierCount": 3,
+      "attachedWeatheredFlakes": 0
+    },
+    {
+      "stage": "adult",
+      "variant": "hardened",
+      "file": "models/ironheart-adult-hardened.usdz",
+      "thumbnail": "ui/ironheart-adult-hardened.png",
+      "bounds": {
+        "min": [
+          -1.0401,
+          -0.986459,
+          0.0
+        ],
+        "max": [
+          0.964956,
+          1.116106,
+          1.210341
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.0401,
+          -0.987413,
+          0.0
+        ],
+        "max": [
+          0.966627,
+          1.11728,
+          1.210399
+        ]
+      },
+      "animation": "ironheart_adult_sway",
+      "triangles": 22252,
+      "joints": 43,
+      "materials": 1,
+      "bytes": 1121767,
+      "sha256": "2ed92640e7a96bf931921bdbb70ae5e0fdb8086580e5f6af98fdfb3addc07b38",
+      "leafCount": 21,
+      "rosetteTierCount": 3,
+      "attachedWeatheredFlakes": 5
+    }
+  ]
+}

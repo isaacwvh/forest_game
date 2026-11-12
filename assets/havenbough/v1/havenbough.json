@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "havenbough",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "gentle structural sway with phase-offset fan motion; flowers follow their sheltered branches"
+  },
+  "materials": {
+    "roughness": 0.79,
+    "sharedRefinedAtlasAcrossStages": true,
+    "atlasSize": [
+      1024,
+      1024
+    ],
+    "leafUpper": "deep woodland green with subtle midrib and warm copper-orange upper tips",
+    "leafUnderside": "warm copper",
+    "wood": "sculpted fluted gray-brown yew",
+    "flowers": "ivory, open bells in adult; closed small buds in young"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/havenbough-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/havenbough-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/havenbough-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/havenbough-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/havenbough-sprout-standard.usdz",
+      "thumbnail": "ui/havenbough-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.120049,
+          -0.021839,
+          0.0
+        ],
+        "max": [
+          0.144049,
+          0.027437,
+          0.385743
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.122161,
+          -0.023809,
+          0.0
+        ],
+        "max": [
+          0.151258,
+          0.033155,
+          0.388368
+        ]
+      },
+      "animation": "havenbough_sprout_sway",
+      "triangles": 834,
+      "joints": 5,
+      "materials": 1,
+      "leafCount": 3,
+      "fanCount": 0,
+      "flowerCount": 0,
+      "stageIdentity": "inward cupped cotyledons, copper backs, twisted shoot, furled tip",
+      "bytes": 152861,
+      "sha256": "bf7d52d5e90e46c716e5e055a763cca6eff048213ecbf28c15e3bf41120a7873"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/havenbough-seedling-standard.usdz",
+      "thumbnail": "ui/havenbough-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.445575,
+          -0.114868,
+          0.0
+        ],
+        "max": [
+          0.415575,
+          0.050771,
+          0.99358
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.447535,
+          -0.118663,
+          0.0
+        ],
+        "max": [
+          0.423197,
+          0.053903,
+          0.994485
+        ]
+      },
+      "animation": "havenbough_seedling_sway",
+      "triangles": 2202,
+      "joints": 5,
+      "materials": 1,
+      "leafCount": 8,
+      "fanCount": 0,
+      "flowerCount": 0,
+      "stageIdentity": "sinuous single stem, curled fork arms, three juvenile leaf groups",
+      "bytes": 234274,
+      "sha256": "50ce2d25d2159f21c11832a7c3ef05bea995a7253d3a0704bc68ac1430fcc90f"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/havenbough-young-standard.usdz",
+      "thumbnail": "ui/havenbough-young-standard.png",
+      "bounds": {
+        "min": [
+          -1.410956,
+          -0.619053,
+          0.0
+        ],
+        "max": [
+          1.43354,
+          0.769217,
+          2.298365
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.416663,
+          -0.628707,
+          0.0
+        ],
+        "max": [
+          1.435155,
+          0.792691,
+          2.303333
+        ]
+      },
+      "animation": "havenbough_young_sway",
+      "triangles": 10910,
+      "joints": 15,
+      "materials": 1,
+      "leafCount": 75,
+      "fanCount": 5,
+      "flowerCount": 2,
+      "stageIdentity": "upright open sapling, ascending side branches, five sparse fans and two ivory buds",
+      "bytes": 714309,
+      "sha256": "49789b81eeb489048f35a00d9234480943ce8d8f336494e3e55f71d42a8a0f94"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/havenbough-adult-standard.usdz",
+      "thumbnail": "ui/havenbough-adult-standard.png",
+      "bounds": {
+        "min": [
+          -2.85567,
+          -1.192084,
+          0.0
+        ],
+        "max": [
+          2.859327,
+          1.969955,
+          4.071482
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.855823,
+          -1.197423,
+          0.0
+        ],
+        "max": [
+          2.864373,
+          1.978217,
+          4.08071
+        ]
+      },
+      "animation": "havenbough_adult_sway",
+      "triangles": 27516,
+      "joints": 29,
+      "materials": 1,
+      "leafCount": 240,
+      "fanCount": 12,
+      "flowerCount": 24,
+      "stageIdentity": "stout fluted ancient yew, upright ascending scaffold branches, layered orange-tipped fan crown, 24 ivory bells",
+      "bytes": 1530124,
+      "sha256": "ec3f24c21f92bb1212e2c41bfbf2a6136be5bcb6839172a963c4cebf26403c52"
+    }
+  ]
+}

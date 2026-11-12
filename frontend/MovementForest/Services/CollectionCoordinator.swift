@@ -47,6 +47,7 @@ final class CollectionCoordinator: ObservableObject {
     @Published private(set) var history: [APICollectionReceipt] = []
     @Published private(set) var catalogue: APICatalogue?
     @Published private(set) var definitions: [String: APIPackDefinition] = [:]
+    @Published private(set) var gemBalance: String?
     @Published private(set) var tokenBalance: String?
     @Published private(set) var economyVersion: Int64 = -1
     @Published private(set) var busy = false
@@ -91,12 +92,20 @@ final class CollectionCoordinator: ObservableObject {
     var canOpenPack: Bool { canMutate && capacity?.plantFull != true }
     func canBuy(quantity: Int) -> Bool { quantity > 0 && quantity <= (capacity?.packRoom ?? 20) }
     func canAfford(_ offer: APIExchangeOffer, quantity: Int) -> Bool {
-        guard let balance = tokenBalance.flatMap(ExactAmount.integer), let cost = ExactAmount.integer(offer.tokenCost) else { return false }
+        guard ["tokens", "gems"].contains(offer.purchaseCurrency),
+              let balance = balance(for: offer).flatMap(ExactAmount.integer),
+              let cost = ExactAmount.integer(offer.tokenCost) else { return false }
         return (1...20).contains(quantity) && balance >= cost * Decimal(quantity)
     }
+    func balance(for offer: APIExchangeOffer) -> String? {
+        offer.purchaseCurrency == "gems" ? gemBalance : tokenBalance
+    }
     func deactivate() { attached = false; discovery.deactivate() }
-    func applyWallet(_ balance: String, version: Int64) {
-        guard attached, version > economyVersion, ExactAmount.integer(balance) != nil else { return }
+    func applyWallet(_ balance: String, version: Int64, gems: String? = nil) {
+        guard attached, version >= economyVersion, ExactAmount.integer(balance) != nil else { return }
+        if version > economyVersion { gemBalance = nil }
+        if let gems = gems, ExactAmount.integer(gems) != nil { gemBalance = gems }
+        guard version > economyVersion else { return }
         tokenBalance = balance; economyVersion = version; onWallet?(balance, version)
     }
     private func persist(_ value: CollectionJournalState) throws {
@@ -132,7 +141,7 @@ final class CollectionCoordinator: ObservableObject {
                 exchangeOfferID = (try? ActivityWire.decoder().decode(CollectionExchangeBody.self, from: pending.body))?.offerId
                 exchangeMessage = "Purchase confirmed. Your packs are saved."
             }
-            applyWallet(receipt.tokenBalance, version: receipt.economyVersion)
+            applyWallet(receipt.tokenBalance, version: receipt.economyVersion, gems: receipt.gemBalance)
             if receipt.economyVersion == economyVersion, let capacity = receipt.capacity {
                 acceptCapacity(capacity)
             }
@@ -151,7 +160,7 @@ final class CollectionCoordinator: ObservableObject {
     private func loadCurrent() async throws {
         let summary = try await service.summary()
         guard attached else { return }
-        applyWallet(summary.tokenBalance, version: summary.economyVersion)
+        applyWallet(summary.tokenBalance, version: summary.economyVersion, gems: summary.gemBalance)
         if summary.economyVersion == economyVersion { acceptCapacity(summary.capacity) }
         offers = summary.offers
         milestones = summary.milestones ?? []

@@ -12,7 +12,8 @@ from forest_api.models import Base
 # Compare original domain data across additive request-cache schema changes.
 LEGACY_ROW = (
     "(to_jsonb(t) - 'completion' - 'response_expires_at' - 'recovery_version' "
-    "- 'gems' - 'lifetime_gems_earned' - 'progression_initialized' - 'progression_version')"
+    "- 'gems' - 'lifetime_gems_earned' - 'progression_initialized' - 'progression_version' "
+    "- 'clearance_radius' - 'gem_delta' - 'currency')"
 )
 
 
@@ -26,7 +27,7 @@ def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
             with engine.connect() as connection:
                 assert set(Base.metadata.tables) <= set(inspect(connection).get_table_names())
                 assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-                    "0014_level_benefits"
+                    "0015_woodland_release"
                 )
             engine.dispose()
             command.downgrade(configuration, "base")

@@ -1,3 +1,5 @@
+**Woodland release, 13 November 2026:** the app bundles all 30 species and supports Standard/Enchanted/Premium artwork and token/gem purchasing. Build this client before backend publication. See [upgrade, storage measurements and device flow](../backend/WOODLAND_RELEASE.md). Native Xcode/device acceptance remains separate from portable checks.
+
 # Movement Forest — native frontend, activity, authentication and visitors
 
 **Account progression foundation, 6 November 2026:** shared, account-scoped gem/

@@ -24,6 +24,7 @@ struct APIOwnedPlant: Codable, Identifiable, Equatable {
     let modelKey: String
     let thumbnailKey: String
     let placement: APIPlacement?
+    var clearanceRadius: Decimal? = nil
     var pinnedProfiles: APIPinnedProfiles? = nil
     var growthProgress: APIGrowthProgress? = nil
     var baseAttractionMicroUnits: String? = nil
@@ -36,7 +37,8 @@ struct APIOwnedPlant: Codable, Identifiable, Equatable {
         // Resolve only exact delivered manifest keys. No arbitrary server path is opened.
         let manifest = assets.species.first { $0.speciesId == speciesId && $0.assetVersion == version }
         let asset = manifest?.assets.first { $0.stage == growthStage && $0.variant == variantId }
-        let prefix = "assets/\(speciesId)/v1/"
+        let prefix = (catalogue.variant(species: speciesId, variant: variantId)?.assetCatalogKey)
+            .map { ($0 as NSString).deletingLastPathComponent + "/" } ?? "assets/\(speciesId)/v1/"
         let matches = asset.map { modelKey == prefix + $0.file && thumbnailKey == prefix + $0.thumbnail } ?? false
         return GardenPlant(id: plantId, speciesId: speciesId, variantId: variantId,
                            assetVersion: matches ? version : "unavailable", growthStage: growthStage,
@@ -131,6 +133,7 @@ struct APIStageAsset: Codable, Equatable {
 struct APIVariant: Codable, Equatable {
     let variantId: String
     let displayName: String
+    var assetCatalogKey: String? = nil
     let assetCatalogVersion: String
     let stages: [String: APIStageAsset]
     var description: String? = nil
@@ -164,7 +167,7 @@ struct APICatalogue: Codable, Equatable {
 
     func radius(for plant: APIOwnedPlant) throws -> Int64 {
         guard coordinateUnit == "garden_unit", coordinateDecimalPlaces == 3, rotationDecimalPlaces == 2,
-              let value = species.first(where: { $0.speciesId == plant.speciesId })?.clearanceRadius else {
+              let value = plant.clearanceRadius ?? species.first(where: { $0.speciesId == plant.speciesId })?.clearanceRadius else {
             throw ForestError.invalidData("Placement rules are unavailable for this plant. Refresh the catalogue.")
         }
         let radius = try PlacementGeometry.units(value)
@@ -294,4 +297,20 @@ struct GardenEditResult: Codable {
     let requestId: UUID
     let garden: APIGarden
     let updatedPlants: [APIOwnedPlant]
+}
+
+
+extension Array where Element == APIGardenSkillDefinition {
+    var uniqueSkills: [APIGardenSkillDefinition] {
+        var seen = Set<String>()
+        return filter { seen.insert($0.name).inserted }
+    }
+}
+
+
+extension Array where Element == APISkillSummary.Effect {
+    var uniqueSkills: [APISkillSummary.Effect] {
+        var seen = Set<String>()
+        return filter { seen.insert($0.name).inserted }
+    }
 }

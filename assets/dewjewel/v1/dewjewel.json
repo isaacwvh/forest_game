@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "dewjewel",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained phase-offset two-joint botanical sway"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/dewjewel-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/dewjewel-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/dewjewel-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/dewjewel-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/dewjewel-sprout-standard.usdz",
+      "thumbnail": "ui/dewjewel-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.089384,
+          -0.033308,
+          0.0
+        ],
+        "max": [
+          0.064015,
+          0.027092,
+          0.139138
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.089622,
+          -0.033959,
+          0.0
+        ],
+        "max": [
+          0.064425,
+          0.028374,
+          0.139517
+        ]
+      },
+      "animation": "dewjewel_sprout_sway",
+      "triangles": 2032,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 214848,
+      "sha256": "94b566a6db6d27c41103c004469ddafa943dff3826d011401159b99add9ef607",
+      "leafCount": 2,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 1,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/dewjewel-seedling-standard.usdz",
+      "thumbnail": "ui/dewjewel-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.146642,
+          -0.055673,
+          0.0
+        ],
+        "max": [
+          0.153543,
+          0.047881,
+          0.337201
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.146742,
+          -0.056221,
+          0.0
+        ],
+        "max": [
+          0.153652,
+          0.052567,
+          0.337655
+        ]
+      },
+      "animation": "dewjewel_seedling_sway",
+      "triangles": 3000,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 256649,
+      "sha256": "a309d6cf6f5380f083547332ebace30335f7108a758e38ed1785b530665cbfb4",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "budCount": 1,
+      "shootCount": 1,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/dewjewel-young-standard.usdz",
+      "thumbnail": "ui/dewjewel-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.390507,
+          -0.113072,
+          0.0
+        ],
+        "max": [
+          0.360307,
+          0.199786,
+          0.657201
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.395338,
+          -0.117651,
+          0.0
+        ],
+        "max": [
+          0.366194,
+          0.20576,
+          0.657216
+        ]
+      },
+      "animation": "dewjewel_young_sway",
+      "triangles": 15552,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 748961,
+      "sha256": "e649e42c0421c98d4ca754ca36468a70382a23939e3132fc63ab00ab5be8e5de",
+      "leafCount": 4,
+      "flowerCount": 2,
+      "budCount": 1,
+      "shootCount": 3,
+      "petalCount": 6,
+      "stamenCount": 0
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/dewjewel-adult-standard.usdz",
+      "thumbnail": "ui/dewjewel-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.946973,
+          -0.432407,
+          0.0
+        ],
+        "max": [
+          0.957044,
+          0.357105,
+          0.986294
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.951235,
+          -0.432509,
+          0.0
+        ],
+        "max": [
+          0.957044,
+          0.368534,
+          0.986346
+        ]
+      },
+      "animation": "dewjewel_adult_sway",
+      "triangles": 51996,
+      "joints": 15,
+      "materials": 1,
+      "bytes": 2206900,
+      "sha256": "5422b403fc3e66197e067d084a0b0f5235d307546adcb6aeb166f7f9d83ba644",
+      "leafCount": 14,
+      "flowerCount": 7,
+      "budCount": 0,
+      "shootCount": 7,
+      "petalCount": 21,
+      "stamenCount": 0
+    }
+  ]
+}

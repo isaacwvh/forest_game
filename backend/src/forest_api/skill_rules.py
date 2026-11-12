@@ -43,7 +43,7 @@ class PresenceCondition(Component):
 
 
 class Magnitude(Component):
-    type: Literal["fixed", "per_copy"] = "fixed"
+    type: Literal["fixed", "per_copy", "per_species", "daily_flights"] = "fixed"
     value: str = Field(max_length=64, pattern=r"^[0-9]{1,7}(\.[0-9]{1,6})?$")
     selector: PlantSelector | None = None
     maximum: str | None = Field(default=None, max_length=64, pattern=r"^[0-9]{1,7}(\.[0-9]{1,6})?$")
@@ -53,8 +53,10 @@ class Magnitude(Component):
         from forest_api.calculations import exact
 
         exact(self.value)
-        if self.type == "per_copy":
-            if self.selector is None or self.maximum is None:
+        if self.type == "daily_flights" and self.selector is not None:
+            raise ValueError("Daily-flight magnitudes have no selector")
+        if self.type in {"per_copy", "per_species", "daily_flights"}:
+            if (self.type != "daily_flights" and self.selector is None) or self.maximum is None:
                 raise ValueError("Per-copy magnitudes require a selector and maximum")
             exact(self.maximum)
         elif self.selector is not None or self.maximum is not None:
@@ -63,7 +65,10 @@ class Magnitude(Component):
 
 
 class SkillEffect(Component):
-    component_version: Literal[1] = 1
+    component_version: Literal[1, 2] = 1
+    step_band: Literal["first_2000", "after_2000"] | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
     id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,99}$")
     name: str = Field(min_length=1, max_length=80)
     description: str = Field(min_length=1, max_length=500)
@@ -81,6 +86,14 @@ class SkillEffect(Component):
 
     @model_validator(mode="after")
     def routing(self):
+        if self.component_version == 1 and (
+            self.step_band is not None or self.magnitude.type in {"per_species", "daily_flights"}
+        ):
+            raise ValueError("Extended mechanics require component 2")
+        if self.step_band and (self.scope != "activity" or self.metric != "steps"):
+            raise ValueError("Step bands only apply to step activity")
+        if self.magnitude.type == "daily_flights" and self.scope != "attraction_garden":
+            raise ValueError("Daily flights only modify garden attraction")
         growth = self.scope in {"activity", "water"}
         if growth != (self.system == "growth"):
             raise ValueError("Effect system and scope disagree")

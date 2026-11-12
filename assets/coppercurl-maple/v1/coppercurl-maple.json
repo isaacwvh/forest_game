@@ -1,0 +1,398 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "coppercurl-maple",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "autumn"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "slight trunk sway and phase-offset branches; peeling sheets follow their supporting stem"
+  },
+  "materials": {
+    "roughness": 0.79,
+    "sharedRefinedAtlasAcrossStages": true,
+    "textureSize": [
+      1024,
+      1024
+    ],
+    "standard": "smooth cinnamon copper bark, green trifoliate foliage and copper-orange accents",
+    "autumn": "entire copper-orange foliage, solid locally peeling copper bark sheets"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/coppercurl-maple-sprout-standard.png",
+        "autumn": "ui/coppercurl-maple-sprout-autumn.png"
+      },
+      "seedling": {
+        "standard": "ui/coppercurl-maple-seedling-standard.png",
+        "autumn": "ui/coppercurl-maple-seedling-autumn.png"
+      },
+      "young": {
+        "standard": "ui/coppercurl-maple-young-standard.png",
+        "autumn": "ui/coppercurl-maple-young-autumn.png"
+      },
+      "adult": {
+        "standard": "ui/coppercurl-maple-adult-standard.png",
+        "autumn": "ui/coppercurl-maple-adult-autumn.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/coppercurl-maple-sprout-standard.usdz",
+      "thumbnail": "ui/coppercurl-maple-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.164347,
+          -0.095741,
+          0.0
+        ],
+        "max": [
+          0.200563,
+          0.090376,
+          0.265387
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.164508,
+          -0.096596,
+          0.0
+        ],
+        "max": [
+          0.200604,
+          0.091625,
+          0.266452
+        ]
+      },
+      "animation": "coppercurl_maple_sprout_sway",
+      "triangles": 4668,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 435210,
+      "sha256": "49bfca99b300615a934de2510412662258be8ed268e8f5475df2405883375f40",
+      "leafCount": 6,
+      "compoundCount": 2,
+      "sprayCount": 0,
+      "peelCount": 0,
+      "baseVertexCount": 2364
+    },
+    {
+      "stage": "sprout",
+      "variant": "autumn",
+      "file": "models/coppercurl-maple-sprout-autumn.usdz",
+      "thumbnail": "ui/coppercurl-maple-sprout-autumn.png",
+      "bounds": {
+        "min": [
+          -0.164347,
+          -0.095741,
+          0.0
+        ],
+        "max": [
+          0.200563,
+          0.090376,
+          0.265387
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.164508,
+          -0.096596,
+          0.0
+        ],
+        "max": [
+          0.200604,
+          0.091625,
+          0.266452
+        ]
+      },
+      "animation": "coppercurl_maple_sprout_sway",
+      "triangles": 4788,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 422804,
+      "sha256": "01af14f8df48e82943c4e2e3472b98e6181f51c2cbb6cad8e00095dc1276f4c8",
+      "leafCount": 6,
+      "compoundCount": 2,
+      "sprayCount": 0,
+      "peelCount": 2,
+      "baseVertexCount": 2364
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/coppercurl-maple-seedling-standard.usdz",
+      "thumbnail": "ui/coppercurl-maple-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.308521,
+          -0.207583,
+          0.0
+        ],
+        "max": [
+          0.275111,
+          0.100263,
+          0.923154
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.308715,
+          -0.208314,
+          0.0
+        ],
+        "max": [
+          0.283892,
+          0.100618,
+          0.92426
+        ]
+      },
+      "animation": "coppercurl_maple_seedling_sway",
+      "triangles": 5706,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 500782,
+      "sha256": "0ca653d74f745dab2000ad051ef3f416242197d10827813bb5188ad6f6d01ed4",
+      "leafCount": 15,
+      "compoundCount": 5,
+      "sprayCount": 2,
+      "peelCount": 0,
+      "baseVertexCount": 2925
+    },
+    {
+      "stage": "seedling",
+      "variant": "autumn",
+      "file": "models/coppercurl-maple-seedling-autumn.usdz",
+      "thumbnail": "ui/coppercurl-maple-seedling-autumn.png",
+      "bounds": {
+        "min": [
+          -0.308521,
+          -0.207583,
+          0.0
+        ],
+        "max": [
+          0.275111,
+          0.100263,
+          0.923154
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.308715,
+          -0.208314,
+          0.0
+        ],
+        "max": [
+          0.283892,
+          0.100618,
+          0.92426
+        ]
+      },
+      "animation": "coppercurl_maple_seedling_sway",
+      "triangles": 6246,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 509019,
+      "sha256": "ad76572544db21ab9f1941f0f4c1c66689ae9b72d56df2479ed5481c393da065",
+      "leafCount": 15,
+      "compoundCount": 5,
+      "sprayCount": 2,
+      "peelCount": 9,
+      "baseVertexCount": 2925
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/coppercurl-maple-young-standard.usdz",
+      "thumbnail": "ui/coppercurl-maple-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.884633,
+          -0.515392,
+          0.0
+        ],
+        "max": [
+          0.883815,
+          0.818978,
+          2.294593
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.893032,
+          -0.521715,
+          0.0
+        ],
+        "max": [
+          0.897539,
+          0.820317,
+          2.299222
+        ]
+      },
+      "animation": "coppercurl_maple_young_sway",
+      "triangles": 24652,
+      "joints": 15,
+      "materials": 1,
+      "bytes": 1448744,
+      "sha256": "da2a9d6a744a118b37e9135de29b14b94c179498d539cdfcc4a8fcd0780b61bf",
+      "leafCount": 126,
+      "compoundCount": 42,
+      "sprayCount": 6,
+      "peelCount": 0,
+      "baseVertexCount": 13016
+    },
+    {
+      "stage": "young",
+      "variant": "autumn",
+      "file": "models/coppercurl-maple-young-autumn.usdz",
+      "thumbnail": "ui/coppercurl-maple-young-autumn.png",
+      "bounds": {
+        "min": [
+          -0.884633,
+          -0.515392,
+          0.0
+        ],
+        "max": [
+          0.883815,
+          0.818978,
+          2.294593
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.893032,
+          -0.521715,
+          0.0
+        ],
+        "max": [
+          0.897539,
+          0.820317,
+          2.299222
+        ]
+      },
+      "animation": "coppercurl_maple_young_sway",
+      "triangles": 26692,
+      "joints": 15,
+      "materials": 1,
+      "bytes": 1529664,
+      "sha256": "d2098127a246d15bc6deb15629d2cb9c2ed14e4fe66c29af7c06683dea960692",
+      "leafCount": 126,
+      "compoundCount": 42,
+      "sprayCount": 6,
+      "peelCount": 34,
+      "baseVertexCount": 13016
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/coppercurl-maple-adult-standard.usdz",
+      "thumbnail": "ui/coppercurl-maple-adult-standard.png",
+      "bounds": {
+        "min": [
+          -2.219686,
+          -1.347759,
+          0.0
+        ],
+        "max": [
+          2.30153,
+          1.888399,
+          4.497272
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.219728,
+          -1.355645,
+          0.0
+        ],
+        "max": [
+          2.305171,
+          1.909443,
+          4.497313
+        ]
+      },
+      "animation": "coppercurl_maple_adult_sway",
+      "triangles": 118980,
+      "joints": 35,
+      "materials": 1,
+      "bytes": 6068982,
+      "sha256": "64dc3bd613bf737d9f2930d5727746c2764004d8ddab5660923c67912a925e10",
+      "leafCount": 720,
+      "compoundCount": 240,
+      "sprayCount": 16,
+      "peelCount": 0,
+      "baseVertexCount": 63388
+    },
+    {
+      "stage": "adult",
+      "variant": "autumn",
+      "file": "models/coppercurl-maple-adult-autumn.usdz",
+      "thumbnail": "ui/coppercurl-maple-adult-autumn.png",
+      "bounds": {
+        "min": [
+          -2.219686,
+          -1.347759,
+          0.0
+        ],
+        "max": [
+          2.30153,
+          1.888399,
+          4.497272
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.219728,
+          -1.355645,
+          0.0
+        ],
+        "max": [
+          2.305171,
+          1.909443,
+          4.497313
+        ]
+      },
+      "animation": "coppercurl_maple_adult_sway",
+      "triangles": 124200,
+      "joints": 35,
+      "materials": 1,
+      "bytes": 6304128,
+      "sha256": "600353be56b38ae73239b7468733a21e3e51dcdcd0d1b1768f9024560301635e",
+      "leafCount": 720,
+      "compoundCount": 240,
+      "sprayCount": 16,
+      "peelCount": 87,
+      "baseVertexCount": 63388
+    }
+  ]
+}

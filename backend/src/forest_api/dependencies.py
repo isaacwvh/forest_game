@@ -15,6 +15,7 @@ def get_session(request: Request) -> Iterator[Session]:
         session.info["recovery_version"] = (
             1 if request.headers.get("X-Forest-Recovery") == "1" else 0
         )
+        session.info["woodland_release"] = request.headers.get("X-Forest-Woodland") == "1"
         yield session
 
 

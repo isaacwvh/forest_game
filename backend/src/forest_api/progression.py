@@ -116,8 +116,18 @@ def reconcile(session, owner, wallet):
     )
     progress = session.get(PlayerProgress, owner)
     entitlement = (progress.activity_steps if progress else 0) // STEPS_PER_GEM
-    # Spending is deliberately deferred. Its ledger must join this reconciliation when added.
-    if earned != wallet.gems or earned != wallet.lifetime_gems_earned or earned != entitlement:
+    from forest_api.collection_models import CollectionEvent
+
+    spent = session.scalar(
+        select(func.coalesce(func.sum(CollectionEvent.gem_delta), 0)).where(
+            CollectionEvent.owner_id == owner
+        )
+    )
+    if (
+        earned + spent != wallet.gems
+        or earned != wallet.lifetime_gems_earned
+        or earned != entitlement
+    ):
         raise ValueError("Unreconciled gem wallet; history retained")
 
 

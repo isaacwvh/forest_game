@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "moonbell",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained phase-offset two-joint botanical sway"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/moonbell-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/moonbell-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/moonbell-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/moonbell-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/moonbell-sprout-standard.usdz",
+      "thumbnail": "ui/moonbell-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.045226,
+          -0.024527,
+          0.0
+        ],
+        "max": [
+          0.028642,
+          0.042532,
+          0.179891
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.045713,
+          -0.02656,
+          0.0
+        ],
+        "max": [
+          0.030456,
+          0.049294,
+          0.17999
+        ]
+      },
+      "animation": "moonbell_sprout_sway",
+      "triangles": 3296,
+      "joints": 5,
+      "materials": 1,
+      "bytes": 256141,
+      "sha256": "5fea85f521ff0cb54c01e780cd45a9bfe6212507d5c043060aa6629d5ee36ac5",
+      "leafCount": 2,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 2,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/moonbell-seedling-standard.usdz",
+      "thumbnail": "ui/moonbell-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.230672,
+          -0.036454,
+          0.0
+        ],
+        "max": [
+          0.194399,
+          0.13798,
+          0.324817
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.231127,
+          -0.038527,
+          0.0
+        ],
+        "max": [
+          0.197502,
+          0.151468,
+          0.324925
+        ]
+      },
+      "animation": "moonbell_seedling_sway",
+      "triangles": 5156,
+      "joints": 9,
+      "materials": 1,
+      "bytes": 338497,
+      "sha256": "4c805f3f8549e61b8d0e4bd4933737c4bd54497464f7ee7dc9b992b2b2e9aa9f",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "budCount": 1,
+      "shootCount": 4,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/moonbell-young-standard.usdz",
+      "thumbnail": "ui/moonbell-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.417672,
+          -0.213635,
+          0.0
+        ],
+        "max": [
+          0.392258,
+          0.302852,
+          0.634859
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.418,
+          -0.214536,
+          0.0
+        ],
+        "max": [
+          0.396407,
+          0.321466,
+          0.63521
+        ]
+      },
+      "animation": "moonbell_young_sway",
+      "triangles": 25948,
+      "joints": 17,
+      "materials": 1,
+      "bytes": 1353594,
+      "sha256": "57a18ac7b59a96c5622c1750978f6c189fe867008871c5b166bca68b1ea47477",
+      "leafCount": 5,
+      "flowerCount": 2,
+      "budCount": 1,
+      "shootCount": 8,
+      "petalCount": 12,
+      "stamenCount": 12
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/moonbell-adult-standard.usdz",
+      "thumbnail": "ui/moonbell-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.623346,
+          -0.409591,
+          0.0
+        ],
+        "max": [
+          0.643021,
+          0.576935,
+          1.025108
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.623725,
+          -0.410255,
+          0.0
+        ],
+        "max": [
+          0.645338,
+          0.59693,
+          1.02519
+        ]
+      },
+      "animation": "moonbell_adult_sway",
+      "triangles": 52712,
+      "joints": 33,
+      "materials": 1,
+      "bytes": 2634459,
+      "sha256": "ed7ee2ab64bd5cc140235625a158ca6228e95ab73c70761be1d94dfd68b5ebef",
+      "leafCount": 11,
+      "flowerCount": 5,
+      "budCount": 0,
+      "shootCount": 16,
+      "petalCount": 30,
+      "stamenCount": 30
+    }
+  ]
+}

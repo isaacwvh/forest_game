@@ -374,6 +374,7 @@ final class GardenConnection: ObservableObject {
         summary.onSummary = { [weak store, weak collection = self.collection, weak visitor = self.visitors,
                                weak levels = self.levelUps] value in
             levels?.receive(value.levelUpNotice)
+            collection?.applyWallet(value.wallet.tokenBalance, version: value.wallet.economyVersion, gems: value.wallet.gemBalance)
             if let benefits = value.benefits {
                 store?.applyLevelPlantLimit(benefits.plantLimit)
                 collection?.applyLevelPlantLimit(benefits.plantLimit)

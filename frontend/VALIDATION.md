@@ -1,3 +1,25 @@
+## First Woodland catalog release — 13 November 2026
+
+The app indexes all 30 species/47 variants (188 models and 188 thumbnails), uses
+explicit versioned manifest paths, supports all three pack designs and token/gem
+purchase flows, retains copy-specific placement radii, and presents concise,
+deduplicated skill descriptions. Model loading shares in-flight requests, bounds
+concurrency and clears unused cached templates on memory pressure.
+
+Passed on Windows: portable frontend assets/contracts/project/contrast validation,
+all **92 Swift syntax parses**, generated-project freshness, release checksum/
+resource/economy verification and diff whitespace checks. All three pack themes
+are validated (nine aligned PNGs). Selected runtime resources measure approximately
+274.52 MB; actual installed/download sizes require a Release archive on a Mac.
+
+Added native regressions for gem affordability and stale wallet versions, all pack
+artwork paths and the full 188-asset matrix. These are syntax-parsed, **not executed
+on Windows**. Native XCTest, Apple SDK typechecking, Release/InternalRelease builds,
+RealityKit animation/performance and device accessibility remain explicit checks.
+No push, CI run or personal-game activation was performed.
+
+Follow [the release activation and device walkthrough](../backend/WOODLAND_RELEASE.md).
+
 # Validation record
 
 ## Tighter Home spacing and quiet reward refresh — 6 November 2026

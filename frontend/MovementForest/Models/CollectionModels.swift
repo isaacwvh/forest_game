@@ -102,11 +102,14 @@ struct APIExchangeOffer: Codable, Identifiable {
     let offerId: String
     let offerVersion: Int
     let tokenCost: String
+    var currency: String? = nil
+    var purchaseCurrency: String { currency ?? "tokens" }
     let pack: APIPackDefinition
     var id: String { "\(offerId)/\(offerVersion)" }
 }
 
 struct APICollectionSummary: Codable {
+    var gemBalance: String? = nil
     let tokenBalance: String
     let economyVersion: Int64
     let offers: [APIExchangeOffer]
@@ -138,6 +141,8 @@ struct APIOpeningPage: Codable { let openings: [APICollectionReceipt]; let nextC
 
 /// Both operations share accounting fields; the selected operation validates its result.
 struct APICollectionReceipt: Codable, Identifiable {
+    var gemBalance: String? = nil
+    var gemsSpent: String? = nil
     let requestId: UUID
     let tokenBalance: String
     let economyVersion: Int64

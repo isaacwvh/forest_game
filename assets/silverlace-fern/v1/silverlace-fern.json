@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "silverlace-fern",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Slight phase-offset skeletal sway; all anatomical parts follow coherent weights"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/silverlace-fern-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/silverlace-fern-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/silverlace-fern-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/silverlace-fern-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/silverlace-fern-sprout-standard.usdz",
+      "thumbnail": "ui/silverlace-fern-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.040901,
+          -0.01464,
+          0.0
+        ],
+        "max": [
+          0.027194,
+          0.009409,
+          0.145377
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.040933,
+          -0.01464,
+          0.0
+        ],
+        "max": [
+          0.027242,
+          0.009409,
+          0.14538
+        ]
+      },
+      "animation": "silverlace-fern_sprout_sway",
+      "frondCount": 0,
+      "fiddleheadCount": 1,
+      "triangles": 2852,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 155839,
+      "sha256": "fba19ab9e980bbb8f99f119e08397c2729631908f1ccfc762deeba18ce8e69e7"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/silverlace-fern-seedling-standard.usdz",
+      "thumbnail": "ui/silverlace-fern-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.088419,
+          -0.03294,
+          0.0
+        ],
+        "max": [
+          0.103206,
+          0.216349,
+          0.218083
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.088424,
+          -0.03294,
+          0.0
+        ],
+        "max": [
+          0.103208,
+          0.216608,
+          0.218407
+        ]
+      },
+      "animation": "silverlace-fern_seedling_sway",
+      "frondCount": 1,
+      "fiddleheadCount": 1,
+      "triangles": 9680,
+      "joints": 6,
+      "materials": 1,
+      "bytes": 423800,
+      "sha256": "f10871ad24c7bc2099e05f0a9da98f06135f09d5158bdaa5d5acb3afef8b6844"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/silverlace-fern-young-standard.usdz",
+      "thumbnail": "ui/silverlace-fern-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.317929,
+          -0.364927,
+          0.0
+        ],
+        "max": [
+          0.379544,
+          0.222957,
+          0.435043
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.317958,
+          -0.365083,
+          0.0
+        ],
+        "max": [
+          0.379684,
+          0.224353,
+          0.43542
+        ]
+      },
+      "animation": "silverlace-fern_young_sway",
+      "frondCount": 5,
+      "fiddleheadCount": 2,
+      "triangles": 45664,
+      "joints": 20,
+      "materials": 1,
+      "bytes": 1820544,
+      "sha256": "44dba280e7368fe308e7b73cbe57f3beb0776d93727db2a61c58b09b304fa6bb"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/silverlace-fern-adult-standard.usdz",
+      "thumbnail": "ui/silverlace-fern-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.555224,
+          -0.72001,
+          0.0
+        ],
+        "max": [
+          0.566269,
+          0.29483,
+          0.737031
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.555588,
+          -0.721152,
+          0.0
+        ],
+        "max": [
+          0.566347,
+          0.298514,
+          0.737597
+        ]
+      },
+      "animation": "silverlace-fern_adult_sway",
+      "frondCount": 11,
+      "fiddleheadCount": 3,
+      "triangles": 128024,
+      "joints": 40,
+      "materials": 1,
+      "bytes": 5010149,
+      "sha256": "6d6462e1f8945a9424ebd9ead0156665762b1ec6d73003a2e938c09bdbffb783"
+    }
+  ]
+}

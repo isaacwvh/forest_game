@@ -248,6 +248,9 @@ class OwnedPlant(Timestamps, Base):
         ),
         UniqueConstraint("id", "owner_id"),
         UniqueConstraint("owner_id", "acquisition_source", "acquisition_reference"),
+        CheckConstraint(
+            "clearance_radius > 0 AND clearance_radius <> 'NaN'::numeric", name="radius"
+        ),
         CheckConstraint("growth_micro_units >= 0", name="growth"),
         CheckConstraint("jsonb_typeof(fractional_state) = 'object'", name="fractional_object"),
     )
@@ -261,6 +264,7 @@ class OwnedPlant(Timestamps, Base):
     behaviour_profile_version: Mapped[int] = mapped_column(Integer)
     attraction_profile_id: Mapped[str] = mapped_column(String(100))
     attraction_profile_version: Mapped[int] = mapped_column(Integer)
+    clearance_radius: Mapped[Decimal] = mapped_column(Numeric(9, 3))
     growth_micro_units: Mapped[int] = mapped_column(BigInteger, server_default="0")
     fractional_state: Mapped[dict] = mapped_column(JSONB, server_default="{}")
     acquisition_source: Mapped[str] = mapped_column(String(64))

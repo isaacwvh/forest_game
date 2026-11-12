@@ -119,12 +119,28 @@ def create_context(session, settings, garden, boundary):
         3 * base if level is not None else definition.curve.maximum_capacity,
         flat_multiplier=definition.capacity_flat_multiplier,
     )
+    expiry = {}
+    if skills.flights and any(
+        e.magnitude.type == "daily_flights"
+        for p in skills.plants
+        if p.stage == "adult"
+        for e in p.behaviour.garden_effects
+    ):
+        from zoneinfo import ZoneInfo
+
+        from forest_api.models import User
+
+        zone = ZoneInfo(session.get(User, garden.owner_id).game_timezone)
+        tomorrow = boundary.astimezone(zone).date() + timedelta(days=1)
+        midnight = datetime.combine(tomorrow, datetime.min.time(), zone).astimezone(UTC)
+        expiry = {"dailySkillExpiresAt": midnight.isoformat()}
     context = VisitorContext(
         id=uuid4(),
         garden_id=garden.id,
         effective_at=boundary,
         rule_version=rule.version,
         snapshot={
+            **expiry,
             "sources": sources,
             "attraction": str(attraction),
             "probability": fraction_json(parameters["active_probability"]),
@@ -320,6 +336,10 @@ def settle(session, settings, garden, boundary, *, can_issue=False, draw=random_
         .order_by(VisitorRules.effective_at)
     ).all()
     change_times = {row.effective_at for row in changes}
+    daily_context = session.get(VisitorContext, state.context_id)
+    expiry = daily_context.snapshot.get("dailySkillExpiresAt")
+    if expiry and state.settled_at < datetime.fromisoformat(expiry) <= boundary:
+        change_times.add(datetime.fromisoformat(expiry))
     cuts = {boundary, *change_times}
     if active and state.settled_at < active.lease_expires_at <= boundary:
         cuts.add(active.lease_expires_at)

@@ -20,9 +20,9 @@ TRACK = (
 
 
 def summary(session, owner, catalogue, wallet):
-    if catalogue.version not in {VERSION, RESCALE_VERSION}:
+    if catalogue.version not in {VERSION, RESCALE_VERSION, "woodland-v1"}:
         return []
-    scale = 10 if catalogue.version == RESCALE_VERSION else 1
+    scale = 10 if catalogue.version in {RESCALE_VERSION, "woodland-v1"} else 1
     progress = session.get(PlayerProgress, owner)
     hosted = wallet.hosted_active + wallet.hosted_offline
     movement = bool(

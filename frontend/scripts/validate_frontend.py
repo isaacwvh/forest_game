@@ -122,16 +122,19 @@ def main():
         require(item["prompt"] and path.stat().st_size < 64 * 1024, "Progression icon prompt/budget mismatch")
     print("PASS: 16 runtime quantity icons, including approved emerald/XP artwork, RGBA budgets and provenance.")
     pack_bytes = 0
-    pack_dimensions = set()
-    for part in ["sealed", "opened", "top-strip"]:
-        png = (REPO / f"assets/packs/woodland/v1/woodland-pack-{part}.png").read_bytes()
-        require(png[:8] == b"\x89PNG\r\n\x1a\n", "Invalid pack PNG")
-        width, height, _, colour = struct.unpack(">IIBB", png[16:26])
-        require(colour in [4, 6] and max(width, height) <= 1536, "Pack image budget/alpha mismatch")
-        pack_dimensions.add((width, height))
-        pack_bytes += len(png)
-    require(len(pack_dimensions) == 1, "Pack layers must share an aligned canvas")
-    require(pack_bytes <= 5 * 1024 * 1024, "Pack theme exceeds 5 MiB compressed budget")
+    for pack_id in ["woodland", "select-woodland", "premium-woodland"]:
+        theme_bytes = 0
+        pack_dimensions = set()
+        for part in ["sealed", "opened", "top-strip"]:
+            png = (REPO / f"assets/packs/{pack_id}/v1/{pack_id}-pack-{part}.png").read_bytes()
+            require(png[:8] == b"\x89PNG\r\n\x1a\n", "Invalid pack PNG")
+            width, height, _, colour = struct.unpack(">IIBB", png[16:26])
+            require(colour in [4, 6] and max(width, height) <= 1536, "Pack image budget/alpha mismatch")
+            pack_dimensions.add((width, height))
+            theme_bytes += len(png)
+        require(len(pack_dimensions) == 1, "Pack layers must share an aligned canvas")
+        require(theme_bytes <= 5 * 1024 * 1024, "Pack theme exceeds 5 MiB compressed budget")
+        pack_bytes += theme_bytes
     visitor = json.loads((REPO / "assets/butterfly/v1/butterfly.json").read_text())
     require(visitor["assetType"] == "visitor" and visitor["visitorId"] == "butterfly", "Invalid visitor manifest")
     require(visitor["animation"]["loop"] and visitor["placement"]["rootMotion"] is False, "Invalid wing/flight boundary")
@@ -338,9 +341,11 @@ def main():
     launch = ast.parse((REPO / "backend/src/forest_api/launch_balance.py").read_text(encoding="utf-8"))
     plants = next(ast.literal_eval(node.value) for node in launch.body if isinstance(node, ast.Assign)
                   and any(isinstance(target, ast.Name) and target.id == "PLANTS" for target in node.targets))
+    woodland = json.loads((REPO / "backend/src/forest_api/data/woodland-v1.json").read_text(encoding="utf-8"))
+    plants.update({p["id"]: p for p in woodland["species"]})
     samples = re.search(r"static let rarities = \[([^]]+)\]", shared)
     require(samples is not None, "Sample rarity metadata missing")
-    sample_rarities = dict(re.findall(r'"([a-z_]+)": "([a-z]+)"', samples.group(1)))
+    sample_rarities = dict(re.findall(r'"([a-z_-]+)": "([a-z]+)"', samples.group(1)))
     require(set(sample_rarities) == set(asset_ids), "Bundled sample species rarity metadata is incomplete")
     for species, rarity in sample_rarities.items():
         require(plants[species]["rarity"] == rarity, f"Sample rarity differs from approved launch data: {species}")
@@ -349,7 +354,7 @@ def main():
     print("PASS: synthetic B3 editor contract, owned-copy identity, bundled API asset keys and shared geometry resource.")
     print("PASS: real synthetic collection exchange/opening accounting, pack consumption, probabilities and bundled award thumbnail.")
     print("PASS: HTTP-derived Sleeping Dew source/activation/storage, +4% growth and versioned cap contract.")
-    print(f"PASS: F8 portrait/light configuration, butterfly checksum/archive, three aligned pack PNGs ({pack_bytes:,} bytes).")
+    print(f"PASS: F8 portrait/light configuration, butterfly checksum/archive, nine aligned pack PNGs ({pack_bytes:,} bytes).")
     print("PASS: internal Release diagnostics scheme and generated configuration; public Release remains separate.")
     print("Swift compilation, native UI, imported axes, animation, and real HealthKit remain Mac/iPhone checks.")
 

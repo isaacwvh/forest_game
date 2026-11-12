@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "duskwand",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "pure"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "slight phase-offset three-bone flowering spire sway and leaf flutter; fixed ground contact"
+  },
+  "materials": {
+    "roughness": 0.8,
+    "sharedRefinedAtlasAcrossStages": true,
+    "pure": "fully white outer and inner corollas with distinct blue inner speckles; matching sage foliage and green calyces",
+    "bellPresentation": "open axes 68 to 74 degrees from vertically down, exposing irregular speckled inner throats"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/duskwand-sprout-standard.png",
+        "pure": "ui/duskwand-sprout-pure.png"
+      },
+      "seedling": {
+        "standard": "ui/duskwand-seedling-standard.png",
+        "pure": "ui/duskwand-seedling-pure.png"
+      },
+      "young": {
+        "standard": "ui/duskwand-young-standard.png",
+        "pure": "ui/duskwand-young-pure.png"
+      },
+      "adult": {
+        "standard": "ui/duskwand-adult-standard.png",
+        "pure": "ui/duskwand-adult-pure.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/duskwand-sprout-standard.usdz",
+      "thumbnail": "ui/duskwand-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.053844,
+          -0.069969,
+          0.0
+        ],
+        "max": [
+          0.060715,
+          0.041529,
+          0.154725
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.054258,
+          -0.070162,
+          0.0
+        ],
+        "max": [
+          0.061427,
+          0.042659,
+          0.154776
+        ]
+      },
+      "animation": "duskwand_sprout_sway",
+      "triangles": 4864,
+      "joints": 8,
+      "materials": 1,
+      "bytes": 414945,
+      "sha256": "f8ff1fb99d28e0cbe4740a9a47c15091282644619f922f9bea81a88f028ce19c",
+      "leafCount": 2,
+      "stemCount": 1,
+      "bellCount": 0,
+      "budCount": 1
+    },
+    {
+      "stage": "sprout",
+      "variant": "pure",
+      "file": "models/duskwand-sprout-pure.usdz",
+      "thumbnail": "ui/duskwand-sprout-pure.png",
+      "bounds": {
+        "min": [
+          -0.053844,
+          -0.069969,
+          0.0
+        ],
+        "max": [
+          0.060715,
+          0.041529,
+          0.154725
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.054258,
+          -0.070162,
+          0.0
+        ],
+        "max": [
+          0.061427,
+          0.042659,
+          0.154776
+        ]
+      },
+      "animation": "duskwand_sprout_sway",
+      "triangles": 4864,
+      "joints": 8,
+      "materials": 1,
+      "bytes": 350851,
+      "sha256": "d2a19e36316d8da78182ae6cc2c834619775f4dd41b04a9fe67adb24578913de",
+      "leafCount": 2,
+      "stemCount": 1,
+      "bellCount": 0,
+      "budCount": 1
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/duskwand-seedling-standard.usdz",
+      "thumbnail": "ui/duskwand-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.12566,
+          -0.197031,
+          0.0
+        ],
+        "max": [
+          0.179348,
+          0.054212,
+          0.331053
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.128104,
+          -0.197728,
+          0.0
+        ],
+        "max": [
+          0.179539,
+          0.057101,
+          0.331216
+        ]
+      },
+      "animation": "duskwand_seedling_sway",
+      "triangles": 10532,
+      "joints": 12,
+      "materials": 1,
+      "bytes": 620317,
+      "sha256": "19fedc59fefabbd867d35b16b87eaef76449560896e870c0cc0b1105b31d262d",
+      "leafCount": 4,
+      "stemCount": 1,
+      "bellCount": 0,
+      "budCount": 3
+    },
+    {
+      "stage": "seedling",
+      "variant": "pure",
+      "file": "models/duskwand-seedling-pure.usdz",
+      "thumbnail": "ui/duskwand-seedling-pure.png",
+      "bounds": {
+        "min": [
+          -0.12566,
+          -0.197031,
+          0.0
+        ],
+        "max": [
+          0.179348,
+          0.054212,
+          0.331053
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.128104,
+          -0.197728,
+          0.0
+        ],
+        "max": [
+          0.179539,
+          0.057101,
+          0.331216
+        ]
+      },
+      "animation": "duskwand_seedling_sway",
+      "triangles": 10532,
+      "joints": 12,
+      "materials": 1,
+      "bytes": 556096,
+      "sha256": "c79c75e6a5b32fc9f94d5f8d68fb72d46624f60cc239a19ae140f1ea7609935e",
+      "leafCount": 4,
+      "stemCount": 1,
+      "bellCount": 0,
+      "budCount": 3
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/duskwand-young-standard.usdz",
+      "thumbnail": "ui/duskwand-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.216321,
+          -0.290272,
+          0.0
+        ],
+        "max": [
+          0.309252,
+          0.189622,
+          0.869859
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.220373,
+          -0.290555,
+          0.0
+        ],
+        "max": [
+          0.309608,
+          0.190129,
+          0.870231
+        ]
+      },
+      "animation": "duskwand_young_sway",
+      "triangles": 22272,
+      "joints": 16,
+      "materials": 1,
+      "bytes": 1036768,
+      "sha256": "0dc147ce1687e7c366a7d1e3738a2090f03e2fc4239237a2ba6779047e6d78b3",
+      "leafCount": 6,
+      "stemCount": 1,
+      "bellCount": 3,
+      "budCount": 3
+    },
+    {
+      "stage": "young",
+      "variant": "pure",
+      "file": "models/duskwand-young-pure.usdz",
+      "thumbnail": "ui/duskwand-young-pure.png",
+      "bounds": {
+        "min": [
+          -0.216321,
+          -0.290272,
+          0.0
+        ],
+        "max": [
+          0.309252,
+          0.189622,
+          0.869859
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.220373,
+          -0.290555,
+          0.0
+        ],
+        "max": [
+          0.309608,
+          0.190129,
+          0.870231
+        ]
+      },
+      "animation": "duskwand_young_sway",
+      "triangles": 22272,
+      "joints": 16,
+      "materials": 1,
+      "bytes": 972674,
+      "sha256": "6e53af603513f96a3ad09281fa9dd87f8ce2aa7accd9a22c6f6f2e1f5dfcf535",
+      "leafCount": 6,
+      "stemCount": 1,
+      "bellCount": 3,
+      "budCount": 3
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/duskwand-adult-standard.usdz",
+      "thumbnail": "ui/duskwand-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.453526,
+          -0.463883,
+          0.0
+        ],
+        "max": [
+          0.49,
+          0.315037,
+          1.639795
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.45451,
+          -0.464278,
+          0.0
+        ],
+        "max": [
+          0.490258,
+          0.315118,
+          1.640235
+        ]
+      },
+      "animation": "duskwand_adult_sway",
+      "triangles": 76776,
+      "joints": 28,
+      "materials": 1,
+      "bytes": 2940698,
+      "sha256": "4d8e36948affdec03f9464d6709dfc8f3b81e29db9c37acf0f4e31609cceba2f",
+      "leafCount": 9,
+      "stemCount": 3,
+      "bellCount": 15,
+      "budCount": 9
+    },
+    {
+      "stage": "adult",
+      "variant": "pure",
+      "file": "models/duskwand-adult-pure.usdz",
+      "thumbnail": "ui/duskwand-adult-pure.png",
+      "bounds": {
+        "min": [
+          -0.453526,
+          -0.463883,
+          0.0
+        ],
+        "max": [
+          0.49,
+          0.315037,
+          1.639795
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.45451,
+          -0.464278,
+          0.0
+        ],
+        "max": [
+          0.490258,
+          0.315118,
+          1.640235
+        ]
+      },
+      "animation": "duskwand_adult_sway",
+      "triangles": 76776,
+      "joints": 28,
+      "materials": 1,
+      "bytes": 2876601,
+      "sha256": "15fc6fdc4be5480a40934e6d33bfa90064e5e21e74bac5f677d89c67ac1109c5",
+      "leafCount": 9,
+      "stemCount": 3,
+      "bellCount": 15,
+      "budCount": 9
+    }
+  ]
+}

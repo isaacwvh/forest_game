@@ -25,6 +25,10 @@ def main() -> None:
         help="Preview capacity activation; --apply settles and enables it",
     )
     benefits.add_argument("--apply", action="store_true")
+    woodland = commands.add_parser(
+        "publish-woodland", help="Preview Woodland release; --apply publishes"
+    )
+    woodland.add_argument("--apply", action="store_true")
     cleanup = commands.add_parser(
         "compact-requests", help="Bounded completion backfill/cache expiry (dry run by default)"
     )
@@ -92,7 +96,11 @@ def main() -> None:
             run(database, settings)
             return
         with database.sessions() as session:
-            if args.command == "activate-level-benefits":
+            if args.command == "publish-woodland":
+                from forest_api.woodland import publish
+
+                print(json.dumps(publish(session, settings, apply=args.apply)))
+            elif args.command == "activate-level-benefits":
                 from forest_api.level_benefits import activate
 
                 print(json.dumps(activate(session, settings, apply=args.apply)))

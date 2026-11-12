@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "amberfan",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "slight trunk sway and phase-offset leafy branches"
+  },
+  "materials": {
+    "roughness": 0.79,
+    "sharedRefinedAtlasAcrossStages": true,
+    "textureSize": [
+      1024,
+      1024
+    ],
+    "standard": "small yellow ginkgo fans with modeled rolled margins, cupping and raised radial pleats; fine radial pigment veins and warm gold rims; smooth tan bark; sparse apricot fruit"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/amberfan-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/amberfan-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/amberfan-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/amberfan-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/amberfan-sprout-standard.usdz",
+      "thumbnail": "ui/amberfan-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.104527,
+          -0.043238,
+          0.0
+        ],
+        "max": [
+          0.106797,
+          0.02063,
+          0.286501
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.104649,
+          -0.043769,
+          0.0
+        ],
+        "max": [
+          0.106865,
+          0.022135,
+          0.286609
+        ]
+      },
+      "animation": "amberfan_sprout_sway",
+      "triangles": 4484,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 476281,
+      "sha256": "fc3d3e4e268b8164e449111b9d53105bae9e6af5c63fc05802d3e9a173ef5f87",
+      "leafCount": 2,
+      "sprayCount": 0,
+      "stemCount": 1,
+      "fruitCount": 0,
+      "leafLinearScaleFromOriginal": 0.55,
+      "leafSurface": "modeled cupping, rolled edges and radial pleats"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/amberfan-seedling-standard.usdz",
+      "thumbnail": "ui/amberfan-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.34354,
+          -0.140648,
+          0.0
+        ],
+        "max": [
+          0.325811,
+          0.157965,
+          0.817443
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.343738,
+          -0.146132,
+          0.0
+        ],
+        "max": [
+          0.327798,
+          0.165817,
+          0.818208
+        ]
+      },
+      "animation": "amberfan_seedling_sway",
+      "triangles": 8408,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 700812,
+      "sha256": "c4f619692346bcf3f841dfd58134521d3e4536baf0263481f2b6e3a688aa3554",
+      "leafCount": 8,
+      "sprayCount": 2,
+      "stemCount": 1,
+      "fruitCount": 0,
+      "leafLinearScaleFromOriginal": 0.55,
+      "leafSurface": "modeled cupping, rolled edges and radial pleats"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/amberfan-young-standard.usdz",
+      "thumbnail": "ui/amberfan-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.86446,
+          -0.46078,
+          0.0
+        ],
+        "max": [
+          0.868493,
+          0.742244,
+          2.351552
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.865111,
+          -0.471132,
+          0.0
+        ],
+        "max": [
+          0.874865,
+          0.742921,
+          2.351989
+        ]
+      },
+      "animation": "amberfan_young_sway",
+      "triangles": 27044,
+      "joints": 17,
+      "materials": 1,
+      "bytes": 1675179,
+      "sha256": "c38f51033ce7fa3c50d587e38facebe6d17b9e7222b7265ebe3a6dfe7e100d93",
+      "leafCount": 61,
+      "sprayCount": 7,
+      "stemCount": 3,
+      "fruitCount": 0,
+      "leafLinearScaleFromOriginal": 0.55,
+      "leafSurface": "modeled cupping, rolled edges and radial pleats"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/amberfan-adult-standard.usdz",
+      "thumbnail": "ui/amberfan-adult-standard.png",
+      "bounds": {
+        "min": [
+          -2.506242,
+          -1.167839,
+          0.0
+        ],
+        "max": [
+          2.476111,
+          1.891194,
+          4.285049
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.510937,
+          -1.181644,
+          0.0
+        ],
+        "max": [
+          2.486046,
+          1.896107,
+          4.288086
+        ]
+      },
+      "animation": "amberfan_adult_sway",
+      "triangles": 241444,
+      "joints": 55,
+      "materials": 1,
+      "bytes": 12578436,
+      "sha256": "51f28c37eabb951800405790a41fc8722be44c28b11d74a15b6fb969705fb9cb",
+      "leafCount": 737,
+      "sprayCount": 26,
+      "stemCount": 5,
+      "fruitCount": 8,
+      "leafLinearScaleFromOriginal": 0.55,
+      "leafSurface": "modeled cupping, rolled edges and radial pleats"
+    }
+  ]
+}

@@ -23,8 +23,8 @@ enum PresentationAssets {
     }
 
     static func packPath(packID: String, part: String) -> String? {
-        guard packID == "woodland", ["sealed", "opened", "top-strip"].contains(part) else { return nil }
-        return "packs/woodland/v1/woodland-pack-\(part).png"
+        guard ["woodland", "select-woodland", "premium-woodland"].contains(packID), ["sealed", "opened", "top-strip"].contains(part) else { return nil }
+        return "packs/\(packID)/v1/\(packID)-pack-\(part).png"
     }
 }
 

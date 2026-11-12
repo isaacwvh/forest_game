@@ -2,6 +2,7 @@ import Foundation
 import RealityKit
 import Combine
 import CryptoKit
+import UIKit
 
 @MainActor
 final class PlantModelLoader {
@@ -16,12 +17,46 @@ final class PlantModelLoader {
     private var templates: [String: Template] = [:]
     private var recency: [String] = []
     private let capacity = 20
+    private var inFlight: [String: Task<LoadedModel, Error>] = [:]
+    private var inFlightIDs: [String: UUID] = [:]
+    private var activeImports = 0
+    private var memoryWarning: AnyCancellable?
+
+    init() {
+        memoryWarning = NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
+            .sink { [weak self] _ in Task { @MainActor in self?.clear() } }
+    }
 
     func load(_ resolved: ResolvedPlantAsset) async throws -> LoadedModel {
         if let cached = templates[resolved.key] {
             touch(resolved.key)
             return LoadedModel(entity: cached.entity.clone(recursive: true), orientationNote: cached.orientationNote)
         }
+        if let task = inFlight[resolved.key] {
+            let value = try await task.value
+            try Task.checkCancellation()
+            return LoadedModel(entity: value.entity.clone(recursive: true), orientationNote: value.orientationNote)
+        }
+        let task = Task { @MainActor in try await self.importModel(resolved) }
+        let requestID = UUID()
+        inFlight[resolved.key] = task; inFlightIDs[resolved.key] = requestID
+        defer {
+            if inFlightIDs[resolved.key] == requestID {
+                inFlight.removeValue(forKey: resolved.key); inFlightIDs.removeValue(forKey: resolved.key)
+            }
+        }
+        let value = try await task.value
+        try Task.checkCancellation()
+        return value
+    }
+
+    private func importModel(_ resolved: ResolvedPlantAsset) async throws -> LoadedModel {
+        while activeImports >= 3 {
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        try Task.checkCancellation()
+        activeImports += 1
+        defer { activeImports -= 1 }
         let url = resolved.modelURL
         let size = resolved.asset.bytes
         let checksum = resolved.asset.sha256
@@ -52,6 +87,10 @@ final class PlantModelLoader {
         throw ForestError.assetLoad("The model loader returned no entity for \(resolved.asset.file).")
     }
 
-    func clear() { templates.removeAll(); recency.removeAll() }
+    func clear() {
+        templates.removeAll(); recency.removeAll()
+        for task in inFlight.values { task.cancel() }
+        inFlight.removeAll(); inFlightIDs.removeAll()
+    }
     private func touch(_ key: String) { recency.removeAll { $0 == key }; recency.append(key) }
 }

@@ -6,6 +6,7 @@ from forest_api.models import Base
 
 GROUPS = {
     "current_state": {
+        "daily_skill_activity",
         "account_level_state",
         "users",
         "gardens",

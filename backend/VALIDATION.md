@@ -1,3 +1,36 @@
+## First Woodland catalog release — 13 November 2026
+
+Implemented migration `0015_woodland_release`, explicit preview/apply publication,
+30 species/47 variants, immutable version-20 Standard/Enchanted/Premium packs,
+gem purchase accounting, conversion/placement compatibility, all 21 skills and
+8% Sleeping Dew. See [release, activation and device flow](WOODLAND_RELEASE.md).
+
+Executed against disposable `forest_test_*` databases on the dedicated local
+PostgreSQL 17 cluster, without changing the personal game database:
+
+- Final full backend suite: **631 passed, 3 skipped**, 423.80 seconds. The skips
+  remain the existing opt-in physical-storage benchmarks; no new load/capacity
+  guarantee is inferred. All default tests passed.
+- Additional focused activity/skill/launch run: **163 passed**. New tests cover
+  all published fixed bonuses, companion replacements, distinct/copy counting,
+  step-band boundary/replay/provenance, flights beyond the water cap, midnight,
+  Moonwillow prospective upgrade, all variant valuations, shared pack pools,
+  insufficient gems, client capability gates and durable purchase/open retries.
+- Existing activity, skills, launch and visitor HTTP walkthroughs passed,
+  including server restart, compacted-response recovery and resale. Progression
+  and level-benefit validation scripts passed and cleaned their test databases.
+- Ruff lint/format, Python compilation, dependency consistency and Compose
+  configuration passed. The Python wheel builds and contains the complete
+  release JSON and runtime modules; Excel is not needed in deployment.
+- Release/compiler equality, all 188 model hashes/archives and alpha thumbnails,
+  all nine pack images, project freshness and portable frontend contracts passed.
+
+Docker Desktop's availability query was unresponsive and was stopped. No image
+build, personal database migration/publication, live service change, commit,
+push or CI run is claimed. Native Apple SDK typechecking, XCTest, simulator
+builds, physical-iPhone appearance/performance and actual thinned app size remain
+Mac/device acceptance. Windows syntax/resource checks do not establish them.
+
 # B1–B6 implementation verification
 
 ## Account progression stages 1–2 — 6 November 2026

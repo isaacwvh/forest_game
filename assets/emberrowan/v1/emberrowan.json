@@ -1,0 +1,394 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "emberrowan",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "autumn-gold"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "slight structural sway with phase-offset leafy branches; berries share branch weights"
+  },
+  "materials": {
+    "roughness": 0.79,
+    "sharedRefinedAtlasAcrossStages": true,
+    "autumnGold": "foliage only: soft golden yellow with muted apricot tips; berries, bark and rachis retained",
+    "berryCenters": "subtle amber pigment on intact coral skin; no dependency on emission or bloom"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/emberrowan-sprout-standard.png",
+        "autumn-gold": "ui/emberrowan-sprout-autumn-gold.png"
+      },
+      "seedling": {
+        "standard": "ui/emberrowan-seedling-standard.png",
+        "autumn-gold": "ui/emberrowan-seedling-autumn-gold.png"
+      },
+      "young": {
+        "standard": "ui/emberrowan-young-standard.png",
+        "autumn-gold": "ui/emberrowan-young-autumn-gold.png"
+      },
+      "adult": {
+        "standard": "ui/emberrowan-adult-standard.png",
+        "autumn-gold": "ui/emberrowan-adult-autumn-gold.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/emberrowan-sprout-standard.usdz",
+      "thumbnail": "ui/emberrowan-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.166739,
+          -0.108124,
+          0.0
+        ],
+        "max": [
+          0.213034,
+          0.025093,
+          0.304952
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.167519,
+          -0.108494,
+          0.0
+        ],
+        "max": [
+          0.213327,
+          0.025665,
+          0.304982
+        ]
+      },
+      "animation": "emberrowan_sprout_sway",
+      "triangles": 3136,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 204452,
+      "sha256": "0599b5f3c13f53ac865e616b03972fd4fcb0d459ab4726617bc43e609b8dcb56",
+      "leafCount": 13,
+      "compoundCount": 3,
+      "berryCount": 0,
+      "clusterCount": 0,
+      "sprayCount": 0
+    },
+    {
+      "stage": "sprout",
+      "variant": "autumn-gold",
+      "file": "models/emberrowan-sprout-autumn-gold.usdz",
+      "thumbnail": "ui/emberrowan-sprout-autumn-gold.png",
+      "bounds": {
+        "min": [
+          -0.166739,
+          -0.108124,
+          0.0
+        ],
+        "max": [
+          0.213034,
+          0.025093,
+          0.304952
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.167519,
+          -0.108494,
+          0.0
+        ],
+        "max": [
+          0.213327,
+          0.025665,
+          0.304982
+        ]
+      },
+      "animation": "emberrowan_sprout_sway",
+      "triangles": 3136,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 204209,
+      "sha256": "c56f5232b28bc0bba4911e16427e757f068c4fd6fac9082f3bbee754d28274ad",
+      "leafCount": 13,
+      "compoundCount": 3,
+      "berryCount": 0,
+      "clusterCount": 0,
+      "sprayCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/emberrowan-seedling-standard.usdz",
+      "thumbnail": "ui/emberrowan-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.373755,
+          -0.214059,
+          0.0
+        ],
+        "max": [
+          0.374106,
+          0.337049,
+          0.942573
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.373903,
+          -0.214351,
+          0.0
+        ],
+        "max": [
+          0.37424,
+          0.340789,
+          0.942786
+        ]
+      },
+      "animation": "emberrowan_seedling_sway",
+      "triangles": 4604,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 248366,
+      "sha256": "cd33b000952fa50d3049f11fc8a9d6f5b86cccc32c40488dcca0e684baf83262",
+      "leafCount": 26,
+      "compoundCount": 4,
+      "berryCount": 0,
+      "clusterCount": 0,
+      "sprayCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "autumn-gold",
+      "file": "models/emberrowan-seedling-autumn-gold.usdz",
+      "thumbnail": "ui/emberrowan-seedling-autumn-gold.png",
+      "bounds": {
+        "min": [
+          -0.373755,
+          -0.214059,
+          0.0
+        ],
+        "max": [
+          0.374106,
+          0.337049,
+          0.942573
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.373903,
+          -0.214351,
+          0.0
+        ],
+        "max": [
+          0.37424,
+          0.340789,
+          0.942786
+        ]
+      },
+      "animation": "emberrowan_seedling_sway",
+      "triangles": 4604,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 248250,
+      "sha256": "a8edf6b21bf0b180eb83a97be057626d9fbb7b4997aedce418f06862d86201dd",
+      "leafCount": 26,
+      "compoundCount": 4,
+      "berryCount": 0,
+      "clusterCount": 0,
+      "sprayCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/emberrowan-young-standard.usdz",
+      "thumbnail": "ui/emberrowan-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.907482,
+          -0.645364,
+          0.0
+        ],
+        "max": [
+          0.939739,
+          0.826123,
+          2.51373
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.912148,
+          -0.65725,
+          0.0
+        ],
+        "max": [
+          0.959861,
+          0.846646,
+          2.514877
+        ]
+      },
+      "animation": "emberrowan_young_sway",
+      "triangles": 25006,
+      "joints": 11,
+      "materials": 1,
+      "bytes": 1210184,
+      "sha256": "ee5715ab1c937088207773744c5790ab0409ad727acd32dba3d3cbec023c0b2c",
+      "leafCount": 144,
+      "compoundCount": 16,
+      "berryCount": 20,
+      "clusterCount": 2,
+      "sprayCount": 4
+    },
+    {
+      "stage": "young",
+      "variant": "autumn-gold",
+      "file": "models/emberrowan-young-autumn-gold.usdz",
+      "thumbnail": "ui/emberrowan-young-autumn-gold.png",
+      "bounds": {
+        "min": [
+          -0.907482,
+          -0.645364,
+          0.0
+        ],
+        "max": [
+          0.939739,
+          0.826123,
+          2.51373
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.912148,
+          -0.65725,
+          0.0
+        ],
+        "max": [
+          0.959861,
+          0.846646,
+          2.514877
+        ]
+      },
+      "animation": "emberrowan_young_sway",
+      "triangles": 25006,
+      "joints": 11,
+      "materials": 1,
+      "bytes": 1210070,
+      "sha256": "580144ec025e556e9a2b54a88e81832f80d2321a64e1bf14ec515873a8c81404",
+      "leafCount": 144,
+      "compoundCount": 16,
+      "berryCount": 20,
+      "clusterCount": 2,
+      "sprayCount": 4
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/emberrowan-adult-standard.usdz",
+      "thumbnail": "ui/emberrowan-adult-standard.png",
+      "bounds": {
+        "min": [
+          -1.738117,
+          -1.419909,
+          0.0
+        ],
+        "max": [
+          1.742367,
+          1.548144,
+          4.514772
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.745431,
+          -1.449428,
+          0.0
+        ],
+        "max": [
+          1.757667,
+          1.549796,
+          4.520102
+        ]
+      },
+      "animation": "emberrowan_adult_sway",
+      "triangles": 127930,
+      "joints": 21,
+      "materials": 1,
+      "bytes": 5766824,
+      "sha256": "a0f34c0385236f0a980345d86b636e3cfaa86b5fb68fc8c7aad44e15de582984",
+      "leafCount": 792,
+      "compoundCount": 72,
+      "berryCount": 135,
+      "clusterCount": 9,
+      "sprayCount": 9
+    },
+    {
+      "stage": "adult",
+      "variant": "autumn-gold",
+      "file": "models/emberrowan-adult-autumn-gold.usdz",
+      "thumbnail": "ui/emberrowan-adult-autumn-gold.png",
+      "bounds": {
+        "min": [
+          -1.738117,
+          -1.419909,
+          0.0
+        ],
+        "max": [
+          1.742367,
+          1.548144,
+          4.514772
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.745431,
+          -1.449428,
+          0.0
+        ],
+        "max": [
+          1.757667,
+          1.549796,
+          4.520102
+        ]
+      },
+      "animation": "emberrowan_adult_sway",
+      "triangles": 127930,
+      "joints": 21,
+      "materials": 1,
+      "bytes": 5766838,
+      "sha256": "ed4f97291f5c62857d27cd373892e03cbc1d39179edcabc42d2c2c291b3f1392",
+      "leafCount": 792,
+      "compoundCount": 72,
+      "berryCount": 135,
+      "clusterCount": 9,
+      "sprayCount": 9
+    }
+  ]
+}

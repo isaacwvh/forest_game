@@ -172,7 +172,9 @@ def edit_garden(
                     str(plant_id),
                     length_units(transform.x),
                     length_units(transform.y),
-                    radii[plants[plant_id].species_id],
+                    length_units(plants[plant_id].clearance_radius)
+                    if plants[plant_id].clearance_radius is not None
+                    else radii[plants[plant_id].species_id],
                 )
                 for plant_id, transform in sorted(final.items())
             ],

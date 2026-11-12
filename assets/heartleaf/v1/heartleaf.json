@@ -1,0 +1,396 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "heartleaf",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "redvein"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained phase-offset two-joint botanical sway"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/heartleaf-sprout-standard.png",
+        "redvein": "ui/heartleaf-sprout-redvein.png"
+      },
+      "seedling": {
+        "standard": "ui/heartleaf-seedling-standard.png",
+        "redvein": "ui/heartleaf-seedling-redvein.png"
+      },
+      "young": {
+        "standard": "ui/heartleaf-young-standard.png",
+        "redvein": "ui/heartleaf-young-redvein.png"
+      },
+      "adult": {
+        "standard": "ui/heartleaf-adult-standard.png",
+        "redvein": "ui/heartleaf-adult-redvein.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/heartleaf-sprout-standard.usdz",
+      "thumbnail": "ui/heartleaf-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.04272,
+          -0.033096,
+          0.0
+        ],
+        "max": [
+          0.042273,
+          0.047939,
+          0.166129
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.043011,
+          -0.033662,
+          0.0
+        ],
+        "max": [
+          0.04257,
+          0.051072,
+          0.166763
+        ]
+      },
+      "animation": "heartleaf_sprout_sway",
+      "triangles": 1520,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 190321,
+      "sha256": "754b3f46a9a1f5d9ec6b93710234e5ec6e7ed9ec40d13f83940f7edb9287cbbe",
+      "leafCount": 1,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 1,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "sprout",
+      "variant": "redvein",
+      "file": "models/heartleaf-sprout-redvein.usdz",
+      "thumbnail": "ui/heartleaf-sprout-redvein.png",
+      "bounds": {
+        "min": [
+          -0.04272,
+          -0.033096,
+          0.0
+        ],
+        "max": [
+          0.042273,
+          0.047939,
+          0.166129
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.043011,
+          -0.033662,
+          0.0
+        ],
+        "max": [
+          0.04257,
+          0.051072,
+          0.166763
+        ]
+      },
+      "animation": "heartleaf_sprout_sway",
+      "triangles": 1520,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 277306,
+      "sha256": "067ff93e7a697926bd7830351d8b740dc1e15807b455ae4878c3319a2133b622",
+      "leafCount": 1,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 1,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/heartleaf-seedling-standard.usdz",
+      "thumbnail": "ui/heartleaf-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.148804,
+          -0.124325,
+          0.0
+        ],
+        "max": [
+          0.169419,
+          0.090408,
+          0.248402
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.151298,
+          -0.126106,
+          0.0
+        ],
+        "max": [
+          0.171764,
+          0.09515,
+          0.248456
+        ]
+      },
+      "animation": "heartleaf_seedling_sway",
+      "triangles": 4560,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 324687,
+      "sha256": "371d58f221db0e27099c51758397f68e115ac0bb3e70e19ef3ec04f2a8b5f10d",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 3,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "redvein",
+      "file": "models/heartleaf-seedling-redvein.usdz",
+      "thumbnail": "ui/heartleaf-seedling-redvein.png",
+      "bounds": {
+        "min": [
+          -0.148804,
+          -0.124325,
+          0.0
+        ],
+        "max": [
+          0.169419,
+          0.090408,
+          0.248402
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.151298,
+          -0.126106,
+          0.0
+        ],
+        "max": [
+          0.171764,
+          0.09515,
+          0.248456
+        ]
+      },
+      "animation": "heartleaf_seedling_sway",
+      "triangles": 4560,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 411539,
+      "sha256": "6d1cfd0161604b889d83216429ee012b74a1380d5840f40251a6761ee1a96cad",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 3,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/heartleaf-young-standard.usdz",
+      "thumbnail": "ui/heartleaf-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.333702,
+          -0.224506,
+          0.0
+        ],
+        "max": [
+          0.349836,
+          0.275349,
+          0.335971
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.339578,
+          -0.22768,
+          0.0
+        ],
+        "max": [
+          0.353249,
+          0.283443,
+          0.34054
+        ]
+      },
+      "animation": "heartleaf_young_sway",
+      "triangles": 9120,
+      "joints": 13,
+      "materials": 1,
+      "bytes": 525645,
+      "sha256": "8ba64045f6af42cd0d6dc6ab3c1dc2afa30263d516a6f44e5428236d271e63e4",
+      "leafCount": 6,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 6,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "redvein",
+      "file": "models/heartleaf-young-redvein.usdz",
+      "thumbnail": "ui/heartleaf-young-redvein.png",
+      "bounds": {
+        "min": [
+          -0.333702,
+          -0.224506,
+          0.0
+        ],
+        "max": [
+          0.349836,
+          0.275349,
+          0.335971
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.339578,
+          -0.22768,
+          0.0
+        ],
+        "max": [
+          0.353249,
+          0.283443,
+          0.34054
+        ]
+      },
+      "animation": "heartleaf_young_sway",
+      "triangles": 9120,
+      "joints": 13,
+      "materials": 1,
+      "bytes": 612497,
+      "sha256": "0de872e9478aa8d14deca039530da18b0e0f1dd21c2a929f522a82ece6b68480",
+      "leafCount": 6,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 6,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/heartleaf-adult-standard.usdz",
+      "thumbnail": "ui/heartleaf-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.52951,
+          -0.372323,
+          0.0
+        ],
+        "max": [
+          0.527396,
+          0.362456,
+          0.492393
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.530896,
+          -0.373092,
+          0.0
+        ],
+        "max": [
+          0.528346,
+          0.368567,
+          0.492632
+        ]
+      },
+      "animation": "heartleaf_adult_sway",
+      "triangles": 18240,
+      "joints": 25,
+      "materials": 1,
+      "bytes": 927818,
+      "sha256": "5030ec3c4ee65a40b37881742d15939299664ee81bc7bbd2aec2bcef1f3a32cb",
+      "leafCount": 12,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 12,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "adult",
+      "variant": "redvein",
+      "file": "models/heartleaf-adult-redvein.usdz",
+      "thumbnail": "ui/heartleaf-adult-redvein.png",
+      "bounds": {
+        "min": [
+          -0.52951,
+          -0.372323,
+          0.0
+        ],
+        "max": [
+          0.527396,
+          0.362456,
+          0.492393
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.530896,
+          -0.373092,
+          0.0
+        ],
+        "max": [
+          0.528346,
+          0.368567,
+          0.492632
+        ]
+      },
+      "animation": "heartleaf_adult_sway",
+      "triangles": 18240,
+      "joints": 25,
+      "materials": 1,
+      "bytes": 1014713,
+      "sha256": "e240acd3fa9891cb7580c37e66d930060c65f99297da83eb51f6dfdf0e03a34e",
+      "leafCount": 12,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 12,
+      "petalCount": 0,
+      "stamenCount": 0
+    }
+  ]
+}

@@ -39,7 +39,38 @@ extension APICatalogue {
 /// Display metadata for bundled sample/asset views only; approved launch_balance.PLANTS.
 /// Connected names always use their actual catalogue, including legacy/unknown values.
 enum SamplePlantPresentation {
-    static let rarities = ["oak": "common", "moonwillow": "epic"]
+    static let rarities = [
+        "oak": "common",
+        "moonwillow": "epic",
+        "bluebell": "legendary",
+        "starcap": "common",
+        "lanternbirch": "common",
+        "berry-shrub": "rare",
+        "dewfern": "rare",
+        "dawnsorrel": "common",
+        "pearlseal": "epic",
+        "emberrowan": "common",
+        "duskwand": "epic",
+        "wispflower": "rare",
+        "moonbell": "rare",
+        "heartleaf": "common",
+        "havenbough": "legendary",
+        "boughrunner": "rare",
+        "swiftgrass": "common",
+        "ironheart": "rare",
+        "dewjewel": "rare",
+        "sunspike": "epic",
+        "coilrush": "common",
+        "cloudveil": "legendary",
+        "mirrorleaf": "epic",
+        "bronze-bugle": "common",
+        "ribbon-fern": "common",
+        "paper-lantern": "rare",
+        "coppercurl-maple": "rare",
+        "amberfan": "epic",
+        "silverlace-fern": "epic",
+        "honeycluster": "rare"
+    ]
 }
 
 struct PlantNameText: View {

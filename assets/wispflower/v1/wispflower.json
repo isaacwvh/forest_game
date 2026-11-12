@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "wispflower",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained phase-offset two-joint petiole and flower sway"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/wispflower-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/wispflower-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/wispflower-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/wispflower-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/wispflower-sprout-standard.usdz",
+      "thumbnail": "ui/wispflower-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.014299,
+          -0.02602,
+          0.0
+        ],
+        "max": [
+          0.024238,
+          0.010356,
+          0.115705
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.014597,
+          -0.026739,
+          0.0
+        ],
+        "max": [
+          0.025069,
+          0.011186,
+          0.116048
+        ]
+      },
+      "animation": "wispflower_sprout_sway",
+      "triangles": 1994,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 268741,
+      "sha256": "1da6838bd993161cbe020d3e851814ff86e448ecfd5e3bf3422c17978a760a18",
+      "leafHeadCount": 1,
+      "leafletCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 1,
+      "stamenCount": 0,
+      "tepalCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/wispflower-seedling-standard.usdz",
+      "thumbnail": "ui/wispflower-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.139804,
+          -0.088789,
+          0.0
+        ],
+        "max": [
+          0.14409,
+          0.079387,
+          0.243909
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.141257,
+          -0.089481,
+          0.0
+        ],
+        "max": [
+          0.146314,
+          0.082833,
+          0.24393
+        ]
+      },
+      "animation": "wispflower_seedling_sway",
+      "triangles": 7116,
+      "joints": 9,
+      "materials": 1,
+      "bytes": 499899,
+      "sha256": "8d5dcbdfaf72a9b1a9824cae0f4ed42c4f66b300472662232c7fca6b2c9fb0d1",
+      "leafHeadCount": 3,
+      "leafletCount": 9,
+      "flowerCount": 0,
+      "budCount": 1,
+      "shootCount": 4,
+      "stamenCount": 0,
+      "tepalCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/wispflower-young-standard.usdz",
+      "thumbnail": "ui/wispflower-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.311251,
+          -0.258797,
+          0.0
+        ],
+        "max": [
+          0.360444,
+          0.193755,
+          0.452341
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.312937,
+          -0.259241,
+          0.0
+        ],
+        "max": [
+          0.361506,
+          0.198307,
+          0.45557
+        ]
+      },
+      "animation": "wispflower_young_sway",
+      "triangles": 27510,
+      "joints": 19,
+      "materials": 1,
+      "bytes": 1355845,
+      "sha256": "0cc5a680384a4f020a1e578a90cece6cca9742888ad65e8ecd262bfaa5bac1c8",
+      "leafHeadCount": 7,
+      "leafletCount": 21,
+      "flowerCount": 1,
+      "budCount": 1,
+      "shootCount": 9,
+      "stamenCount": 24,
+      "tepalCount": 6
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/wispflower-adult-standard.usdz",
+      "thumbnail": "ui/wispflower-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.490079,
+          -0.327549,
+          0.0
+        ],
+        "max": [
+          0.500289,
+          0.403281,
+          0.704866
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.490768,
+          -0.328303,
+          0.0
+        ],
+        "max": [
+          0.500341,
+          0.410267,
+          0.707713
+        ]
+      },
+      "animation": "wispflower_adult_sway",
+      "triangles": 109946,
+      "joints": 59,
+      "materials": 1,
+      "bytes": 4812960,
+      "sha256": "ec19f784269347f90daefde511f9e98b681e24c74597556fd8c4202956f76f1e",
+      "leafHeadCount": 24,
+      "leafletCount": 72,
+      "flowerCount": 5,
+      "budCount": 0,
+      "shootCount": 29,
+      "stamenCount": 120,
+      "tepalCount": 30
+    }
+  ]
+}

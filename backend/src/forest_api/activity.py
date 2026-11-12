@@ -349,6 +349,11 @@ def sync(
                 delta = Fraction(receipt["newlyEligible"])
                 activity_metrics[metric] = str(Fraction(activity_metrics.get(metric, "0")) + delta)
             progress.activity_metrics = activity_metrics
+            # Flights can change Sweet Ascent even after the water-eligible cap.
+            if Fraction(metric_receipts.get("flights_climbed", {}).get("newlyEligible", "0")) > 0:
+                if not accounting_started:
+                    accounting.before_change(session, garden, boundary)
+                    accounting_started = True
             if candidate > old or quantities:
                 if not accounting_started:
                     accounting.before_change(session, garden, boundary)
@@ -384,13 +389,18 @@ def sync(
                     prior_fraction = dict(plant.fractional_state)
                     try:
                         definition = presenter.behaviour(plant)
-                        activity_factors, water_factor = skills.growth(
-                            source_facts[str(plant.id)], rates
+                        activity_factors, water_factor = skills.growth_interval(
+                            source_facts[str(plant.id)], rates, old, water_steps
                         )
-                        skill_context = skills.context(source_facts[str(plant.id)], rates)
+                        from forest_api.woodland import plant_rates
+
+                        effective_rates = plant_rates(definition, rates)
+                        skill_context = skills.context_interval(
+                            source_facts[str(plant.id)], rates, old, water_steps
+                        )
                         result = calculate_growth(
                             {"steps": water_steps, **quantities},
-                            rates,
+                            effective_rates,
                             definition.metric_multipliers,
                             prior,
                             growth.maximum_growth_micro_units,
@@ -400,7 +410,7 @@ def sync(
                         )
                         neutral = calculate_growth(
                             {"steps": water_steps, **quantities},
-                            rates,
+                            effective_rates,
                             definition.metric_multipliers,
                             prior,
                             growth.maximum_growth_micro_units,
@@ -442,13 +452,14 @@ def sync(
                                 "steps": water_steps,
                                 "metricQuantities": {m: str(q) for m, q in quantities.items()},
                                 "metricRates": {
-                                    m: rates[m].model_dump(mode="json") for m in quantities
+                                    m: effective_rates[m].model_dump(mode="json")
+                                    for m in quantities
                                 },
                                 "metricReceipts": metric_receipts,
                                 "coefficient": str(definition.metric_multipliers.get("steps", 0)),
-                                "normalisation": rules.metrics["steps"].normalisation,
+                                "normalisation": effective_rates["steps"].normalisation,
                                 "baseWaterMicroUnits": str(
-                                    rules.metrics["steps"].water_micro_units
+                                    effective_rates["steps"].water_micro_units
                                 ),
                                 "snapshotStage": before[plant.id][2],
                                 "activityFactor": skill_context["activityFactors"]["steps"],
@@ -496,6 +507,9 @@ def sync(
             garden.state_version = checked_add(garden.state_version, 1)
         session.flush()
         if accounting_started:
+            from forest_api.woodland import update_daily_flights
+
+            update_daily_flights(session, user.id, day_results, today)
             accounting.after_change(session, garden, boundary)
         progress.last_sync_at = boundary
         progress.progression_version = checked_add(progress.progression_version or 0, 1)

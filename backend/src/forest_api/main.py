@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from forest_api import (
     history_models,  # noqa: F401 - register compact-history models
     progression_models,  # noqa: F401 - register durable gem grants
+    woodland_models,  # noqa: F401 - register daily skill context
 )
 from forest_api.auth import TokenVerifier
 from forest_api.collection_routes import router as collection_router

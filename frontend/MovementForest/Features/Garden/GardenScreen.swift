@@ -160,7 +160,7 @@ struct PlantDetailScreen: View {
                 VStack(alignment: .leading, spacing: 8) {
                     JournalSectionHeading(title: "Garden skills")
                     if let skills = owned.gardenSkills, !skills.isEmpty {
-                        ForEach(skills) { skill in
+                        ForEach(skills.uniqueSkills) { skill in
                             DisclosureGroup {
                                 Text(skill.description).font(.callout).padding(.top, 6)
                             } label: {

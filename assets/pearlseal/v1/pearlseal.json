@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "pearlseal",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained phase-offset three-joint arch sway"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/pearlseal-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/pearlseal-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/pearlseal-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/pearlseal-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/pearlseal-sprout-standard.usdz",
+      "thumbnail": "ui/pearlseal-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.052335,
+          -0.041503,
+          0.0
+        ],
+        "max": [
+          0.051682,
+          0.032985,
+          0.236742
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.053374,
+          -0.044262,
+          0.0
+        ],
+        "max": [
+          0.05374,
+          0.037333,
+          0.236832
+        ]
+      },
+      "animation": "pearlseal_sprout_sway",
+      "triangles": 2960,
+      "joints": 4,
+      "materials": 1,
+      "bytes": 169127,
+      "sha256": "9f195ad5463f18604e4a8a8583993a12199b3d64f44b62fa800e06a3b51671a3",
+      "leafCount": 5,
+      "pairedLeafCount": 4,
+      "flowerCount": 0,
+      "shootCount": 1,
+      "basalBladeCount": 1
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/pearlseal-seedling-standard.usdz",
+      "thumbnail": "ui/pearlseal-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.098502,
+          -0.052475,
+          0.0
+        ],
+        "max": [
+          0.144719,
+          0.10007,
+          0.460498
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.099649,
+          -0.052475,
+          0.0
+        ],
+        "max": [
+          0.148483,
+          0.105186,
+          0.460877
+        ]
+      },
+      "animation": "pearlseal_seedling_sway",
+      "triangles": 3784,
+      "joints": 4,
+      "materials": 1,
+      "bytes": 205328,
+      "sha256": "0e3197591f76ea7a038d187df80173d3082b9112bf5dd731915bdd57847b0990",
+      "leafCount": 7,
+      "pairedLeafCount": 6,
+      "flowerCount": 0,
+      "shootCount": 1,
+      "basalBladeCount": 1
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/pearlseal-young-standard.usdz",
+      "thumbnail": "ui/pearlseal-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.331683,
+          -0.118609,
+          0.0
+        ],
+        "max": [
+          0.369735,
+          0.114959,
+          0.712327
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.334281,
+          -0.126269,
+          0.0
+        ],
+        "max": [
+          0.377298,
+          0.129128,
+          0.713403
+        ]
+      },
+      "animation": "pearlseal_young_sway",
+      "triangles": 10568,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 466600,
+      "sha256": "f1fb37de2d37328d34351b4311392c0aeb08237084d0caec935c14f1393047b0",
+      "leafCount": 12,
+      "pairedLeafCount": 10,
+      "flowerCount": 4,
+      "shootCount": 2,
+      "basalBladeCount": 2
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/pearlseal-adult-standard.usdz",
+      "thumbnail": "ui/pearlseal-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.617281,
+          -0.185131,
+          0.0
+        ],
+        "max": [
+          0.58432,
+          0.584629,
+          1.045441
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.624131,
+          -0.186353,
+          0.0
+        ],
+        "max": [
+          0.594164,
+          0.592916,
+          1.046611
+        ]
+      },
+      "animation": "pearlseal_adult_sway",
+      "triangles": 31460,
+      "joints": 10,
+      "materials": 1,
+      "bytes": 1258472,
+      "sha256": "0b80cd840d5a1030b2e6ee9e26ba92b4cec2769e147d39dab45cc011dfca8d8b",
+      "leafCount": 28,
+      "pairedLeafCount": 24,
+      "flowerCount": 18,
+      "shootCount": 3,
+      "basalBladeCount": 4
+    }
+  ]
+}

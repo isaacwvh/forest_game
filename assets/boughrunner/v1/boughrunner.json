@@ -1,0 +1,420 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "boughrunner",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "pink"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained leaf-node and reaching-tip sway around a stationary support"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/boughrunner-sprout-standard.png",
+        "pink": "ui/boughrunner-sprout-pink.png"
+      },
+      "seedling": {
+        "standard": "ui/boughrunner-seedling-standard.png",
+        "pink": "ui/boughrunner-seedling-pink.png"
+      },
+      "young": {
+        "standard": "ui/boughrunner-young-standard.png",
+        "pink": "ui/boughrunner-young-pink.png"
+      },
+      "adult": {
+        "standard": "ui/boughrunner-adult-standard.png",
+        "pink": "ui/boughrunner-adult-pink.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/boughrunner-sprout-standard.usdz",
+      "thumbnail": "ui/boughrunner-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.152491,
+          -0.142246,
+          0.0
+        ],
+        "max": [
+          0.168795,
+          0.145679,
+          1.65
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.152796,
+          -0.142246,
+          0.0
+        ],
+        "max": [
+          0.169719,
+          0.148393,
+          1.65
+        ]
+      },
+      "animation": "boughrunner_sprout_sway",
+      "triangles": 9986,
+      "joints": 4,
+      "materials": 1,
+      "bytes": 486429,
+      "sha256": "c6fc499c3a617bea0efcfd0687b60106493b7418e2bcef10896c9169d63ef518",
+      "leafCount": 6,
+      "flowerCount": 0,
+      "budCount": 2,
+      "shootCount": 1,
+      "petalCount": 0,
+      "stamenCount": 0,
+      "leafNodeCount": 2,
+      "climbedHeight": 0.24,
+      "supportHeight": 1.65
+    },
+    {
+      "stage": "sprout",
+      "variant": "pink",
+      "file": "models/boughrunner-sprout-pink.usdz",
+      "thumbnail": "ui/boughrunner-sprout-pink.png",
+      "bounds": {
+        "min": [
+          -0.152491,
+          -0.142246,
+          0.0
+        ],
+        "max": [
+          0.168795,
+          0.145679,
+          1.65
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.152796,
+          -0.142246,
+          0.0
+        ],
+        "max": [
+          0.169719,
+          0.148393,
+          1.65
+        ]
+      },
+      "animation": "boughrunner_sprout_sway",
+      "triangles": 9986,
+      "joints": 4,
+      "materials": 1,
+      "bytes": 496250,
+      "sha256": "79a22ee8a8ee0a96ca43e5d7ad076049dc1b93d9cce4c6ef1a460f0c7b4c4565",
+      "leafCount": 6,
+      "flowerCount": 0,
+      "budCount": 2,
+      "shootCount": 1,
+      "petalCount": 0,
+      "stamenCount": 0,
+      "leafNodeCount": 2,
+      "climbedHeight": 0.24,
+      "supportHeight": 1.65
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/boughrunner-seedling-standard.usdz",
+      "thumbnail": "ui/boughrunner-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.257539,
+          -0.186998,
+          0.0
+        ],
+        "max": [
+          0.267912,
+          0.205317,
+          1.65
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.257681,
+          -0.187657,
+          0.0
+        ],
+        "max": [
+          0.268147,
+          0.206903,
+          1.65
+        ]
+      },
+      "animation": "boughrunner_seedling_sway",
+      "triangles": 16264,
+      "joints": 9,
+      "materials": 1,
+      "bytes": 747034,
+      "sha256": "3cbbf4fc9ffba148838ff63868d0489341617c489ddab809a58b6292f8c49056",
+      "leafCount": 16,
+      "flowerCount": 0,
+      "budCount": 4,
+      "shootCount": 2,
+      "petalCount": 0,
+      "stamenCount": 0,
+      "leafNodeCount": 6,
+      "climbedHeight": 0.59,
+      "supportHeight": 1.65
+    },
+    {
+      "stage": "seedling",
+      "variant": "pink",
+      "file": "models/boughrunner-seedling-pink.usdz",
+      "thumbnail": "ui/boughrunner-seedling-pink.png",
+      "bounds": {
+        "min": [
+          -0.257539,
+          -0.186998,
+          0.0
+        ],
+        "max": [
+          0.267912,
+          0.205317,
+          1.65
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.257681,
+          -0.187657,
+          0.0
+        ],
+        "max": [
+          0.268147,
+          0.206903,
+          1.65
+        ]
+      },
+      "animation": "boughrunner_seedling_sway",
+      "triangles": 16264,
+      "joints": 9,
+      "materials": 1,
+      "bytes": 756983,
+      "sha256": "00cf51a1e59ff38546a05ef4a199c7b593d6150d1ce83d079f61d50ba6e9206b",
+      "leafCount": 16,
+      "flowerCount": 0,
+      "budCount": 4,
+      "shootCount": 2,
+      "petalCount": 0,
+      "stamenCount": 0,
+      "leafNodeCount": 6,
+      "climbedHeight": 0.59,
+      "supportHeight": 1.65
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/boughrunner-young-standard.usdz",
+      "thumbnail": "ui/boughrunner-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.302352,
+          -0.23734,
+          0.0
+        ],
+        "max": [
+          0.311992,
+          0.245996,
+          1.65
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.302734,
+          -0.23764,
+          0.0
+        ],
+        "max": [
+          0.313486,
+          0.250327,
+          1.65
+        ]
+      },
+      "animation": "boughrunner_young_sway",
+      "triangles": 33952,
+      "joints": 15,
+      "materials": 1,
+      "bytes": 1481512,
+      "sha256": "cc51554579cb1529fdda1ae3eb9cd8c9c5a1632b7f1de0d73f02579515f11915",
+      "leafCount": 28,
+      "flowerCount": 4,
+      "budCount": 4,
+      "shootCount": 2,
+      "petalCount": 20,
+      "stamenCount": 20,
+      "leafNodeCount": 12,
+      "climbedHeight": 1.1,
+      "supportHeight": 1.65
+    },
+    {
+      "stage": "young",
+      "variant": "pink",
+      "file": "models/boughrunner-young-pink.usdz",
+      "thumbnail": "ui/boughrunner-young-pink.png",
+      "bounds": {
+        "min": [
+          -0.302352,
+          -0.23734,
+          0.0
+        ],
+        "max": [
+          0.311992,
+          0.245996,
+          1.65
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.302734,
+          -0.23764,
+          0.0
+        ],
+        "max": [
+          0.313486,
+          0.250327,
+          1.65
+        ]
+      },
+      "animation": "boughrunner_young_sway",
+      "triangles": 33952,
+      "joints": 15,
+      "materials": 1,
+      "bytes": 1491334,
+      "sha256": "e2bf317034beb8e18e3e578a22c81c6a217c1e6315e774e057b0e57f67185f62",
+      "leafCount": 28,
+      "flowerCount": 4,
+      "budCount": 4,
+      "shootCount": 2,
+      "petalCount": 20,
+      "stamenCount": 20,
+      "leafNodeCount": 12,
+      "climbedHeight": 1.1,
+      "supportHeight": 1.65
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/boughrunner-adult-standard.usdz",
+      "thumbnail": "ui/boughrunner-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.304992,
+          -0.303605,
+          0.0
+        ],
+        "max": [
+          0.301316,
+          0.305771,
+          1.89809
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.304992,
+          -0.309928,
+          0.0
+        ],
+        "max": [
+          0.301883,
+          0.311293,
+          1.898468
+        ]
+      },
+      "animation": "boughrunner_adult_sway",
+      "triangles": 104606,
+      "joints": 34,
+      "materials": 1,
+      "bytes": 4468712,
+      "sha256": "79c1012a9d3f58a660d1f5c145197529ff31f697f217fbc969c8cb835afc0ded",
+      "leafCount": 140,
+      "flowerCount": 12,
+      "budCount": 8,
+      "shootCount": 3,
+      "petalCount": 60,
+      "stamenCount": 60,
+      "leafNodeCount": 30,
+      "climbedHeight": 1.6,
+      "supportHeight": 1.65
+    },
+    {
+      "stage": "adult",
+      "variant": "pink",
+      "file": "models/boughrunner-adult-pink.usdz",
+      "thumbnail": "ui/boughrunner-adult-pink.png",
+      "bounds": {
+        "min": [
+          -0.304992,
+          -0.303605,
+          0.0
+        ],
+        "max": [
+          0.301316,
+          0.305771,
+          1.89809
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.304992,
+          -0.309928,
+          0.0
+        ],
+        "max": [
+          0.301883,
+          0.311293,
+          1.898468
+        ]
+      },
+      "animation": "boughrunner_adult_sway",
+      "triangles": 104606,
+      "joints": 34,
+      "materials": 1,
+      "bytes": 4478534,
+      "sha256": "2b0d7405893a52d8891902eb8d2cba6bf1e462c2952e9e7b1f9f887988bc34a0",
+      "leafCount": 140,
+      "flowerCount": 12,
+      "budCount": 8,
+      "shootCount": 3,
+      "petalCount": 60,
+      "stamenCount": 60,
+      "leafNodeCount": 30,
+      "climbedHeight": 1.6,
+      "supportHeight": 1.65
+    }
+  ]
+}

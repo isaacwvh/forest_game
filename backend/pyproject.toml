@@ -14,6 +14,7 @@ dependencies = [
   "alembic>=1.15,<2",
   "psycopg[binary]>=3.2,<4",
   "pydantic-settings>=2.8,<3",
+  "pydantic>=2.14,<3",
   "PyJWT[crypto]>=2.10,<3",
   "tzdata>=2025.1",
 ]
@@ -44,3 +45,6 @@ select = ["E", "F", "I", "UP", "B"]
 "src/forest_api/visitor_routes.py" = ["B008"]
 "src/forest_api/collection_routes.py" = ["B008"]
 "src/forest_api/dependencies.py" = ["B008"]
+
+[tool.setuptools.package-data]
+forest_api = ["data/*.json"]

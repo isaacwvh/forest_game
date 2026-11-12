@@ -455,7 +455,7 @@ def test_existing_database_backfill_preserves_live_state_and_pins_value(
 
     with database_factory() as url, migration_url(url):
         configuration = migration_config()
-        command.upgrade(configuration, "0011_compact_history")
+        command.upgrade(configuration, "head")
         settings = Settings(
             _env_file=None,
             environment="test",
@@ -495,6 +495,7 @@ def test_existing_database_backfill_preserves_live_state_and_pins_value(
             with database.sessions() as session:
                 before = session.get(OwnedPlant, plant_id)
                 before = {c.name: getattr(before, c.name) for c in OwnedPlant.__table__.columns}
+            command.downgrade(configuration, "0011_compact_history")
             command.upgrade(configuration, "head")
             command.check(configuration)
             with database.sessions() as session:

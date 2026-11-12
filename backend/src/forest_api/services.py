@@ -155,9 +155,13 @@ def award_plant(
         acquisition_source=source,
         acquisition_reference=reference,
         growth_micro_units=0,
+        clearance_radius=species.clearance_radius,
         fractional_state={},
         **pinned,
     )
+    if source == "starter" and species.properties.get("starterGrowthProfile"):
+        starter = species.properties["starterGrowthProfile"]
+        plant.growth_profile_id, plant.growth_profile_version = starter["id"], starter["version"]
     session.add(plant)
     session.flush()
     return plant
@@ -294,6 +298,12 @@ def register_account(
     payload_hash = request_hash(operation, body)
     try:
         with session.begin():
+            session.execute(
+                text(
+                    "SELECT pg_advisory_xact_lock_shared("
+                    "hashtextextended('forest-content-release', 0))"
+                )
+            )
             # Serialise a subject even before its user row exists. Hash collisions only wait.
             identity_key = json.dumps([identity.issuer, identity.subject], separators=(",", ":"))
             session.execute(
@@ -312,6 +322,13 @@ def register_account(
                 if previous is not None:
                     return AccountDTO.model_validate(previous)
             else:
+                catalogue = get_catalogue_state(session, settings)
+                if catalogue.version == "woodland-v1" and not session.info.get("woodland_release"):
+                    raise ApiError(
+                        426,
+                        "woodland_client_update_required",
+                        "Update the app to begin your garden",
+                    )
                 user = User(
                     auth_issuer=identity.issuer,
                     auth_subject=identity.subject,
@@ -446,6 +463,7 @@ class PlantPresenter:
             species_id=plant.species_id,
             variant_id=plant.variant_id,
             pinned_profiles=profile_refs(plant),
+            clearance_radius=plant.clearance_radius,
             growth_micro_units=str(plant.growth_micro_units),
             growth_stage=stage,
             growth_progress=GrowthProgressDTO(
@@ -592,7 +610,23 @@ def skill_snapshot(session, garden, *, presenter=None, rows=None, boundary=None)
                     behaviour,
                 )
             )
-        return SkillSnapshot(tuple(facts), caps, version)
+        from datetime import UTC, datetime
+        from zoneinfo import ZoneInfo
+
+        from forest_api.woodland_models import DailySkillActivity
+
+        flights = 0
+        if any(
+            e.magnitude.type == "daily_flights"
+            for p in facts
+            if p.stage == "adult"
+            for e in p.behaviour.garden_effects
+        ):
+            owner = session.get(User, garden.owner_id)
+            day = (boundary or datetime.now(UTC)).astimezone(ZoneInfo(owner.game_timezone)).date()
+            daily = session.get(DailySkillActivity, (garden.owner_id, day))
+            flights = daily.flights if daily else 0
+        return SkillSnapshot(tuple(facts), caps, version, flights=flights)
     except ValueError as exc:
         raise ApiError(
             503, "invalid_skill_configuration", "Skill rules require maintenance"

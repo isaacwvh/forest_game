@@ -43,6 +43,7 @@ class ExchangeOffer(Base):
             ["pack_id", "pack_version"], ["pack_definitions.id", "pack_definitions.version"]
         ),
         CheckConstraint("version > 0 AND token_cost > 0", name="amounts"),
+        CheckConstraint("currency IN ('tokens', 'gems')", name="currency"),
         Index("uq_exchange_active_offer", "id", unique=True, postgresql_where=text("active")),
     )
     id: Mapped[str] = mapped_column(String(100), primary_key=True)
@@ -50,6 +51,7 @@ class ExchangeOffer(Base):
     pack_id: Mapped[str] = mapped_column(String(100))
     pack_version: Mapped[int] = mapped_column(Integer)
     token_cost: Mapped[int] = mapped_column(BigInteger)
+    currency: Mapped[str] = mapped_column(String(10), server_default="tokens")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -83,6 +85,7 @@ class CollectionEvent(Base):
     __table_args__ = (
         UniqueConstraint("owner_id", "request_id"),
         CheckConstraint("token_delta <= 0", name="token_delta"),
+        CheckConstraint("gem_delta <= 0 AND (token_delta = 0 OR gem_delta = 0)", name="gem_delta"),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
@@ -90,6 +93,7 @@ class CollectionEvent(Base):
     operation: Mapped[str] = mapped_column(String(100))
     payload_hash: Mapped[str] = mapped_column(String(64))
     token_delta: Mapped[int] = mapped_column(BigInteger)
+    gem_delta: Mapped[int] = mapped_column(BigInteger, server_default="0")
     receipt: Mapped[dict] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

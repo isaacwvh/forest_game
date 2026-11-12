@@ -134,6 +134,8 @@ enum PlayerMessage {
         if let error = error as? APIError {
             switch error.code {
             case "plant_capacity_full": return "Plant collection full. Sell a stored plant to open a pack."
+            case "insufficient_gems": return "Not enough gems for this pack."
+            case "woodland_client_update_required": return "Update the app to use Woodland packs."
             case "pack_capacity_full": return "Pack storage full. Open a pack before buying more."
             case "garden_capacity_full": return "Garden full. Store a planted copy before planting another."
             case "starter_protected": return "Your original starter stays with your garden and cannot be sold."

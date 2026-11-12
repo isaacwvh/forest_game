@@ -5,13 +5,16 @@ from uuid import UUID
 
 from pydantic import Field, TypeAdapter, model_validator
 
-from forest_api.schemas import DTO, PinnedProfiles
+from forest_api.schemas import DTO, GroundNumber, PinnedProfiles
 
 Weight = Annotated[int, Field(strict=True, ge=0, le=1_000_000)]
 Identifier = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_-]{0,99}$")]
 
 
 class PackOutcome(DTO):
+    clearance_radius: GroundNumber | None = Field(
+        default=None, gt=0, exclude_if=lambda v: v is None
+    )
     species_id: Identifier
     variant_id: Identifier
     profiles: PinnedProfiles
@@ -48,6 +51,9 @@ class PackContract(DTO):
 
 
 class WeightedVariant(DTO):
+    clearance_radius: GroundNumber | None = Field(
+        default=None, gt=0, exclude_if=lambda v: v is None
+    )
     variant_id: Identifier
     weight: Weight
     profiles: PinnedProfiles
@@ -111,7 +117,12 @@ def outcomes(pool):
     if isinstance(pool, RarityPool):
         return pool.outcomes
     return [
-        PackOutcome(species_id=s.species_id, variant_id=v.variant_id, profiles=v.profiles)
+        PackOutcome(
+            species_id=s.species_id,
+            variant_id=v.variant_id,
+            profiles=v.profiles,
+            clearance_radius=v.clearance_radius,
+        )
         for s in pool.species
         for v in s.variants
     ]
@@ -136,3 +147,4 @@ class PublishPack(DTO):
     offer_id: Identifier
     offer_version: Annotated[int, Field(strict=True, ge=1, le=2147483647)]
     token_cost: Annotated[int, Field(strict=True, ge=1, le=9223372036854775807)]
+    currency: Literal["tokens", "gems"] = "tokens"

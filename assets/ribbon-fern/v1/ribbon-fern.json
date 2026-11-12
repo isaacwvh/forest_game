@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "ribbon-fern",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/ribbon-fern-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/ribbon-fern-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/ribbon-fern-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/ribbon-fern-adult-standard.png"
+      }
+    },
+    "size": [
+      384,
+      448
+    ],
+    "background": "transparent",
+    "framing": "individually_framed_not_physical_scale"
+  },
+  "materials": {
+    "atlasSize": [
+      1024,
+      1024
+    ],
+    "embeddedTextures": true,
+    "roughness": 0.55,
+    "metallic": 0,
+    "sameQualityAllStages": true
+  },
+  "growthDesign": {
+    "sprout": "One tightly folded, rippled green ribbon unfurling beside a small basal tongue.",
+    "seedling": "Asymmetric opening fan: one rising blade, one low arched tongue and one half-folded inner ribbon.",
+    "young": "Open five-frond vase with upright heart and two low outward arches; pronounced individual folds.",
+    "adult": "Loose twelve-frond radial crown with tall upright inner ribbons and broad low arching outer blades."
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/ribbon-fern-sprout-standard.usdz",
+      "thumbnail": "ui/ribbon-fern-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.022908,
+          -0.095353,
+          0.0
+        ],
+        "max": [
+          0.050342,
+          0.052358,
+          0.222754
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.023205,
+          -0.095466,
+          0.0
+        ],
+        "max": [
+          0.050724,
+          0.054159,
+          0.222972
+        ]
+      },
+      "animation": "ribbon-fern_sprout_sway",
+      "triangles": 3560,
+      "joints": 5,
+      "materials": 1,
+      "bytes": 250276,
+      "sha256": "d7979dd4ab5f66fbd1794bb1d9b5b9b9f33f683750e59b50ec061ae9ac97e3bd",
+      "leafCount": 2,
+      "flowerCount": 0,
+      "flowerSpikeCount": 0,
+      "budSpikeCount": 0,
+      "shootCount": 2
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/ribbon-fern-seedling-standard.usdz",
+      "thumbnail": "ui/ribbon-fern-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.094911,
+          -0.186777,
+          0.0
+        ],
+        "max": [
+          0.211234,
+          0.120441,
+          0.4003
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.095673,
+          -0.187105,
+          0.0
+        ],
+        "max": [
+          0.211805,
+          0.123994,
+          0.401094
+        ]
+      },
+      "animation": "ribbon-fern_seedling_sway",
+      "triangles": 5340,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 333603,
+      "sha256": "25e279b8f47e0674a5d54c2b2ec17cc2a008799f8a5cb9f12f4972ba58c6fa02",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "flowerSpikeCount": 0,
+      "budSpikeCount": 0,
+      "shootCount": 3
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/ribbon-fern-young-standard.usdz",
+      "thumbnail": "ui/ribbon-fern-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.363468,
+          -0.396603,
+          0.0
+        ],
+        "max": [
+          0.424426,
+          0.229877,
+          0.69058
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.363674,
+          -0.396687,
+          0.0
+        ],
+        "max": [
+          0.42469,
+          0.235814,
+          0.692142
+        ]
+      },
+      "animation": "ribbon-fern_young_sway",
+      "triangles": 8900,
+      "joints": 11,
+      "materials": 1,
+      "bytes": 500680,
+      "sha256": "758160ca58dc4c4e33a4aa8e0524d803f435a3387bf3ea800cf64ae5a6581ad3",
+      "leafCount": 5,
+      "flowerCount": 0,
+      "flowerSpikeCount": 0,
+      "budSpikeCount": 0,
+      "shootCount": 5
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/ribbon-fern-adult-standard.usdz",
+      "thumbnail": "ui/ribbon-fern-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.743133,
+          -0.748314,
+          0.0
+        ],
+        "max": [
+          0.748275,
+          0.649642,
+          1.160485
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.744226,
+          -0.74993,
+          0.0
+        ],
+        "max": [
+          0.749107,
+          0.649721,
+          1.162501
+        ]
+      },
+      "animation": "ribbon-fern_adult_sway",
+      "triangles": 21360,
+      "joints": 25,
+      "materials": 1,
+      "bytes": 1084799,
+      "sha256": "407c67bf1939cf946d5c28b7ff08b7dde8ac54164b108f5343d9aabf8390d79f",
+      "leafCount": 12,
+      "flowerCount": 0,
+      "flowerSpikeCount": 0,
+      "budSpikeCount": 0,
+      "shootCount": 12
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+**First Woodland release — 13 November 2026:** source implementation and validation are covered in [WOODLAND_RELEASE.md](backend/WOODLAND_RELEASE.md). This supplies the expanded catalog and Standard/Enchanted/Premium packs; the separate milestone redesign remains deferred. Personal-database activation and native acceptance are explicit.
+
 # Movement Forest implementation plan
 
 **Inventory management — source implemented locally, 5 November 2026:** 50 owned

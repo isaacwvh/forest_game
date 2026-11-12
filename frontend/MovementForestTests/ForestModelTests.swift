@@ -5,8 +5,9 @@ import simd
 final class ForestModelTests: XCTestCase {
     func testAllDeliveredStageVariantsResolve() throws {
         let catalog = try BundleAssetCatalog()
-        XCTAssertEqual(catalog.species.map(\.speciesId), ["oak", "moonwillow"])
-        XCTAssertEqual(catalog.species.reduce(0) { $0 + $1.assets.count }, 20)
+        XCTAssertEqual(catalog.species.count, 30)
+        XCTAssertTrue(Set(catalog.species.map(\.speciesId)).isSuperset(of: ["oak", "moonwillow"]))
+        XCTAssertEqual(catalog.species.reduce(0) { $0 + $1.assets.count }, 188)
         for manifest in catalog.species {
             for stage in GrowthStage.allCases {
                 for variant in manifest.variantIds {

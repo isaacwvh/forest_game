@@ -13,6 +13,7 @@ from pydantic import (
     PlainSerializer,
     WithJsonSchema,
     field_validator,
+    model_serializer,
     model_validator,
 )
 from pydantic.alias_generators import to_camel
@@ -67,7 +68,17 @@ class AttractionDefinition(DTO):
 
 
 class BehaviourDefinition(DTO):
-    schema_version: Literal[1, 2] = 1
+    schema_version: Literal[1, 2, 3] = 1
+    conversion_rates: dict[str, dict] = Field(default_factory=dict, max_length=32)
+
+    @model_serializer(mode="wrap")
+    def serialize(self, handler):
+        data = handler(self)
+        if self.schema_version < 3:
+            data.pop("conversionRates", None)
+            data.pop("conversion_rates", None)
+        return data
+
     metric_multipliers: dict[str, Annotated[float, Field(ge=0, allow_inf_nan=False)]]
     conditional_modifiers: list[dict] = Field(default_factory=list, max_length=0)
     garden_effects: list[SkillEffect] = Field(default_factory=list, max_length=64)
@@ -83,6 +94,17 @@ class BehaviourDefinition(DTO):
 
     @model_validator(mode="after")
     def versioned_effects(self):
+        if self.conversion_rates:
+            from forest_api.calculations import MetricRate
+
+            if self.schema_version != 3:
+                raise ValueError("Pinned conversions require schema 3")
+            for metric, rate in self.conversion_rates.items():
+                if metric not in self.metric_multipliers:
+                    raise ValueError("Conversion must match a configured plant metric")
+                MetricRate.model_validate(rate)
+        if self.schema_version < 3 and any(e.component_version != 1 for e in self.garden_effects):
+            raise ValueError("Extended skills require schema 3")
         if self.schema_version == 1 and self.garden_effects:
             raise ValueError("Schema 1 supports neutral effects only")
         if len({effect.id for effect in self.garden_effects}) != len(self.garden_effects):
@@ -213,6 +235,7 @@ class PlantDTO(DTO):
     growth_micro_units: str
     growth_stage: Stage
     base_attraction_micro_units: str
+    clearance_radius: GroundNumber | None = None
     contributes_attraction: bool
     model_key: str
     thumbnail_key: str

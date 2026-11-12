@@ -88,6 +88,7 @@ struct CollectionPackCard<Action: View>: View {
     let packID: String
     let name: String
     var price: String? = nil
+    var currency: String = "tokens"
     let infoID: String
     var canInspect = true
     let inspect: () -> Void
@@ -114,9 +115,9 @@ struct CollectionPackCard<Action: View>: View {
                     .frame(maxWidth: .infinity).frame(height: nameHeight)
                     .multilineTextAlignment(.center).padding(.horizontal, 8)
                 if let price = price {
-                    QuantityLabel(metric: "tokens", text: price).font(.subheadline.weight(.medium))
+                    QuantityLabel(metric: currency, text: price).font(.subheadline.weight(.medium))
                         .monospacedDigit().lineLimit(1).minimumScaleFactor(0.75)
-                        .accessibilityLabel("\(price) tokens").padding(.horizontal, 8)
+                        .accessibilityLabel("\(price) \(currency)").padding(.horizontal, 8)
                 }
                 action().font(.subheadline).frame(maxWidth: .infinity, minHeight: 44)
                     .padding(.horizontal, 10).padding(.bottom, 12)

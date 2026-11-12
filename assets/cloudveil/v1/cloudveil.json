@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "cloudveil",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "restrained structural sway and phase-offset pendulous veil joints; fixed ground contact"
+  },
+  "materials": {
+    "roughness": 0.76,
+    "sharedRefinedAtlasAcrossStages": true,
+    "bracts": "overlapping closed folded blades, ivory shoulders to blush-pink tips with subtle tonal midribs and secondary veins",
+    "foliage": "cupped sage leaves with deeper green undersides",
+    "bark": "smooth sculpted taupe with quiet longitudinal pigment"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/cloudveil-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/cloudveil-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/cloudveil-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/cloudveil-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/cloudveil-sprout-standard.usdz",
+      "thumbnail": "ui/cloudveil-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.140665,
+          -0.071934,
+          0.0
+        ],
+        "max": [
+          0.171166,
+          0.035992,
+          0.294082
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.140754,
+          -0.072232,
+          0.0
+        ],
+        "max": [
+          0.171209,
+          0.03697,
+          0.29412
+        ]
+      },
+      "animation": "cloudveil_sprout_sway",
+      "triangles": 3054,
+      "joints": 3,
+      "materials": 1,
+      "textureSize": [
+        1024,
+        1024
+      ],
+      "bytes": 242756,
+      "sha256": "902a76dc8e2c754e68e0c94f07eb176ab7f959d32eca9738d1a93c60905a515a",
+      "leafCount": 2,
+      "bractCount": 3,
+      "clusterCount": 0,
+      "branchCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/cloudveil-seedling-standard.usdz",
+      "thumbnail": "ui/cloudveil-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.346939,
+          -0.217756,
+          0.0
+        ],
+        "max": [
+          0.466939,
+          0.196796,
+          0.95438
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.349654,
+          -0.219849,
+          0.0
+        ],
+        "max": [
+          0.468716,
+          0.203093,
+          0.954601
+        ]
+      },
+      "animation": "cloudveil_seedling_sway",
+      "triangles": 5652,
+      "joints": 8,
+      "materials": 1,
+      "textureSize": [
+        1024,
+        1024
+      ],
+      "bytes": 378850,
+      "sha256": "e53cd2d8defd299f3ba8a1dc1b4eec9eda6524cc2ff1e9dab3e15a8344d7c79a",
+      "leafCount": 7,
+      "bractCount": 10,
+      "clusterCount": 1,
+      "branchCount": 2
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/cloudveil-young-standard.usdz",
+      "thumbnail": "ui/cloudveil-young-standard.png",
+      "bounds": {
+        "min": [
+          -1.085774,
+          -0.617082,
+          0.0
+        ],
+        "max": [
+          1.007932,
+          0.909231,
+          2.437363
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -1.085805,
+          -0.626258,
+          0.0
+        ],
+        "max": [
+          1.021167,
+          0.919057,
+          2.438486
+        ]
+      },
+      "animation": "cloudveil_young_sway",
+      "triangles": 26058,
+      "joints": 17,
+      "materials": 1,
+      "textureSize": [
+        1024,
+        1024
+      ],
+      "bytes": 1312349,
+      "sha256": "476f3af4778a5622b33d1661cfbd057cf60e05692d0b525aa0d301e3af7c480a",
+      "leafCount": 30,
+      "bractCount": 90,
+      "clusterCount": 6,
+      "branchCount": 4
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/cloudveil-adult-standard.usdz",
+      "thumbnail": "ui/cloudveil-adult-standard.png",
+      "bounds": {
+        "min": [
+          -2.212753,
+          -1.815288,
+          0.0
+        ],
+        "max": [
+          1.996819,
+          1.583549,
+          4.399992
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -2.229611,
+          -1.830115,
+          0.0
+        ],
+        "max": [
+          2.019627,
+          1.602269,
+          4.41296
+        ]
+      },
+      "animation": "cloudveil_adult_sway",
+      "triangles": 114156,
+      "joints": 45,
+      "materials": 1,
+      "textureSize": [
+        1024,
+        1024
+      ],
+      "bytes": 5238836,
+      "sha256": "2df0b0e21975ffab54c306ab8f8a9c577f0f74c561b3948f5891ef35e57c58c2",
+      "leafCount": 168,
+      "bractCount": 432,
+      "clusterCount": 24,
+      "branchCount": 9
+    }
+  ]
+}

@@ -52,17 +52,29 @@ class Candidate:
 
 
 class SkillSnapshot:
-    def __init__(self, plants: tuple[PlantFacts, ...], caps: SkillCaps, policy_version: str):
+    def __init__(
+        self,
+        plants: tuple[PlantFacts, ...],
+        caps: SkillCaps,
+        policy_version: str,
+        *,
+        flights=0,
+        step_band=None,
+    ):
+        self.flights, self.step_band = flights, step_band
         self.plants = tuple(sorted(plants, key=lambda plant: plant.id))
         self.caps, self.policy_version = caps, policy_version
         self._selectors = {}
         self._resolved = {}
+        self._band_snapshots = {}
         self.candidates = []
         magnitudes = {}
         for plant in self.plants:
             if plant.stage != "adult":
                 continue
             for effect in plant.behaviour.garden_effects:
+                if effect.step_band and effect.step_band != step_band:
+                    continue
                 if effect.condition and len(self.selected(effect.condition.selector)) < (
                     effect.condition.minimum
                 ):
@@ -71,10 +83,14 @@ class SkillSnapshot:
                 if key not in magnitudes:
                     magnitude = effect.magnitude
                     value = exact(magnitude.value)
-                    if magnitude.type == "per_copy":
-                        value = min(
-                            value * len(self.selected(magnitude.selector)), exact(magnitude.maximum)
-                        )
+                    if magnitude.type in {"per_copy", "per_species", "daily_flights"}:
+                        if magnitude.type == "daily_flights":
+                            count = flights
+                        elif magnitude.type == "per_species":
+                            count = len({p.species for p in self.selected(magnitude.selector)})
+                        else:
+                            count = len(self.selected(magnitude.selector))
+                        value = min(value * count, exact(magnitude.maximum))
                     magnitudes[key] = value
                 if magnitudes[key]:
                     self.candidates.append(Candidate(effect, magnitudes[key], plant))
@@ -124,6 +140,27 @@ class SkillSnapshot:
         water = 1 + min(self.total("water", plant), exact(self.caps.water_bonus))
         return activity, water
 
+    def growth_interval(self, plant, metrics, start_steps, water_steps):
+        activity, water = self.growth(plant, metrics)
+        if water_steps and any(p.behaviour.schema_version == 3 for p in self.plants):
+            first = max(0, min(start_steps + water_steps, 2000) - min(start_steps, 2000))
+            factors = []
+            for band in ("first_2000", "after_2000"):
+                if band not in self._band_snapshots:
+                    self._band_snapshots[band] = SkillSnapshot(
+                        self.plants,
+                        self.caps,
+                        self.policy_version,
+                        flights=self.flights,
+                        step_band=band,
+                    )
+                snapshot = self._band_snapshots[band]
+                factors.append(snapshot.growth(plant, ["steps"])[0]["steps"])
+            activity["steps"] = (
+                first * factors[0] + (water_steps - first) * factors[1]
+            ) / water_steps
+        return activity, water
+
     def attraction(self):
         base = sum(p.attraction for p in self.plants)
         flat_requested = sum(
@@ -170,6 +207,29 @@ class SkillSnapshot:
             "effects": self.effects(plant, metrics),
         }
 
+    def context_interval(self, plant, metrics, start_steps, water_steps):
+        context = self.context(plant, metrics)
+        activity, _ = self.growth_interval(plant, metrics, start_steps, water_steps)
+        context["activityFactors"] = {metric: number(value) for metric, value in activity.items()}
+        if water_steps and self._band_snapshots:
+            first = max(0, min(start_steps + water_steps, 2000) - min(start_steps, 2000))
+            context["stepBandSegments"] = [
+                {
+                    "band": band,
+                    "waterSteps": str(quantity),
+                    "activityFactor": number(snapshot.growth(plant, ["steps"])[0]["steps"]),
+                    "effects": [
+                        row
+                        for row in snapshot.effects(plant, ["steps"])
+                        if row.get("stepBand") == band
+                    ],
+                }
+                for band, quantity in (("first_2000", first), ("after_2000", water_steps - first))
+                if quantity
+                for snapshot in [self._band_snapshots[band]]
+            ]
+        return context
+
     def effects(self, recipient=None, metrics=()):
         rows = []
         scopes = [("water", None), *(("activity", metric) for metric in sorted(metrics))]
@@ -183,6 +243,7 @@ class SkillSnapshot:
                     effect = winner.effect
                     rows.append(
                         {
+                            **({"stepBand": effect.step_band} if effect.step_band else {}),
                             "id": effect.id,
                             "name": effect.name,
                             "description": effect.description,
@@ -222,6 +283,26 @@ class SkillSnapshot:
                 }
             )
             effects = self.effects(plant) + self.effects(plant, metrics)
+            if self.step_band is None and any(
+                e.step_band
+                for p in self.plants
+                if p.stage == "adult"
+                for e in p.behaviour.garden_effects
+            ):
+                for band in ("first_2000", "after_2000"):
+                    if band not in self._band_snapshots:
+                        self._band_snapshots[band] = SkillSnapshot(
+                            self.plants,
+                            self.caps,
+                            self.policy_version,
+                            flights=self.flights,
+                            step_band=band,
+                        )
+                    effects.extend(
+                        row
+                        for row in self._band_snapshots[band].effects(plant, ["steps"])
+                        if row.get("stepBand") == band
+                    )
             for row in effects:
                 key = (
                     row["system"],

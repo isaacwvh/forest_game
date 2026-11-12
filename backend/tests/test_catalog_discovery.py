@@ -244,7 +244,7 @@ def test_upgrade_uses_all_stored_pinned_copies_and_is_repeat_safe(app, client, h
         with engine.connect() as connection:
             before = {
                 table: connection.execute(
-                    text(f"SELECT to_jsonb(t) FROM {table} t ORDER BY id")
+                    text(f"SELECT (to_jsonb(t) - 'clearance_radius') FROM {table} t ORDER BY id")
                 ).all()
                 for table in ["users", "gardens", "owned_plants"]
             }
@@ -253,7 +253,7 @@ def test_upgrade_uses_all_stored_pinned_copies_and_is_repeat_safe(app, client, h
         with engine.connect() as connection:
             assert before == {
                 table: connection.execute(
-                    text(f"SELECT to_jsonb(t) FROM {table} t ORDER BY id")
+                    text(f"SELECT (to_jsonb(t) - 'clearance_radius') FROM {table} t ORDER BY id")
                 ).all()
                 for table in before
             }

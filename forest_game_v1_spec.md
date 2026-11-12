@@ -1,3 +1,5 @@
+**First Woodland release — source implemented, 13 November 2026:** 30 species, 47 variants, bundled assets, 21 skills, 8% Sleeping Dew, three versioned token/gem packs, copy-pinned radii and conversion compatibility. Migration/publication and native acceptance remain explicit. See [Woodland release](backend/WOODLAND_RELEASE.md).
+
 # Movement Forest: V1 Working Specification
 
 **Inventory management — source implemented locally, 5 November 2026:**

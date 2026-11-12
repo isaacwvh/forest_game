@@ -42,7 +42,11 @@ def wallet_for(session, owner):
 
 
 def wallet_dto(wallet):
-    return {"tokenBalance": str(wallet.tokens), "economyVersion": wallet.economy_version}
+    return {
+        "tokenBalance": str(wallet.tokens),
+        "gemBalance": str(wallet.gems or 0),
+        "economyVersion": wallet.economy_version,
+    }
 
 
 def pack_contract(session, settings, pack_id, version):
@@ -153,6 +157,7 @@ def publish_in_transaction(session, settings, body):
             pack_id=body.pack_id,
             pack_version=body.version,
             token_cost=body.token_cost,
+            currency=body.currency,
             active=True,
         )
     )
@@ -177,6 +182,7 @@ def choose(definition, randbelow=secrets.randbelow):
                         species_id=selected.species_id,
                         variant_id=variant.variant_id,
                         profiles=variant.profiles,
+                        clearance_radius=variant.clearance_radius,
                     )
                 variant_roll -= variant.weight
             raise RuntimeError("Random source returned an out-of-range variant value")
@@ -243,6 +249,7 @@ def read(session, settings, identity, *, kind="summary", limit=30, after=None):
                         "offerId": offer.id,
                         "offerVersion": offer.version,
                         "tokenCost": str(offer.token_cost),
+                        "currency": offer.currency,
                         "pack": definition_dto(row, definition),
                     }
                 )
@@ -327,6 +334,7 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
         wallet = wallet_for(session, user.id)
         event_id = uuid4()
         delta = 0
+        gem_delta = 0
         if pack_id is None:
             from forest_api.inventory_management import capacity
 
@@ -340,13 +348,20 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 raise ApiError(409, "stale_offer", "Refresh Exchange to see the current offer")
             row, definition = pack_contract(session, settings, offer.pack_id, offer.pack_version)
             validate_dependencies(session, definition)
+            require_woodland_client(session, row)
             cost = checked(offer.token_cost * body.quantity)
-            if wallet.tokens < cost:
-                raise ApiError(
-                    409, "insufficient_tokens", "You need more visitor tokens for this exchange"
-                )
-            wallet.tokens -= cost
-            delta = -cost
+            if offer.currency == "gems":
+                if wallet.gems < cost:
+                    raise ApiError(409, "insufficient_gems", "You need more gems for this pack")
+                wallet.gems -= cost
+                gem_delta = -cost
+            else:
+                if wallet.tokens < cost:
+                    raise ApiError(
+                        409, "insufficient_tokens", "You need more visitor tokens for this exchange"
+                    )
+                wallet.tokens -= cost
+                delta = -cost
             packs = [
                 OwnedPack(
                     id=uuid4(),
@@ -364,7 +379,9 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 "offerId": offer.id,
                 "offerVersion": offer.version,
                 "quantity": body.quantity,
-                "tokensSpent": str(cost),
+                "tokensSpent": str(cost if offer.currency == "tokens" else 0),
+                "gemsSpent": str(cost if offer.currency == "gems" else 0),
+                "currency": offer.currency,
                 "packs": [pack_dto(pack) for pack in packs],
             }
         else:
@@ -385,6 +402,7 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
             require_plant_room(session, user.id, settings)
             row, definition = pack_contract(session, settings, pack.pack_id, pack.pack_version)
             validate_dependencies(session, definition)
+            require_woodland_client(session, row)
             rarity, outcome = choose(definition, **({"randbelow": randbelow} if randbelow else {}))
             plant = OwnedPlant(
                 id=uuid4(),
@@ -393,6 +411,13 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 variant_id=outcome.variant_id,
                 acquisition_source="pack_open",
                 acquisition_reference=str(pack.id),
+                clearance_radius=(
+                    outcome.clearance_radius
+                    or session.get(Species, outcome.species_id).properties.get(
+                        "legacyClearanceRadius"
+                    )
+                    or session.get(Species, outcome.species_id).clearance_radius
+                ),
                 growth_micro_units=0,
                 fractional_state={},
             )
@@ -428,6 +453,7 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 operation=operation,
                 payload_hash=digest,
                 token_delta=delta,
+                gem_delta=gem_delta,
                 receipt=receipt,
                 created_at=boundary,
             )
@@ -450,3 +476,11 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
         services.record_request(session, user.id, body, operation, digest, receipt)
         session.flush()
         return receipt
+
+
+def require_woodland_client(session, pack):
+    if pack.version >= 20 and pack.id in {"woodland", "select-woodland", "premium-woodland"}:
+        if not session.info.get("woodland_release"):
+            raise ApiError(
+                426, "woodland_client_update_required", "Update the app to use Woodland packs"
+            )

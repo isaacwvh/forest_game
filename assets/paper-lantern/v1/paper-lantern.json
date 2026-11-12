@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "paper-lantern",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained phase-offset two-joint botanical sway"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/paper-lantern-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/paper-lantern-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/paper-lantern-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/paper-lantern-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/paper-lantern-sprout-standard.usdz",
+      "thumbnail": "ui/paper-lantern-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.06951,
+          -0.024959,
+          0.0
+        ],
+        "max": [
+          0.07762,
+          0.033629,
+          0.168206
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.069704,
+          -0.025756,
+          0.0
+        ],
+        "max": [
+          0.077919,
+          0.034387,
+          0.16835
+        ]
+      },
+      "animation": "paper-lantern_sprout_sway",
+      "triangles": 2956,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 262927,
+      "sha256": "df1cf18bac93087d40e436662d25f8effdbc48dc97fe08622b7e33b913bea4c5",
+      "leafCount": 3,
+      "lanternCount": 0,
+      "budCount": 0,
+      "shootCount": 1,
+      "mainRibCount": 0,
+      "laceEdgeCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/paper-lantern-seedling-standard.usdz",
+      "thumbnail": "ui/paper-lantern-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.160151,
+          -0.068555,
+          0.0
+        ],
+        "max": [
+          0.15157,
+          0.089662,
+          0.354282
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.160216,
+          -0.070829,
+          0.0
+        ],
+        "max": [
+          0.151876,
+          0.092001,
+          0.35483
+        ]
+      },
+      "animation": "paper-lantern_seedling_sway",
+      "triangles": 8118,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 461244,
+      "sha256": "cd3d5330746e99fede0837612dfe68c810ac5f6205370721edf9fedb51294a93",
+      "leafCount": 4,
+      "lanternCount": 0,
+      "budCount": 1,
+      "shootCount": 1,
+      "mainRibCount": 5,
+      "laceEdgeCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/paper-lantern-young-standard.usdz",
+      "thumbnail": "ui/paper-lantern-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.235838,
+          -0.167461,
+          0.0
+        ],
+        "max": [
+          0.259943,
+          0.208014,
+          0.678007
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.235858,
+          -0.167461,
+          0.0
+        ],
+        "max": [
+          0.26005,
+          0.209321,
+          0.678734
+        ]
+      },
+      "animation": "paper-lantern_young_sway",
+      "triangles": 63280,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 2648251,
+      "sha256": "31ca8f2282994dacfbbd33b36e4be8e09d5f1570f5e445b2ea06f5994393a414",
+      "leafCount": 4,
+      "lanternCount": 2,
+      "budCount": 1,
+      "shootCount": 3,
+      "mainRibCount": 15,
+      "laceEdgeCount": 2880
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/paper-lantern-adult-standard.usdz",
+      "thumbnail": "ui/paper-lantern-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.452055,
+          -0.345418,
+          0.0
+        ],
+        "max": [
+          0.456567,
+          0.279419,
+          1.059367
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.454224,
+          -0.347254,
+          0.0
+        ],
+        "max": [
+          0.457164,
+          0.27953,
+          1.060669
+        ]
+      },
+      "animation": "paper-lantern_adult_sway",
+      "triangles": 137294,
+      "joints": 11,
+      "materials": 1,
+      "bytes": 5652265,
+      "sha256": "bbe590eafd93dd4fa0fd660b349c9d4da6dbd21556d77c7214d3d3df0cbbc62a",
+      "leafCount": 9,
+      "lanternCount": 5,
+      "budCount": 0,
+      "shootCount": 5,
+      "mainRibCount": 25,
+      "laceEdgeCount": 7200
+    }
+  ]
+}

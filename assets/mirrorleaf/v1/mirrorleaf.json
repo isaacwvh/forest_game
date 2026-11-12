@@ -1,0 +1,396 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "mirrorleaf",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "speckled"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained phase-offset two-joint botanical sway"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/mirrorleaf-sprout-standard.png",
+        "speckled": "ui/mirrorleaf-sprout-speckled.png"
+      },
+      "seedling": {
+        "standard": "ui/mirrorleaf-seedling-standard.png",
+        "speckled": "ui/mirrorleaf-seedling-speckled.png"
+      },
+      "young": {
+        "standard": "ui/mirrorleaf-young-standard.png",
+        "speckled": "ui/mirrorleaf-young-speckled.png"
+      },
+      "adult": {
+        "standard": "ui/mirrorleaf-adult-standard.png",
+        "speckled": "ui/mirrorleaf-adult-speckled.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/mirrorleaf-sprout-standard.usdz",
+      "thumbnail": "ui/mirrorleaf-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.057877,
+          -0.042029,
+          0.0
+        ],
+        "max": [
+          0.063604,
+          0.062756,
+          0.175326
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.058042,
+          -0.042708,
+          0.0
+        ],
+        "max": [
+          0.064064,
+          0.065349,
+          0.176128
+        ]
+      },
+      "animation": "mirrorleaf_sprout_sway",
+      "triangles": 2288,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 191359,
+      "sha256": "8843c665a90e74edc4443b4301d12ca7c89f704ad215d4be0b196f7b4548e01f",
+      "leafCount": 1,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 1,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "sprout",
+      "variant": "speckled",
+      "file": "models/mirrorleaf-sprout-speckled.usdz",
+      "thumbnail": "ui/mirrorleaf-sprout-speckled.png",
+      "bounds": {
+        "min": [
+          -0.057877,
+          -0.042029,
+          0.0
+        ],
+        "max": [
+          0.063604,
+          0.062756,
+          0.175326
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.058042,
+          -0.042708,
+          0.0
+        ],
+        "max": [
+          0.064064,
+          0.065349,
+          0.176128
+        ]
+      },
+      "animation": "mirrorleaf_sprout_sway",
+      "triangles": 2288,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 275755,
+      "sha256": "7c37f73d6ffb52ed34a30bcccdbfea5823541b91068e9caf9d684a7c3e30fd09",
+      "leafCount": 1,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 1,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/mirrorleaf-seedling-standard.usdz",
+      "thumbnail": "ui/mirrorleaf-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.228475,
+          -0.157082,
+          0.0
+        ],
+        "max": [
+          0.225699,
+          0.154394,
+          0.324317
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.229764,
+          -0.158495,
+          0.0
+        ],
+        "max": [
+          0.227271,
+          0.161631,
+          0.324406
+        ]
+      },
+      "animation": "mirrorleaf_seedling_sway",
+      "triangles": 6864,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 396238,
+      "sha256": "ad76f7f524c44548303eda7830ebd90359ae338187d16acadf0967c635f8cae5",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 3,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "speckled",
+      "file": "models/mirrorleaf-seedling-speckled.usdz",
+      "thumbnail": "ui/mirrorleaf-seedling-speckled.png",
+      "bounds": {
+        "min": [
+          -0.228475,
+          -0.157082,
+          0.0
+        ],
+        "max": [
+          0.225699,
+          0.154394,
+          0.324317
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.229764,
+          -0.158495,
+          0.0
+        ],
+        "max": [
+          0.227271,
+          0.161631,
+          0.324406
+        ]
+      },
+      "animation": "mirrorleaf_seedling_sway",
+      "triangles": 6864,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 480595,
+      "sha256": "82b4b1ec37e5d8eb605c1340bcd53c43fb74a44fde1faf30264cde58af8ac09d",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 3,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/mirrorleaf-young-standard.usdz",
+      "thumbnail": "ui/mirrorleaf-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.366719,
+          -0.379139,
+          0.0
+        ],
+        "max": [
+          0.319159,
+          0.335908,
+          0.560638
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.368211,
+          -0.379311,
+          0.0
+        ],
+        "max": [
+          0.320812,
+          0.336677,
+          0.564099
+        ]
+      },
+      "animation": "mirrorleaf_young_sway",
+      "triangles": 18304,
+      "joints": 17,
+      "materials": 1,
+      "bytes": 908170,
+      "sha256": "5a6ebe909215d2312b262a291e21a2c709620d471745b6a11190151e06664854",
+      "leafCount": 8,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 8,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "speckled",
+      "file": "models/mirrorleaf-young-speckled.usdz",
+      "thumbnail": "ui/mirrorleaf-young-speckled.png",
+      "bounds": {
+        "min": [
+          -0.366719,
+          -0.379139,
+          0.0
+        ],
+        "max": [
+          0.319159,
+          0.335908,
+          0.560638
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.368211,
+          -0.379311,
+          0.0
+        ],
+        "max": [
+          0.320812,
+          0.336677,
+          0.564099
+        ]
+      },
+      "animation": "mirrorleaf_young_sway",
+      "triangles": 18304,
+      "joints": 17,
+      "materials": 1,
+      "bytes": 992522,
+      "sha256": "f57f42a95d0ecb4a44b2a19a711f97cd395c2275d647dcb3def02a3fad1c427f",
+      "leafCount": 8,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 8,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/mirrorleaf-adult-standard.usdz",
+      "thumbnail": "ui/mirrorleaf-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.682007,
+          -0.568861,
+          0.0
+        ],
+        "max": [
+          0.730849,
+          0.670277,
+          0.907694
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.682521,
+          -0.569809,
+          0.0
+        ],
+        "max": [
+          0.733711,
+          0.679528,
+          0.916126
+        ]
+      },
+      "animation": "mirrorleaf_adult_sway",
+      "triangles": 57200,
+      "joints": 51,
+      "materials": 1,
+      "bytes": 2650868,
+      "sha256": "3aa9ae38944586e81d7173d9b528e38d247eea0efa6f70dc3bb364ef4e7fe4ac",
+      "leafCount": 25,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 25,
+      "petalCount": 0,
+      "stamenCount": 0
+    },
+    {
+      "stage": "adult",
+      "variant": "speckled",
+      "file": "models/mirrorleaf-adult-speckled.usdz",
+      "thumbnail": "ui/mirrorleaf-adult-speckled.png",
+      "bounds": {
+        "min": [
+          -0.682007,
+          -0.568861,
+          0.0
+        ],
+        "max": [
+          0.730849,
+          0.670277,
+          0.907694
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.682521,
+          -0.569809,
+          0.0
+        ],
+        "max": [
+          0.733711,
+          0.679528,
+          0.916126
+        ]
+      },
+      "animation": "mirrorleaf_adult_sway",
+      "triangles": 57200,
+      "joints": 51,
+      "materials": 1,
+      "bytes": 2735261,
+      "sha256": "59dc6db8af1b09a035c4fe30e85d1fc375adb11db649e60e01196eccdb558379",
+      "leafCount": 25,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 25,
+      "petalCount": 0,
+      "stamenCount": 0
+    }
+  ]
+}

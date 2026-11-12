@@ -341,7 +341,7 @@ private struct ExchangeOfferRow: View {
     let purchase: () -> Void
     var body: some View {
         CollectionPackCard(packID: offer.pack.packId, name: offer.pack.displayName,
-            price: offer.tokenCost, infoID: "collection.offerContents.\(offer.offerId)", inspect: inspect) {
+            price: offer.tokenCost, currency: offer.purchaseCurrency, infoID: "collection.offerContents.\(offer.offerId)", inspect: inspect) {
             Button(action: purchase) {
                 Text("Purchase").frame(maxWidth: .infinity, minHeight: 44)
             }.accessibilityLabel("Purchase pack")
@@ -368,8 +368,10 @@ private struct ExchangeOfferFeedback: View {
                     .accessibilityIdentifier("collection.exchangeSuccess")
                 Button("Open packs") { navigate?(.draws) }.buttonStyle(.journalQuiet).frame(minHeight: 44)
             }
-            if store.tokenBalance != nil && !store.canAfford(offer, quantity: 1) {
-                Text("\(offer.pack.displayName): Not enough tokens").font(.caption).foregroundStyle(JournalTheme.secondary)
+            if store.balance(for: offer) == nil {
+                Text("Refreshing \(offer.purchaseCurrency) balance…").font(.caption).foregroundStyle(JournalTheme.secondary)
+            } else if !store.canAfford(offer, quantity: 1) {
+                Text("\(offer.pack.displayName): Not enough \(offer.purchaseCurrency)").font(.caption).foregroundStyle(JournalTheme.secondary)
             }
         }
     }
@@ -404,17 +406,17 @@ private struct PurchasePackScreen: View {
             Text(offer.pack.displayName).font(.system(.title3, design: .serif).weight(.semibold))
                 .multilineTextAlignment(.center)
             VStack(alignment: .leading, spacing: 16) {
-                QuantityLabel(metric: "tokens", text: "\(offer.tokenCost) per pack").monospacedDigit()
+                QuantityLabel(metric: offer.purchaseCurrency, text: "\(offer.tokenCost) per pack").monospacedDigit()
                 Stepper("Quantity: \(quantity)", value: $quantity, in: 1...max(1, min(20, store.capacity?.packRoom ?? 20)))
                     .disabled(submitted || !store.canMutate).accessibilityIdentifier("purchase.quantity")
                     .frame(minHeight: 44)
-                QuantityLabel(metric: "tokens", text: "Total: \(totalCost)").monospacedDigit()
-                    .font(.headline).accessibilityLabel("Total: \(totalCost) tokens")
-                if let balance = store.tokenBalance {
-                    LabeledContent("Available tokens", value: balance).monospacedDigit()
+                QuantityLabel(metric: offer.purchaseCurrency, text: "Total: \(totalCost)").monospacedDigit()
+                    .font(.headline).accessibilityLabel("Total: \(totalCost) \(offer.purchaseCurrency)")
+                if let balance = store.balance(for: offer) {
+                    LabeledContent("Available \(offer.purchaseCurrency)", value: balance).monospacedDigit()
                 }
                 if !store.canAfford(offer, quantity: quantity) {
-                    Text("Not enough tokens").foregroundStyle(JournalTheme.secondary)
+                    Text("Not enough \(offer.purchaseCurrency)").foregroundStyle(JournalTheme.secondary)
                 }
                 if !store.canBuy(quantity: quantity) {
                     Text("Pack storage full.").foregroundStyle(JournalTheme.secondary)
@@ -646,13 +648,13 @@ private struct CatalogDetailScreen: View {
                 VStack(alignment: .leading, spacing: 8) {
                     JournalSectionHeading(title: "Garden skills")
                     if let skills = profile("behaviour")?.gardenEffects, !skills.isEmpty {
-                        ForEach(skills) { skill in
+                        ForEach(skills.uniqueSkills) { skill in
                             DisclosureGroup {
                                 Text(skill.description).font(.callout).padding(.top, 6)
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(skill.name).font(.headline)
-                                    Label("Requires a fully grown plant in the garden", systemImage: "lock")
+                                    Label("Active when adult and planted", systemImage: "lock")
                                         .font(.caption).foregroundStyle(JournalTheme.secondary)
                                 }
                             }.padding(12).background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
@@ -763,7 +765,10 @@ private struct ReceiptRow: View {
         } else if receipt.milestoneId != nil {
             QuantityLabel(metric: "tokens", text: "+\(receipt.tokensEarned ?? "0") tokens")
         } else {
-            QuantityLabel(metric: "tokens", text: "\(receipt.tokensSpent ?? "0") tokens · \(receipt.quantity ?? 0) packs")
+            let usesGems = (receipt.gemsSpent.flatMap(ExactAmount.integer) ?? 0) > 0
+            let currency = usesGems ? "gems" : "tokens"
+            let spent = usesGems ? receipt.gemsSpent : receipt.tokensSpent
+            QuantityLabel(metric: currency, text: "\(spent ?? "0") \(currency) · \(receipt.quantity ?? 0) packs")
         }
     }
 }

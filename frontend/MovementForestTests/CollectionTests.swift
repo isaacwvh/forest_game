@@ -95,6 +95,37 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testGemAffordabilityUsesConfirmedGemWalletAndRejectsStaleVersions() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())
+        await store.refresh()
+        var offer = try XCTUnwrap(store.offers.first)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: ActivityWire.encoder().encode(offer)) as? [String: Any])
+        var gemOffer = object; gemOffer["currency"] = "gems"; gemOffer["tokenCost"] = "5"
+        offer = try ActivityWire.decoder().decode(APIExchangeOffer.self, from: JSONSerialization.data(withJSONObject: gemOffer))
+        let version = store.economyVersion + 10
+        store.applyWallet("10000", version: version, gems: "5")
+        XCTAssertTrue(store.canAfford(offer, quantity: 1))
+        XCTAssertFalse(store.canAfford(offer, quantity: 2))
+        store.applyWallet("10000", version: version - 1, gems: "100")
+        XCTAssertEqual(store.gemBalance, "5")
+        store.applyWallet("10001", version: version + 1)
+        XCTAssertNil(store.gemBalance)
+        XCTAssertFalse(store.canAfford(offer, quantity: 1))
+        store.applyWallet("10001", version: version + 1, gems: "4")
+        XCTAssertFalse(store.canAfford(offer, quantity: 1))
+    }
+
+    func testAllWoodlandPackArtworkPartsResolve() {
+        for pack in ["woodland", "select-woodland", "premium-woodland"] {
+            for part in ["sealed", "opened", "top-strip"] {
+                let path = PresentationAssets.packPath(packID: pack, part: part)
+                XCTAssertNotNil(path.flatMap { PresentationAssets.url($0) })
+            }
+        }
+        XCTAssertNil(PresentationAssets.packPath(packID: "../unsafe", part: "sealed"))
+    }
+
     func testConfirmedLevelCapacitySurvivesLaterStaleSummary() async throws {
         let service = FakeCollection(try CollectionContract.load())
         let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())

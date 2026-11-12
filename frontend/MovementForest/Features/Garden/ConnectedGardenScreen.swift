@@ -264,7 +264,7 @@ struct ConnectedGardenScreen: View {
                 JournalSectionHeading(title: "Active skills")
                 if let summary = store.confirmed?.skillSummary {
                     if summary.activeSkills.isEmpty { Text("No active skills").foregroundStyle(JournalTheme.secondary) }
-                    ForEach(summary.activeSkills) { skill in
+                    ForEach(summary.activeSkills.uniqueSkills) { skill in
                         DisclosureGroup {
                             Text(skill.description).foregroundStyle(JournalTheme.secondary)
                             if let source = store.ownedCopy(skill.sourcePlantId) {

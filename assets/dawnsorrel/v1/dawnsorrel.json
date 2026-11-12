@@ -1,0 +1,388 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "dawnsorrel",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "yellow"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Restrained phase-offset two-joint petiole and flower sway"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/dawnsorrel-sprout-standard.png",
+        "yellow": "ui/dawnsorrel-sprout-yellow.png"
+      },
+      "seedling": {
+        "standard": "ui/dawnsorrel-seedling-standard.png",
+        "yellow": "ui/dawnsorrel-seedling-yellow.png"
+      },
+      "young": {
+        "standard": "ui/dawnsorrel-young-standard.png",
+        "yellow": "ui/dawnsorrel-young-yellow.png"
+      },
+      "adult": {
+        "standard": "ui/dawnsorrel-adult-standard.png",
+        "yellow": "ui/dawnsorrel-adult-yellow.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/dawnsorrel-sprout-standard.usdz",
+      "thumbnail": "ui/dawnsorrel-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.045256,
+          -0.056377,
+          0.0
+        ],
+        "max": [
+          0.035437,
+          0.036659,
+          0.179162
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.046337,
+          -0.060225,
+          0.0
+        ],
+        "max": [
+          0.03768,
+          0.036659,
+          0.179409
+        ]
+      },
+      "animation": "dawnsorrel_sprout_sway",
+      "triangles": 1142,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 91643,
+      "sha256": "5b28c57e3295ffe43e62725bfe0abf35e4c3ca22088bab4e6426623c76d17988",
+      "leafHeadCount": 1,
+      "leafletCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 1
+    },
+    {
+      "stage": "sprout",
+      "variant": "yellow",
+      "file": "models/dawnsorrel-sprout-yellow.usdz",
+      "thumbnail": "ui/dawnsorrel-sprout-yellow.png",
+      "bounds": {
+        "min": [
+          -0.045256,
+          -0.056377,
+          0.0
+        ],
+        "max": [
+          0.035437,
+          0.036659,
+          0.179162
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.046337,
+          -0.060225,
+          0.0
+        ],
+        "max": [
+          0.03768,
+          0.036659,
+          0.179409
+        ]
+      },
+      "animation": "dawnsorrel_sprout_sway",
+      "triangles": 1142,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 90920,
+      "sha256": "7ecdf5fdd5b1e56ab4104d1aac5cf1b7f77c3f851d6149f816d2cb1a84f8a402",
+      "leafHeadCount": 1,
+      "leafletCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 1
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/dawnsorrel-seedling-standard.usdz",
+      "thumbnail": "ui/dawnsorrel-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.145809,
+          -0.113105,
+          0.0
+        ],
+        "max": [
+          0.156663,
+          0.062849,
+          0.249916
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.147208,
+          -0.114937,
+          0.0
+        ],
+        "max": [
+          0.163463,
+          0.072607,
+          0.249963
+        ]
+      },
+      "animation": "dawnsorrel_seedling_sway",
+      "triangles": 3426,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 184420,
+      "sha256": "44fd0896e7461d2817e5c442cf451baba6d8e59722231ad314d9c22f3cc8becf",
+      "leafHeadCount": 3,
+      "leafletCount": 9,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 3
+    },
+    {
+      "stage": "seedling",
+      "variant": "yellow",
+      "file": "models/dawnsorrel-seedling-yellow.usdz",
+      "thumbnail": "ui/dawnsorrel-seedling-yellow.png",
+      "bounds": {
+        "min": [
+          -0.145809,
+          -0.113105,
+          0.0
+        ],
+        "max": [
+          0.156663,
+          0.062849,
+          0.249916
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.147208,
+          -0.114937,
+          0.0
+        ],
+        "max": [
+          0.163463,
+          0.072607,
+          0.249963
+        ]
+      },
+      "animation": "dawnsorrel_seedling_sway",
+      "triangles": 3426,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 183694,
+      "sha256": "f4efd390954d2b651d6af86d3ddfada8b4b799d7fb12383ac43381462c2139f3",
+      "leafHeadCount": 3,
+      "leafletCount": 9,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 3
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/dawnsorrel-young-standard.usdz",
+      "thumbnail": "ui/dawnsorrel-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.344132,
+          -0.267495,
+          0.0
+        ],
+        "max": [
+          0.367709,
+          0.226954,
+          0.362862
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.344425,
+          -0.271883,
+          0.0
+        ],
+        "max": [
+          0.368543,
+          0.240291,
+          0.368684
+        ]
+      },
+      "animation": "dawnsorrel_young_sway",
+      "triangles": 12902,
+      "joints": 19,
+      "materials": 1,
+      "bytes": 613112,
+      "sha256": "8acb5273cf259a86b76494c06da9cf6b1bb27d672254f403caae42983b9967da",
+      "leafHeadCount": 7,
+      "leafletCount": 21,
+      "flowerCount": 1,
+      "budCount": 1,
+      "shootCount": 9
+    },
+    {
+      "stage": "young",
+      "variant": "yellow",
+      "file": "models/dawnsorrel-young-yellow.usdz",
+      "thumbnail": "ui/dawnsorrel-young-yellow.png",
+      "bounds": {
+        "min": [
+          -0.344132,
+          -0.267495,
+          0.0
+        ],
+        "max": [
+          0.367709,
+          0.226954,
+          0.362862
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.344425,
+          -0.271883,
+          0.0
+        ],
+        "max": [
+          0.368543,
+          0.240291,
+          0.368684
+        ]
+      },
+      "animation": "dawnsorrel_young_sway",
+      "triangles": 12902,
+      "joints": 19,
+      "materials": 1,
+      "bytes": 612506,
+      "sha256": "71c29e3220f1b8d2e96ebc6b3303ba66e13e73d413151601e9ada20d8e507dd3",
+      "leafHeadCount": 7,
+      "leafletCount": 21,
+      "flowerCount": 1,
+      "budCount": 1,
+      "shootCount": 9
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/dawnsorrel-adult-standard.usdz",
+      "thumbnail": "ui/dawnsorrel-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.592321,
+          -0.424549,
+          0.0
+        ],
+        "max": [
+          0.59202,
+          0.424422,
+          0.484476
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.6009,
+          -0.426806,
+          0.0
+        ],
+        "max": [
+          0.592047,
+          0.447094,
+          0.490846
+        ]
+      },
+      "animation": "dawnsorrel_adult_sway",
+      "triangles": 38768,
+      "joints": 49,
+      "materials": 1,
+      "bytes": 1720594,
+      "sha256": "d047873c9eeb64db0d0317339a92becb039c938dfc811e0dbf8d806ff3ba496c",
+      "leafHeadCount": 19,
+      "leafletCount": 57,
+      "flowerCount": 5,
+      "budCount": 0,
+      "shootCount": 24
+    },
+    {
+      "stage": "adult",
+      "variant": "yellow",
+      "file": "models/dawnsorrel-adult-yellow.usdz",
+      "thumbnail": "ui/dawnsorrel-adult-yellow.png",
+      "bounds": {
+        "min": [
+          -0.592321,
+          -0.424549,
+          0.0
+        ],
+        "max": [
+          0.59202,
+          0.424422,
+          0.484476
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.6009,
+          -0.426806,
+          0.0
+        ],
+        "max": [
+          0.592047,
+          0.447094,
+          0.490846
+        ]
+      },
+      "animation": "dawnsorrel_adult_sway",
+      "triangles": 38768,
+      "joints": 49,
+      "materials": 1,
+      "bytes": 1719900,
+      "sha256": "06c3d1312897fb6cff313b045ab442ce398fc7cdef6dfb72ef8be6d069e1081b",
+      "leafHeadCount": 19,
+      "leafletCount": 57,
+      "flowerCount": 5,
+      "budCount": 0,
+      "shootCount": 24
+    }
+  ]
+}

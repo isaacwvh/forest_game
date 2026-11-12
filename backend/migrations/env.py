@@ -12,6 +12,7 @@ from forest_api import (
     history_models,  # noqa: F401 - compact accounting and temporary provenance
     progression_models,  # noqa: F401 - durable step-earned gem accounting
     visitor_models,  # noqa: F401 - register B6 metadata
+    woodland_models,  # noqa: F401 - daily skill context metadata
 )
 from forest_api.models import Base
 

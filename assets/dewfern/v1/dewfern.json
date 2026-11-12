@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "dewfern",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "motion": "Three-bone phase-offset arching fronds and two-bone fiddleheads; slight sway, fixed crown"
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/dewfern-sprout-standard.png"
+      },
+      "seedling": {
+        "standard": "ui/dewfern-seedling-standard.png"
+      },
+      "young": {
+        "standard": "ui/dewfern-young-standard.png"
+      },
+      "adult": {
+        "standard": "ui/dewfern-adult-standard.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/dewfern-sprout-standard.usdz",
+      "thumbnail": "ui/dewfern-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.063451,
+          -0.011184,
+          0.0
+        ],
+        "max": [
+          0.043001,
+          0.011184,
+          0.266364
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.063451,
+          -0.013401,
+          0.0
+        ],
+        "max": [
+          0.043433,
+          0.014682,
+          0.266364
+        ]
+      },
+      "animation": "dewfern_sprout_sway",
+      "frondCount": 0,
+      "fiddleheadCount": 1,
+      "dewCount": 0,
+      "triangles": 3104,
+      "joints": 3,
+      "materials": 1,
+      "bytes": 154108,
+      "sha256": "73607ac5175957c108f888932867afadf98794c5b6b483f32b73b86d7e0fd9bd"
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/dewfern-seedling-standard.usdz",
+      "thumbnail": "ui/dewfern-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.096064,
+          -0.228694,
+          0.0
+        ],
+        "max": [
+          0.284871,
+          0.072907,
+          0.351464
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.096147,
+          -0.234787,
+          0.0
+        ],
+        "max": [
+          0.285718,
+          0.07309,
+          0.351476
+        ]
+      },
+      "animation": "dewfern_seedling_sway",
+      "frondCount": 1,
+      "fiddleheadCount": 1,
+      "dewCount": 1,
+      "triangles": 10568,
+      "joints": 6,
+      "materials": 2,
+      "bytes": 441752,
+      "sha256": "7229ac968b088ce998ef25674f20039e72b372010bcf37a4291c5af672016da0"
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/dewfern-young-standard.usdz",
+      "thumbnail": "ui/dewfern-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.516554,
+          -0.364215,
+          0.0
+        ],
+        "max": [
+          0.471212,
+          0.3102,
+          0.758227
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.518366,
+          -0.368113,
+          0.0
+        ],
+        "max": [
+          0.477435,
+          0.323682,
+          0.76201
+        ]
+      },
+      "animation": "dewfern_young_sway",
+      "frondCount": 3,
+      "fiddleheadCount": 1,
+      "dewCount": 5,
+      "triangles": 30664,
+      "joints": 12,
+      "materials": 2,
+      "bytes": 1214681,
+      "sha256": "cb8652cd3deec7c85e5847bfe339abf76029e10b5b46c60e091b45e3c6cc3c04"
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/dewfern-adult-standard.usdz",
+      "thumbnail": "ui/dewfern-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.795406,
+          -0.796473,
+          0.0
+        ],
+        "max": [
+          0.817441,
+          0.562604,
+          1.126076
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.799754,
+          -0.796473,
+          0.0
+        ],
+        "max": [
+          0.820631,
+          0.597889,
+          1.133587
+        ]
+      },
+      "animation": "dewfern_adult_sway",
+      "frondCount": 7,
+      "fiddleheadCount": 2,
+      "dewCount": 13,
+      "triangles": 83232,
+      "joints": 26,
+      "materials": 2,
+      "bytes": 3223967,
+      "sha256": "4a8667253931d7cdfd2c4c177f0587e36a34c775405ab52b8c4cb340ac93be9c"
+    }
+  ]
+}

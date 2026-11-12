@@ -1,0 +1,421 @@
+{
+  "schemaVersion": 1,
+  "speciesId": "sunspike",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "initialStage": "sprout",
+  "stageOrder": [
+    "sprout",
+    "seedling",
+    "young",
+    "adult"
+  ],
+  "variantIds": [
+    "standard",
+    "moon"
+  ],
+  "placement": {
+    "anchor": "ground_center",
+    "groundHeight": 0,
+    "footprintPolicy": "fixed_across_all_stages_and_variants",
+    "boundsReference": "adult",
+    "seedGeometry": "none"
+  },
+  "animation": {
+    "durationSeconds": 5,
+    "fps": 24,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "sharedBetweenVariants": true,
+    "rootAnchored": true,
+    "motion": "Gentle phase-offset skeletal sway; all basal contacts fixed."
+  },
+  "materials": {
+    "roughness": 0.79,
+    "atlasSize": [
+      512,
+      512
+    ],
+    "sharedRefinedTreatmentAcrossStages": true,
+    "moon": "Flower pigment only: dark blue upper florets fading to near-black lower florets; sage foliage retained."
+  },
+  "ui": {
+    "thumbnails": {
+      "sprout": {
+        "standard": "ui/sunspike-sprout-standard.png",
+        "moon": "ui/sunspike-sprout-moon.png"
+      },
+      "seedling": {
+        "standard": "ui/sunspike-seedling-standard.png",
+        "moon": "ui/sunspike-seedling-moon.png"
+      },
+      "young": {
+        "standard": "ui/sunspike-young-standard.png",
+        "moon": "ui/sunspike-young-moon.png"
+      },
+      "adult": {
+        "standard": "ui/sunspike-adult-standard.png",
+        "moon": "ui/sunspike-adult-moon.png"
+      }
+    }
+  },
+  "assets": [
+    {
+      "stage": "sprout",
+      "variant": "standard",
+      "file": "models/sunspike-sprout-standard.usdz",
+      "thumbnail": "ui/sunspike-sprout-standard.png",
+      "bounds": {
+        "min": [
+          -0.111992,
+          -0.067419,
+          0.0
+        ],
+        "max": [
+          0.090324,
+          0.036735,
+          0.299583
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.112044,
+          -0.067859,
+          0.0
+        ],
+        "max": [
+          0.090326,
+          0.041551,
+          0.299589
+        ]
+      },
+      "animation": "sunspike_sprout_sway",
+      "triangles": 1820,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 115349,
+      "sha256": "52816c01879b374f6860e4e79d57ce9d932af483f9af7338fd9b475406206a9b",
+      "growthStructure": "Three clasping blades: an upright tightly folded spear between two short opening ribbon leaves; no flowers.",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 3,
+      "mainRushCount": 0,
+      "patchSites": 1,
+      "floretCount": 0
+    },
+    {
+      "stage": "sprout",
+      "variant": "moon",
+      "file": "models/sunspike-sprout-moon.usdz",
+      "thumbnail": "ui/sunspike-sprout-moon.png",
+      "bounds": {
+        "min": [
+          -0.111992,
+          -0.067419,
+          0.0
+        ],
+        "max": [
+          0.090324,
+          0.036735,
+          0.299583
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.112044,
+          -0.067859,
+          0.0
+        ],
+        "max": [
+          0.090326,
+          0.041551,
+          0.299589
+        ]
+      },
+      "animation": "sunspike_sprout_sway",
+      "triangles": 1820,
+      "joints": 7,
+      "materials": 1,
+      "bytes": 114834,
+      "sha256": "aa666bf56577aef2daf70a9c5cdcf850b96b086001c015e04151aa3fc0e7f602",
+      "growthStructure": "Three clasping blades: an upright tightly folded spear between two short opening ribbon leaves; no flowers.",
+      "leafCount": 3,
+      "flowerCount": 0,
+      "budCount": 0,
+      "shootCount": 3,
+      "mainRushCount": 0,
+      "patchSites": 1,
+      "floretCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "standard",
+      "file": "models/sunspike-seedling-standard.usdz",
+      "thumbnail": "ui/sunspike-seedling-standard.png",
+      "bounds": {
+        "min": [
+          -0.251992,
+          -0.179413,
+          0.0
+        ],
+        "max": [
+          0.253882,
+          0.086983,
+          0.4874
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.252249,
+          -0.179458,
+          0.0
+        ],
+        "max": [
+          0.253882,
+          0.088826,
+          0.487881
+        ]
+      },
+      "animation": "sunspike_seedling_sway",
+      "triangles": 4880,
+      "joints": 13,
+      "materials": 1,
+      "bytes": 237166,
+      "sha256": "cfa2680a0ccd45616046d628eccbe7d7a449ad223d02a34d7c903050ac54ca84",
+      "growthStructure": "Open five-blade basal fan and one short scape with a compact imbricate colored torch bud.",
+      "leafCount": 5,
+      "flowerCount": 0,
+      "budCount": 1,
+      "shootCount": 6,
+      "mainRushCount": 0,
+      "patchSites": 1,
+      "floretCount": 0
+    },
+    {
+      "stage": "seedling",
+      "variant": "moon",
+      "file": "models/sunspike-seedling-moon.usdz",
+      "thumbnail": "ui/sunspike-seedling-moon.png",
+      "bounds": {
+        "min": [
+          -0.251992,
+          -0.179413,
+          0.0
+        ],
+        "max": [
+          0.253882,
+          0.086983,
+          0.4874
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.252249,
+          -0.179458,
+          0.0
+        ],
+        "max": [
+          0.253882,
+          0.088826,
+          0.487881
+        ]
+      },
+      "animation": "sunspike_seedling_sway",
+      "triangles": 4880,
+      "joints": 13,
+      "materials": 1,
+      "bytes": 236480,
+      "sha256": "1bc6e0a99612362f7a0d84e00e36547380a96deb225f20887b80c4433fe4e9d8",
+      "growthStructure": "Open five-blade basal fan and one short scape with a compact imbricate colored torch bud.",
+      "leafCount": 5,
+      "flowerCount": 0,
+      "budCount": 1,
+      "shootCount": 6,
+      "mainRushCount": 0,
+      "patchSites": 1,
+      "floretCount": 0
+    },
+    {
+      "stage": "young",
+      "variant": "standard",
+      "file": "models/sunspike-young-standard.usdz",
+      "thumbnail": "ui/sunspike-young-standard.png",
+      "bounds": {
+        "min": [
+          -0.421642,
+          -0.261411,
+          0.0
+        ],
+        "max": [
+          0.426508,
+          0.294666,
+          0.94465
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.422291,
+          -0.261552,
+          0.0
+        ],
+        "max": [
+          0.426525,
+          0.295714,
+          0.944667
+        ]
+      },
+      "animation": "sunspike_young_sway",
+      "triangles": 21640,
+      "joints": 23,
+      "materials": 1,
+      "bytes": 853029,
+      "sha256": "1aa00685d4238f295077c6c904be96361020f12f2f9f6916896e19f22cc147a4",
+      "growthStructure": "Eight-blade spreading rosette, first two unequal open torches and a separate developing third bud.",
+      "leafCount": 8,
+      "flowerCount": 2,
+      "budCount": 1,
+      "shootCount": 11,
+      "mainRushCount": 0,
+      "patchSites": 1,
+      "floretCount": 78
+    },
+    {
+      "stage": "young",
+      "variant": "moon",
+      "file": "models/sunspike-young-moon.usdz",
+      "thumbnail": "ui/sunspike-young-moon.png",
+      "bounds": {
+        "min": [
+          -0.421642,
+          -0.261411,
+          0.0
+        ],
+        "max": [
+          0.426508,
+          0.294666,
+          0.94465
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.422291,
+          -0.261552,
+          0.0
+        ],
+        "max": [
+          0.426525,
+          0.295714,
+          0.944667
+        ]
+      },
+      "animation": "sunspike_young_sway",
+      "triangles": 21640,
+      "joints": 23,
+      "materials": 1,
+      "bytes": 852598,
+      "sha256": "60733626b293e38ac7df01c90abea8e1b3e5be50dd100d826631c599647d22f7",
+      "growthStructure": "Eight-blade spreading rosette, first two unequal open torches and a separate developing third bud.",
+      "leafCount": 8,
+      "flowerCount": 2,
+      "budCount": 1,
+      "shootCount": 11,
+      "mainRushCount": 0,
+      "patchSites": 1,
+      "floretCount": 78
+    },
+    {
+      "stage": "adult",
+      "variant": "standard",
+      "file": "models/sunspike-adult-standard.usdz",
+      "thumbnail": "ui/sunspike-adult-standard.png",
+      "bounds": {
+        "min": [
+          -0.691844,
+          -0.464648,
+          0.0
+        ],
+        "max": [
+          0.693069,
+          0.442185,
+          1.656913
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.692689,
+          -0.464763,
+          0.0
+        ],
+        "max": [
+          0.69311,
+          0.444548,
+          1.657944
+        ]
+      },
+      "animation": "sunspike_adult_sway",
+      "triangles": 53268,
+      "joints": 41,
+      "materials": 1,
+      "bytes": 2009751,
+      "sha256": "2a81ccb9bf95903b0b82540f44a07c1ba919472a32c842855b48e73a7c766361",
+      "growthStructure": "Approved concept 02: full fourteen-blade arching crown and six separate staggered coral-to-yellow torch heads.",
+      "leafCount": 14,
+      "flowerCount": 6,
+      "budCount": 0,
+      "shootCount": 20,
+      "mainRushCount": 0,
+      "patchSites": 1,
+      "floretCount": 234
+    },
+    {
+      "stage": "adult",
+      "variant": "moon",
+      "file": "models/sunspike-adult-moon.usdz",
+      "thumbnail": "ui/sunspike-adult-moon.png",
+      "bounds": {
+        "min": [
+          -0.691844,
+          -0.464648,
+          0.0
+        ],
+        "max": [
+          0.693069,
+          0.442185,
+          1.656913
+        ]
+      },
+      "animatedBounds": {
+        "min": [
+          -0.692689,
+          -0.464763,
+          0.0
+        ],
+        "max": [
+          0.69311,
+          0.444548,
+          1.657944
+        ]
+      },
+      "animation": "sunspike_adult_sway",
+      "triangles": 53268,
+      "joints": 41,
+      "materials": 1,
+      "bytes": 2009236,
+      "sha256": "137bef331539dc95e5e50e968c9595e4e20b56056f588abc4a575d768fd38ea5",
+      "growthStructure": "Approved concept 02: full fourteen-blade arching crown and six separate staggered coral-to-yellow torch heads.",
+      "leafCount": 14,
+      "flowerCount": 6,
+      "budCount": 0,
+      "shootCount": 20,
+      "mainRushCount": 0,
+      "patchSites": 1,
+      "floretCount": 234
+    }
+  ]
+}
