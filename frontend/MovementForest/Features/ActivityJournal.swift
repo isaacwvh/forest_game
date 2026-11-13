@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum ActivityJournalTheme {
-    static let added = Color(red: 0.82, green: 0.38, blue: 0.07)
+    static let added = Color(red: 0.67, green: 0.50, blue: 0.03)
     static let addedText = Color(red: 0.65, green: 0.27, blue: 0.04)
 }
 
@@ -71,11 +71,7 @@ struct RecapPlantGrid: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             JournalSectionHeading(title: "Plant progress")
-            Text("Progress to fully grown").font(.caption).foregroundStyle(JournalTheme.secondary)
-            HStack(spacing: 14) {
-                Label("Existing", systemImage: "square.fill").foregroundStyle(JournalTheme.action)
-                Label("New water", systemImage: "square.fill").foregroundStyle(ActivityJournalTheme.addedText)
-            }.font(.caption)
+            Text("Progress to next stage").font(.caption).foregroundStyle(JournalTheme.secondary)
             JournalGrid {
                 ForEach(rows) { row in RecapPlantTile(row: row, catalogue: catalogue, assets: assets) }
             }
@@ -92,7 +88,7 @@ private struct RecapPlantTile: View {
     @ScaledMetric(relativeTo: .subheadline) private var nameHeight: CGFloat = 22
     @ScaledMetric(relativeTo: .caption) private var footerHeight: CGFloat = 44
     private var rarity: String? { row.speciesID.flatMap { catalogue?.rarity(for: $0) } }
-    private var stage: GrowthStage? { row.afterStage ?? row.plant?.growthStage }
+    private var stage: GrowthStage? { row.stage }
     private var name: String {
         row.speciesID.map { id in catalogue?.species.first { $0.speciesId == id }?.displayName ?? id.capitalized }
             ?? "Plant \(row.id.uuidString.prefix(6))"
@@ -112,10 +108,13 @@ private struct RecapPlantTile: View {
         return stage == .adult ? "Fully grown" : "No new water"
     }
     private var stageLabel: String {
-        if let before = row.beforeStage, let after = row.afterStage, before != after {
+        stage.map { $0 == .young ? "Young" : $0.title } ?? "Stage unavailable"
+    }
+    private var accessibleStageLabel: String {
+        if row.advancesStage, let before = row.beforeStage, let after = row.afterStage {
             return "\(before == .young ? "Young" : before.title) → \(after == .young ? "Young" : after.title)"
         }
-        return stage.map { $0 == .young ? "Young" : $0.title } ?? "Stage unavailable"
+        return stageLabel
     }
     var body: some View {
         JournalPlantFrame(rarity: rarity) {
@@ -134,7 +133,7 @@ private struct RecapPlantTile: View {
                 Text("\(row.variantID?.capitalized ?? "Variant unavailable") · \(stage.map { "\($0.number)/4" } ?? "—")")
                     .font(.caption2).lineLimit(1).minimumScaleFactor(0.75).foregroundStyle(JournalTheme.secondary)
                     .padding(.horizontal, 6)
-                RecapWaterBar(row: row).padding(.horizontal, 7)
+                RecapWaterBar(row: row, catalogue: catalogue).padding(.horizontal, 7)
                 HStack(spacing: 0) {
                     JournalInfoIcon(title: "Water gained", explanation: "", metric: "water")
                     VStack(alignment: .leading, spacing: 2) {
@@ -150,8 +149,20 @@ private struct RecapPlantTile: View {
                     }.lineLimit(1).minimumScaleFactor(0.65).frame(maxWidth: .infinity, alignment: .leading)
                 }.frame(height: max(44, footerHeight)).padding(.horizontal, 4)
             }.padding(.bottom, 6).clipShape(RoundedRectangle(cornerRadius: 16))
+        }.overlay(alignment: .topTrailing) {
+            if row.advancesStage {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 24, weight: .heavy))
+                    .foregroundStyle(ActivityJournalTheme.added)
+                    .background {
+                        Image(systemName: "arrow.up").font(.system(size: 27, weight: .black))
+                            .foregroundStyle(JournalTheme.paper)
+                    }
+                    .offset(x: 5, y: -9)
+                    .allowsHitTesting(false).accessibilityHidden(true)
+            }
         }.accessibilityElement(children: .contain)
-            .accessibilityLabel("\(name), \(row.variantID?.capitalized ?? "Variant unavailable"), \(stageLabel), \(gain)")
+            .accessibilityLabel("\(name), \(row.variantID?.capitalized ?? "Variant unavailable"), \(accessibleStageLabel), \(gain)")
             .accessibilityIdentifier("recap.plant.\(row.id)")
     }
 }
@@ -159,17 +170,20 @@ private struct RecapPlantTile: View {
 @MainActor
 struct RecapWaterBar: View {
     let row: ActivityRecapRow
+    var catalogue: APICatalogue? = nil
     var body: some View {
         Group {
-            if let progress = RecapGrowthDisplay(row: row) {
+            if row.stage == .adult {
+                Color.clear.accessibilityHidden(true)
+            } else if let progress = RecapGrowthDisplay(row: row, catalogue: catalogue) {
                 GeometryReader { geometry in
                     HStack(spacing: 0) {
                         Rectangle().fill(JournalTheme.action).frame(width: geometry.size.width * CGFloat(progress.existing))
                         Rectangle().fill(ActivityJournalTheme.added).frame(width: geometry.size.width * CGFloat(progress.added))
                         Spacer(minLength: 0)
                     }.background(JournalTheme.sage).clipShape(Capsule())
-                }.accessibilityElement(children: .ignore).accessibilityLabel("Growth to fully grown")
-                    .accessibilityValue("\(progress.total.formatted(.percent.precision(.fractionLength(0)))), \(JournalAmount.water(row.water)) new water")
+                }.accessibilityElement(children: .ignore).accessibilityLabel("Progress to next growth stage")
+                    .accessibilityValue("\(progress.total.formatted(.percent.precision(.fractionLength(0)))) of this stage, \(JournalAmount.water(row.water)) water gained in this recap")
             } else {
                 Capsule().fill(JournalTheme.sage).accessibilityLabel("Growth unavailable")
             }

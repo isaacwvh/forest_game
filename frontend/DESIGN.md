@@ -258,11 +258,19 @@ uses the fixed, deduplicated server recap batch and may belong to earlier days.
 Unavailable/legacy details do not pretend to be zero. Raw Health detail screens
 show daily totals without inventing a game recap.
 
-Recap plants use the existing rarity-framed card language and a cumulative bar
-to adulthood: green is existing water, orange is this recap's awarded water.
-Keep numeric gains, stage transitions, skill-water inclusion, storage status and
-VoiceOver values. Freeze awarded growth/stage/maximum to the receipt; current
-Health totals never calculate the gain. Mature/zero-award copies add no orange.
+Recap plants use the existing rarity-framed card language. The 14 November 2026
+follow-up replaces the cumulative adulthood bar with progress within the displayed
+stage, using the copy's pinned stage boundaries: green is existing progress and
+golden yellow is this recap's water within that stage. After a stage advance, only
+progress into the resulting stage appears in yellow. Numeric gains still retain
+the full saved award. Remove the Existing/New water legend. A golden-yellow up
+arrow sits just outside the upper-right frame only when both saved stages exist
+and differ; current stage text replaces the visible before/after transition.
+VoiceOver retains the complete transition. Keep skill-water inclusion and storage
+status. Freeze awarded growth/stage/maximum to the receipt; current Health totals
+never calculate the gain. Historical bounds use the exact pinned profile version,
+never current species defaults; unavailable bounds remain unavailable. Mature
+copies have no next-stage bar, and zero-award copies add no yellow.
 
 Server recap JSON now retains metric/workout receipts and growth maxima and can
 describe newly accepted activity even when no integer water is awarded. No

@@ -39,6 +39,12 @@ struct ActivityRecapRow: Identifiable {
     let speciesID: String?
     let variantID: String?
 
+    var stage: GrowthStage? { afterStage ?? plant?.growthStage }
+    var advancesStage: Bool {
+        guard let beforeStage = beforeStage, let afterStage = afterStage else { return false }
+        return beforeStage != afterStage
+    }
+
     static func make(recaps: [APIRewardRecap], plants: [APIOwnedPlant]) -> [Self] {
         let copies = Dictionary(plants.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
         let unique = Dictionary(recaps.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })

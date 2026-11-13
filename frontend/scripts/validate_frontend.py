@@ -337,7 +337,7 @@ def main():
         for background in [theme["paper"], theme["sage"]]:
             low, high = sorted([luminance(activity_colours[name]), luminance(background)])
             require((high + 0.05) / (low + 0.05) >= minimum, f"Insufficient activity {name} contrast")
-    print("PASS: orange recap progress and new-activity text contrast.")
+    print("PASS: yellow recap progress and new-activity text contrast.")
     launch = ast.parse((REPO / "backend/src/forest_api/launch_balance.py").read_text(encoding="utf-8"))
     plants = next(ast.literal_eval(node.value) for node in launch.body if isinstance(node, ast.Assign)
                   and any(isinstance(target, ast.Name) and target.id == "PLANTS" for target in node.targets))

@@ -1,5 +1,30 @@
 # Stage 3 activity journal — 1 November 2026
 
+## Recap stage-progress follow-up — 14 November 2026
+
+This follow-up supersedes the cumulative adulthood scale and orange highlight
+described in the original acceptance record below. Both the entry recap and
+Activity use the same stage-relative grid. Compare its fill with the copy's
+normal stage bar: same-stage awards retain green existing progress plus golden
+yellow gain; crossing one or several boundaries shows only yellow progress into
+the resulting stage. Exact-boundary advances show the new stage with an empty
+bar and an up arrow. Mature copies have no next-stage bar. Numeric water gains
+retain the full receipt award, including water used in earlier stages.
+
+There is no Existing/New water legend. The yellow up arrow sits outside the
+upper-right card frame, clear of the rarity control, only for the existing
+before-stage/after-stage change condition. Current-stage text replaces the
+visible transition; VoiceOver retains the full before/after transition. Check
+small portrait and accessibility text sizes, stage skips, unchanged-stage water,
+zero gains, reaching adulthood, skill water and stored copies. Historical rows
+retain saved growth and use exact pinned bounds when the live stage has changed;
+missing bounds must not fall back to lifetime progress or current defaults.
+
+Native XCTest, Apple SDK builds and device layout/VoiceOver acceptance still
+require Mac/iPhone. No push or remote CI was requested for this follow-up.
+
+## Original acceptance record
+
 Prepared for Mac testing. The user requested committing and pushing this batch
 without waiting for CI. No CI result is claimed.
 

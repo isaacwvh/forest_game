@@ -150,12 +150,43 @@ struct RecapGrowthDisplay {
     let existing: Double
     let added: Double
     let total: Double
-    init?(row: ActivityRecapRow) {
+    init?(row: ActivityRecapRow, catalogue: APICatalogue? = nil) {
         guard let end = row.endGrowth.flatMap(ExactAmount.integer),
               let maximum = row.maximumGrowth.flatMap(ExactAmount.integer), maximum > 0,
-              let award = ExactAmount.integer(row.water), end <= maximum, award <= end else { return nil }
-        existing = NSDecimalNumber(decimal: (end - award) / maximum).doubleValue
-        added = NSDecimalNumber(decimal: award / maximum).doubleValue
-        total = NSDecimalNumber(decimal: end / maximum).doubleValue
+              let award = ExactAmount.integer(row.water), end <= maximum, award <= end,
+              let stage = row.stage else { return nil }
+        if stage == .adult {
+            guard end == maximum else { return nil }
+            existing = 1; added = 0; total = 1
+            return
+        }
+        // A receipt stays frozen even if the live copy has since advanced. Never
+        // substitute a species' latest/default profile for the copy's pinned one.
+        let progress: APIGrowthProgress
+        if let plant = row.plant, plant.growthStage == stage,
+           let pinned = plant.growthProgress,
+           ExactAmount.integer(pinned.maximumGrowthMicroUnits) == maximum {
+            progress = pinned
+        } else {
+            guard let reference = row.plant?.pinnedProfiles?.growth,
+                  let profile = catalogue?.profiles?["growth"]?.first(where: {
+                      $0.id == reference.id && $0.version == reference.version
+                  }),
+                  let rawMaximum = profile.maximumGrowthMicroUnits,
+                  ExactAmount.integer(rawMaximum) == maximum,
+                  let start = profile.thresholdsMicroUnits?[stage.rawValue],
+                  let nextStage = stage.next,
+                  let next = profile.thresholdsMicroUnits?[nextStage.rawValue] else { return nil }
+            progress = APIGrowthProgress(stageStartMicroUnits: start, nextStageMicroUnits: next,
+                                         maximumGrowthMicroUnits: rawMaximum)
+        }
+        guard let fraction = progress.fraction(growth: NSDecimalNumber(decimal: end).stringValue),
+              let start = ExactAmount.integer(progress.stageStartMicroUnits),
+              let next = progress.nextStageMicroUnits.flatMap(ExactAmount.integer),
+              next > start, end < next else { return nil }
+        let previous = max(start, end - award)
+        existing = NSDecimalNumber(decimal: (previous - start) / (next - start)).doubleValue
+        total = fraction
+        added = NSDecimalNumber(decimal: (end - previous) / (next - start)).doubleValue
     }
 }

@@ -1,3 +1,23 @@
+## Recap stage progress — 14 November 2026
+
+The shared recap grid now uses pinned current-stage bounds instead of the lifetime
+maximum. Saved stage advances show only golden-yellow progress within the resulting
+stage and a matching up arrow outside the card frame. The legend and visible
+before/after transition are removed; numeric awards, skill water, storage status
+and VoiceOver transitions remain. Historical rows use exact pinned profile versions
+or show unavailable progress; maturity has no next-stage bar.
+
+Passed on Windows: `python frontend/scripts/validate_frontend.py` (project,
+resources, contracts and contrast), `python frontend/scripts/check_swift_syntax.py`
+(94 Swift files), `python tools/validate_woodland_release.py`, activity/editor wire
+fixture tests (**18 passed**), and diff whitespace validation. The design detector
+reported no findings for ActivityJournal.swift; this is not native visual acceptance.
+Added XCTest cases for stage changes/skips, exact boundaries, unchanged-stage and
+zero gains, adulthood, frozen historical/pinned profiles and invalid/missing bounds.
+These tests are syntax-parsed but cannot execute on this Windows host. Xcode/Apple
+SDK builds, XCTest/UI and device layout/VoiceOver checks still require Mac/iPhone
+using `bash frontend/scripts/test-mac.sh`. No push or remote CI was run.
+
 ## Milestone layout and quiet feedback — 13 November 2026
 
 Frontend-only refinement stabilizes selector height and cached-entry scroll
