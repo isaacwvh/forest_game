@@ -232,7 +232,6 @@ private struct CollectionCleanupFixtureHost: View {
                 }.pickerStyle(.segmented)
                 CollectionScreen(store: store, destination: destination, assets: assets,
                                  navigate: { destination = $0 ?? .draws })
-                    .id(destination)
                 HStack {
                     Text("Requests: \(service.requestCount)").accessibilityValue(String(service.requestCount))
                         .accessibilityIdentifier("fixture.collectionRequests")
@@ -241,8 +240,11 @@ private struct CollectionCleanupFixtureHost: View {
                     Text("Tokens: \(store.tokenBalance ?? "Unavailable")").accessibilityValue(store.tokenBalance ?? "Unavailable")
                         .accessibilityIdentifier("fixture.collectionTokens")
                 }.font(.caption)
-            }.navigationTitle(destination.rawValue)
+            }.navigationTitle(destination.rawValue).navigationBarTitleDisplayMode(.inline)
         }
+        // Match the app's collection route: recreate the native stack, not only
+        // its SwiftUI contents, when leaving and returning to Milestones.
+        .id(destination)
     }
 }
 #endif

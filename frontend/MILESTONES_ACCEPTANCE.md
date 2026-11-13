@@ -26,6 +26,23 @@ slogans and footer filler are absent from the list.
 
 ## Executed portable checks
 
+### Native scroll-edge follow-up — 13 November 2026
+
+Device feedback confirmed that the sibling-layer correction below did not resolve
+the blank-but-tappable strip on return. The next targeted change disables the
+native top scroll-edge effect for both scroll views in the Milestones hierarchy
+on iOS 26+, using Apple's `scrollEdgeEffectHidden` API. It is scoped to this screen;
+other pages and the saved selection/scroll/claim state are unchanged. The compiler
+guard preserves builds with the previously supported pre-iOS-26 SDKs.
+
+The regression fixture now recreates the entire NavigationStack on destination
+changes, matching the real app; previously it recreated only CollectionScreen.
+Its native title is inline as in the app. The rendered-selector regression also
+leaves and returns without first scrolling. This checks the reported route rather
+than relying on hit testing. Portable syntax/resource/project/contract/contrast and
+whitespace validation pass; Xcode execution and device confirmation remain pending
+on Mac/iPhone. The native-edge-effect diagnosis remains unconfirmed on this host.
+
 ### Selector painting correction — 13 November 2026
 
 Device feedback after the refinement showed a blank strip whose five selectors

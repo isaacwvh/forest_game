@@ -23,6 +23,20 @@ private struct MilestoneRowPositions: PreferenceKey {
     }
 }
 
+private struct MilestoneScrollEdges: ViewModifier {
+    @ViewBuilder func body(content: Content) -> some View {
+        // The fixed header has its own paper backing. Disable the native top
+        // fade as well; sibling z-order does not control toolbar edge effects.
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectHidden(true, for: .top)
+        } else { content }
+        #else
+        content
+        #endif
+    }
+}
+
 @MainActor
 struct MilestoneTracksScreen: View {
     @ObservedObject var store: CollectionCoordinator
@@ -123,6 +137,7 @@ struct MilestoneTracksScreen: View {
         }
         .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
         .background(JournalPageBackground().ignoresSafeArea())
+        .modifier(MilestoneScrollEdges())
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showsInformation = true } label: {

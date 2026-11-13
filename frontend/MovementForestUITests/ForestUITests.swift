@@ -13,6 +13,11 @@ final class ForestUITests: XCTestCase {
         pages.buttons["Milestones"].tap()
         let list = app.scrollViews["milestones.list"]
         let steps = app.buttons["milestones.track.steps"]
+        XCTAssertTrue(steps.waitForExistence(timeout: 5))
+        assertMilestoneSelectorPainted(steps, in: app)
+        // Re-entry must also paint correctly without scrolling on the first visit.
+        pages.buttons["Packs"].tap()
+        pages.buttons["Milestones"].tap()
         for _ in 0..<3 {
             XCTAssertTrue(steps.waitForExistence(timeout: 5))
             XCTAssertTrue(steps.isHittable)
