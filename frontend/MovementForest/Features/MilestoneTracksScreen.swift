@@ -54,14 +54,20 @@ struct MilestoneTracksScreen: View {
     }
     var body: some View {
         VStack(spacing: 0) {
-            selectors
-            if selected == .growth {
-                Group {
-                    if textSize.isAccessibilitySize {
-                        growthPicker.pickerStyle(.menu)
-                    } else { growthPicker.pickerStyle(.segmented) }
-                }.padding(.horizontal, 16).padding(.vertical, 10)
+            VStack(spacing: 0) {
+                selectors
+                if selected == .growth {
+                    Group {
+                        if textSize.isAccessibilitySize {
+                            growthPicker.pickerStyle(.menu)
+                        } else { growthPicker.pickerStyle(.segmented) }
+                    }.padding(.horizontal, 16).padding(.vertical, 10)
+                }
             }
+            // Keep the fixed controls above the list's drawing/scroll-edge layers.
+            // A covered selector can still receive taps, so height alone is insufficient.
+            .background(JournalTheme.paper)
+            .zIndex(1)
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: selected.timeline ? 0 : 14) {
@@ -113,6 +119,7 @@ struct MilestoneTracksScreen: View {
                 }
                 .accessibilityIdentifier("milestones.list")
             }
+            .clipped()
         }
         .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
         .background(JournalPageBackground().ignoresSafeArea())

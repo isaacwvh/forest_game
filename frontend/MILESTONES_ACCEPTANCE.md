@@ -26,6 +26,23 @@ slogans and footer filler are absent from the list.
 
 ## Executed portable checks
 
+### Selector painting correction — 13 November 2026
+
+Device feedback after the refinement showed a blank strip whose five selectors
+were still tappable. This rules out a missing view/zero-height explanation and
+points to drawing-layer overlap; the previous hit-testing assertions could not
+detect it. The fixed selector/filter group now has an opaque journal-paper backing
+and explicit foreground z-order. The vertical reader is clipped to its own bounds,
+so its scrolling content/effects cannot draw over the fixed controls. Existing
+layout dimensions, saved anchors and all selection/claim behavior are unchanged.
+
+The repeated cached-entry UI regression now samples the rendered selector image
+for visible artwork/text, before scrolling and after every return. It fails on a
+blank-but-tappable strip and attaches the failing screen. Syntax/resource/project/
+contract/contrast validation and whitespace checks pass on Windows; the native
+pixel regression and iPhone visual confirmation still require Xcode. Verify the
+actual painted icons/labels, not just tappability, after returning and refreshing.
+
 ### Frontend refinement — 13 November 2026
 
 The track strip now keeps its intrinsic height above the list, including cached

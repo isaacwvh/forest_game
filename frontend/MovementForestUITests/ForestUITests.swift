@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 final class ForestUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
@@ -17,6 +18,7 @@ final class ForestUITests: XCTestCase {
             XCTAssertTrue(steps.isHittable)
             XCTAssertGreaterThanOrEqual(steps.frame.height, 44)
             XCTAssertLessThanOrEqual(steps.frame.maxY, list.frame.minY + 1)
+            assertMilestoneSelectorPainted(steps, in: app)
             list.swipeUp()
             list.swipeUp()
             let visibleRows = app.descendants(matching: .any)
@@ -35,6 +37,7 @@ final class ForestUITests: XCTestCase {
             }, object: nil)
             wait(for: [restoredInViewport], timeout: 5)
             XCTAssertTrue(steps.isHittable)
+            assertMilestoneSelectorPainted(steps, in: app)
             XCTAssertFalse(app.staticTexts["Reward saved"].exists)
         }
         for track in ["butterfly", "growth", "special", "event"] {
@@ -92,6 +95,42 @@ final class ForestUITests: XCTestCase {
         }
         XCTAssertTrue(button.isHittable)
         button.tap()
+    }
+
+    private func assertMilestoneSelectorPainted(_ button: XCUIElement, in app: XCUIApplication,
+                                               file: StaticString = #filePath, line: UInt = #line) {
+        // Accessibility/hit testing also passes for the reported invisible-but-tappable strip.
+        let screenshot = app.screenshot()
+        guard let image = screenshot.image.cgImage else {
+            XCTFail("Could not read selector screenshot", file: file, line: line)
+            return
+        }
+        let scaleX = CGFloat(image.width) / app.frame.width
+        let scaleY = CGFloat(image.height) / app.frame.height
+        let frame = button.frame
+        let rect = CGRect(x: (frame.minX - app.frame.minX) * scaleX,
+                          y: (frame.minY - app.frame.minY) * scaleY,
+                          width: frame.width * scaleX, height: frame.height * scaleY).integral
+        guard let crop = image.cropping(to: rect), crop.width > 0, crop.height > 0 else {
+            XCTFail("Selector has no on-screen image", file: file, line: line)
+            return
+        }
+        var pixels = [UInt8](repeating: 0, count: crop.width * crop.height * 4)
+        let rendered = pixels.withUnsafeMutableBytes { bytes -> Bool in
+            guard let context = CGContext(data: bytes.baseAddress, width: crop.width, height: crop.height,
+                bitsPerComponent: 8, bytesPerRow: crop.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue) else { return false }
+            context.draw(crop, in: CGRect(x: 0, y: 0, width: CGFloat(crop.width), height: CGFloat(crop.height)))
+            return true
+        }
+        XCTAssertTrue(rendered, file: file, line: line)
+        let inkPixels = stride(from: 0, to: pixels.count, by: 4).filter {
+            pixels[$0] < 180 && pixels[$0 + 1] < 180 && pixels[$0 + 2] < 180
+        }.count
+        if Double(inkPixels) / Double(crop.width * crop.height) <= 0.005 {
+            add(XCTAttachment(screenshot: screenshot))
+            XCTFail("Selector is tappable but its artwork/text is not painted", file: file, line: line)
+        }
     }
 
     func testLevelUpPopupUsesConfirmedBenefitsAndDoesNotReplayOnNavigation() {
