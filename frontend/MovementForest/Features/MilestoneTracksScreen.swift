@@ -26,13 +26,17 @@ private struct MilestoneRowPositions: PreferenceKey {
 @MainActor
 struct MilestoneTracksScreen: View {
     @ObservedObject var store: CollectionCoordinator
-    var navigate: ((CollectionDestination?) -> Void)?
-    @State private var selected: MilestoneTrack = .steps
+    @State private var selected: MilestoneTrack
     @State private var growthFilter = "All"
     @State private var visibleAnchor: String?
-    @State private var restoredPosition = false
+    @State private var restoredSelection: String?
     @State private var showsInformation = false
     @Environment(\.dynamicTypeSize) private var textSize
+    init(store: CollectionCoordinator) {
+        self.store = store
+        _selected = State(initialValue: MilestoneTrack(rawValue: store.state.milestoneTrack ?? "steps") ?? .steps)
+    }
+    private var selectionKey: String { selected.rawValue + "/" + growthFilter }
     private var trackRows: [APIIntroMilestone] {
         store.milestones.filter { ($0.track ?? "steps") == selected.rawValue }
             .sorted { ($0.order ?? 0) < ($1.order ?? 0) }
@@ -61,6 +65,7 @@ struct MilestoneTracksScreen: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: selected.timeline ? 0 : 14) {
+                        Color.clear.frame(height: 1).id("milestones.top")
                         status
                         if selected.timeline, let total = trackRows.first(where: {
                             $0.metric == (selected == .steps ? "steps" : "butterflies")
@@ -83,16 +88,6 @@ struct MilestoneTracksScreen: View {
                                         value: [row.id: geometry.frame(in: .named("milestoneScroll")).minY])
                                 })
                         }
-                        if let receipt = store.state.result, receipt.milestoneId != nil {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label("Reward saved", systemImage: "checkmark.circle")
-                                MilestoneReceiptRewards(receipt: receipt)
-                                if receipt.packs?.isEmpty == false {
-                                    Button("Open pack") { navigate?(.draws) }
-                                        .buttonStyle(.journalPrimary).frame(minHeight: 44)
-                                }
-                            }.padding(.top, 16)
-                        }
                     }.padding(16).padding(.bottom, 20)
                 }
                 .coordinateSpace(name: "milestoneScroll")
@@ -101,22 +96,22 @@ struct MilestoneTracksScreen: View {
                     visibleAnchor = positions.filter { ids.contains($0.key) && $0.value >= -4 }
                         .min { $0.value < $1.value }?.key
                 }
-                .onChange(of: selected) { track in
+                .onChange(of: selectionKey) { _ in
                     visibleAnchor = nil
-                    proxy.scrollTo(store.state.milestoneScroll?[track.rawValue] ?? rows.first?.id ?? "", anchor: .top)
+                    restoredSelection = nil
                 }
-                .onChange(of: rows.map(\.id)) { ids in
-                    if !restoredPosition && !ids.isEmpty {
-                        restoredPosition = true
-                        proxy.scrollTo(store.state.milestoneScroll?[selected.rawValue] ?? ids[0], anchor: .top)
-                    }
+                .task(id: [selectionKey] + rows.map(\.id)) {
+                    // Cached rows can already exist on entry. Restore after layout,
+                    // once per selection, rather than racing three scroll callbacks.
+                    guard restoredSelection != selectionKey, !rows.isEmpty else { return }
+                    await Task.yield()
+                    guard !Task.isCancelled else { return }
+                    let saved = store.state.milestoneScroll?[selected.rawValue]
+                    let anchor = saved.flatMap { candidate in rows.contains { $0.id == candidate } ? candidate : nil }
+                    proxy.scrollTo(anchor ?? "milestones.top", anchor: .top)
+                    restoredSelection = selectionKey
                 }
-                .onAppear {
-                    selected = MilestoneTrack(rawValue: store.state.milestoneTrack ?? "steps") ?? .steps
-                    if let anchor = store.state.milestoneScroll?[selected.rawValue] {
-                        proxy.scrollTo(anchor, anchor: .top)
-                    }
-                }
+                .accessibilityIdentifier("milestones.list")
             }
         }
         .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
@@ -179,7 +174,7 @@ struct MilestoneTracksScreen: View {
                                             .accessibilityHidden(true)
                                     }
                                 }
-                            Text(track.title).font(.subheadline)
+                            Text(track.title).font(.subheadline).fixedSize(horizontal: true, vertical: true)
                             Capsule().fill(track == selected ? JournalTheme.action : Color.clear)
                                 .frame(height: 3).padding(.horizontal, 12)
                         }.padding(.vertical, 10).padding(.horizontal, 6)
@@ -188,12 +183,17 @@ struct MilestoneTracksScreen: View {
                                         in: RoundedRectangle(cornerRadius: 16))
                     }.buttonStyle(.journalQuiet)
                         .accessibilityLabel(track.title)
-                        .accessibilityValue(store.milestones.contains { $0.track == track.rawValue && $0.eligible } ? "Reward ready" : "")
+                        .accessibilityValue(store.milestones.contains { $0.track == track.rawValue && $0.eligible && !claimed($0) } ? "Reward ready" : "")
                         .accessibilityAddTraits(track == selected ? [.isSelected] : [])
                         .accessibilityIdentifier("milestones.track.\(track.rawValue)")
                 }
             }.padding(.horizontal, 12)
         }
+        // A horizontal ScrollView must retain its content height when cached
+        // milestones and the vertical list are present on the first layout pass.
+        .fixedSize(horizontal: false, vertical: true)
+        .layoutPriority(1)
+        .accessibilityIdentifier("milestones.tracks")
     }
     @ViewBuilder private var status: some View {
         if store.busy { ProgressView("Confirming…") }
@@ -214,62 +214,74 @@ struct MilestoneTracksScreen: View {
         }
     }
     private func milestone(_ row: APIIntroMilestone) -> some View {
-        HStack(spacing: 10) {
-            if selected.timeline {
-                VStack(spacing: 0) {
-                    Rectangle().fill(JournalTheme.vine.opacity(0.45)).frame(width: 1)
-                    Image(systemName: claimed(row) ? "checkmark.circle.fill" : row.eligible ? "circle.inset.filled" : row.id == nextIncomplete ? "record.circle" : "circle")
-                        .font(.title3).foregroundStyle(JournalTheme.action)
-                    Rectangle().fill(JournalTheme.vine.opacity(0.45)).frame(width: 1)
-                }.frame(width: 22).accessibilityHidden(true)
-            }
-            VStack(alignment: .leading, spacing: 8) {
-                if let name = row.eventName, rows.first(where: { $0.eventId == row.eventId })?.id == row.id {
-                    Text(name).font(.headline)
-                    if let end = row.endsAt {
-                        if end > Date() { (Text("Ends in ") + Text(end, style: .relative)).font(.caption) }
-                        else { Text("Earning ended").font(.caption) }
-                    }
-                    if let claimUntil = row.claimUntil {
-                        Text("Claim by \(claimUntil.formatted(date: .abbreviated, time: .shortened))").font(.caption)
-                    }
+        VStack(alignment: .leading, spacing: 8) {
+            if let name = row.eventName, rows.first(where: { $0.eventId == row.eventId })?.id == row.id {
+                Text(name).font(.headline)
+                if let end = row.endsAt {
+                    if end > Date() { (Text("Ends in ") + Text(end, style: .relative)).font(.caption) }
+                    else { Text("Earning ended").font(.caption) }
                 }
-                if textSize.isAccessibilitySize {
-                    rewardContent(row)
-                    action(row)
-                } else {
-                    HStack(alignment: .center, spacing: 10) {
+                if let claimUntil = row.claimUntil {
+                    Text("Claim by \(claimUntil.formatted(date: .abbreviated, time: .shortened))").font(.caption)
+                }
+            }
+            if textSize.isAccessibilitySize {
+                rewardContent(row)
+                action(row)
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .center, spacing: 12) {
+                        rewardContent(row).frame(minWidth: 180)
+                        action(row).fixedSize(horizontal: true, vertical: true)
+                    }
+                    VStack(alignment: .leading, spacing: 10) {
                         rewardContent(row)
-                        Spacer(minLength: 0)
                         action(row)
                     }
                 }
-                if !claimed(row), row.supersededBy == nil, let threshold = row.threshold,
-                   row.progressValue != nil, row.metric != "opening",
-                   !selected.timeline || row.id == nextIncomplete {
-                    ProgressView(value: row.progressFraction)
-                        .accessibilityLabel(row.title)
-                        .accessibilityValue("\(Int64(min(row.progressValue ?? 0, Double(Int64.max - 1024)))) of \(threshold)")
+            }
+            if !claimed(row), row.supersededBy == nil, let threshold = row.threshold,
+               row.progressValue != nil, row.metric != "opening",
+               !selected.timeline || row.id == nextIncomplete {
+                ProgressView(value: row.progressFraction)
+                    .accessibilityLabel(row.title)
+                    .accessibilityValue("\(Int64(min(row.progressValue ?? 0, Double(Int64.max - 1024)))) of \(threshold)")
+            }
+            if let reason = row.unavailableReason {
+                Text(reason).font(.caption).foregroundStyle(JournalTheme.secondary)
+            }
+        }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .background(row.eligible ? JournalTheme.sage : JournalTheme.paper,
+                        in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JournalTheme.vine.opacity(0.45), lineWidth: 1))
+            .padding(.leading, selected.timeline ? 28 : 0)
+            .overlay(alignment: .leading) {
+                if selected.timeline {
+                    // The rail follows the text height; it never determines it.
+                    VStack(spacing: 0) {
+                        Rectangle().fill(JournalTheme.vine.opacity(0.45)).frame(width: 1)
+                        Image(systemName: claimed(row) ? "checkmark.circle.fill" : row.eligible ? "circle.inset.filled" : row.id == nextIncomplete ? "record.circle" : "circle")
+                            .font(.title3).foregroundStyle(JournalTheme.action)
+                        Rectangle().fill(JournalTheme.vine.opacity(0.45)).frame(width: 1)
+                    }.frame(width: 18).accessibilityHidden(true)
                 }
-                if let reason = row.unavailableReason { Text(reason).font(.caption) }
-            }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                .background(row.eligible ? JournalTheme.sage : JournalTheme.paper,
-                            in: RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(JournalTheme.vine.opacity(0.45), lineWidth: 1))
-                .padding(.vertical, selected.timeline ? 5 : 0)
-        }
+            }
+            .padding(.vertical, selected.timeline ? 5 : 0)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("milestones.row.\(row.id)")
     }
     private func rewardContent(_ row: APIIntroMilestone) -> some View {
-        HStack(spacing: 10) {
+        HStack(alignment: .top, spacing: 10) {
             if let pack = row.rewardPacks?.first {
                 CollectionPackArtwork(packID: pack.packId, height: 44).frame(width: 36)
-            } else { QuantityIcon(metric: "tokens") }
+            } else { QuantityIcon(metric: row.rewardTokens == "0" ? "gems" : "tokens").frame(minWidth: 36) }
             VStack(alignment: .leading, spacing: 4) {
-                Text(row.title).font(.headline).fixedSize(horizontal: false, vertical: true)
+                Text(row.title).font(.subheadline.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
                 MilestoneRewardLabels(tokens: row.rewardTokens, gems: row.rewardGems,
                                       packs: row.rewardPacks ?? [])
-            }
-        }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }.frame(maxWidth: .infinity, alignment: .leading).multilineTextAlignment(.leading)
     }
     @ViewBuilder private func action(_ row: APIIntroMilestone) -> some View {
         if store.state.pending?.milestoneID == row.id {
@@ -294,7 +306,7 @@ struct MilestoneTracksScreen: View {
             }
         } else if row.unavailableReason == nil, let threshold = row.threshold,
                   let progress = row.progressValue {
-            Text("\(Int64(min(progress, Double(Int64.max - 1024)))) / \(threshold)")
+            Text("\(Int64(min(progress, Double(Int64.max - 1024))).formatted()) / \(threshold.formatted())")
                 .font(.caption).monospacedDigit().fixedSize(horizontal: false, vertical: true)
         } else { Text("Unavailable").font(.caption) }
     }
@@ -322,10 +334,11 @@ struct MilestoneRewardLabels: View {
     let packs: [APIMilestonePackReward]
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            if tokens != "0" { QuantityLabel(metric: "tokens", text: "\(tokens) tokens") }
-            if let gems = gems, gems != "0" { QuantityLabel(metric: "gems", text: "\(gems) gems") }
+            if tokens != "0" { Text("\(tokens) tokens") }
+            if let gems = gems, gems != "0" { Text("\(gems) gems") }
             ForEach(packs) { pack in Text("\(pack.quantity) \(pack.displayName) \(pack.quantity == 1 ? "pack" : "packs")") }
-        }.font(.subheadline)
+        }.font(.caption).foregroundStyle(JournalTheme.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 

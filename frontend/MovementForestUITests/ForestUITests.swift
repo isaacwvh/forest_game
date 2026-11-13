@@ -3,6 +3,97 @@ import XCTest
 final class ForestUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    func testMilestoneSelectorsAndScrollSurviveRepeatedCachedEntry() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-collection", "--fixture-milestones"]
+        app.launch()
+        let pages = app.segmentedControls
+        XCTAssertTrue(pages.buttons["Milestones"].waitForExistence(timeout: 15))
+        pages.buttons["Milestones"].tap()
+        let list = app.scrollViews["milestones.list"]
+        let steps = app.buttons["milestones.track.steps"]
+        for _ in 0..<3 {
+            XCTAssertTrue(steps.waitForExistence(timeout: 5))
+            XCTAssertTrue(steps.isHittable)
+            XCTAssertGreaterThanOrEqual(steps.frame.height, 44)
+            XCTAssertLessThanOrEqual(steps.frame.maxY, list.frame.minY + 1)
+            list.swipeUp()
+            list.swipeUp()
+            let visibleRows = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "identifier BEGINSWITH %@", "milestones.row."))
+                .allElementsBoundByIndex.filter {
+                    $0.frame.height > 0 && $0.frame.minY >= list.frame.minY && $0.frame.minY < list.frame.maxY
+                }
+            let anchor = try XCTUnwrap(visibleRows.min { $0.frame.minY < $1.frame.minY })
+            let identifier = anchor.identifier
+            pages.buttons["Packs"].tap()
+            XCTAssertFalse(steps.exists)
+            pages.buttons["Milestones"].tap()
+            let restored = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+            let restoredInViewport = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                restored.exists && restored.frame.height > 0 && list.frame.intersects(restored.frame)
+            }, object: nil)
+            wait(for: [restoredInViewport], timeout: 5)
+            XCTAssertTrue(steps.isHittable)
+            XCTAssertFalse(app.staticTexts["Reward saved"].exists)
+        }
+        for track in ["butterfly", "growth", "special", "event"] {
+            selectMilestoneTrack(track, in: app)
+            if track == "special" {
+                let title = app.staticTexts["At least 10,000 steps in one day"]
+                XCTAssertTrue(title.waitForExistence(timeout: 5))
+                XCTAssertGreaterThanOrEqual(title.frame.minX, list.frame.minX)
+                XCTAssertLessThanOrEqual(title.frame.maxX, list.frame.maxX)
+            }
+        }
+        XCTAssertTrue(app.staticTexts["No active event."].waitForExistence(timeout: 5))
+        pages.buttons["Packs"].tap()
+        pages.buttons["Milestones"].tap()
+        XCTAssertTrue(app.staticTexts["No active event."].waitForExistence(timeout: 5))
+        selectMilestoneTrack("event", in: app)
+        XCTAssertTrue(app.buttons["milestones.track.event"].isSelected)
+        XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
+    }
+
+    func testMilestonesWrapLongRequirementsAtLargestTextSize() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-collection", "--fixture-milestones",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let page = app.segmentedControls.buttons["Milestones"]
+        XCTAssertTrue(page.waitForExistence(timeout: 15))
+        page.tap()
+        selectMilestoneTrack("special", in: app)
+        let list = app.scrollViews["milestones.list"]
+        let title = app.staticTexts["At least 10,000 steps in one day"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertGreaterThan(title.frame.height, 0)
+        XCTAssertGreaterThanOrEqual(title.frame.minX, list.frame.minX)
+        XCTAssertLessThanOrEqual(title.frame.maxX, list.frame.maxX)
+        let claim = app.buttons["milestone.special_day_10000"]
+        XCTAssertTrue(claim.exists)
+        XCTAssertGreaterThanOrEqual(claim.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(claim.frame.minY, title.frame.maxY)
+        XCTAssertLessThanOrEqual(claim.frame.maxX, list.frame.maxX)
+        app.segmentedControls.buttons["Packs"].tap()
+        app.segmentedControls.buttons["Milestones"].tap()
+        selectMilestoneTrack("special", in: app)
+        XCTAssertTrue(app.buttons["milestones.track.special"].isSelected)
+        XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
+    }
+
+    private func selectMilestoneTrack(_ track: String, in app: XCUIApplication) {
+        let button = app.buttons["milestones.track.\(track)"]
+        XCTAssertTrue(button.waitForExistence(timeout: 5))
+        let strip = app.scrollViews["milestones.tracks"]
+        for _ in 0..<5 {
+            if button.isHittable { break }
+            strip.swipeLeft()
+        }
+        XCTAssertTrue(button.isHittable)
+        button.tap()
+    }
+
     func testLevelUpPopupUsesConfirmedBenefitsAndDoesNotReplayOnNavigation() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-level-up"]
@@ -469,7 +560,8 @@ final class ForestUITests: XCTestCase {
             XCTAssertTrue(reveal.exists)
             reveal.tap()
             XCTAssertTrue(app.buttons["pack.continue"].waitForExistence(timeout: 5))
-            XCTAssertTrue(app.staticTexts["Your sprout is saved in Storage. Plant it from Edit → Storage → plant details → Place."].exists)
+            XCTAssertTrue(app.staticTexts[rarity.capitalized].exists)
+            XCTAssertFalse(app.staticTexts["Saved to Storage."].exists)
             app.terminate()
         }
     }
@@ -603,6 +695,7 @@ final class ForestUITests: XCTestCase {
         app.launchArguments = ["--fixture-health", "--fixture-collection"]; app.launch()
         let purchase = app.buttons["collection.exchange.woodland"]
         XCTAssertTrue(purchase.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", ": Not enough ")).firstMatch.exists)
         let requests = app.staticTexts["fixture.collectionRequests"]
         let tokens = app.staticTexts["fixture.collectionTokens"]
         let packs = app.staticTexts["fixture.collectionPacks"]
@@ -633,6 +726,7 @@ final class ForestUITests: XCTestCase {
         waitForExpectations(timeout: 10)
         XCTAssertEqual(tokens.value as? String, "4")
         XCTAssertEqual(packs.value as? String, "3")
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "collection.exchangeSuccess").firstMatch.exists)
 
         app.segmentedControls.buttons["Packs"].tap()
         let open = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "collection.open.")).firstMatch

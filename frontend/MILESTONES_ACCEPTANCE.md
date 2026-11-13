@@ -26,6 +26,27 @@ slogans and footer filler are absent from the list.
 
 ## Executed portable checks
 
+### Frontend refinement — 13 November 2026
+
+The track strip now keeps its intrinsic height above the list, including cached
+return visits. Selection initializes from the saved journal, and one cancelable
+post-layout task restores a valid row anchor once per track/filter. The rail is
+an overlay sized by its row. Compact reward text removes duplicate currency icons;
+ordinary narrow layouts fall back to stacked actions, as accessibility sizes do.
+
+Routine Exchange affordability/success footers, the milestone receipt footer and
+the pack-opening saved message are removed. Storage/My plants use the existing
+categorized feedback filter. Pending, offline and actionable failures remain;
+receipts, claim guards, account state and backend contracts are unchanged.
+
+Portable frontend/resource/project/contrast validation, all 94 Swift syntax parses
+and changed-source whitespace checks pass. New UI regressions cover repeated
+cached entry, visible selectors, saved row restoration, all tracks, empty Event
+return and large-text wrapping. Existing purchase/opening checks now verify quiet
+success presentation. These native tests are added but **not executed on Windows**.
+Use `--fixture-health --fixture-collection --fixture-milestones` for deterministic
+manual inspection without network, authentication or disk writes.
+
 - Generated Xcode project freshness and full resource/asset/contract validation.
 - Tree-sitter syntax parsing of all 94 Swift files.
 - Real HTTP-derived `milestones-contract.json`: 62 quests, catalogue endpoints,

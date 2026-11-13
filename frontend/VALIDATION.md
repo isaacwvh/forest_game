@@ -1,3 +1,19 @@
+## Milestone layout and quiet feedback — 13 November 2026
+
+Frontend-only refinement stabilizes selector height and cached-entry scroll
+restoration, allows compact reward text and narrow-width stacked actions, and
+sizes timeline rails from content. Routine Exchange, opening and milestone
+confirmation footers are removed; Storage/My plants reuse categorized success
+filtering. Backend, reward accounting, pending requests and receipts are unchanged.
+
+Passed: `python frontend/scripts/validate_frontend.py` (including project freshness,
+resources, contracts and contrast), `python frontend/scripts/check_swift_syntax.py`
+(94 Swift files), and changed-frontend `git diff --check`. Added native UI coverage
+for repeated cached entry, selector bounds, scroll/track restoration, empty Event
+and largest-text wrapping, plus quiet purchase/opening checks. Xcode/Apple SDK
+compilation, XCTest/UI execution and device visual acceptance cannot run on this
+Windows host and remain pending. No push or remote CI was run.
+
 ## Milestone tracks — 13 November 2026
 
 Implemented the five-selector native page, timeline/card layouts, Growth filters,

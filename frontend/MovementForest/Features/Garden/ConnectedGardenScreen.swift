@@ -409,7 +409,7 @@ struct ConnectedGardenScreen: View {
                     PlantCapacitySummary(capacity: capacity, cached: store.showingCached)
                 }
                 if store.showingCached { Label("Saved plants · Connect to refresh", systemImage: "wifi.slash").font(.callout) }
-                if let message = store.message { Text(message).font(.callout) }
+                if let message = store.gardenMessage { Text(message).font(.callout) }
                 if store.inventory.isEmpty { Text("No stored copies in the saved inventory.") }
                 JournalGrid {
                     ForEach(store.inventory) { plant in

@@ -17,6 +17,10 @@ private struct PackFixtureContract: Decodable {
     let packs: APIPackPage
 }
 
+private struct MilestonePresentationContract: Decodable {
+    let earned: APICollectionSummary
+}
+
 @MainActor
 private final class PackFixtureService: CollectionServing {
     let contract: PackFixtureContract
@@ -110,6 +114,7 @@ private struct PackFixtureHost: View {
 private final class CleanupCollectionService: ObservableObject, CollectionServing {
     let serverID = "https://collection-cleanup-fixture.invalid"
     let contract: PackFixtureContract
+    let milestoneRows: [APIIntroMilestone]?
     @Published private(set) var requestCount = 0
     private var balance: Decimal
     private var version: Int64
@@ -119,6 +124,13 @@ private final class CleanupCollectionService: ObservableObject, CollectionServin
 
     init(contract: PackFixtureContract) throws {
         self.contract = contract
+        if ProcessInfo.processInfo.arguments.contains("--fixture-milestones") {
+            guard let url = Bundle.main.url(forResource: "milestones-contract", withExtension: "json", subdirectory: "Fixtures") else {
+                throw ForestError.missingResource("milestones fixture")
+            }
+            milestoneRows = try ActivityWire.decoder().decode(MilestonePresentationContract.self,
+                from: Data(contentsOf: url)).earned.milestones
+        } else { milestoneRows = nil }
         guard let balance = ExactAmount.integer(contract.summary.tokenBalance) else {
             throw ForestError.invalidData("Invalid fixture balance.")
         }
@@ -127,7 +139,7 @@ private final class CleanupCollectionService: ObservableObject, CollectionServin
     }
     func summary() async throws -> APICollectionSummary {
         APICollectionSummary(tokenBalance: NSDecimalNumber(decimal: balance).stringValue,
-                             economyVersion: version, offers: contract.summary.offers)
+                             economyVersion: version, offers: contract.summary.offers, milestones: milestoneRows)
     }
     func catalogue() async throws -> APICatalogue { contract.catalogue }
     func packs(after: UUID?) async throws -> APIPackPage { .init(packs: unopened, nextCursor: nil) }
@@ -216,9 +228,11 @@ private struct CollectionCleanupFixtureHost: View {
                     Text("Exchange").tag(CollectionDestination.exchange)
                     Text("Packs").tag(CollectionDestination.draws)
                     Text("Catalog").tag(CollectionDestination.catalog)
+                    if service.milestoneRows != nil { Text("Milestones").tag(CollectionDestination.milestones) }
                 }.pickerStyle(.segmented)
                 CollectionScreen(store: store, destination: destination, assets: assets,
                                  navigate: { destination = $0 ?? .draws })
+                    .id(destination)
                 HStack {
                     Text("Requests: \(service.requestCount)").accessibilityValue(String(service.requestCount))
                         .accessibilityIdentifier("fixture.collectionRequests")

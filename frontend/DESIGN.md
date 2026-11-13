@@ -2,6 +2,13 @@
 
 ## Milestone tracks — 13 November 2026
 
+Frontend refinement: the selector strip retains its intrinsic height independently
+of the scrolling list. Requirement text wraps above smaller, plain reward labels;
+actions stack whenever horizontal space is insufficient. Timeline rails follow
+content height. Routine saved/collected messages and Exchange affordability
+footers stay absent; pending/offline/recovery and contextual purchase constraints
+remain explicit. Saved track/row restoration must work on every return visit.
+
 The accepted milestones-rebrand-v2 concepts govern this route. Five tactile
 boot/butterfly/sprout/medal/calendar selectors sit on the existing parchment;
 selection uses sage and a green underline. Steps/Butterfly use narrow rails with

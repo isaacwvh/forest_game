@@ -60,7 +60,7 @@ struct CollectionScreen: View {
     var body: some View {
         Group {
             if destination == .catalog { catalogContent }
-            else if destination == .milestones { MilestoneTracksScreen(store: store, navigate: navigate) }
+            else if destination == .milestones { MilestoneTracksScreen(store: store) }
             else { content }
         }
         .refreshable { await refresh() }
@@ -172,8 +172,8 @@ struct CollectionScreen: View {
                         inspect: { inspectingPack = offer.pack }, purchase: { purchasingOffer = offer })
                 }
             }
-            ForEach(store.offers) { offer in
-                ExchangeOfferFeedback(store: store, offer: offer, navigate: navigate)
+            if store.exchangeOfferID != nil, store.confirmedExchange == nil, let message = store.exchangeMessage {
+                Text(message).font(.callout).accessibilityIdentifier("collection.exchangeFeedback")
             }
         }
     }
@@ -293,31 +293,6 @@ private struct ExchangeOfferRow: View {
                 .disabled(!store.canMutate || !store.canAfford(offer, quantity: 1) || !store.canBuy(quantity: 1))
                 .buttonStyle(.journalPrimary)
                 .accessibilityIdentifier("collection.exchange.\(offer.offerId)")
-        }
-    }
-}
-
-@MainActor
-private struct ExchangeOfferFeedback: View {
-    @ObservedObject var store: CollectionCoordinator
-    let offer: APIExchangeOffer
-    var navigate: ((CollectionDestination?) -> Void)? = nil
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if store.exchangeOfferID == offer.offerId, store.confirmedExchange == nil, let message = store.exchangeMessage {
-                Text(message).font(.callout).accessibilityIdentifier("collection.exchangeFeedback")
-            }
-            if let receipt = store.confirmedExchange,
-               receipt.packs?.contains(where: { $0.packId == offer.pack.packId && $0.version == offer.pack.version }) == true {
-                Label("\(receipt.quantity ?? 0) \(receipt.quantity == 1 ? "pack" : "packs") added", systemImage: "checkmark.circle.fill")
-                    .accessibilityIdentifier("collection.exchangeSuccess")
-                Button("Open packs") { navigate?(.draws) }.buttonStyle(.journalQuiet).frame(minHeight: 44)
-            }
-            if store.balance(for: offer) == nil {
-                Text("Refreshing \(offer.purchaseCurrency) balance…").font(.caption).foregroundStyle(JournalTheme.secondary)
-            } else if !store.canAfford(offer, quantity: 1) {
-                Text("\(offer.pack.displayName): Not enough \(offer.purchaseCurrency)").font(.caption).foregroundStyle(JournalTheme.secondary)
-            }
         }
     }
 }

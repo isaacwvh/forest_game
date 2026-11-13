@@ -280,7 +280,7 @@ struct MyPlantsScreen: View {
     @ViewBuilder private var status: some View {
         if store.showingCached { Label("Saved plants · Connect to refresh", systemImage: "wifi.slash").font(.callout) }
         if store.state.busy { ProgressView("Loading your plants…") }
-        if let message = store.message { Text(message).font(.callout) }
+        if let message = store.gardenMessage { Text(message).font(.callout) }
         if store.state == .unknown {
             Button("Retry saved edit") { Task { await store.retryPending() } }
                 .buttonStyle(.journalSecondary)

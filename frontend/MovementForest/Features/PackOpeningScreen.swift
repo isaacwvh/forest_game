@@ -109,7 +109,6 @@ struct PackOpeningScreen: View {
                                       rarity: result.rarity, announcesRarity: false)
                             .font(.system(.title2, design: .serif).weight(.semibold)).multilineTextAlignment(.center)
                         Text(PackRevealStep.rarityName(result.rarity)).font(.headline)
-                        Text("Saved to Storage.").font(.callout).foregroundStyle(JournalTheme.secondary)
                     }
                 }.padding(24)
             }
