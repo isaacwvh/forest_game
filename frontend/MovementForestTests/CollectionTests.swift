@@ -447,6 +447,8 @@ final class CollectionTests: XCTestCase {
         store.deactivate()
         let reopened = CollectionCoordinator(userID: user, service: service, journal: journal)
         XCTAssertTrue(reopened.confirmedMilestoneIDs.contains(milestone.id))
+        XCTAssertEqual(reopened.milestones.first?.id, milestone.id)
+        XCTAssertNotNil(reopened.milestonesConfirmedAt)
         await reopened.refresh()
         XCTAssertTrue(reopened.refreshFailed)
         XCTAssertEqual(service.operations.count, 1)

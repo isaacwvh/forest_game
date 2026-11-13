@@ -66,6 +66,10 @@ def completion(operation, response):
             "milestoneId",
             "milestoneEventId",
             "tokensEarned",
+            "gemsEarned",
+            "packs",
+            "policyVersion",
+            "supersededMilestoneIds",
             "claimedAt",
         )
         outcome = {k: response[k] for k in keys if k in response}

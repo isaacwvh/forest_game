@@ -13,7 +13,7 @@ from forest_api.models import Base
 LEGACY_ROW = (
     "(to_jsonb(t) - 'completion' - 'response_expires_at' - 'recovery_version' "
     "- 'gems' - 'lifetime_gems_earned' - 'progression_initialized' - 'progression_version' "
-    "- 'clearance_radius' - 'gem_delta' - 'currency')"
+    "- 'clearance_radius' - 'gem_delta' - 'currency' - 'step_gems_earned')"
 )
 
 
@@ -27,7 +27,7 @@ def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
             with engine.connect() as connection:
                 assert set(Base.metadata.tables) <= set(inspect(connection).get_table_names())
                 assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-                    "0016_sprout_discovery"
+                    "0017_milestone_tracks"
                 )
             engine.dispose()
             command.downgrade(configuration, "base")

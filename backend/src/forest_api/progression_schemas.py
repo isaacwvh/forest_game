@@ -27,6 +27,8 @@ class AccountWallet(DTO):
     token_balance: str
     gem_balance: str
     lifetime_gems_earned: str
+    step_gems_earned: str = "0"
+    bonus_gems_earned: str = "0"
     initialized: bool
     hosted_active: str
     hosted_offline: str

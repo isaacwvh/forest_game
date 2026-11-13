@@ -160,6 +160,9 @@ class VisitorWallet(Base):
         ),
         CheckConstraint("economy_version >= 0", name="economy_version"),
         CheckConstraint("gems >= 0 AND lifetime_gems_earned >= gems", name="gem_amounts"),
+        CheckConstraint(
+            "step_gems_earned >= 0 AND step_gems_earned <= lifetime_gems_earned", name="step_gems"
+        ),
     )
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
     tokens: Mapped[int] = mapped_column(BigInteger, default=0)
@@ -168,6 +171,7 @@ class VisitorWallet(Base):
     hosted_offline: Mapped[int] = mapped_column(BigInteger, default=0)
     gems: Mapped[int] = mapped_column(BigInteger, server_default="0")
     lifetime_gems_earned: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    step_gems_earned: Mapped[int] = mapped_column(BigInteger, server_default="0")
     progression_initialized: Mapped[bool] = mapped_column(Boolean, server_default="false")
 
 

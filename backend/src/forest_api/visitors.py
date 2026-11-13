@@ -742,6 +742,9 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
             wallet.hosted_offline = checked(
                 wallet.hosted_offline + (visits if kind == "offline_claim" else 0)
             )
+            from forest_api.milestone_tracks import observe_visitors
+
+            observe_visitors(session, user.id, boundary, visits)
             session.add(
                 VisitorRewardEvent(
                     id=event_id,

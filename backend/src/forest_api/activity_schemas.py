@@ -67,6 +67,7 @@ class WorkoutSegment(DTO):
 
 class WorkoutInput(WorkoutSegment):
     workout_id: UUID
+    distance_metres: str | None = Field(default=None, pattern=r"^[0-9]{1,9}(\.[0-9]{1,3})?$")
     source_bundle_identifier: str = Field(min_length=1, max_length=255)
     was_user_entered: bool | None = None
     has_segments: bool = False

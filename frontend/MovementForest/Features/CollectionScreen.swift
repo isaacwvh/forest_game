@@ -60,6 +60,7 @@ struct CollectionScreen: View {
     var body: some View {
         Group {
             if destination == .catalog { catalogContent }
+            else if destination == .milestones { MilestoneTracksScreen(store: store, navigate: navigate) }
             else { content }
         }
         .refreshable { await refresh() }
@@ -120,7 +121,7 @@ struct CollectionScreen: View {
                 }
                 collectionStatus
                 switch destination {
-                case .milestones: milestonesContent
+                case .milestones: EmptyView()
                 case .exchange: exchangeContent
                 case .draws: packsContent
                 case .catalog: EmptyView()
@@ -157,28 +158,6 @@ struct CollectionScreen: View {
             Button("Retry saved request") { Task { await store.refresh() } }
                 .buttonStyle(.journalSecondary)
                 .disabled(store.busy).frame(minHeight: 44)
-        }
-    }
-    private var milestonesContent: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            JournalSectionHeading(title: "Your first garden")
-            if let confirmedAt = store.milestonesConfirmedAt {
-                Text("\(store.refreshFailed ? "Cached milestones" : "Last confirmed") · \(confirmedAt.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.caption).foregroundStyle(JournalTheme.secondary)
-            }
-            if store.refreshFailed {
-                Button("Retry refresh") { Task { await store.refresh() } }.buttonStyle(.journalSecondary).disabled(store.busy).frame(minHeight: 44)
-            }
-            if store.milestones.isEmpty && !store.busy && !store.refreshFailed && store.milestonesConfirmedAt != nil {
-                Text("No milestones available.").foregroundStyle(JournalTheme.secondary)
-            }
-            ForEach(store.milestones) { milestone in milestoneRow(milestone) }
-            if let receipt = store.state.result, receipt.milestoneId != nil {
-                ReceiptRow(receipt: receipt, catalogue: store.catalogue, assets: assets)
-            }
-            if !store.confirmedMilestoneIDs.isEmpty {
-                Button("Browse Exchange") { navigate?(.exchange) }.buttonStyle(.journalSecondary).frame(minHeight: 44)
-            }
         }
     }
     private var exchangeContent: some View {
@@ -296,44 +275,7 @@ struct CollectionScreen: View {
     }
 
 
-    private func milestoneRow(_ milestone: APIIntroMilestone) -> some View {
-        let claimed = milestone.claimed || store.confirmedMilestoneIDs.contains(milestone.id)
-        let pending = store.state.pending?.kind == .milestone && store.state.pending?.milestoneID == milestone.id
-        return CollectionJournalFrame {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: claimed ? "checkmark.seal.fill" : "leaf")
-                        .font(.title2).frame(width: 44, height: 44).accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(milestone.title).font(.system(.headline, design: .serif))
-                            .fixedSize(horizontal: false, vertical: true)
-                        QuantityLabel(metric: "tokens", text: "+\(milestone.rewardTokens)")
-                            .font(.subheadline).monospacedDigit()
-                            .accessibilityLabel("\(milestone.rewardTokens) tokens")
-                    }
-                }
-                DisclosureGroup("Requirement") {
-                    Text(milestone.description).font(.callout).foregroundStyle(JournalTheme.secondary)
-                        .fixedSize(horizontal: false, vertical: true).padding(.top, 6)
-                }.frame(minHeight: 44)
-                if pending {
-                    Label(store.busy ? "Confirming…" : "Awaiting confirmation", systemImage: "clock")
-                    if !store.busy {
-                        Button("Retry saved claim") { Task { await store.refresh() } }.buttonStyle(.journalSecondary).frame(minHeight: 44)
-                    }
-                } else if claimed {
-                    Label("Claimed", systemImage: "checkmark.circle")
-                } else if milestone.eligible {
-                    Button("Claim") { Task { await store.claim(milestone) } }
-                        .buttonStyle(.journalPrimary).disabled(!store.canMutate).frame(minHeight: 44)
-                        .accessibilityLabel("Claim reward")
-                        .accessibilityIdentifier("milestone.\(milestone.id)")
-                } else {
-                    Label("Not yet eligible", systemImage: "lock")
-                }
-            }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
+
 }
 
 @MainActor
@@ -767,7 +709,7 @@ private struct ReceiptRow: View {
         if receipt.plant != nil {
             CollectionPlantReceiptCard(receipt: receipt, catalogue: catalogue, assets: assets)
         } else if receipt.milestoneId != nil {
-            QuantityLabel(metric: "tokens", text: "+\(receipt.tokensEarned ?? "0") tokens")
+            MilestoneReceiptRewards(receipt: receipt)
         } else {
             let usesGems = (receipt.gemsSpent.flatMap(ExactAmount.integer) ?? 0) > 0
             let currency = usesGems ? "gems" : "tokens"

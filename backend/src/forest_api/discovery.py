@@ -69,6 +69,11 @@ def record_reached(session, owner_id: UUID, plants, boundary: datetime) -> bool:
     if state.version == MAX_INTEGER:
         raise ApiError(503, "counter_exhausted", "Discovery version requires maintenance")
     state.version += 1
+    # Pin collection rewards in the acquisition/growth transaction, including pack opens.
+    from forest_api.milestone_tracks import refresh
+
+    session.flush()
+    refresh(session, owner_id, boundary)
     return True
 
 

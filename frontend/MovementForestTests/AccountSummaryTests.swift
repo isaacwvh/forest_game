@@ -54,6 +54,25 @@ final class AccountSummaryTests: XCTestCase {
         XCTAssertEqual(value.progression.stepsToNextGem, 2750)
     }
 
+    func testGemSourceFieldsUpgradeAnOldCacheWithoutChangingItsEconomyVersion() async throws {
+        let old = try fixture()
+        var upgraded = old
+        upgraded.wallet.stepGemsEarned = old.wallet.lifetimeGemsEarned
+        upgraded.wallet.bonusGemsEarned = "0"
+        let cache = MemoryAccountSummaryCache()
+        cache.value = AccountSummaryCache(snapshot: old, confirmedAt: Date())
+        let service = FakeAccountSummary(upgraded)
+        let store = AccountSummaryStore(userID: old.profile.userId, service: service, cache: cache)
+        await store.refresh()
+        XCTAssertFalse(store.failed)
+        XCTAssertEqual(store.snapshot?.wallet.stepGemsEarned, "3")
+        XCTAssertEqual(store.snapshot?.wallet.economyVersion, old.wallet.economyVersion)
+        service.value = old
+        await store.refresh()
+        XCTAssertFalse(store.failed)
+        XCTAssertEqual(store.snapshot?.wallet.stepGemsEarned, "3")
+    }
+
     func testLevelBenefitsHTTPContractAndOlderReceiptCannotRollbackTheTier() async throws {
         let url = try XCTUnwrap(Bundle.main.url(forResource: "level-benefits-contract", withExtension: "json", subdirectory: "Fixtures"))
         let values = try ActivityWire.decoder().decode([String: APIAccountSummary].self, from: Data(contentsOf: url))

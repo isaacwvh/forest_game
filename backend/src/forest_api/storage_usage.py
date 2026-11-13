@@ -23,6 +23,12 @@ GROUPS = {
         "visitor_controls",
     },
     "durable_recovery": {
+        "milestone_state",
+        "milestone_days",
+        "milestone_species",
+        "milestone_entitlements",
+        "milestone_bonus_grants",
+        "milestone_event_state",
         "level_up_notices",
         "gem_grants",
         "plant_identities",
@@ -55,6 +61,8 @@ GROUPS = {
         "visitor_opportunities",
     },
     "shared_configuration": {
+        "milestone_policies",
+        "milestone_events",
         "level_benefits_policy",
         "alembic_version",
         "game_catalogue",

@@ -89,7 +89,8 @@ enum ActivityWire {
                              durationMilliseconds: parentMilliseconds,
                              sourceBundleIdentifier: value.sourceBundleIdentifier,
                              wasUserEntered: value.wasUserEntered, hasSegments: value.hasSegments,
-                             segments: segments)
+                             segments: segments,
+                             distanceMetres: quantity(value.distanceMetres, maximum: 999_999_999))
     }
 }
 
@@ -110,6 +111,7 @@ struct WorkoutUpload: Codable, Equatable {
     let wasUserEntered: Bool?
     let hasSegments: Bool
     let segments: [WorkoutSegmentUpload]
+    var distanceMetres: String? = nil
 }
 
 struct APIActivityDevice: Codable, Equatable {

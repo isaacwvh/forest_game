@@ -61,6 +61,10 @@ def wallet_snapshot(wallet: VisitorWallet | None) -> AccountWallet:
         token_balance=str(wallet.tokens if wallet else 0),
         gem_balance=str(wallet.gems if wallet else 0),
         lifetime_gems_earned=str(wallet.lifetime_gems_earned if wallet else 0),
+        step_gems_earned=str(wallet.step_gems_earned if wallet else 0),
+        bonus_gems_earned=str(
+            (wallet.lifetime_gems_earned - wallet.step_gems_earned) if wallet else 0
+        ),
         initialized=wallet.progression_initialized if wallet else False,
         hosted_active=str(active),
         hosted_offline=str(offline),
@@ -82,9 +86,9 @@ def initialize_account(session, owner):
 def credit_steps(session, owner, steps, source_id, boundary):
     wallet = collection.wallet_for(session, owner)
     entitlement = steps // STEPS_PER_GEM
-    if entitlement < wallet.lifetime_gems_earned:
+    if entitlement < wallet.step_gems_earned:
         raise ValueError("Gem entitlement cannot move backwards")
-    amount = entitlement - wallet.lifetime_gems_earned
+    amount = entitlement - wallet.step_gems_earned
     initialized = wallet.progression_initialized
     if amount:
         session.add(
@@ -94,14 +98,15 @@ def credit_steps(session, owner, steps, source_id, boundary):
                 source_id=source_id,
                 kind="steps" if initialized else "backfill",
                 rules_version=RULES_VERSION,
-                start_milestone=wallet.lifetime_gems_earned,
+                start_milestone=wallet.step_gems_earned,
                 end_milestone=entitlement,
                 amount=amount,
                 created_at=boundary,
             )
         )
         wallet.gems = collection.checked(wallet.gems + amount)
-        wallet.lifetime_gems_earned = entitlement
+        wallet.step_gems_earned = entitlement
+        wallet.lifetime_gems_earned = collection.checked(wallet.lifetime_gems_earned + amount)
     if amount or not initialized:
         wallet.economy_version = collection.checked(wallet.economy_version + 1)
     wallet.progression_initialized = True
@@ -116,6 +121,13 @@ def reconcile(session, owner, wallet):
     )
     progress = session.get(PlayerProgress, owner)
     entitlement = (progress.activity_steps if progress else 0) // STEPS_PER_GEM
+    from forest_api.milestone_models import MilestoneBonusGrant
+
+    bonuses = session.scalar(
+        select(func.coalesce(func.sum(MilestoneBonusGrant.amount), 0)).where(
+            MilestoneBonusGrant.owner_id == owner
+        )
+    )
     from forest_api.collection_models import CollectionEvent
 
     spent = session.scalar(
@@ -124,8 +136,9 @@ def reconcile(session, owner, wallet):
         )
     )
     if (
-        earned + spent != wallet.gems
-        or earned != wallet.lifetime_gems_earned
+        earned + bonuses + spent != wallet.gems
+        or earned + bonuses != wallet.lifetime_gems_earned
+        or earned != wallet.step_gems_earned
         or earned != entitlement
     ):
         raise ValueError("Unreconciled gem wallet; history retained")
@@ -178,7 +191,7 @@ def backfill(session, *, apply=False, limit=500):
             progress = session.get(PlayerProgress, owner)
             steps = progress.activity_steps if progress else 0
             result["examined"] += 1
-            amount = steps // STEPS_PER_GEM - (wallet.lifetime_gems_earned if wallet else 0)
+            amount = steps // STEPS_PER_GEM - (wallet.step_gems_earned if wallet else 0)
             total += amount
             if apply:
                 credit_steps(

@@ -1,5 +1,24 @@
 # Native baseline conventions
 
+## Milestone tracks — 13 November 2026
+
+The accepted milestones-rebrand-v2 concepts govern this route. Five tactile
+boot/butterfly/sprout/medal/calendar selectors sit on the existing parchment;
+selection uses sage and a green underline. Steps/Butterfly use narrow rails with
+checks/current/future nodes and left reward artwork, middle text and right state.
+Growth/Special/Event use independent cards without rails or numbered stages.
+Growth has All/Maturity/Discovery, with a menu at accessibility sizes. Event shows
+real instance/deadline information and an honest empty state. Removed slogans,
+footer filler and deferred cosmetic rewards stay absent.
+
+Native labels wrap, selectors scroll horizontally and larger text moves actions
+below requirements. Existing journal colors/buttons and confirmed quantities
+remain authoritative. An information sheet holds activity-day/workout/legacy and
+event semantics. Cached rows, pending requests, full storage and unavailable earned
+rewards remain explicit. Track/scroll state is scoped to the account/server journal.
+This is source presentation guidance; native screenshot, VoiceOver and device
+acceptance is pending. See MILESTONES_ACCEPTANCE.md.
+
 ## Catalog and capacity follow-up — 13 November 2026
 
 Packs/Exchange summaries use two equal flexible columns in reading order: Tokens,

@@ -356,6 +356,34 @@ def main():
     print("PASS: HTTP-derived Sleeping Dew source/activation/storage, +4% growth and versioned cap contract.")
     print(f"PASS: F8 portrait/light configuration, butterfly checksum/archive, nine aligned pack PNGs ({pack_bytes:,} bytes).")
     print("PASS: internal Release diagnostics scheme and generated configuration; public Release remains separate.")
+    milestones = json.loads((ROOT / "MovementForest/Resources/Fixtures/milestones-contract.json").read_text(encoding="utf-8"))
+    require(milestones["synthetic"] is True, "Milestones contract must be synthetic")
+    quests = {q["milestoneId"]: q for q in milestones["fresh"]["milestones"]}
+    require(len(quests) == len(milestones["fresh"]["milestones"]) == 62, "Duplicate/missing milestone identities")
+    require(all(re.fullmatch(r"[a-z][a-z0-9_]{0,63}", key) for key in quests), "Invalid milestone journal ID")
+    for rarity, count in {"common": 10, "rare": 10, "epic": 7, "legendary": 3}.items():
+        tiers = [q["threshold"] for q in quests.values() if q["metric"] == f"discovery_{rarity}"]
+        require(tiers and max(tiers) == count, f"Discovery endpoints exceed published {rarity} catalogue")
+    require(quests["special_run_5km"]["rewardPacks"][0]["quantity"] == 1 and quests["special_workout_60min"]["rewardPacks"][0]["quantity"] == 1,
+            "Running and workout duration must have separate pack entitlements")
+    receipt, pack_receipt = milestones["receipt"], milestones["packReceipt"]
+    require(receipt["tokensEarned"] == "1200" and receipt["gemsEarned"] == "2", "Mixed reward contract mismatch")
+    require(len(pack_receipt["packs"]) == 1 and pack_receipt["packs"][0]["version"] == 20 and "plant" not in pack_receipt,
+            "Milestones must issue pinned unopened packs")
+    wallet = milestones["account"]["wallet"]
+    require(int(wallet["stepGemsEarned"]) + int(wallet["bonusGemsEarned"]) == int(wallet["lifetimeGemsEarned"]), "Gem sources do not reconcile")
+    print("PASS: HTTP-derived milestone tracks, attainable discovery, separate workout quests, pinned packs and bonus-gem accounting.")
+    milestone_art = REPO / "assets/milestones/v1"
+    manifest = json.loads((milestone_art / "milestones.json").read_text(encoding="utf-8"))
+    require(len(manifest["assets"]) == 10, "Five selector icons require two runtime sizes")
+    for asset in manifest["assets"]:
+        path = milestone_art / asset["path"]
+        data = path.read_bytes()
+        require(hashlib.sha256(data).hexdigest() == asset["sha256"], f"Milestone art checksum mismatch: {path}")
+        require(struct.unpack(">II", data[16:24]) == (asset["width"], asset["height"]) and data[25] == 6,
+                f"Milestone art must be transparent RGBA at its manifest dimensions: {path}")
+    require('../assets/milestones' in project_text, "Milestone art missing from bundle")
+    print("PASS: five tactile milestone selectors, two RGBA sizes, manifest checksums and bundle membership.")
     print("Swift compilation, native UI, imported axes, animation, and real HealthKit remain Mac/iPhone checks.")
 
 

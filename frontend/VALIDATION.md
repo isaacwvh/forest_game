@@ -1,3 +1,22 @@
+## Milestone tracks — 13 November 2026
+
+Implemented the five-selector native page, timeline/card layouts, Growth filters,
+server progress/bundles/event states, source-aware gems, workout distance and
+account-scoped cache/claim/scroll recovery. Added tactile selector PNGs and new
+HTTP-derived contract/native tests. An old wallet cache can gain gem-source fields
+at the same economy version without a false conflict.
+
+Portable project/resource/contract validation passes, including all milestone
+IDs, attainable rarity endpoints, separate workout rewards, version-20 unopened
+packs, gem sources, and ten RGBA icon exports (94,515 bytes). All **94 Swift files**
+parse successfully. Backend final full regression passes **659 tests**, with three
+existing benchmark skips; final milestone/migration checks pass **36 tests**.
+
+Xcode/Apple SDK compilation, XCTest execution, simulator screenshots and real
+iPhone/HealthKit/accessibility acceptance remain pending on Mac/iPhone. No native
+build or visual acceptance is claimed. No push, remote CI or personal database
+activation was performed. See [acceptance](MILESTONES_ACCEPTANCE.md).
+
 ## Catalog and capacity follow-up — 13 November 2026
 
 Implemented two-column collection summaries, ordered rarity/name catalog display,

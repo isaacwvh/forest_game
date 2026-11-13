@@ -1,3 +1,5 @@
+**Milestone tracks, 13 November 2026:** five artwork selectors, Steps/Butterfly timelines, independent Growth/Special/Event quests, reward bundles, source-aware gem validation, workout distance and account-scoped cache/recovery are source-implemented. See [native acceptance](MILESTONES_ACCEPTANCE.md) and [explicit backend activation](../backend/MILESTONES.md). Native Xcode/device acceptance remains pending.
+
 **Woodland release, 13 November 2026:** the app bundles all 30 species and supports Standard/Enchanted/Premium artwork and token/gem purchasing. Build this client before backend publication. See [upgrade, storage measurements and device flow](../backend/WOODLAND_RELEASE.md). Native Xcode/device acceptance remains separate from portable checks.
 
 **Catalog/capacity follow-up, 13 November 2026:** two-column Packs balances;
@@ -219,7 +221,7 @@ RealityKit rendering or HealthKit device aggregation.
   real project credentials, Xcode/XCTest and physical provider/Health acceptance
   remain pending. Email/password can be tested before setting up Google/Apple.
 - **F6:** visitor interaction backed by B6 accounting.
-- **F7:** Exchange/Catalog/Draws source implemented with durable token-to-pack exchange and server-confirmed openings. Unlocks/milestones and social screens are deferred. Use [F7_COLLECTION_ACCEPTANCE.md](F7_COLLECTION_ACCEPTANCE.md) for server upgrade and device testing.
+- **F7:** Exchange/Catalog/Draws source implemented with durable token-to-pack exchange and server-confirmed openings. Milestone tracks are source-implemented with explicit activation; social screens remain deferred. Use [F7_COLLECTION_ACCEPTANCE.md](F7_COLLECTION_ACCEPTANCE.md) and [milestone acceptance](MILESTONES_ACCEPTANCE.md) for server upgrade and device testing.
 
 Background Health delivery, CDN downloads/cache eviction, reward celebrations,
 full storage editing and server writes are deliberately outside F1–F3. Device

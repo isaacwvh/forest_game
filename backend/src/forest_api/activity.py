@@ -513,6 +513,18 @@ def sync(
             accounting.after_change(session, garden, boundary)
         progress.last_sync_at = boundary
         progress.progression_version = checked_add(progress.progression_version or 0, 1)
+        from forest_api.milestone_tracks import observe_activity
+
+        observe_activity(
+            session,
+            user.id,
+            boundary,
+            day_results,
+            grew_sprout=any(
+                before[p.id][2] == "sprout" and p.growth_micro_units > before[p.id][0]
+                for p in plants
+            ),
+        )
         gem_delta, wallet = progression.credit_steps(
             session, user.id, progress.activity_steps, body.request_id, boundary
         )

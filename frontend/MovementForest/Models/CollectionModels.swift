@@ -124,7 +124,42 @@ struct APIIntroMilestone: Codable, Identifiable {
     let rewardTokens: String
     let eligible: Bool
     let claimed: Bool
+    var track: String? = nil
+    var category: String? = nil
+    var metric: String? = nil
+    var scope: String? = nil
+    var threshold: Int64? = nil
+    var progress: String? = nil
+    var rewardGems: String? = nil
+    var rewardPacks: [APIMilestonePackReward]? = nil
+    var policyVersion: String? = nil
+    var order: Int? = nil
+    var supersededBy: String? = nil
+    var legacyMilestoneId: String? = nil
+    var unavailableReason: String? = nil
+    var earnedAt: Date? = nil
+    var eventId: String? = nil
+    var eventName: String? = nil
+    var startsAt: Date? = nil
+    var endsAt: Date? = nil
+    var claimUntil: Date? = nil
     var id: String { milestoneId }
+    var progressValue: Double? {
+        guard let progress = progress, let value = ActivityDisplayAmount.decimal(progress) else { return nil }
+        return NSDecimalNumber(decimal: value).doubleValue
+    }
+    var progressFraction: Double {
+        guard let value = progressValue, let threshold = threshold, threshold > 0 else { return 0 }
+        return min(1, max(0, value / Double(threshold)))
+    }
+}
+
+struct APIMilestonePackReward: Codable, Equatable, Identifiable {
+    let packId: String
+    let version: Int
+    let quantity: Int
+    let displayName: String
+    var id: String { "\(packId)/\(version)" }
 }
 
 struct APIOwnedPack: Codable, Identifiable {
@@ -160,6 +195,9 @@ struct APICollectionReceipt: Codable, Identifiable {
     var milestoneId: String? = nil
     var milestoneEventId: UUID? = nil
     var tokensEarned: String? = nil
+    var gemsEarned: String? = nil
+    var policyVersion: String? = nil
+    var supersededMilestoneIds: [String]? = nil
     var saleId: UUID? = nil
     var plantId: UUID? = nil
     var capacity: APIInventoryCapacity? = nil
@@ -252,6 +290,10 @@ struct PendingCollectionOperation: Codable, Equatable {
 struct CollectionJournalState: Codable {
     var pending: PendingCollectionOperation? = nil
     var result: APICollectionReceipt? = nil
+    var milestoneTrack: String? = nil
+    var milestoneScroll: [String: String]? = nil
+    var milestonesCache: [APIIntroMilestone]? = nil
+    var milestonesConfirmedAt: Date? = nil
 }
 
 @MainActor

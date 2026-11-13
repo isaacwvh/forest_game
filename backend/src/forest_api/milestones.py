@@ -20,6 +20,17 @@ TRACK = (
 
 
 def summary(session, owner, catalogue, wallet):
+    from forest_api import milestone_tracks
+
+    if milestone_tracks.policy(session) is not None:
+        if session.info.get("milestones_client") != "1":
+            return []
+        from sqlalchemy import func, select
+
+        boundary = session.info.get("milestone_boundary") or session.scalar(
+            select(func.clock_timestamp())
+        )
+        return milestone_tracks.summary(session, owner, wallet, boundary)
     if catalogue.version not in {VERSION, RESCALE_VERSION, "woodland-v1"}:
         return []
     scale = 10 if catalogue.version in {RESCALE_VERSION, "woodland-v1"} else 1
@@ -65,8 +76,18 @@ def claim(session, settings, identity, milestone_id, body, clock):
         wallet = collection.wallet_for(session, user.id)
         existing = session.get(MilestoneClaim, (user.id, milestone_id))
         if existing is not None:
-            services.record_request(session, user.id, body, operation, digest, existing.receipt)
-            return existing.receipt
+            # Alias requests preserve the reward's original IDs, but acknowledge this UUID.
+            receipt = dict(existing.receipt)
+            if "policyVersion" in receipt:
+                receipt["requestId"] = str(body.request_id)
+            services.record_request(session, user.id, body, operation, digest, receipt)
+            return receipt
+        from forest_api import milestone_tracks
+
+        if milestone_tracks.policy(session) is not None:
+            return milestone_tracks.claim(
+                session, settings, user, milestone_id, body, clock(), operation, digest
+            )
         entry = next(
             (
                 x

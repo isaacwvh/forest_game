@@ -33,6 +33,15 @@ struct APIAccountWallet: Codable, Equatable {
     let hostedActive: String
     let hostedOffline: String
     let hostedTotal: String
+    var stepGemsEarned: String? = nil
+    var bonusGemsEarned: String? = nil
+    var resolvingLegacyGemSources: Self {
+        guard stepGemsEarned == nil, bonusGemsEarned == nil else { return self }
+        var resolved = self
+        resolved.stepGemsEarned = lifetimeGemsEarned
+        resolved.bonusGemsEarned = "0"
+        return resolved
+    }
 }
 
 struct APIAccountSummary: Codable, Equatable {
@@ -72,8 +81,16 @@ struct APIAccountSummary: Codable, Equatable {
               into == xp - threshold, needed == 50 + 25 * n, into < needed,
               p.stepsIntoNextGem == steps % 10_000,
               p.stepsToNextGem == 10_000 - p.stepsIntoNextGem,
-              (w.initialized ? earned == steps / 10_000 : (earned == 0 && gems == 0)) else {
+              (w.initialized ? (w.stepGemsEarned.flatMap(Self.amount) ?? earned) == steps / 10_000
+               : (earned == 0 && gems == 0)) else {
             throw ForestError.invalidData("Account progression could not be verified.")
+        }
+        if w.stepGemsEarned != nil || w.bonusGemsEarned != nil {
+            guard let stepGems = w.stepGemsEarned.flatMap(Self.amount),
+                  let bonusGems = w.bonusGemsEarned.flatMap(Self.amount),
+                  stepGems <= Int64.max - bonusGems, stepGems + bonusGems == earned else {
+                throw ForestError.invalidData("The gem reward sources could not be verified.")
+            }
         }
         try benefits?.validate(progression: p)
         try levelUpNotice?.validate()

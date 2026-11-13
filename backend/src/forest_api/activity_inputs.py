@@ -212,6 +212,7 @@ def workout_credits(session, settings, user, device, body, boundary):
             continue
         outcome = "accepted"
         awarded = Fraction(0)
+        uncapped_minutes = Fraction(0)
         if workout.was_user_entered is True:
             outcome = "manual_excluded"
         elif workout.end > body.observed_at or workout.end > boundary:
@@ -260,6 +261,9 @@ def workout_credits(session, settings, user, device, body, boundary):
                         eligible = sum(
                             (microseconds(b - a) * density for a, b in fresh), Fraction(0)
                         )
+                        # Milestone workout requirements use eligible active time, not
+                        # the remaining growth allowance for this game date.
+                        uncapped_minutes += eligible / 60_000_000
                         before = row.credited_microseconds + read_remainder(row.remainder)
                         after = min(
                             Fraction(rules.workout_daily_cap_seconds * 1_000_000), before + eligible
@@ -280,6 +284,10 @@ def workout_credits(session, settings, user, device, body, boundary):
                     start = stop
             if not awarded:
                 outcome = "no_new_eligible_minutes"
+        if outcome in {"accepted", "no_new_eligible_minutes"} and uncapped_minutes > 0:
+            from forest_api.milestone_tracks import observe_workout
+
+            observe_workout(session, user.id, workout, boundary, earliest, uncapped_minutes)
         session.add(
             WorkoutImport(
                 owner_id=user.id,

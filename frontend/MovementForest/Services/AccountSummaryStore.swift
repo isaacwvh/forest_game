@@ -118,8 +118,11 @@ final class AccountSummaryStore: ObservableObject {
             }
             if incoming.wallet.economyVersion < current.wallet.economyVersion {
                 merged.wallet = current.wallet
-            } else if incoming.wallet.economyVersion == current.wallet.economyVersion && incoming.wallet != current.wallet {
-                throw ForestError.invalidData("Conflicting account wallet version.")
+            } else if incoming.wallet.economyVersion == current.wallet.economyVersion {
+                guard incoming.wallet.resolvingLegacyGemSources == current.wallet.resolvingLegacyGemSources else {
+                    throw ForestError.invalidData("Conflicting account wallet version.")
+                }
+                if incoming.wallet.stepGemsEarned == nil { merged.wallet = current.wallet }
             }
             if let old = current.benefits, let next = incoming.benefits,
                old.progressionVersion > next.progressionVersion ||

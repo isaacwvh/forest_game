@@ -12,6 +12,20 @@ from forest_api.seed import seed_development_catalogue
 def main() -> None:
     parser = argparse.ArgumentParser(description="Movement Forest development tools")
     commands = parser.add_subparsers(dest="command", required=True)
+    milestones = commands.add_parser(
+        "activate-milestones", help="Preview milestone publication/mapping"
+    )
+    milestones.add_argument("--apply", action="store_true")
+    milestone_backfill = commands.add_parser(
+        "backfill-milestones", help="Preview bounded earned rewards"
+    )
+    milestone_backfill.add_argument("--apply", action="store_true")
+    milestone_backfill.add_argument("--limit", type=int, default=500)
+    event = commands.add_parser(
+        "schedule-milestone-event", help="Preview an immutable event instance"
+    )
+    event.add_argument("file", type=Path)
+    event.add_argument("--apply", action="store_true")
     usage = commands.add_parser("storage-report", help="Read-only table/index/TOAST size inventory")
     usage.add_argument("--exact", action="store_true", help="Count every row; may be expensive")
     progression = commands.add_parser(
@@ -96,7 +110,22 @@ def main() -> None:
             run(database, settings)
             return
         with database.sessions() as session:
-            if args.command == "publish-woodland":
+            if args.command == "activate-milestones":
+                from forest_api.milestone_tracks import activate
+
+                print(json.dumps(activate(session, settings, apply=args.apply)))
+            elif args.command == "backfill-milestones":
+                from forest_api.milestone_tracks import backfill
+
+                print(json.dumps(backfill(session, apply=args.apply, limit=args.limit)))
+            elif args.command == "schedule-milestone-event":
+                from forest_api.milestone_tracks import schedule_event
+
+                data = json.loads(args.file.read_text(encoding="utf-8"))
+                for key in ("starts_at", "ends_at", "claim_until"):
+                    data[key] = datetime.fromisoformat(data[key])
+                print(json.dumps(schedule_event(session, apply=args.apply, **data)))
+            elif args.command == "publish-woodland":
                 from forest_api.woodland import publish
 
                 print(json.dumps(publish(session, settings, apply=args.apply)))

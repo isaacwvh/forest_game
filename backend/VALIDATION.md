@@ -1,3 +1,34 @@
+## Milestone tracks — 13 November 2026
+
+Implemented `0017_milestone_tracks`, the finite 62-quest policy, catalogue-scaled
+discovery, independent running/duration quests, pinned reward bundles, durable
+activity/event progress, legacy fulfillment/backfill and source-aware bonus gems.
+No personal database migration/publication, event scheduling, commit, push or
+remote CI run was performed. See [rollout and accounting](MILESTONES.md).
+
+Executed on a separate PostgreSQL 17 cluster, loopback port 55442, using only
+randomized disposable `forest_test_*` databases and normal durability settings:
+
+- Full backend regression: **659 passed, 3 skipped**, 503.03 seconds. The skips
+  are the existing opt-in physical-storage benchmarks.
+- Final milestone/migration/model checks after exact-fraction storage and detailed
+  backfill preview changes: **36 passed**, 73.74 seconds. These include migration
+  parity/downgrade/reupgrade, concurrency, aliases/compacted receipts, capacity
+  rollback and same-ID retry after opening, bonus/step grants and spending,
+  separate workouts, first-10-km replacement, growth-cap independence, manual /
+  pre-enrollment exclusion, rolling days, event deadlines, offline collections,
+  rarity/species credit, exact long fractions and preview rollback.
+- Expanded milestone/workout regression: **50 passed**, 90.90 seconds.
+- Isolated HTTP walkthrough passes, including bonus-gem reconciliation, direct
+  version-20 pack grants and replay after compaction; exported only synthetic
+  native contract fixtures. Repeated without export after implementation.
+- Ruff source/tests/migrations/scripts checks and changed-file formatting pass.
+  Dependency consistency and diff whitespace checks pass. The wheel builds
+  offline, and its milestone modules/catalogue exactly match the current workspace.
+- Portable frontend project/resource/contract checks and all 94 Swift syntax
+  parses pass. These do not establish Apple SDK compilation, XCTest, simulator
+  appearance, device accessibility or physical HealthKit behavior.
+
 ## Catalog and capacity follow-up — 13 November 2026
 
 Implemented migration `0016_sprout_discovery`, transactional exact-variant sprout

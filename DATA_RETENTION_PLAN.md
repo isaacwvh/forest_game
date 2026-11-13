@@ -288,3 +288,16 @@ as an operational user limit. No implementation tests are claimed by this plan.
   maintenance and cleanup of job execution history.
 - [PostgreSQL 17 routine vacuuming](https://www.postgresql.org/docs/17/routine-vacuuming.html):
   reusable free space, normal vacuum and the tradeoffs of full table rewrites.
+
+## Milestone tracks retention — 13 November 2026
+
+Migration `0017_milestone_tracks` adds permanent `milestone_state`, `milestone_days`,
+`milestone_species`, `milestone_entitlements`, `milestone_bonus_grants` and
+`milestone_event_state` to durable recovery, and `milestone_policies` /
+`milestone_events` to shared configuration. Existing history maintenance does not
+delete these tables. Daily progress survives detail cleanup; maturity continues
+using the lifetime counter and first-maturity copy markers. Earned reward versions,
+legacy fulfillment, supersession and claimed receipts must never be inferred from
+expiring request bodies or mutable inventory. Step/bonus gem sources and spending
+are reconciled independently before existing history cleanup. See
+[milestone accounting and explicit rollout](backend/MILESTONES.md).

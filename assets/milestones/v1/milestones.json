@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "style": "Tactile botanical selectors matching milestones-rebrand-v2",
+  "generation": "image_gen transparent output; proportional PNG exports, original alpha retained",
+  "assets": [
+    {
+      "track": "steps",
+      "path": "steps-64.png",
+      "width": 64,
+      "height": 64,
+      "sha256": "73aa0f9469798132f2b84aca9c15cfe65be4b6aaed97ea3ca7e6e7d6de172a26",
+      "bytes": 5586,
+      "sourceSha256": "79a4d5db6578a7a284522f68dc4949984a3947a96255ec18bd6ec0b93278a14a",
+      "source": "exec-f911e6fb-883b-473b-b79d-a496cdea16e9.png"
+    },
+    {
+      "track": "steps",
+      "path": "steps-128.png",
+      "width": 128,
+      "height": 128,
+      "sha256": "0fba12e39b20cd222846bccb9338c40beb0a4d8695cf1f77896c7ea17b7803a6",
+      "bytes": 16702,
+      "sourceSha256": "79a4d5db6578a7a284522f68dc4949984a3947a96255ec18bd6ec0b93278a14a",
+      "source": "exec-f911e6fb-883b-473b-b79d-a496cdea16e9.png"
+    },
+    {
+      "track": "butterfly",
+      "path": "butterfly-64.png",
+      "width": 64,
+      "height": 64,
+      "sha256": "e7cc59bddfbaf70353e79e2d41075bacede15fdab04928403a1d77c1af73a810",
+      "bytes": 4923,
+      "sourceSha256": "4f857c6e1c1a30a87349b59b54eb1393a8a7254ed5eab4167f69407139cee22d",
+      "source": "exec-e5e44570-5ea5-4e01-9f05-5a1003aea183.png"
+    },
+    {
+      "track": "butterfly",
+      "path": "butterfly-128.png",
+      "width": 128,
+      "height": 128,
+      "sha256": "a7b11e7854c792abce54832a73e5e64aa3c8eba3f5adda211ee8598cc11f52c3",
+      "bytes": 14108,
+      "sourceSha256": "4f857c6e1c1a30a87349b59b54eb1393a8a7254ed5eab4167f69407139cee22d",
+      "source": "exec-e5e44570-5ea5-4e01-9f05-5a1003aea183.png"
+    },
+    {
+      "track": "growth",
+      "path": "growth-64.png",
+      "width": 64,
+      "height": 64,
+      "sha256": "9e15207ec21f0706e6d2e06a5067d8a8830ec54ab6b52e746079cbe379b5dfd0",
+      "bytes": 3939,
+      "sourceSha256": "21aa03cb213ba15339b937d3b6297caac0d443315c046d7697c824d72e6392c4",
+      "source": "exec-295c2440-c168-4974-9605-e4e943f4f3cc.png"
+    },
+    {
+      "track": "growth",
+      "path": "growth-128.png",
+      "width": 128,
+      "height": 128,
+      "sha256": "30109ace8e004b9bd719af2ebf66ae00e794489ad2fe48d07c3442c304483a34",
+      "bytes": 11342,
+      "sourceSha256": "21aa03cb213ba15339b937d3b6297caac0d443315c046d7697c824d72e6392c4",
+      "source": "exec-295c2440-c168-4974-9605-e4e943f4f3cc.png"
+    },
+    {
+      "track": "special",
+      "path": "special-64.png",
+      "width": 64,
+      "height": 64,
+      "sha256": "5550154a1e1a711d7ccc4b95077f17d648199a4a03caa726daf34b52a545b92b",
+      "bytes": 5413,
+      "sourceSha256": "c485f216697883cee5744cbc5042da995e452329c373dcb0e4158f200950e302",
+      "source": "exec-d77467e7-25f0-4eaf-ad0d-1a1bc2523695.png"
+    },
+    {
+      "track": "special",
+      "path": "special-128.png",
+      "width": 128,
+      "height": 128,
+      "sha256": "b287244e3142bee7e43cdce20f610d7cfa1d3076b764818d62e7142cf2007edc",
+      "bytes": 15884,
+      "sourceSha256": "c485f216697883cee5744cbc5042da995e452329c373dcb0e4158f200950e302",
+      "source": "exec-d77467e7-25f0-4eaf-ad0d-1a1bc2523695.png"
+    },
+    {
+      "track": "event",
+      "path": "event-64.png",
+      "width": 64,
+      "height": 64,
+      "sha256": "5ec05ab20266ac85b7c4c7f8efb34e236d897f9bedc4e80741204d058e7c678b",
+      "bytes": 4216,
+      "sourceSha256": "0f174486da0376c0252418a032db98ba2ad4c46e3c1614d6434bedbe68641f2c",
+      "source": "exec-6feaa33a-6786-49b9-b899-5b8d18630f5d.png"
+    },
+    {
+      "track": "event",
+      "path": "event-128.png",
+      "width": 128,
+      "height": 128,
+      "sha256": "893320d2c3c695b086fce2a01a94b656d0abf9143f8df8592444b80dd8cd3d05",
+      "bytes": 12402,
+      "sourceSha256": "0f174486da0376c0252418a032db98ba2ad4c46e3c1614d6434bedbe68641f2c",
+      "source": "exec-6feaa33a-6786-49b9-b899-5b8d18630f5d.png"
+    }
+  ]
+}

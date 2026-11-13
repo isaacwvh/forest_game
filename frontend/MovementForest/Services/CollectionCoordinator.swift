@@ -76,6 +76,11 @@ final class CollectionCoordinator: ObservableObject {
         self.catalogue = initialCatalogue
         do {
             state = try resolved.load(server: service.serverID, user: userID) ?? CollectionJournalState()
+            if let cached = state.milestonesCache {
+                milestones = cached
+                milestonesConfirmedAt = state.milestonesConfirmedAt
+                refreshFailed = true
+            }
             try state.pending?.validate()
             if state.result?.exchangeId != nil { confirmedExchange = state.result }
             if let milestoneID = state.result?.milestoneId { confirmedMilestoneIDs.insert(milestoneID) }
@@ -109,8 +114,26 @@ final class CollectionCoordinator: ObservableObject {
         tokenBalance = balance; economyVersion = version; onWallet?(balance, version)
     }
     private func persist(_ value: CollectionJournalState) throws {
-        try journal.save(value, server: service.serverID, user: userID)
-        state = value
+        var updated = value
+        updated.milestoneTrack = value.milestoneTrack ?? state.milestoneTrack
+        updated.milestoneScroll = value.milestoneScroll ?? state.milestoneScroll
+        updated.milestonesCache = value.milestonesCache ?? state.milestonesCache
+        updated.milestonesConfirmedAt = value.milestonesConfirmedAt ?? state.milestonesConfirmedAt
+        try journal.save(updated, server: service.serverID, user: userID)
+        state = updated
+    }
+    func rememberMilestone(track: String, anchor: String? = nil) {
+        guard attached else { return }
+        var updated = state
+        updated.milestoneTrack = track
+        if let anchor = anchor {
+            var positions = updated.milestoneScroll ?? [:]
+            positions[track] = anchor
+            updated.milestoneScroll = positions
+        }
+        guard updated.milestoneTrack != state.milestoneTrack || updated.milestoneScroll != state.milestoneScroll else { return }
+        do { try persist(updated) }
+        catch { message = "Your milestone position could not be saved." }
     }
     private func recover() async throws {
         guard let pending = state.pending else { return }
@@ -127,7 +150,15 @@ final class CollectionCoordinator: ObservableObject {
                     receipt.plantId == pending.target && receipt.tokensEarned == body.expectedTokens
             case .open: matchesOperation = receipt.ownedPackId == pending.target && receipt.plant != nil && receipt.openingId != nil
             case .exchange: matchesOperation = receipt.requestId == pending.id && receipt.exchangeId != nil && receipt.packs?.isEmpty == false
-            case .milestone: matchesOperation = receipt.requestId == pending.id && receipt.milestoneId == pending.milestoneID && receipt.milestoneEventId != nil && receipt.tokensEarned != nil
+            case .milestone:
+                let packs = receipt.packs ?? []
+                matchesOperation = receipt.requestId == pending.id && receipt.milestoneId == pending.milestoneID &&
+                    receipt.milestoneEventId != nil && receipt.tokensEarned.flatMap(ExactAmount.integer) != nil &&
+                    (receipt.gemsEarned == nil || receipt.gemsEarned.flatMap(ExactAmount.integer) != nil) &&
+                    (receipt.gemBalance == nil || receipt.gemBalance.flatMap(ExactAmount.integer) != nil) &&
+                    Set(packs.map(\.id)).count == packs.count && packs.allSatisfy {
+                        $0.version > 0 && $0.packId.range(of: "^[a-z][a-z0-9_-]{0,99}$", options: .regularExpression) != nil
+                    }
             }
             guard receipt.economyVersion >= 0, ExactAmount.integer(receipt.tokenBalance) != nil,
                   matchesOperation else {
@@ -137,6 +168,7 @@ final class CollectionCoordinator: ObservableObject {
             try persist(CollectionJournalState(pending: nil, result: receipt))
             if isOpening { discovery.invalidate() }
             if let milestoneID = receipt.milestoneId { confirmedMilestoneIDs.insert(milestoneID) }
+            confirmedMilestoneIDs.formUnion(receipt.supersededMilestoneIds ?? [])
             if pending.kind == .exchange {
                 confirmedExchange = receipt
                 exchangeOfferID = (try? ActivityWire.decoder().decode(CollectionExchangeBody.self, from: pending.body))?.offerId
@@ -148,7 +180,7 @@ final class CollectionCoordinator: ObservableObject {
             }
             DiagnosticHistory.shared.record("Collection", "confirmed \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
             message = pending.kind == .sell ? "Plant sold for \(receipt.tokensEarned ?? "0") tokens." :
-                pending.kind == .milestone ? "Milestone confirmed: +\(receipt.tokensEarned ?? "0") visitor tokens." :
+                pending.kind == .milestone ? "Milestone reward saved." :
                 (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
             if isOpening || pending.kind == .sell { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
@@ -166,6 +198,10 @@ final class CollectionCoordinator: ObservableObject {
         offers = summary.offers
         milestones = summary.milestones ?? []
         milestonesConfirmedAt = Date()
+        var cached = state
+        cached.milestonesCache = milestones
+        cached.milestonesConfirmedAt = milestonesConfirmedAt
+        try persist(cached)
         for offer in offers { definitions[offer.pack.id] = offer.pack }
         let catalogue = try await service.catalogue()
         guard attached else { return }

@@ -1,4 +1,6 @@
-**Woodland release and catalog follow-up, 13 November 2026:** migration head is `0016_sprout_discovery`. Thirty species, three packs, gem spending, extended skills and earned sprout discovery are source-implemented. Use the [preview/apply upgrade and device walkthrough](WOODLAND_RELEASE.md); migrations alone do not activate the Woodland release. Earlier delivery records below remain historical.
+**Milestone tracks, 13 November 2026:** migration head is `0017_milestone_tracks`. The revised five-track system, pinned unopened-pack bundles, source-aware bonus gems, permanent quest progress and explicit legacy backfill are source-implemented. Use [milestone publication and validation](MILESTONES.md); migration alone does not activate rewards or schedule an event.
+
+**Woodland release and catalog follow-up, 13 November 2026:** thirty species, three packs, gem spending, extended skills and earned sprout discovery are source-implemented. Use the [preview/apply upgrade and device walkthrough](WOODLAND_RELEASE.md); migrations alone do not activate the Woodland release. Earlier delivery records below remain historical.
 
 # Movement Forest backend — B1–B7 collection slice
 
@@ -11,7 +13,8 @@ Inventory capacity/selling source is implemented in `0012_inventory_management`.
 Defaults: 50 owned plants total and 50 unopened packs; level benefits can raise
 owned capacity to 100. Placement shares owned capacity and clearance/boundary rules,
 with no independent 20-planted ceiling. Current migration head is
-`0016_sprout_discovery`, adding permanent acquisition-based sprout artwork unlocks.
+`0017_milestone_tracks`, adding durable quest entitlements and bonus-gem accounting
+after the permanent acquisition-based sprout unlocks in `0016_sprout_discovery`.
 See [catalog/capacity acceptance](../frontend/CATALOG_CAPACITY_ACCEPTANCE.md) and
 [inventory rules, resale formula and explicit upgrade](INVENTORY_MANAGEMENT.md).
 The personal database requires that migration before running the updated API.
@@ -36,7 +39,8 @@ upgrade/enablement and the device checklist. No live cleanup is enabled by defau
 This foundation implements accounts, catalogue/profile records, owned plants,
 owner-only garden/storage reads, atomic B3 placement edits, exact B4 growth/attraction
 calculations, B5 steps synchronisation, B6 visitors and B7 token exchange/pack draws.
-Wider inputs, collection unlocks/milestones and social work remain deferred.
+Milestone tracks are now source-implemented with explicit activation; social work
+remains deferred.
 See [COLLECTION_API.md](COLLECTION_API.md) and [F7 acceptance](../frontend/F7_COLLECTION_ACCEPTANCE.md). See [ACTIVITY_API.md](ACTIVITY_API.md)
 for the F5 contract, enrolment/device policies, examples and verification commands.
 The Supabase email/password iPhone/Xcode/Tailscale flow and configuration locations
