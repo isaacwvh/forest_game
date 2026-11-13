@@ -57,6 +57,59 @@ final class JournalPresentationTests: XCTestCase {
         XCTAssertEqual(display.displayRemaining, JournalAmount.water("39308141"))
         XCTAssertEqual(display.caption, "\(JournalAmount.water("39308141")) to Young")
     }
+    func testOwnedMetadataKeepsPinnedValuesWhenCurrentCatalogueHasDifferentRules() throws {
+        let pinned = APIProfileReference(id: "old", version: 1)
+        var plant = copy()
+        plant.pinnedProfiles = APIPinnedProfiles(growth: pinned, behaviour: pinned, attraction: pinned)
+        var catalogue = APICatalogue(catalogVersion: "current", isFixture: true, coordinateUnit: "garden_unit",
+            gardenUnitMetres: 1, coordinateDecimalPlaces: 3, rotationDecimalPlaces: 2, species: [],
+            profiles: ["behaviour": [APICatalogueProfile(id: "old", version: 2, metricMultipliers: ["steps": 9])],
+                       "attraction": [APICatalogueProfile(id: "old", version: 2, gameplayTags: ["herb"])]])
+        XCTAssertTrue(JournalOwnedPlantMetadata.multipliers(plant, catalogue: catalogue).isEmpty)
+        XCTAssertTrue(JournalOwnedPlantMetadata.tags(plant, catalogue: catalogue).isEmpty)
+        plant.metricMultipliers = ["steps": 1, "workout_minutes.*": Decimal(string: "0.25")!]
+        plant.gameplayTags = ["tree", "woodland"]
+        XCTAssertEqual(JournalOwnedPlantMetadata.multipliers(plant, catalogue: catalogue), plant.metricMultipliers)
+        XCTAssertEqual(JournalOwnedPlantMetadata.tags(plant, catalogue: catalogue), ["tree", "woodland"])
+        // Older responses can still resolve an exact matching profile, including in storage.
+        plant.metricMultipliers = nil; plant.gameplayTags = nil
+        catalogue.profiles = ["behaviour": [APICatalogueProfile(id: "old", version: 1, metricMultipliers: ["steps": 1])],
+                              "attraction": [APICatalogueProfile(id: "old", version: 1, gameplayTags: ["tree"])]]
+        XCTAssertEqual(JournalOwnedPlantMetadata.multipliers(plant, catalogue: catalogue), ["steps": 1])
+        XCTAssertEqual(JournalOwnedPlantMetadata.tags(plant, catalogue: catalogue), ["tree"])
+        // A known empty value must not fall back to a different display.
+        plant.metricMultipliers = [:]; plant.gameplayTags = []
+        XCTAssertTrue(JournalOwnedPlantMetadata.multipliers(plant, catalogue: catalogue).isEmpty)
+        XCTAssertTrue(JournalOwnedPlantMetadata.tags(plant, catalogue: catalogue).isEmpty)
+    }
+    func testTagPresentationKeepsTraitsAndOmitsRepeatedRarity() {
+        XCTAssertEqual(JournalPlantTags.visible(["herb", "flowering", "rare", "woodland", "Herb", "", "  "]),
+                       ["Herb", "Flowering", "Woodland"])
+        XCTAssertEqual(JournalPlantTags.visible(["under_story", "ground-cover"]), ["Under Story", "Ground Cover"])
+    }
+    @MainActor
+    func testProfileSectionsFitNarrowAndAccessibilityWidths() {
+        let multipliers: [String: Decimal] = ["steps": 1, "flights_climbed": 10,
+            "workout_minutes.*": Decimal(string: "0.25")!, "workout_minutes.running": Decimal(string: "0.375")!]
+        var unavailable = copy(); unavailable.growthProgress = nil
+        for textSize: DynamicTypeSize in [.large, .xxxLarge, .accessibility3] {
+            for width: CGFloat in [232, 302] {
+                for plant in [copy(), unavailable,
+                              copy(stage: .adult, growth: "1000000000", start: "1000000000", next: nil)] {
+                    let host = UIHostingController(rootView:
+                        VStack {
+                            JournalPlantTagList(tags: ["herb", "flowering", "woodland", "understory"])
+                            JournalPlantDetailProgress(plant: plant)
+                            JournalPlantMultipliers(multipliers: multipliers)
+                        }.environment(\.dynamicTypeSize, textSize))
+                    let size = host.sizeThatFits(in: CGSize(width: width, height: 4000))
+                    XCTAssertLessThanOrEqual(size.width, width + 1)
+                    XCTAssertTrue(size.height.isFinite)
+                    XCTAssertGreaterThan(size.height, 44)
+                }
+            }
+        }
+    }
     @MainActor
     func testCompactCatalogMetricReservesASeparateSingleLineForTheWholeNumber() {
         func height(_ value: String) -> CGFloat {

@@ -234,6 +234,40 @@ final class ForestUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Visitors"].exists)
     }
 
+    func testStoredProfilesShowTagsMultipliersAndIntegratedGrowth() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()
+        let edit = app.buttons["navigation.Edit"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 15))
+        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: edit)
+        waitForExpectations(timeout: 10)
+        func checkDetails() {
+            XCTAssertTrue(app.staticTexts["plantDetails.stage"].waitForExistence(timeout: 5))
+            XCTAssertFalse(app.staticTexts["plantDetails.stage"].label.contains("·"))
+            XCTAssertTrue(app.descendants(matching: .any)["plantDetails.tags"].exists)
+            XCTAssertTrue(app.descendants(matching: .any)["plantDetails.growthBar"].exists)
+            XCTAssertFalse(app.buttons["Growth details"].exists)
+            let multiplier = app.descendants(matching: .any)["plantDetails.multiplier.steps"]
+            let content = app.scrollViews["plantDetails.content"]
+            for _ in 0..<3 {
+                if multiplier.exists { break }
+                content.swipeUp()
+            }
+            XCTAssertTrue(multiplier.exists)
+            XCTAssertFalse(app.staticTexts["Activity multipliers unavailable"].exists)
+            app.buttons["plantDetails.close"].tap()
+        }
+        app.buttons["navigation.My plants"].tap()
+        let owned = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "myplants.stored.")).firstMatch
+        XCTAssertTrue(owned.waitForExistence(timeout: 5)); owned.tap()
+        checkDetails()
+        app.buttons["navigation.Edit"].tap()
+        app.buttons["editor.storage"].tap()
+        let stored = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "storage.copy.")).firstMatch
+        XCTAssertTrue(stored.waitForExistence(timeout: 5)); stored.tap()
+        checkDetails()
+    }
+
     func testOwnedBrowsingIsReadOnlyAndStorageOpensDetailsBeforePlace() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()
@@ -345,6 +379,7 @@ final class ForestUITests: XCTestCase {
         XCTAssertTrue(oak.waitForExistence(timeout: 5)); oak.tap()
         let blue = app.buttons["catalog.variant.blue"]
         XCTAssertTrue(blue.waitForExistence(timeout: 5)); blue.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["plantDetails.tags"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["catalog.stage.sprout"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["catalog.stage.adult"].exists)
         XCTAssertFalse(app.staticTexts["Grow this variant to discover its later stages."].exists)

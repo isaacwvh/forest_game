@@ -30,6 +30,9 @@ struct APIOwnedPlant: Codable, Identifiable, Equatable {
     var baseAttractionMicroUnits: String? = nil
     var contributesAttraction: Bool? = nil
     var gardenSkills: [APIGardenSkillDefinition]? = nil
+    // Optional for older servers, receipts and cached snapshots.
+    var metricMultipliers: [String: Decimal]? = nil
+    var gameplayTags: [String]? = nil
 
     func rendered(catalogue: APICatalogue, assets: any AssetCatalogProviding) -> GardenPlant {
         let version = catalogue.variant(species: speciesId, variant: variantId)?.assetCatalogVersion

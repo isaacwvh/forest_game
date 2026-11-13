@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from forest_api.errors import ApiError
 from forest_api.models import (
     AttractionProfile,
+    BehaviourProfile,
     GardenPlacement,
     GrowthProfile,
     OwnedPlant,
@@ -119,6 +120,61 @@ def test_variant_profile_override_is_resolved_and_pinned(app, register):
         )
         assert plant.attraction_profile_id == "blue_attraction"
         assert plant.growth_profile_id == "dev_oak_growth"
+
+
+def test_owned_display_metadata_survives_catalogue_profile_changes(client, app, headers, register):
+    account = register()
+    owner = UUID(account["profile"]["userId"])
+    stored_id = UUID(account["starterPlantId"])
+    with app.state.database.sessions.begin() as session:
+        placed = award_plant(session, owner, "oak", "standard", "test", str(uuid4()))
+        placed_id = placed.id
+        session.add(
+            GardenPlacement(
+                plant_id=placed_id,
+                owner_id=owner,
+                garden_id=UUID(account["gardenId"]),
+                x=Decimal("3"),
+                y=Decimal("3"),
+                rotation_degrees=Decimal("0"),
+            )
+        )
+        species = session.get(Species, "oak")
+        old_behaviour = session.get(BehaviourProfile, (species.behaviour_profile_id, 1))
+        old_attraction = session.get(AttractionProfile, (species.attraction_profile_id, 1))
+        expected_multipliers = old_behaviour.rules["metricMultipliers"]
+        expected_tags = old_attraction.gameplay_tags
+        session.add_all(
+            [
+                BehaviourProfile(
+                    id=old_behaviour.id,
+                    version=2,
+                    rules={**old_behaviour.rules, "metricMultipliers": {"steps": 9}},
+                ),
+                AttractionProfile(
+                    id=old_attraction.id,
+                    version=2,
+                    stage_attraction=old_attraction.stage_attraction,
+                    gameplay_tags=["herb", "flowering"],
+                ),
+            ]
+        )
+        session.flush()
+        species.behaviour_profile_version = 2
+        species.attraction_profile_version = 2
+    catalogue = client.get("/v1/catalog", headers=headers()).json()
+    assert all(profile["version"] == 2 for profile in catalogue["profiles"]["behaviour"])
+    inventory = client.get("/v1/me/inventory", headers=headers()).json()
+    garden = client.get("/v1/me/garden", headers=headers()).json()
+    detail = client.get(f"/v1/me/plants/{stored_id}", headers=headers()).json()
+    for plant in [inventory["plants"][0], garden["plants"][0], detail]:
+        assert plant["metricMultipliers"] == expected_multipliers
+        assert plant["gameplayTags"] == expected_tags
+        assert plant["pinnedProfiles"]["behaviour"]["version"] == 1
+        assert plant["pinnedProfiles"]["attraction"]["version"] == 1
+        assert plant["growthMicroUnits"] == "0"
+    assert inventory["plants"][0]["placement"] is None
+    assert garden["plants"][0]["plantId"] == str(placed_id)
 
 
 def test_placed_plants_are_excluded_from_storage_and_keep_fractional_coordinates(

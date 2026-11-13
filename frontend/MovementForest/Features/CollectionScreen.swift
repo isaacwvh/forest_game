@@ -612,6 +612,9 @@ private struct CatalogDetailScreen: View {
                 }.frame(width: 172)
                     .accessibilityLabel("\(row.variant.displayName) \(row.species.displayName), sprout, always visible")
                 variantPicker
+                if let tags = profile("attraction")?.gameplayTags, !tags.isEmpty {
+                    JournalPlantTagList(tags: tags)
+                }
                 JournalGrid(minimumWidth: 76, fixedColumns: 3) {
                     JournalAttribute(title: "Variant", value: row.variant.displayName,
                         explanation: row.variant.displayName, symbol: "leaf")
@@ -630,21 +633,7 @@ private struct CatalogDetailScreen: View {
                     JournalSectionHeading(title: "Growth stages")
                     stageGrid
                 }
-                VStack(alignment: .leading, spacing: 8) {
-                    JournalSectionHeading(title: "Activity multipliers")
-                    if multipliers.isEmpty {
-                        Text("Activity multipliers unavailable").font(.callout).foregroundStyle(JournalTheme.secondary)
-                    } else {
-                        JournalGrid(minimumWidth: 100) {
-                            ForEach(multipliers.keys.sorted(), id: \.self) { key in
-                                JournalMetric(title: ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×",
-                                    explanation: "", metric: key)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
-                            }
-                        }
-                    }
-                }
+                JournalPlantMultipliers(multipliers: multipliers)
                 VStack(alignment: .leading, spacing: 8) {
                     JournalSectionHeading(title: "Garden skills")
                     if let skills = profile("behaviour")?.gardenEffects, !skills.isEmpty {

@@ -476,6 +476,8 @@ class PlantPresenter:
             base_attraction_micro_units=str(getattr(attraction_definition.stage_attraction, stage)),
             contributes_attraction=placement is not None,
             garden_skills=self.behaviour(plant).model_dump(by_alias=True)["gardenEffects"],
+            metric_multipliers=self.behaviour(plant).metric_multipliers,
+            gameplay_tags=attraction_definition.gameplay_tags,
             model_key=assets.model_key,
             thumbnail_key=assets.thumbnail_key,
             placement=PlacementDTO(

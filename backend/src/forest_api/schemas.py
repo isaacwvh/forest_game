@@ -242,6 +242,9 @@ class PlantDTO(DTO):
     placement: PlacementDTO | None
     growth_progress: GrowthProgressDTO | None = None
     garden_skills: list[dict] = Field(default_factory=list)
+    # Read-only presentation facts from this copy's immutable pinned profiles.
+    metric_multipliers: dict[str, float] | None = None
+    gameplay_tags: list[str] | None = None
 
 
 class InventoryDTO(DTO):

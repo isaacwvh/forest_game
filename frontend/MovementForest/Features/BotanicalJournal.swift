@@ -475,6 +475,176 @@ struct JournalPlantProgress: View {
     }
 }
 
+/// Full profiles use the same pinned-stage fraction as tiles, with visible endpoints.
+struct JournalPlantDetailProgress: View {
+    let plant: APIOwnedPlant
+    private var summary: JournalGrowthSummary { JournalGrowthSummary(plant: plant) }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 16) {
+                Text(summary.fullyGrown ? "Fully grown" : plant.growthStage.title)
+                    .accessibilityIdentifier("plantDetails.stage")
+                Spacer(minLength: 0)
+                if let next = summary.nextStage { Text(next).multilineTextAlignment(.trailing) }
+            }.font(.system(.title3, design: .serif).weight(.semibold)).foregroundStyle(JournalTheme.ink)
+            if let progress = plant.growthProgress, let fraction = summary.fraction {
+                if !summary.fullyGrown {
+                    ProgressView(value: fraction).tint(JournalTheme.action)
+                        .accessibilityLabel("Progress to next stage")
+                        .accessibilityValue(fraction.formatted(.percent))
+                        .accessibilityIdentifier("plantDetails.growthBar")
+                    HStack(alignment: .firstTextBaseline, spacing: 16) {
+                        Text("\(JournalAmount.water(progress.stageStartMicroUnits)) water")
+                            .accessibilityLabel("Stage begins at \(ExactAmount.water(progress.stageStartMicroUnits)) water")
+                        Spacer(minLength: 0)
+                        if let next = progress.nextStageMicroUnits {
+                            Text("\(JournalAmount.water(next)) water").multilineTextAlignment(.trailing)
+                                .accessibilityLabel("Next stage at \(ExactAmount.water(next)) water")
+                        }
+                    }.font(.caption).monospacedDigit()
+                } else {
+                    Text("\(JournalAmount.water(progress.maximumGrowthMicroUnits)) water")
+                        .font(.caption).monospacedDigit()
+                        .accessibilityLabel("Fully grown at \(ExactAmount.water(progress.maximumGrowthMicroUnits)) water")
+                }
+            } else {
+                Text("Growth unavailable").font(.callout)
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    remainingWater.fixedSize()
+                    Spacer(minLength: 0)
+                    stageNumber.fixedSize()
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    remainingWater
+                    stageNumber
+                }
+            }.font(.caption)
+        }.foregroundStyle(JournalTheme.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    @ViewBuilder private var remainingWater: some View {
+        if let remaining = summary.displayRemaining {
+            Text("\(remaining) water remaining").monospacedDigit()
+                .accessibilityLabel("\(summary.remaining ?? remaining) water remaining")
+        }
+    }
+    private var stageNumber: some View { Text("Stage \(plant.growthStage.number) of 4") }
+}
+
+/// Old caches may only have references. Never substitute current species rules.
+enum JournalOwnedPlantMetadata {
+    private static func profile(_ reference: APIProfileReference?, kind: String, catalogue: APICatalogue?) -> APICatalogueProfile? {
+        guard let reference = reference else { return nil }
+        return catalogue?.profiles?[kind]?.first { $0.id == reference.id && $0.version == reference.version }
+    }
+    static func multipliers(_ plant: APIOwnedPlant, catalogue: APICatalogue?) -> [String: Decimal] {
+        plant.metricMultipliers
+            ?? profile(plant.pinnedProfiles?.behaviour, kind: "behaviour", catalogue: catalogue)?.metricMultipliers ?? [:]
+    }
+    static func tags(_ plant: APIOwnedPlant, catalogue: APICatalogue?) -> [String] {
+        plant.gameplayTags
+            ?? profile(plant.pinnedProfiles?.attraction, kind: "attraction", catalogue: catalogue)?.gameplayTags ?? []
+    }
+}
+
+enum JournalPlantTags {
+    static func visible(_ tags: [String]) -> [String] {
+        var seen = Set<String>()
+        return tags.compactMap { tag in
+            let key = tag.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard !key.isEmpty, PlantRarity(label: key) == nil else { return nil }
+            let title = key.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ").capitalized
+            return seen.insert(title).inserted ? title : nil
+        }
+    }
+}
+
+struct JournalPlantTagList: View {
+    let tags: [String]
+    var body: some View {
+        JournalTagFlow {
+            ForEach(JournalPlantTags.visible(tags), id: \.self) { tag in
+                Text(tag).font(.caption).foregroundStyle(JournalTheme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(JournalTheme.sage, in: Capsule())
+            }
+        }.accessibilityElement(children: .combine).accessibilityLabel("Plant tags")
+            .accessibilityValue(JournalPlantTags.visible(tags).joined(separator: ", "))
+            .accessibilityIdentifier("plantDetails.tags")
+    }
+}
+
+/// Center each row without scrolling or truncating tags at larger text sizes.
+private struct JournalTagFlow: Layout {
+    private let spacing: CGFloat = 6
+    private func rows(_ subviews: Subviews, width: CGFloat) -> [[CGSize]] {
+        var rows: [[CGSize]] = [], row: [CGSize] = [], used: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(ProposedViewSize(width: width, height: nil))
+            if !row.isEmpty && used + spacing + size.width > width {
+                rows.append(row); row = []; used = 0
+            }
+            used += (row.isEmpty ? 0 : spacing) + size.width
+            row.append(size)
+        }
+        if !row.isEmpty { rows.append(row) }
+        return rows
+    }
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let natural = subviews.reduce(CGFloat(0)) { $0 + $1.sizeThatFits(.unspecified).width }
+            + CGFloat(max(0, subviews.count - 1)) * spacing
+        let width = max(0, proposal.width.flatMap { $0.isFinite ? $0 : nil } ?? natural)
+        let rows = rows(subviews, width: width)
+        return CGSize(width: width, height: rows.reduce(CGFloat(0)) { $0 + ($1.map(\.height).max() ?? 0) }
+            + CGFloat(max(0, rows.count - 1)) * spacing)
+    }
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var index = 0, y = bounds.minY
+        for row in rows(subviews, width: bounds.width) {
+            let rowWidth = row.reduce(CGFloat(0)) { $0 + $1.width } + CGFloat(max(0, row.count - 1)) * spacing
+            var x = bounds.minX + max(0, (bounds.width - rowWidth) / 2)
+            for size in row {
+                subviews[index].place(at: CGPoint(x: x, y: y), anchor: .topLeading,
+                    proposal: ProposedViewSize(width: size.width, height: size.height))
+                x += size.width + spacing; index += 1
+            }
+            y += (row.map(\.height).max() ?? 0) + spacing
+        }
+    }
+}
+
+struct JournalPlantMultipliers: View {
+    let multipliers: [String: Decimal]
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Activity multipliers").font(.system(.title3, design: .serif).weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
+                .padding(.top, 8).padding(.bottom, 4)
+            if multipliers.isEmpty {
+                Text("Activity multipliers unavailable").font(.callout).foregroundStyle(JournalTheme.secondary)
+            } else {
+                JournalGrid(minimumWidth: 112) {
+                    ForEach(multipliers.keys.sorted(), id: \.self) { key in
+                        HStack(spacing: 4) {
+                            JournalInfoIcon(title: ActivityMetricLabel.title(key),
+                                explanation: "\(ActivityMetricLabel.title(key)): \(multipliers[key]!.formatted())×", metric: key)
+                            Text("\(multipliers[key]!.formatted())×").font(.callout).monospacedDigit()
+                                .lineLimit(1).minimumScaleFactor(0.85)
+                                .accessibilityLabel("\(ActivityMetricLabel.title(key)), \(multipliers[key]!.formatted()) times")
+                            Spacer(minLength: 0)
+                        }.padding(.trailing, 8).frame(maxWidth: .infinity, alignment: .leading)
+                            .background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
+                            .accessibilityIdentifier("plantDetails.multiplier.\(key)")
+                    }
+                }
+            }
+        }.foregroundStyle(JournalTheme.ink).frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
 struct PlantInspection: Identifiable { let id: UUID }
 
 /// Catalog-only fallback for an older/offline catalogue's blank or placeholder copy.

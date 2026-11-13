@@ -103,10 +103,11 @@ struct PlantDetailScreen: View {
         catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId.capitalized
     }
     private var multipliers: [String: Decimal] {
-        guard let reference = owned?.pinnedProfiles?.behaviour else { return [:] }
-        return catalogue?.profiles?["behaviour"]?.first {
-            $0.id == reference.id && $0.version == reference.version
-        }?.metricMultipliers ?? [:]
+        owned.map { JournalOwnedPlantMetadata.multipliers($0, catalogue: catalogue) } ?? [:]
+    }
+    private var tags: [String] {
+        if isSample { return SamplePlantPresentation.tags[plant.speciesId] ?? [] }
+        return owned.map { JournalOwnedPlantMetadata.tags($0, catalogue: catalogue) } ?? []
     }
     var body: some View {
         JournalInspector(title: "Plant details", close: { dismiss() }) {
@@ -118,6 +119,7 @@ struct PlantDetailScreen: View {
                 PlantNameText(name, rarity: rarity)
                     .font(.system(.largeTitle, design: .serif).weight(.semibold))
                 Text(plant.variantId.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
+                if !tags.isEmpty { JournalPlantTagList(tags: tags) }
             }
             JournalGrid(minimumWidth: 52, fixedColumns: owned == nil ? 2 : owned?.baseAttractionMicroUnits == nil ? 3 : 4) {
                 JournalAttribute(title: "Variant", value: plant.variantId.capitalized,
@@ -133,29 +135,18 @@ struct PlantDetailScreen: View {
                 }
             }.padding(8).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
             VStack(alignment: .leading, spacing: 8) {
-                Text("\(plant.growthStage.title) · \(plant.growthStage.number) / 4")
-                    .font(.system(.title3, design: .serif).weight(.semibold))
-                    .accessibilityIdentifier("plantDetails.stage")
                 if let owned = owned {
-                    JournalPlantProgress(plant: owned)
+                    JournalPlantDetailProgress(plant: owned)
                     Text(owned.placement == nil ? "In storage" : "Planted")
                         .font(.caption).foregroundStyle(JournalTheme.secondary)
                         .accessibilityIdentifier("plantDetails.placement")
+                } else {
+                    Text(plant.growthStage.title).font(.system(.title3, design: .serif).weight(.semibold))
+                        .accessibilityIdentifier("plantDetails.stage")
+                    Text("Stage \(plant.growthStage.number) of 4").font(.caption).foregroundStyle(JournalTheme.secondary)
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
-            if !multipliers.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    JournalSectionHeading(title: "Activity multipliers")
-                    JournalGrid(minimumWidth: 96) {
-                        ForEach(multipliers.keys.sorted(), id: \.self) { key in
-                            JournalMetric(title: ActivityMetricLabel.title(key), value: "\(multipliers[key]!.formatted())×",
-                                explanation: "", metric: key)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(JournalTheme.sage.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
-                        }
-                    }
-                }
-            }
+            if owned != nil { JournalPlantMultipliers(multipliers: multipliers) }
             if let owned = owned {
                 VStack(alignment: .leading, spacing: 8) {
                     JournalSectionHeading(title: "Garden skills")
@@ -177,17 +168,6 @@ struct PlantDetailScreen: View {
                         Text("No garden skill").font(.callout).foregroundStyle(JournalTheme.secondary)
                     } else {
                         Text("Skill information unavailable").font(.callout).foregroundStyle(JournalTheme.secondary)
-                    }
-                    if let progress = owned.growthProgress {
-                        DisclosureGroup("Growth details") {
-                            VStack(alignment: .leading, spacing: 8) {
-                                QuantityDetailRow(metric: "water", title: "Stage begins at",
-                                    value: JournalAmount.water(progress.stageStartMicroUnits))
-                                if let next = progress.nextStageMicroUnits {
-                                    QuantityDetailRow(metric: "water", title: "Next stage at", value: JournalAmount.water(next))
-                                }
-                            }.padding(.top, 8)
-                        }.padding(.top, 10)
                     }
                 }
             }

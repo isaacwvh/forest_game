@@ -39,6 +39,8 @@ extension APICatalogue {
 /// Display metadata for bundled sample/asset views only; approved launch_balance.PLANTS.
 /// Connected names always use their actual catalogue, including legacy/unknown values.
 enum SamplePlantPresentation {
+    // Only the two species in the bundled sample garden; never used for owned copies.
+    static let tags = ["oak": ["tree", "woodland"], "moonwillow": ["tree", "woodland"]]
     static let rarities = [
         "oak": "common",
         "moonwillow": "epic",

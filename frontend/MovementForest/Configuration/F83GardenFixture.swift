@@ -121,7 +121,8 @@ final class PresentationGardenService: GardenServing {
             growthMicroUnits: copy.growthMicroUnits, growthStage: copy.growthStage, modelKey: copy.modelKey,
             thumbnailKey: copy.thumbnailKey, placement: placement, pinnedProfiles: copy.pinnedProfiles,
             growthProgress: copy.growthProgress, baseAttractionMicroUnits: copy.baseAttractionMicroUnits,
-            contributesAttraction: copy.contributesAttraction, gardenSkills: copy.gardenSkills)
+            contributesAttraction: copy.contributesAttraction, gardenSkills: copy.gardenSkills,
+            metricMultipliers: copy.metricMultipliers, gameplayTags: copy.gameplayTags)
         copies[index] = updated
         current = APIGarden(gardenId: current.gardenId, width: current.width, depth: current.depth,
             coordinateUnit: current.coordinateUnit, gardenUnitMetres: current.gardenUnitMetres,
