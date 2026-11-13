@@ -26,6 +26,25 @@ slogans and footer filler are absent from the list.
 
 ## Executed portable checks
 
+### Selector container replacement — 14 November 2026
+
+Device feedback confirmed that the earlier height, layer and native scroll-edge
+changes did not resolve the failure, including after refresh. Those diagnoses
+were not established by native reproduction. The selector's horizontal ScrollView
+is now removed. An intrinsic row retains the five artwork/text controls when they
+fit; a labelled native menu provides all five tracks at narrow widths/large text.
+There is no selector scroll state or iOS-26-only edge modifier. The failed edge
+modifier and extra z-order override are removed. The scrolling milestone list,
+account-scoped saved positions, reward data and claim operations are unchanged.
+
+The pixel regression covers leaving/returning with and without list scrolling,
+refreshing after return, and the large-text menu's selected track/visible label.
+The fixture continues recreating the entire native NavigationStack on each route
+change. Portable resource/project/contract/contrast validation, 94 Swift syntax
+parses and whitespace checks pass. Native Xcode/UI/VoiceOver execution and device
+confirmation remain pending; these portable checks cannot establish the original
+UIKit/SwiftUI rendering cause or certify that the device symptom is resolved.
+
 ### Native scroll-edge follow-up — 13 November 2026
 
 Device feedback confirmed that the sibling-layer correction below did not resolve
@@ -105,7 +124,7 @@ also check that cached milestone rows survive coordinator recreation.
   and left artwork → text → progress/action arrangement against both v2 concepts.
 - Inspect Growth filters and independent quest cards, a real event with a deadline,
   and No active event when none is scheduled. Only the two timeline tracks have rails.
-- At the largest text sizes, confirm horizontal selector scrolling, the Growth
+- At the largest text sizes, confirm the labelled native track menu, the Growth
   menu, card wrapping/vertical actions and 44-point buttons. Check VoiceOver
   selection, ready indicators, progress, rewards, pending and full-storage states.
 - Claim direct packs and mixed bundles, open through Packs, fill storage and retry

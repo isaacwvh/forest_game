@@ -18,7 +18,8 @@ Growth has All/Maturity/Discovery, with a menu at accessibility sizes. Event sho
 real instance/deadline information and an honest empty state. Removed slogans,
 footer filler and deferred cosmetic rewards stay absent.
 
-Native labels wrap, selectors scroll horizontally and larger text moves actions
+Native labels wrap; selectors use an intrinsic, non-scrolling row, with a labelled
+native track menu when the five controls cannot fit. Larger text moves actions
 below requirements. Existing journal colors/buttons and confirmed quantities
 remain authoritative. An information sheet holds activity-day/workout/legacy and
 event semantics. Cached rows, pending requests, full storage and unavailable earned

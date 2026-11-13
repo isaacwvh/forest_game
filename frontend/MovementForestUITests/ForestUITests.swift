@@ -12,12 +12,16 @@ final class ForestUITests: XCTestCase {
         XCTAssertTrue(pages.buttons["Milestones"].waitForExistence(timeout: 15))
         pages.buttons["Milestones"].tap()
         let list = app.scrollViews["milestones.list"]
-        let steps = app.buttons["milestones.track.steps"]
+        let steps = app.buttons["milestones.trackMenu"].exists
+            ? app.buttons["milestones.trackMenu"] : app.buttons["milestones.track.steps"]
         XCTAssertTrue(steps.waitForExistence(timeout: 5))
         assertMilestoneSelectorPainted(steps, in: app)
         // Re-entry must also paint correctly without scrolling on the first visit.
         pages.buttons["Packs"].tap()
         pages.buttons["Milestones"].tap()
+        XCTAssertTrue(steps.waitForExistence(timeout: 5))
+        app.buttons["Refresh collection"].tap()
+        assertMilestoneSelectorPainted(steps, in: app)
         for _ in 0..<3 {
             XCTAssertTrue(steps.waitForExistence(timeout: 5))
             XCTAssertTrue(steps.isHittable)
@@ -59,7 +63,7 @@ final class ForestUITests: XCTestCase {
         pages.buttons["Milestones"].tap()
         XCTAssertTrue(app.staticTexts["No active event."].waitForExistence(timeout: 5))
         selectMilestoneTrack("event", in: app)
-        XCTAssertTrue(app.buttons["milestones.track.event"].isSelected)
+        assertMilestoneSelection("event", in: app)
         XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
     }
 
@@ -86,20 +90,25 @@ final class ForestUITests: XCTestCase {
         app.segmentedControls.buttons["Packs"].tap()
         app.segmentedControls.buttons["Milestones"].tap()
         selectMilestoneTrack("special", in: app)
-        XCTAssertTrue(app.buttons["milestones.track.special"].isSelected)
+        assertMilestoneSelection("special", in: app)
+        XCTAssertTrue(app.buttons["milestones.trackMenu"].exists)
+        assertMilestoneSelectorPainted(app.buttons["milestones.trackMenu"], in: app)
         XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
     }
 
     private func selectMilestoneTrack(_ track: String, in app: XCUIApplication) {
+        let menu = app.buttons["milestones.trackMenu"]
+        if menu.exists { menu.tap() }
         let button = app.buttons["milestones.track.\(track)"]
         XCTAssertTrue(button.waitForExistence(timeout: 5))
-        let strip = app.scrollViews["milestones.tracks"]
-        for _ in 0..<5 {
-            if button.isHittable { break }
-            strip.swipeLeft()
-        }
         XCTAssertTrue(button.isHittable)
         button.tap()
+    }
+
+    private func assertMilestoneSelection(_ track: String, in app: XCUIApplication) {
+        let menu = app.buttons["milestones.trackMenu"]
+        if menu.exists { XCTAssertEqual(menu.value as? String, track.capitalized) }
+        else { XCTAssertTrue(app.buttons["milestones.track.\(track)"].isSelected) }
     }
 
     private func assertMilestoneSelectorPainted(_ button: XCUIElement, in app: XCUIApplication,

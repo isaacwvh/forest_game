@@ -23,20 +23,6 @@ private struct MilestoneRowPositions: PreferenceKey {
     }
 }
 
-private struct MilestoneScrollEdges: ViewModifier {
-    @ViewBuilder func body(content: Content) -> some View {
-        // The fixed header has its own paper backing. Disable the native top
-        // fade as well; sibling z-order does not control toolbar edge effects.
-        #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            content.scrollEdgeEffectHidden(true, for: .top)
-        } else { content }
-        #else
-        content
-        #endif
-    }
-}
-
 @MainActor
 struct MilestoneTracksScreen: View {
     @ObservedObject var store: CollectionCoordinator
@@ -78,10 +64,7 @@ struct MilestoneTracksScreen: View {
                     }.padding(.horizontal, 16).padding(.vertical, 10)
                 }
             }
-            // Keep the fixed controls above the list's drawing/scroll-edge layers.
-            // A covered selector can still receive taps, so height alone is insufficient.
             .background(JournalTheme.paper)
-            .zIndex(1)
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: selected.timeline ? 0 : 14) {
@@ -137,7 +120,6 @@ struct MilestoneTracksScreen: View {
         }
         .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
         .background(JournalPageBackground().ignoresSafeArea())
-        .modifier(MilestoneScrollEdges())
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showsInformation = true } label: {
@@ -177,45 +159,70 @@ struct MilestoneTracksScreen: View {
         }.foregroundStyle(JournalTheme.ink)
     }
     private var selectors: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        // Keep the five controls independent of a second scroll-view lifecycle.
+        // A native menu preserves full-size labels when the row cannot fit.
+        ViewThatFits(in: .horizontal) {
             HStack(spacing: 4) {
+                ForEach(MilestoneTrack.allCases) { trackButton($0) }
+            }.fixedSize(horizontal: true, vertical: true)
+            Menu {
                 ForEach(MilestoneTrack.allCases) { track in
-                    Button {
-                        store.rememberMilestone(track: selected.rawValue, anchor: visibleAnchor)
-                        selected = track
-                        store.rememberMilestone(track: track.rawValue)
-                    } label: {
-                        VStack(spacing: 6) {
-                            MilestoneTrackArtwork(track: track)
-                                .frame(height: 32)
-                                .overlay(alignment: .topTrailing) {
-                                    if track != selected && store.milestones.contains(where: {
-                                        $0.track == track.rawValue && $0.eligible && !claimed($0)
-                                    }) {
-                                        Circle().fill(JournalTheme.action).frame(width: 6, height: 6)
-                                            .accessibilityHidden(true)
-                                    }
-                                }
-                            Text(track.title).font(.subheadline).fixedSize(horizontal: true, vertical: true)
-                            Capsule().fill(track == selected ? JournalTheme.action : Color.clear)
-                                .frame(height: 3).padding(.horizontal, 12)
-                        }.padding(.vertical, 10).padding(.horizontal, 6)
-                            .frame(minWidth: textSize.isAccessibilitySize ? 96 : 62, minHeight: 44)
-                            .background(track == selected ? JournalTheme.sage : Color.clear,
-                                        in: RoundedRectangle(cornerRadius: 16))
-                    }.buttonStyle(.journalQuiet)
-                        .accessibilityLabel(track.title)
-                        .accessibilityValue(store.milestones.contains { $0.track == track.rawValue && $0.eligible && !claimed($0) } ? "Reward ready" : "")
+                    Button { select(track) } label: {
+                        Label(track.title, systemImage: track == selected ? "checkmark" : track.symbol)
+                    }
+                        .accessibilityValue(rewardReady(in: track) ? "Reward ready" : "")
                         .accessibilityAddTraits(track == selected ? [.isSelected] : [])
                         .accessibilityIdentifier("milestones.track.\(track.rawValue)")
                 }
-            }.padding(.horizontal, 12)
+            } label: {
+                HStack(spacing: 10) {
+                    MilestoneTrackArtwork(track: selected)
+                    Text(selected.title).font(.subheadline)
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.down").font(.caption)
+                }.padding(.horizontal, 12).padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(JournalTheme.sage, in: RoundedRectangle(cornerRadius: 16))
+            }.buttonStyle(.journalQuiet)
+                .accessibilityLabel("Milestone track")
+                .accessibilityValue(selected.title)
+                .accessibilityIdentifier("milestones.trackMenu")
         }
-        // A horizontal ScrollView must retain its content height when cached
-        // milestones and the vertical list are present on the first layout pass.
+        .padding(.horizontal, 12).frame(maxWidth: .infinity)
         .fixedSize(horizontal: false, vertical: true)
-        .layoutPriority(1)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("milestones.tracks")
+    }
+    private func rewardReady(in track: MilestoneTrack) -> Bool {
+        store.milestones.contains { $0.track == track.rawValue && $0.eligible && !claimed($0) }
+    }
+    private func select(_ track: MilestoneTrack) {
+        store.rememberMilestone(track: selected.rawValue, anchor: visibleAnchor)
+        selected = track
+        store.rememberMilestone(track: track.rawValue)
+    }
+    private func trackButton(_ track: MilestoneTrack) -> some View {
+        Button { select(track) } label: {
+            VStack(spacing: 6) {
+                MilestoneTrackArtwork(track: track)
+                    .overlay(alignment: .topTrailing) {
+                        if track != selected && rewardReady(in: track) {
+                            Circle().fill(JournalTheme.action).frame(width: 6, height: 6)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                Text(track.title).font(.subheadline).fixedSize(horizontal: true, vertical: true)
+                Capsule().fill(track == selected ? JournalTheme.action : Color.clear)
+                    .frame(width: 28, height: 3)
+            }.padding(.vertical, 10).padding(.horizontal, 4)
+                .frame(minWidth: 44, minHeight: 44)
+                .background(track == selected ? JournalTheme.sage : Color.clear,
+                            in: RoundedRectangle(cornerRadius: 16))
+        }.buttonStyle(.journalQuiet)
+            .accessibilityLabel(track.title)
+            .accessibilityValue(rewardReady(in: track) ? "Reward ready" : "")
+            .accessibilityAddTraits(track == selected ? [.isSelected] : [])
+            .accessibilityIdentifier("milestones.track.\(track.rawValue)")
     }
     @ViewBuilder private var status: some View {
         if store.busy { ProgressView("Confirming…") }
