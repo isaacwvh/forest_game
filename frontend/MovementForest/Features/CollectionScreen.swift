@@ -235,11 +235,11 @@ struct CollectionScreen: View {
     }
 
     private var filteredSpecies: [APISpecies] {
-        catalogueSpecies.filter { species in
+        CatalogPresentation.sortedSpecies(catalogueSpecies.filter { species in
             (rarity == "All" || species.rarity == rarity) &&
             (search.isEmpty || (species.displayName + " " + species.variants.map(\.displayName).joined(separator: " "))
                 .localizedCaseInsensitiveContains(search))
-        }
+        })
     }
     private var catalogContent: some View {
         ScrollView {
@@ -250,7 +250,10 @@ struct CollectionScreen: View {
                     Menu {
                         Picker("Rarity", selection: $rarity) {
                             Text("All rarities").tag("All")
-                            ForEach(Array(Set(catalogueSpecies.compactMap(\.rarity))).sorted(), id: \.self) {
+                            ForEach(Array(Set(catalogueSpecies.compactMap(\.rarity))).sorted {
+                                let left = CatalogPresentation.rarityOrder($0), right = CatalogPresentation.rarityOrder($1)
+                                return left == right ? $0 < $1 : left < right
+                            }, id: \.self) {
                                 Text($0.capitalized).tag($0)
                             }
                         }
@@ -519,6 +522,13 @@ private struct CatalogSpeciesTile: View {
     let assets: any AssetCatalogProviding
     @ObservedObject var discovery: CatalogDiscoveryStore
     @ScaledMetric(relativeTo: .headline) private var nameHeight: CGFloat = 24
+    private var portraitVariant: APIVariant? {
+        CatalogPresentation.portraitVariant(species, discovered: discovery.snapshot?.keys ?? [])
+    }
+    private var portraitStatus: String {
+        guard let variant = portraitVariant ?? species.variants.first else { return "Artwork unavailable" }
+        return discovery.status(species: species.speciesId, variant: variant.variantId, stage: .sprout)
+    }
     var body: some View {
         JournalPlantFrame(rarity: species.rarity) {
             ZStack(alignment: .topTrailing) {
@@ -527,9 +537,12 @@ private struct CatalogSpeciesTile: View {
                 } label: {
                     VStack(spacing: 6) {
                         Group {
-                            if let variant = species.variants.first(where: { $0.variantId == "standard" }) ?? species.variants.first {
-                                JournalPlantImage(plant: CatalogRow(species: species, variant: variant).plant(.sprout), catalog: assets)
-                            } else { Image(systemName: "leaf").resizable().scaledToFit() }
+                            if let variant = portraitVariant ?? species.variants.first {
+                                CatalogPlantArtwork(plant: CatalogRow(species: species, variant: variant).plant(.sprout), catalog: assets,
+                                    revealed: discovery.revealed(species: species.speciesId, variant: variant.variantId, stage: .sprout))
+                            } else {
+                                Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(JournalTheme.secondary)
+                            }
                         }.frame(height: 100).frame(maxWidth: .infinity).padding(8)
                             .background(JournalTheme.sage.opacity(0.45))
                         PlantNameText(species.displayName, rarity: species.rarity, announcesRarity: false)
@@ -544,7 +557,7 @@ private struct CatalogSpeciesTile: View {
                             .padding(.bottom, 12).padding(.horizontal, 6)
                     }.contentShape(Rectangle())
                 }.buttonStyle(.plain)
-                    .accessibilityLabel("\(species.displayName), \(species.rarity?.capitalized ?? "Rarity unavailable"), \(species.variants.count) variants")
+                    .accessibilityLabel("\(species.displayName), \(species.rarity?.capitalized ?? "Rarity unavailable"), \(species.variants.count) variants, \(portraitStatus)")
                     .accessibilityIdentifier("catalog.species.\(species.speciesId)")
                 JournalRarity(rarity: species.rarity)
             }.clipShape(RoundedRectangle(cornerRadius: 16))
@@ -607,10 +620,12 @@ private struct CatalogDetailScreen: View {
         ScrollView {
             VStack(spacing: 18) {
                 JournalPlantFrame(rarity: row.species.rarity) {
-                    JournalPlantImage(plant: row.plant(.sprout), catalog: assets, maximumPixels: 600)
+                    CatalogPlantArtwork(plant: row.plant(.sprout), catalog: assets,
+                        revealed: discovery.revealed(species: row.species.speciesId, variant: row.variant.variantId, stage: .sprout),
+                        maximumPixels: 600)
                         .frame(width: 148, height: 148).padding(12)
                 }.frame(width: 172)
-                    .accessibilityLabel("\(row.variant.displayName) \(row.species.displayName), sprout, always visible")
+                    .accessibilityLabel("\(row.variant.displayName) \(row.species.displayName), sprout, \(discovery.status(species: row.species.speciesId, variant: row.variant.variantId, stage: .sprout))")
                 variantPicker
                 if let tags = profile("attraction")?.gameplayTags, !tags.isEmpty {
                     JournalPlantTagList(tags: tags)
@@ -717,7 +732,7 @@ private struct CatalogDetailScreen: View {
                 .font(.system(.caption, design: .serif).weight(.semibold))
                 .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.center)
             ZStack(alignment: .bottomTrailing) {
-                JournalPlantImage(plant: row.plant(stage), catalog: assets, revealed: revealed, maximumPixels: 300)
+                CatalogPlantArtwork(plant: row.plant(stage), catalog: assets, revealed: revealed, maximumPixels: 300)
                     .frame(height: 88).frame(maxWidth: .infinity)
                 if !revealed {
                     JournalInfoIcon(title: "\(stage.title), \(status)",

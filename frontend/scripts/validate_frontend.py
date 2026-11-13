@@ -183,11 +183,11 @@ def main():
     revealed = {}
     for entry in discovery["grown"]["entries"]:
         key = (entry["speciesId"], entry["variantId"])
-        require(key not in revealed and entry["stages"] == STAGES[1:1 + len(entry["stages"])], "Invalid discovery stages")
-        require(entry["stages"] and len(entry["stages"]) <= 3, "Sprout visibility is not earned discovery")
+        require(key not in revealed and entry["stages"] == STAGES[:len(entry["stages"])], "Invalid discovery stages")
+        require(entry["stages"] and len(entry["stages"]) <= 4, "Discovery must start with an earned sprout")
         revealed[key] = entry["stages"]
-    require(revealed[("oak", "standard")] == STAGES[1:] and revealed[("oak", "blue")] == ["seedling"], "Discovery leaks between variants")
-    print("PASS: variant-specific permanent discovery contract, intermediate stages and zero-row sprout preview.")
+    require(revealed[("oak", "standard")] == STAGES and revealed[("oak", "blue")] == ["sprout", "seedling"], "Discovery leaks between variants")
+    print("PASS: variant-specific permanent discovery contract, earned sprouts and intermediate stages.")
     accounts = json.loads((ROOT / "MovementForest/Resources/Fixtures/account-summary-contract.json").read_text(encoding="utf-8"))
     require(accounts["fresh"]["profile"]["userId"] == accounts["grown"]["profile"]["userId"], "Account fixture identity mismatch")
     for account in accounts.values():
@@ -217,7 +217,7 @@ def main():
                 value["level"] == account["progression"]["level"], "Level benefits version mismatch")
         require(value["baseOfflineCapacity"] == value["effectiveOfflineCapacity"] == base and
                 value["maximumOfflineCapacity"] == base * 3 and value["plantLimit"] == limit and
-                value["plantedLimit"] == 20, "Level benefits tier mismatch")
+                value["plantedLimit"] == limit, "Level benefits tier mismatch")
     notice = after["levelUpNotice"]
     require(notice["fromLevel"] == 4 and notice["toLevel"] == 5 and
             notice["baseOfflineBefore"] == 825 and notice["baseOfflineAfter"] == 900 and

@@ -36,6 +36,7 @@ final class APIClientTests: XCTestCase {
             XCTAssertThrowsError(try result.validate(id: id, operation: "visitor_welcome"))
         }
         XCTAssertEqual(transport.requests.first?.value(forHTTPHeaderField: "X-Forest-Recovery"), "1")
+        XCTAssertEqual(transport.requests.first?.value(forHTTPHeaderField: "X-Forest-Discovery"), "2")
         XCTAssertEqual(transport.requests.first?.httpBody, body)
     }
 

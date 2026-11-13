@@ -24,14 +24,9 @@ struct CollectionWalletSummary: View {
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if textSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 12) { metrics }
-            } else {
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .firstTextBaseline, spacing: 20) { metrics }
-                    VStack(alignment: .leading, spacing: 12) { metrics }
-                }
-            }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .leading),
+                                     count: textSize.isAccessibilitySize ? 1 : 2),
+                      alignment: .leading, spacing: 12) { metrics }
             if cached {
                 Text("Last confirmed").font(.caption).foregroundStyle(JournalTheme.secondary)
             }

@@ -427,6 +427,9 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 setattr(plant, f"{kind}_profile_version", ref.version)
             session.add(plant)
             session.flush()
+            from forest_api.discovery import record_reached
+
+            record_reached(session, user.id, [plant], boundary)
             garden = services.lock_garden(session, user.id, write=True)
             garden.state_version = checked(garden.state_version + 1)
             # UUID ordering is not used for time semantics, only bounded pagination.

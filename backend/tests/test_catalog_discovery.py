@@ -88,19 +88,19 @@ def payload(world, steps):
 
 
 def snapshot(client, headers, subject="alice"):
-    response = client.get(PATH, headers=headers(subject))
+    response = client.get(PATH, headers={**headers(subject), "X-Forest-Discovery": "2"})
     assert response.status_code == 200, response.text
     return response.json()
 
 
-def test_empty_owner_snapshot_and_authentication(client, headers, register):
+def test_starter_sprout_snapshot_and_authentication(client, headers, register):
     account = register()
     assert client.get(PATH).status_code == 401
     assert snapshot(client, headers) == {
         "userId": account["profile"]["userId"],
         "catalogVersion": "development-oak-v1",
-        "discoveryVersion": 0,
-        "entries": [],
+        "discoveryVersion": 1,
+        "entries": [{"speciesId": "oak", "variantId": "standard", "stages": ["sprout"]}],
     }
     assert client.post(PATH, headers=headers(), json={}).status_code == 405
 
@@ -120,10 +120,10 @@ def test_exact_growth_thresholds_and_intermediate_stages(world, client, headers,
     response = client.post("/v1/activity/sync", headers=headers(), json=payload(world, steps))
     assert response.status_code == 200, response.text
     result = snapshot(client, headers)
-    assert result["discoveryVersion"] == int(bool(stages))
-    assert result["entries"] == (
-        [{"speciesId": "oak", "variantId": "standard", "stages": stages}] if stages else []
-    )
+    assert result["discoveryVersion"] == 1 + int(bool(stages))
+    assert result["entries"] == [
+        {"speciesId": "oak", "variantId": "standard", "stages": ["sprout", *stages]}
+    ]
 
 
 def test_variant_duplicates_storage_and_account_isolation(world, app, client, headers, register):
@@ -132,7 +132,7 @@ def test_variant_duplicates_storage_and_account_isolation(world, app, client, he
     first = client.post("/v1/activity/sync", headers=headers(), json=body)
     assert first.status_code == 200, first.text
     assert client.post("/v1/activity/sync", headers=headers(), json=body).json() == first.json()
-    assert snapshot(client, headers)["discoveryVersion"] == 1
+    assert snapshot(client, headers)["discoveryVersion"] == 2
     with app.state.database.sessions.begin() as session:
         blue = services.award_plant(session, world["owner"], "oak", "blue", "test", "blue")
         services.award_plant(session, world["owner"], "oak", "standard", "test", "duplicate")
@@ -148,15 +148,21 @@ def test_variant_duplicates_storage_and_account_isolation(world, app, client, he
                 rotation_degrees=0,
             )
         )
-    assert snapshot(client, headers, "bob")["entries"] == []
+    assert snapshot(client, headers, "bob")["entries"] == [
+        {"speciesId": "oak", "variantId": "standard", "stages": ["sprout"]}
+    ]
     world["now"][0] += timedelta(days=1)
     response = client.post("/v1/activity/sync", headers=headers(), json=payload(world, 10000))
     assert response.status_code == 200, response.text
     result = snapshot(client, headers)
-    assert result["discoveryVersion"] == 2
+    assert result["discoveryVersion"] == 4
     assert result["entries"] == [
-        {"speciesId": "oak", "variantId": "blue", "stages": ["seedling"]},
-        {"speciesId": "oak", "variantId": "standard", "stages": ["seedling", "young", "adult"]},
+        {"speciesId": "oak", "variantId": "blue", "stages": ["sprout", "seedling"]},
+        {
+            "speciesId": "oak",
+            "variantId": "standard",
+            "stages": ["sprout", "seedling", "young", "adult"],
+        },
     ]
     stored = client.post(
         "/v1/me/garden/edits",
@@ -183,9 +189,9 @@ def test_concurrent_and_zero_change_syncs_do_not_mint_discovery_versions(
             )
         )
     assert [result.status_code for result in results] == [200, 200]
-    assert snapshot(client, headers)["discoveryVersion"] == 1
+    assert snapshot(client, headers)["discoveryVersion"] == 2
     with app.state.database.sessions() as session:
-        assert session.scalar(select(func.count()).select_from(CatalogStageDiscovery)) == 2
+        assert session.scalar(select(func.count()).select_from(CatalogStageDiscovery)) == 3
 
 
 def test_discovery_and_growth_rollback_together(world, app, client, headers, monkeypatch):
@@ -202,10 +208,10 @@ def test_discovery_and_growth_rollback_together(world, app, client, headers, mon
             client.post("/v1/activity/sync", headers=headers(), json=body)
     with app.state.database.sessions() as session:
         assert session.get(OwnedPlant, world["plant"]).growth_micro_units == 0
-        assert session.get(CatalogDiscoveryState, world["owner"]).version == 0
-        assert session.scalar(select(func.count()).select_from(CatalogStageDiscovery)) == 0
+        assert session.get(CatalogDiscoveryState, world["owner"]).version == 1
+        assert session.scalar(select(func.count()).select_from(CatalogStageDiscovery)) == 1
     assert client.post("/v1/activity/sync", headers=headers(), json=body).status_code == 200
-    assert snapshot(client, headers)["discoveryVersion"] == 1
+    assert snapshot(client, headers)["discoveryVersion"] == 2
 
 
 def test_upgrade_uses_all_stored_pinned_copies_and_is_repeat_safe(app, client, headers, register):
@@ -258,17 +264,21 @@ def test_upgrade_uses_all_stored_pinned_copies_and_is_repeat_safe(app, client, h
                 for table in before
             }
         result = snapshot(client, headers)
-        assert result["discoveryVersion"] == 1
+        assert result["discoveryVersion"] == 2
         assert result["entries"] == [
-            {"speciesId": "oak", "variantId": "blue", "stages": ["seedling", "young", "adult"]},
-            {"speciesId": "oak", "variantId": "standard", "stages": ["seedling"]},
-            {"speciesId": "oak", "variantId": "vined", "stages": ["seedling", "young"]},
+            {
+                "speciesId": "oak",
+                "variantId": "blue",
+                "stages": ["sprout", "seedling", "young", "adult"],
+            },
+            {"speciesId": "oak", "variantId": "standard", "stages": ["sprout", "seedling"]},
+            {"speciesId": "oak", "variantId": "vined", "stages": ["sprout", "seedling", "young"]},
         ]
         assert snapshot(client, headers, "bob") == {
             "userId": second["profile"]["userId"],
             "catalogVersion": "development-oak-v1",
-            "discoveryVersion": 0,
-            "entries": [],
+            "discoveryVersion": 1,
+            "entries": [{"speciesId": "oak", "variantId": "standard", "stages": ["sprout"]}],
         }
         revision = ScriptDirectory.from_config(configuration).get_revision("0009_catalog_discovery")
         with engine.begin() as connection:
@@ -278,7 +288,7 @@ def test_upgrade_uses_all_stored_pinned_copies_and_is_repeat_safe(app, client, h
             command.downgrade(configuration, "0008_scheduled_visitors")
 
 
-@pytest.mark.parametrize("stage", ["sprout", "missing", "adult"])
+@pytest.mark.parametrize("stage", ["seed", "missing", "adult"])
 def test_database_rejects_invalid_stage_or_variant(app, register, stage):
     account = register()
     with pytest.raises(IntegrityError), app.state.database.sessions.begin() as session:
@@ -301,6 +311,81 @@ def test_shared_wire_fixture_is_valid():
     for value in fixture.values():
         parsed = discovery.DiscoverySnapshot.model_validate(value)
         assert parsed.model_dump(mode="json", by_alias=True) == value
+
+
+def test_legacy_client_receives_only_later_stages(world, client, headers):
+    assert client.get(PATH, headers=headers()).json()["entries"] == []
+    response = client.post("/v1/activity/sync", headers=headers(), json=payload(world, 10000))
+    assert response.status_code == 200
+    assert client.get(PATH, headers=headers()).json()["entries"] == [
+        {"speciesId": "oak", "variantId": "standard", "stages": ["seedling"]}
+    ]
+    assert snapshot(client, headers)["entries"][0]["stages"] == ["sprout", "seedling"]
+
+
+def test_acquisition_rolls_back_and_duplicate_never_relocks(app, client, headers, register):
+    from sqlalchemy import delete
+
+    from forest_api.models import OwnedPlant
+
+    account = register()
+    owner = UUID(account["profile"]["userId"])
+    before = snapshot(client, headers)
+    with pytest.raises(RuntimeError), app.state.database.sessions.begin() as session:
+        services.award_plant(session, owner, "oak", "blue", "test", "rolled-back")
+        raise RuntimeError("rollback acquisition")
+    assert snapshot(client, headers) == before
+    with app.state.database.sessions.begin() as session:
+        one = services.award_plant(session, owner, "oak", "blue", "test", "first")
+        two = services.award_plant(session, owner, "oak", "blue", "test", "duplicate")
+        identifiers = [one.id, two.id]
+    acquired = snapshot(client, headers)
+    assert acquired["discoveryVersion"] == before["discoveryVersion"] + 1
+    assert acquired["entries"][0] == {"speciesId": "oak", "variantId": "blue", "stages": ["sprout"]}
+    with app.state.database.sessions.begin() as session:
+        session.execute(delete(OwnedPlant).where(OwnedPlant.id.in_(identifiers)))
+    assert snapshot(client, headers) == acquired
+
+
+def test_pack_acquisition_replay_sale_and_upgrade_backfill(economy, headers, monkeypatch):
+    from test_collection import exchange, open_pack
+    from test_inventory_management import sell
+
+    from forest_api import collection
+
+    def blue_outcome(definition):
+        return next(
+            (pool.rarity, outcome)
+            for pool in definition.rarities
+            for outcome in pool.outcomes
+            if outcome.variant_id == "blue"
+        )
+
+    monkeypatch.setattr(collection, "choose", blue_outcome)
+    app, client = economy["app"], economy["client"]
+    pack = exchange(economy).json()["packs"][0]["ownedPackId"]
+    request = uuid4()
+    receipt = open_pack(economy, pack, request)
+    assert receipt.status_code == 200, receipt.text
+    acquired = snapshot(client, headers)
+    assert open_pack(economy, pack, request).json() == receipt.json()
+    assert snapshot(client, headers) == acquired
+    assert sell(economy, UUID(receipt.json()["plant"]["plantId"])).status_code == 200
+    assert snapshot(client, headers) == acquired
+    inventory = client.get("/v1/me/inventory", headers=economy["headers"]).json()
+    with migration_url(app.state.settings.database_url.get_secret_value()):
+        configuration = migration_config()
+        command.downgrade(configuration, "0015_woodland_release")
+        command.upgrade(configuration, "head")
+        command.check(configuration)
+        restored = snapshot(client, headers)
+        assert restored["entries"] == acquired["entries"]
+        assert restored["discoveryVersion"] == acquired["discoveryVersion"] + 1
+        assert client.get("/v1/me/inventory", headers=economy["headers"]).json() == inventory
+        revision = ScriptDirectory.from_config(configuration).get_revision("0016_sprout_discovery")
+        with app.state.database.engine.begin() as connection:
+            revision.module.backfill(connection)
+        assert snapshot(client, headers) == restored
 
 
 @pytest.mark.parametrize(
@@ -369,5 +454,5 @@ def test_optional_metrics_and_workout_use_same_discovery_transaction(
     response = client.post("/v1/activity/sync", headers=headers(), json=body)
     assert response.status_code == 200, response.text
     assert snapshot(client, headers)["entries"] == [
-        {"speciesId": "oak", "variantId": "standard", "stages": ["seedling"]}
+        {"speciesId": "oak", "variantId": "standard", "stages": ["sprout", "seedling"]}
     ]

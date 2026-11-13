@@ -286,7 +286,7 @@ class CatalogStageDiscovery(Base):
         ForeignKeyConstraint(
             ["species_id", "variant_id"], ["plant_variants.species_id", "plant_variants.variant_id"]
         ),
-        CheckConstraint("stage IN ('seedling', 'young', 'adult')", name="stage"),
+        CheckConstraint("stage IN ('sprout', 'seedling', 'young', 'adult')", name="stage"),
     )
 
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)

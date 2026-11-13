@@ -29,6 +29,22 @@ private final class MemoryCollectionJournal: CollectionJournalPersisting {
 }
 
 @MainActor
+private final class OpeningDiscoveryProbe: CatalogDiscoveryServing, CatalogDiscoveryPersisting {
+    let serverID = "https://collection-test.invalid"
+    var value: APICatalogDiscovery
+    var calls = 0
+    var onRead: (() -> Void)?
+    init(user: UUID) {
+        value = APICatalogDiscovery(userId: user, catalogVersion: "fixture", discoveryVersion: 0, entries: [])
+    }
+    func discovery() async throws -> APICatalogDiscovery {
+        calls += 1; onRead?(); return value
+    }
+    func load(server: String, user: UUID) throws -> CatalogDiscoveryCache? { nil }
+    func save(_ value: CatalogDiscoveryCache, server: String, user: UUID) throws { }
+}
+
+@MainActor
 private final class FakeCollection: CollectionServing {
     let serverID = "https://collection-test.invalid"
     let contract: CollectionContract
@@ -135,6 +151,7 @@ final class CollectionTests: XCTestCase {
         service.capacity = initial.applyingPlantLimit(75)
         await store.refresh()
         XCTAssertEqual(store.capacity?.plantLimit, 75)
+        XCTAssertEqual(store.capacity?.plantedLimit, 75)
         service.capacity = initial
         await store.refresh()
         store.applyLevelPlantLimit(60)
@@ -381,6 +398,34 @@ final class CollectionTests: XCTestCase {
         await reopened.open(pack)
         XCTAssertEqual(service.operations.count, 2)
         XCTAssertEqual(reopened.confirmedOpening(for: pack.id)?.openingId, result.openingId)
+    }
+
+    func testRecoveredOpeningRefreshesVisibleSproutDiscoveryOnlyAfterConfirmation() async throws {
+        let fixture = try CollectionContract.load(), service = FakeCollection(fixture)
+        let user = UUID(), probe = OpeningDiscoveryProbe(user: user)
+        let discovery = CatalogDiscoveryStore(userID: user, service: probe, cache: probe)
+        let store = CollectionCoordinator(userID: user, service: service,
+            journal: MemoryCollectionJournal(), discovery: discovery)
+        await store.refresh(); await discovery.refresh()
+        discovery.beginViewing(UUID())
+        let plant = try XCTUnwrap(fixture.opening.plant)
+        service.onMutation = {
+            probe.value = APICatalogDiscovery(userId: user, catalogVersion: "fixture", discoveryVersion: 1,
+                entries: [.init(speciesId: plant.speciesId, variantId: plant.variantId, stages: [.sprout])])
+        }
+        service.loseResponse = true
+        await store.open(try XCTUnwrap(store.packs.first))
+        XCTAssertNotNil(store.state.pending)
+        XCTAssertEqual(probe.calls, 1)
+        XCTAssertFalse(discovery.revealed(species: plant.speciesId, variant: plant.variantId, stage: .sprout))
+        let refreshed = expectation(description: "Recovered opening invalidates visible discovery")
+        probe.onRead = { refreshed.fulfill() }
+        service.loseResponse = false
+        await store.refresh()
+        await fulfillment(of: [refreshed], timeout: 5)
+        XCTAssertNil(store.state.pending)
+        XCTAssertTrue(discovery.revealed(species: plant.speciesId, variant: plant.variantId, stage: .sprout))
+        XCTAssertFalse(discovery.revealed(species: plant.speciesId, variant: plant.variantId, stage: .seedling))
     }
 
     func testMilestoneConfirmationSurvivesRefreshFailureAndStaleRepeatedClaim() async throws {

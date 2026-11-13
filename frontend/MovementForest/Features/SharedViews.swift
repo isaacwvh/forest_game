@@ -36,6 +36,28 @@ extension APICatalogue {
     func rarity(for speciesID: String) -> String? { species.first { $0.speciesId == speciesID }?.rarity }
 }
 
+enum CatalogPresentation {
+    static func rarityOrder(_ label: String?) -> Int {
+        PlantRarity(label: label).flatMap { PlantRarity.allCases.firstIndex(of: $0) } ?? PlantRarity.allCases.count
+    }
+
+    static func sortedSpecies(_ species: [APISpecies]) -> [APISpecies] {
+        species.sorted {
+            let left = rarityOrder($0.rarity), right = rarityOrder($1.rarity)
+            if left != right { return left < right }
+            let names = $0.displayName.localizedStandardCompare($1.displayName)
+            return names == .orderedSame ? $0.speciesId < $1.speciesId : names == .orderedAscending
+        }
+    }
+
+    static func portraitVariant(_ species: APISpecies, discovered: Set<CatalogDiscoveryKey>) -> APIVariant? {
+        let variants = species.variants.filter {
+            discovered.contains(.init(species: species.speciesId, variant: $0.variantId, stage: .sprout))
+        }
+        return variants.first { $0.variantId == "standard" } ?? variants.sorted { $0.variantId < $1.variantId }.first
+    }
+}
+
 /// Display metadata for bundled sample/asset views only; approved launch_balance.PLANTS.
 /// Connected names always use their actual catalogue, including legacy/unknown values.
 enum SamplePlantPresentation {

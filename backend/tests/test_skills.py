@@ -286,13 +286,18 @@ def test_real_sleeping_dew_growth_store_retry_and_repeat_grant(app, client, head
         assert progress.first_maturity_count == 0
         credits = list(
             session.scalars(
-                select(PlantGrowthCredit).where(PlantGrowthCredit.plant_id == actor["plant"])
+                select(PlantGrowthCredit)
+                .where(PlantGrowthCredit.plant_id == actor["plant"])
+                .order_by(PlantGrowthCredit.before_growth)
             )
         )
         from forest_api.growth_history import trace
 
+        assert [credit.before_growth for credit in credits] == [0, 10_400_000]
         assert trace(session, credits[0])["skills"]["waterFactor"] == "1.04"
         assert credits[0].context["skillBonusGrowthMicroUnits"] == "400000"
+        assert trace(session, credits[1])["skills"]["waterFactor"] == "1"
+        assert credits[1].context["skillBonusGrowthMicroUnits"] == "0"
         assert session.get(OwnedPlant, UUID(grant["plantId"])).growth_micro_units == 1000 * MICRO
 
 

@@ -72,6 +72,7 @@ def test_level_up_capacity_receipt_and_replay(app, client, actors, headers):
     initial = summary(client, headers)
     assert initial["benefits"]["baseOfflineCapacity"] == 825
     assert initial["benefits"]["plantLimit"] == 50
+    assert initial["benefits"]["plantedLimit"] == 50
     assert initial["levelUpNotice"] is None
     body = body_for(actor, 35000)
     result = client.post("/v1/activity/sync", json=body, headers=headers())
@@ -79,11 +80,13 @@ def test_level_up_capacity_receipt_and_replay(app, client, actors, headers):
     current = summary(client, headers)
     assert current["benefits"]["baseOfflineCapacity"] == 900
     assert current["benefits"]["plantLimit"] == 60
+    assert current["benefits"]["plantedLimit"] == 60
     notice = current["levelUpNotice"]
     assert (notice["fromLevel"], notice["toLevel"]) == (4, 5)
     assert (notice["baseOfflineBefore"], notice["baseOfflineAfter"]) == (825, 900)
     assert (notice["plantLimitBefore"], notice["plantLimitAfter"]) == (50, 60)
-    assert client.get("/v1/me/inventory", headers=headers()).json()["capacity"]["plantLimit"] == 60
+    capacity = client.get("/v1/me/inventory", headers=headers()).json()["capacity"]
+    assert capacity["plantLimit"] == capacity["plantedLimit"] == 60
     assert client.get("/v1/me/visitors", headers=headers()).json()["capacity"] == 900
     assert client.post("/v1/activity/sync", json=body, headers=headers()).json() == result.json()
     with app.state.database.sessions() as session:

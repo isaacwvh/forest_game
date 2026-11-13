@@ -14,6 +14,7 @@ from forest_api.auth import Identity
 from forest_api.config import Settings
 from forest_api.errors import ApiError
 from forest_api.geometry import ClearanceCircle, length_units, validate_layout
+from forest_api.level_benefits import owned_limit
 from forest_api.models import Garden, GardenPlacement, OwnedPlant, Species, Variant
 from forest_api.schemas import GardenEditRequest, GardenEditResult
 
@@ -154,11 +155,11 @@ def edit_garden(
                     final[action.plant_id] = Transform(action.x, action.y, rotation)
 
         species_ids = {plants[plant_id].species_id for plant_id in final}
-        if len(final) > max(settings.planted_capacity, len(initial)):
+        if len(final) > max(owned_limit(session, user.id, settings.plant_capacity), len(initial)):
             raise ApiError(
                 409,
                 "garden_capacity_full",
-                "Garden full. Store a planted copy before planting another.",
+                "Plant collection limit reached. Store a planted copy before planting another.",
             )
         radii = {
             row.id: length_units(row.clearance_radius)

@@ -335,12 +335,29 @@ struct JournalPlantFrame<Content: View>: View {
     }
 }
 
-/// Display-sized shared PNGs. Catalog masking is chosen before rendering;
-/// owned art never reads discovery state.
+/// Catalog locks never resolve a plant PNG, including its silhouette.
+struct CatalogPlantArtwork: View {
+    let plant: GardenPlant
+    let catalog: any AssetCatalogProviding
+    let revealed: Bool
+    var maximumPixels = 360
+    var body: some View {
+        Group {
+            if revealed {
+                JournalPlantImage(plant: plant, catalog: catalog, maximumPixels: maximumPixels)
+            } else {
+                Image(systemName: "lock.fill")
+                    .font(.largeTitle).foregroundStyle(JournalTheme.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }.accessibilityHidden(true)
+    }
+}
+
+/// Display-sized shared PNGs; owned art never reads discovery state.
 struct JournalPlantImage: View {
     let plant: GardenPlant
     let catalog: any AssetCatalogProviding
-    var revealed = true
     var maximumPixels = 360
     private static let cache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
@@ -365,7 +382,7 @@ struct JournalPlantImage: View {
     var body: some View {
         Group {
             if let image = image {
-                Image(uiImage: image).renderingMode(revealed ? .original : .template)
+                Image(uiImage: image).renderingMode(.original)
                     .resizable().scaledToFit().foregroundStyle(JournalTheme.secondary)
             } else {
                 VStack(spacing: 4) {

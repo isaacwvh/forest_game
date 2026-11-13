@@ -46,18 +46,24 @@ final class CatalogDiscoveryTests: XCTestCase {
         store.revealed(species: "oak", variant: variant, stage: stage)
     }
 
-    func testSproutsAlwaysVisibleWhileUnknownFailedOrUnowned() async throws {
+    func testUnownedSproutsStayConcealedWhileUnknownFailedOrConfirmed() async throws {
         let fresh = try fixture("fresh"), service = FakeDiscovery(try fixture("fresh"))
         let store = CatalogDiscoveryStore(userID: fresh.userId, service: service, cache: MemoryDiscoveryCache())
-        XCTAssertTrue(revealed(store, "unowned", .sprout))
+        XCTAssertFalse(revealed(store, "unowned", .sprout))
         XCTAssertFalse(revealed(store, "standard", .adult))
         service.fail = true
         await store.refresh()
         XCTAssertEqual(store.status(species: "oak", variant: "standard", stage: .adult), "Discovery unavailable")
-        XCTAssertTrue(revealed(store, "unowned", .sprout))
+        XCTAssertFalse(revealed(store, "unowned", .sprout))
         service.fail = false
         await store.refresh()
         XCTAssertEqual(store.status(species: "oak", variant: "standard", stage: .adult), "Not discovered")
+        XCTAssertFalse(revealed(store, "unowned", .sprout))
+        service.value = try fixture("grown")
+        await store.refresh()
+        XCTAssertTrue(revealed(store, "standard", .sprout))
+        XCTAssertTrue(revealed(store, "blue", .sprout))
+        XCTAssertFalse(revealed(store, "vined", .sprout))
     }
 
     func testExactVariantAndSpeciesIsolationAndPersistentCache() async throws {
@@ -86,7 +92,7 @@ final class CatalogDiscoveryTests: XCTestCase {
         cache.value = CatalogDiscoveryCache(snapshot: grown, confirmedAt: Date())
         let wrongCache = CatalogDiscoveryStore(userID: UUID(), service: service, cache: cache)
         XCTAssertNil(wrongCache.snapshot)
-        let invalidStages: [[GrowthStage]] = [[.sprout], [.adult], [.young, .seedling], [.seedling, .seedling], []]
+        let invalidStages: [[GrowthStage]] = [[.seedling], [.adult], [.young, .seedling], [.sprout, .sprout], []]
         for stages in invalidStages {
             let bad = APICatalogDiscovery(userId: grown.userId, catalogVersion: "v", discoveryVersion: 3,
                 entries: [.init(speciesId: "oak", variantId: "standard", stages: stages)])
@@ -166,5 +172,22 @@ final class CatalogDiscoveryTests: XCTestCase {
         XCTAssertEqual(try disk.load(server: "one", user: grown.userId)?.snapshot, grown)
         XCTAssertNil(try disk.load(server: "two", user: grown.userId))
         XCTAssertNil(try disk.load(server: "one", user: UUID()))
+    }
+
+    func testLegacyCachePreservesEarnedStagesWithoutRestoringFreeSproutPreviews() throws {
+        let user = UUID()
+        let legacy = APICatalogDiscovery(userId: user, catalogVersion: "legacy", discoveryVersion: 2,
+            entries: [.init(speciesId: "oak", variantId: "blue", stages: [.seedling, .young])])
+        var saved = CatalogDiscoveryCache(snapshot: legacy, confirmedAt: Date())
+        saved.artworkPolicyVersion = nil
+        // Exercise decoding a pre-policy cache, where the field was absent.
+        let data = try ActivityWire.encoder().encode(saved)
+        let decoded = try ActivityWire.decoder().decode(CatalogDiscoveryCache.self, from: data)
+        let upgraded = try decoded.upgraded(user: user)
+        XCTAssertEqual(upgraded.artworkPolicyVersion, 2)
+        XCTAssertEqual(upgraded.snapshot.entries[0].stages, [.sprout, .seedling, .young])
+        XCTAssertFalse(upgraded.snapshot.keys.contains(.init(species: "oak", variant: "standard", stage: .sprout)))
+        XCTAssertThrowsError(try decoded.upgraded(user: UUID()))
+        XCTAssertEqual(try upgraded.upgraded(user: user).snapshot, upgraded.snapshot)
     }
 }

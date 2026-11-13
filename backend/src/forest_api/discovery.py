@@ -19,7 +19,7 @@ from forest_api.schemas import DTO, STAGES, GrowthDefinition
 class DiscoveryEntry(DTO):
     species_id: str
     variant_id: str
-    stages: list[Literal["seedling", "young", "adult"]]
+    stages: list[Literal["sprout", "seedling", "young", "adult"]]
 
 
 class DiscoverySnapshot(DTO):
@@ -46,7 +46,7 @@ def record_reached(session, owner_id: UUID, plants, boundary: datetime) -> bool:
                 maximum_growth_micro_units=row.maximum_growth_micro_units,
             )
         reached = stage_for(plant.growth_micro_units, profiles[key].thresholds.model_dump())
-        for stage in STAGES[1 : STAGES.index(reached) + 1]:
+        for stage in STAGES[: STAGES.index(reached) + 1]:
             candidates.add((plant.species_id, plant.variant_id, stage))
     if not candidates:
         return False
@@ -72,7 +72,7 @@ def record_reached(session, owner_id: UUID, plants, boundary: datetime) -> bool:
     return True
 
 
-def read(session, settings, identity) -> DiscoverySnapshot:
+def read(session, settings, identity, *, include_sprouts=True) -> DiscoverySnapshot:
     with session.begin():
         user = services.get_user(session, identity, lock=True)
         catalog = services.get_catalogue_state(session, settings)
@@ -85,7 +85,8 @@ def read(session, settings, identity) -> DiscoverySnapshot:
         for row in session.scalars(
             select(CatalogStageDiscovery).where(CatalogStageDiscovery.owner_id == user.id)
         ):
-            entries[row.species_id, row.variant_id].add(row.stage)
+            if include_sprouts or row.stage != "sprout":
+                entries[row.species_id, row.variant_id].add(row.stage)
         return DiscoverySnapshot(
             user_id=user.id,
             catalog_version=catalog.version,
@@ -94,7 +95,7 @@ def read(session, settings, identity) -> DiscoverySnapshot:
                 DiscoveryEntry(
                     species_id=s,
                     variant_id=v,
-                    stages=[stage for stage in STAGES[1:] if stage in stages],
+                    stages=[stage for stage in STAGES if stage in stages],
                 )
                 for (s, v), stages in sorted(entries.items())
             ],

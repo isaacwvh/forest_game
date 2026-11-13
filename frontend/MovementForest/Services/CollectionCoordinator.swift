@@ -135,6 +135,7 @@ final class CollectionCoordinator: ObservableObject {
             }
             // Persist the result and removal together. A disk failure retains the request.
             try persist(CollectionJournalState(pending: nil, result: receipt))
+            if isOpening { discovery.invalidate() }
             if let milestoneID = receipt.milestoneId { confirmedMilestoneIDs.insert(milestoneID) }
             if pending.kind == .exchange {
                 confirmedExchange = receipt

@@ -1,5 +1,26 @@
 # Native baseline conventions
 
+## Catalog and capacity follow-up — 13 November 2026
+
+Packs/Exchange summaries use two equal flexible columns in reading order: Tokens,
+Gems, Packs, Plants (only applicable metrics appear). Accessibility text uses one
+column; long values wrap within their cell. Keep the existing journal materials,
+labels and confirmed quantities. Planted counts show a count without a separate
+capacity denominator throughout My plants, Storage and Edit.
+
+Catalog orders species by Common → Rare → Epic → Legendary, then localized name
+and stable ID; unknown rarities follow. The rarity menu uses the same order.
+Sprouts are earned on acquisition, with permanent exact-variant discovery for all
+four stages. Every locked catalog image uses a generic lock before loading artwork,
+including tiles and detail portraits. Discovered standard sprouts represent a
+species when available; otherwise use its first discovered variant in stable ID
+order. Variant detail remains exact. Names, stats and existing information remain
+visible. Loading/failure/cache notices retain their existing meaning. This supersedes
+the always-visible sprouts and silhouettes in older design entries below.
+
+See [CATALOG_CAPACITY_ACCEPTANCE.md](CATALOG_CAPACITY_ACCEPTANCE.md). Native layout,
+VoiceOver and dense-garden performance require Mac/iPhone acceptance.
+
 ## Compact Home bars and Profile — 7 November 2026
 
 The approved two-row Home concept supersedes the separate native browsing title,

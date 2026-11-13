@@ -1,14 +1,16 @@
 # Plant capacity and selling
 
-Source implementation, 5 November 2026. Requires explicit migration to
-`0012_inventory_management`; the personal game database is not upgraded by tests.
+Source implementation, 5 November 2026; capacity/discovery follow-up 13 November.
+Current schema head is `0016_sprout_discovery`; the personal game database is not upgraded by tests.
 Native Xcode/device validation is separate from Windows portable validation.
 
 ## Rules
 
-- Maximum **50 live owned plants**, including the original starter and all
-  planted/stored duplicates. There is no additional storage-only limit.
-- Maximum **20 planted copies**, also subject to the existing geometry rules.
+- Maximum **50 live owned plants** initially, rising through 60/75/90/100 with
+  active level benefits, including the original starter and all planted/stored
+  duplicates. There is no additional storage-only limit.
+- Planted copies use the same effective owned-plant limit, subject to pinned
+  clearance and garden boundaries. There is no independent 20-planted limit.
   Existing over-limit layouts can move/rotate/store/swap; they cannot increase
   the over-limit count. Existing owned plants are never discarded at upgrade.
 - Maximum **50 unopened packs**. Exchange checks the entire requested quantity
@@ -18,8 +20,10 @@ Native Xcode/device validation is separate from Windows portable validation.
 - Pack purchases can proceed with full plant capacity if pack space remains.
 - All gameplay writers serialize on the account lock. Internal awards use the
   same ownership guard. Account ownership and existing geometry remain enforced.
-- The settings are `FOREST_PLANT_CAPACITY`, `FOREST_PLANTED_CAPACITY` and
-  `FOREST_PACK_CAPACITY`; default values are 50/20/50, also exposed by Compose.
+- `FOREST_PLANT_CAPACITY` and `FOREST_PACK_CAPACITY` default to 50/50. The old
+  `FOREST_PLANTED_CAPACITY` setting is accepted for configuration compatibility
+  but does not restrict planting. The wire `plantedLimit` field reports the
+  effective owned limit; client Planted labels show counts without a denominator.
 
 ## Selling and valuation
 

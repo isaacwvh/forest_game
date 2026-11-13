@@ -1,3 +1,34 @@
+## Catalog and capacity follow-up — 13 November 2026
+
+Implemented migration `0016_sprout_discovery`, transactional exact-variant sprout
+discovery on acquisition, sold-opening/live-copy/later-stage backfill, legacy
+read compatibility through `X-Forest-Discovery: 2`, and placement capacity aligned
+with the effective owned limit. Existing pinned clearance, ownership, replay,
+visitor/growth accounting and grandfathered-layout rules remain enforced.
+
+Executed against disposable `forest_test_*` databases on a separate local
+PostgreSQL 17 cluster (localhost 55441), without migrating the personal game DB:
+
+- Focused discovery/inventory/level/migration run: **83 passed**, 162.70 seconds.
+- Final full backend suite: **638 passed, 3 skipped**, 968.91 seconds.
+  The skips are the existing opt-in physical-storage benchmarks.
+- Corrected the existing Sleeping Dew integration test's unordered credit query:
+  it now orders by prior growth and checks both boosted and unboosted credits.
+  Isolated skill/level follow-up: **2 passed**; the corrected test also passed
+  within the final complete run.
+- Ruff checks pass across backend source/tests/migrations; changed Python files
+  pass formatting checks. Diff whitespace checks pass.
+- Acquisition/growth rollback, duplicate/replayed awards, exact variants, starter
+  discovery, sales, sold-sprout migration preservation, repeat-safe backfill,
+  migration/model parity, level capacity and valid 21/50/100-copy layouts are covered.
+
+The final functional rerun used an ephemeral cluster with fsync,
+synchronous_commit and full_page_writes disabled. Physical crash durability and
+deployment capacity are separate measurements. Native Xcode/XCTest/UI/device
+acceptance remains pending on Mac/iPhone; see
+[CATALOG_CAPACITY_ACCEPTANCE.md](../frontend/CATALOG_CAPACITY_ACCEPTANCE.md).
+No personal database upgrade, pack publication, push or CI run was performed.
+
 ## First Woodland catalog release — 13 November 2026
 
 Implemented migration `0015_woodland_release`, explicit preview/apply publication,

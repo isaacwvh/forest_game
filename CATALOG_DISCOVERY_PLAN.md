@@ -1,11 +1,40 @@
 # F8.7 — Catalog discovery implementation plan
 
+## Current policy — 13 November 2026
+
+The original always-visible sprout/silhouette policy below is historical and is
+superseded by the following implemented follow-up:
+
+- All four stages use exact account/species/variant discovery. Acquisition discovers
+  the sprout; confirmed growth discovers every later stage crossed. Unlocks persist
+  after sale. Names, stats, descriptions and odds remain visible.
+- Catalog tiles, selected-variant portraits and growth-stage images use a generic
+  lock before resolving plant artwork. Tiles prefer a discovered standard variant,
+  otherwise the discovered variant with the first stable variant ID. No discovered
+  variant means a locked species tile. Owned/current Garden art keeps its existing rules.
+- Migration `0016_sprout_discovery` extends the existing ledger and repeat-safely
+  backfills live copies, earned later stages and immutable opening receipts. Each
+  changed account receives one discovery-version increment. Timestamps record the
+  backfill boundary, not an invented acquisition time.
+- Updated clients send `X-Forest-Discovery: 2`. Without it, the read API retains
+  the old later-stage-only entry shape so old clients still validate responses.
+- Version-2 disk caches retain all confirmed unlocks. Legacy cached earned stages
+  imply a sprout unlock only for that exact variant; free previews never become
+  cached entitlement. Unknown/failing reads conceal unverified art and offer Retry.
+- Confirmed/recovered pack openings invalidate the discovery store, as growth
+  already does. Retries, duplicate awards and repeated backfills mint no extra unlocks.
+
+See [CATALOG_CAPACITY_ACCEPTANCE.md](frontend/CATALOG_CAPACITY_ACCEPTANCE.md) for
+validation and the explicit existing-database upgrade. No personal database upgrade
+is performed by source implementation or isolated tests.
+
 Prepared 29 October 2026 against the V1 working specification and current
 implementation. **F8.7 source implemented locally, 29 October 2026; native/device
 acceptance pending.** Includes an explicit migration/backfill, transactional server
 discovery and account-scoped catalog presentation/cache. No live game database is
 automatically upgraded, no asset package changes are needed, and nothing is pushed.
-The original implementation brief below remains the requirement/acceptance reference.
+The original implementation brief below is historical context; the current policy
+above supersedes its sprout-preview, masking, API and cache clauses.
 Executed results belong in backend/frontend VALIDATION.md; F8.6 remains accepted.
 
 ## 1. Findings and change in direction

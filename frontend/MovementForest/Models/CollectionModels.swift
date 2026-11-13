@@ -189,7 +189,7 @@ struct APIInventoryCapacity: Codable, Equatable {
     func applyingPlantLimit(_ limit: Int?) -> Self {
         guard let limit = limit else { return self }
         return Self(ownedPlants: ownedPlants, plantedPlants: plantedPlants, storedPlants: storedPlants,
-            plantLimit: max(plantLimit, limit), plantedLimit: plantedLimit, unopenedPacks: unopenedPacks, packLimit: packLimit)
+            plantLimit: max(plantLimit, limit), plantedLimit: max(plantLimit, limit), unopenedPacks: unopenedPacks, packLimit: packLimit)
     }
 }
 

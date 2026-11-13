@@ -44,7 +44,7 @@ struct PlantCapacitySummary: View {
     }
     @ViewBuilder private var counts: some View {
         count("Plants", value: "\(capacity.ownedPlants) / \(capacity.plantLimit)")
-        count("Planted", value: "\(capacity.plantedPlants) / \(capacity.plantedLimit)")
+        count("Planted", value: "\(capacity.plantedPlants)")
         count("Stored", value: "\(capacity.storedPlants)")
     }
     private func count(_ title: String, value: String) -> some View {
@@ -209,8 +209,7 @@ struct MyPlantsScreen: View {
                 if let capacity = store.capacity {
                     PlantCapacitySummary(capacity: capacity, cached: store.showingCached)
                 }
-                PlantInventoryHeading(title: "Planted", symbol: "leaf", count: store.confirmed?.plants.count,
-                    limit: store.capacity?.plantedLimit)
+                PlantInventoryHeading(title: "Planted", symbol: "leaf", count: store.confirmed?.plants.count)
                 if let garden = store.confirmed {
                     let plants = garden.plants.filter(matches)
                     if plants.isEmpty {

@@ -42,7 +42,7 @@
       "effectiveOfflineCapacity": 825,
       "maximumOfflineCapacity": 2475,
       "plantLimit": 50,
-      "plantedLimit": 20,
+      "plantedLimit": 50,
       "nextBaseIncrease": 75,
       "nextPlantLevel": 5,
       "nextPlantLimit": 60
@@ -92,7 +92,7 @@
       "effectiveOfflineCapacity": 900,
       "maximumOfflineCapacity": 2700,
       "plantLimit": 60,
-      "plantedLimit": 20,
+      "plantedLimit": 60,
       "nextBaseIncrease": 60,
       "nextPlantLevel": 10,
       "nextPlantLimit": 75

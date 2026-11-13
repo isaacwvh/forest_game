@@ -2,8 +2,22 @@
 
 # Movement Forest: V1 Working Specification
 
+**Catalog/capacity follow-up — source implemented, 13 November 2026:** Packs uses
+a two-column wallet/capacity summary (one column at accessibility text sizes).
+Catalog sorts Common → Rare → Epic → Legendary, then by species name. Artwork for
+every stage, including sprouts, is concealed behind a generic lock until permanently
+discovered for that exact account/species/variant. Acquisition unlocks the sprout;
+growth unlocks subsequent stages. Names and stats remain visible. Species tiles
+prefer a discovered standard sprout, otherwise a discovered variant. Placement
+uses the effective owned-plant limit (50–100 with active level benefits), pinned
+clearance and garden boundaries; the independent 20-planted limit is retired.
+Migration `0016_sprout_discovery` backfills live copies, earned later stages and
+permanent pack receipts, including sold sprouts. Existing game databases require
+an explicit upgrade. Native/device acceptance remains separate; see
+[the acceptance guide](frontend/CATALOG_CAPACITY_ACCEPTANCE.md).
+
 **Inventory management — source implemented locally, 5 November 2026:**
-cap live owned plants at 50 total (planted plus stored), planted copies at 20 and
+cap live owned plants at 50 total (planted plus stored), and
 unopened packs at 50. Plant capacity blocks opening before consumption/draw;
 pack capacity blocks purchasing before spending. Existing over-limit collections
 retain all copies and can reduce their counts. Stored copies can be sold for
@@ -55,9 +69,9 @@ results. S4–S6 require their own explicit server upgrade and cleanup enablemen
 
 **Catalog discovery — F8.7 source implemented locally, 29–30 October 2026;
 native/device acceptance pending:**
-all species/variant sprouts stay visible and supply catalog portraits regardless
-of ownership or progression. Seedling, young and adult art uses a solid silhouette
-until an owned copy of that exact variant first reaches the stage. Earned discovery
+All catalog artwork uses generic locked placeholders until discovered. Sprouts
+unlock on acquisition; seedling, young and adult unlock when an owned copy of that
+exact variant first reaches the stage. Earned discovery
 is permanent per account/species/variant/stage; it never carries between variants.
 This supersedes the earlier any-variant/species-shared proposal. Intermediate-stage
 unlocks, pinned-profile existing-account backfill, transactional server state,
@@ -314,21 +328,24 @@ showing rarity light. See section 12.4 for image assets and frontend/backend sco
 
 #### 3.4.1 Catalog stage discovery — source implemented; native acceptance pending
 
-Keep one catalog entry per species, with variants inside its detail. Every
-species/variant sprout is always visible, even before it is owned, and remains
-the catalog portrait after later stages unlock. Species rows use the standard
-variant's sprout, falling back to the first available variant; variant detail
-uses that variant's sprout.
+Keep one catalog entry per species, with variants inside its detail. Sort by rarity
+(Common, Rare, Epic, Legendary), then name, with unknown rarities last. Acquisition
+permanently discovers the exact variant's sprout. Species tiles prefer a discovered
+standard sprout, otherwise the first discovered variant in stable ID order. Variant
+detail keeps that exact variant's sprout portrait. Undiscovered portraits show a
+generic lock, never another variant's artwork.
 
-For seedling, young and adult, locked artwork is a solid silhouette with accessible
+For every stage, locked artwork is a generic placeholder with accessible
 “Not discovered” text. First reaching a stage with an owned copy permanently
 reveals the matching stage/variant artwork for that account. Unlock every
 intermediate stage crossed in one credit. Duplicate copies of the same variant
 share visual discovery only; standard and sibling variants never share unlocks.
 Storing/replanting, inactivity and catalog/profile updates never relock earned
-discovery. Sprout preview visibility is independent of ownership and earned discovery.
+discovery. Sprout unlocks also survive sale and removal from live inventory.
 
-Backfill all existing stored/planted copies using their pinned growth profiles.
+Backfill existing stored/planted copies using their pinned growth profiles. Sprout
+backfill also uses permanent later-stage discoveries and immutable opening receipts
+so sold sprouts remain discovered.
 Persist discovery atomically with confirmed growth; never derive entitlement from
 recap playback, catalog browsing or another player's garden. Retain names, stage
 labels, descriptions, mechanics and pack probabilities while artwork is concealed.
@@ -937,7 +954,7 @@ Blocking overrides friendship and visibility. Remove/disable conflicting request
 | `growth_rule_profiles` | `(id, version) PK`, validated immutable `metricMultipliers` (exact workout type → `workout_minutes.*` → 0; other omitted metrics = 0), `conditionalModifiers` and `gardenEffects` JSONB; effects declare `system` growth/visitors, supported scope, recipient/filter, conditions/activation and stacking metadata. Growth activity scope requires a canonical metric; growth water and visitor scopes forbid one. Schema version and activation metadata; an empty effects array means no emitted skills |
 | `plant_stages` | Species/variant/stage reference, visual model key, PNG thumbnail key and stage display metadata; four stable stage IDs |
 | `owned_plants` | `id uuid PK`, `owner_id FK`, `(species_id, variant_id) FK` to shared variant, resolved/pinned growth/behaviour/attraction profile references and versions, `growth_micro_units bigint CHECK >= 0` representing individual cumulative water, fractional accounting state if needed, acquisition source/reference, `first_matured_at NULL`, timestamps; stage and base attraction derived from that copy's progress and pinned profiles, not separate authoritative balances. Duplicate copies have distinct IDs and progress |
-| `catalog_stage_discoveries` (F8.7) | `(owner_id, species_id, variant_id, stage) PK`, owner and composite variant FKs, `stage` restricted to seedling/young/adult, server `recorded_at`; permanent visual discovery for that exact variant. Sprouts are always visible without discovery rows |
+| `catalog_stage_discoveries` (F8.7, extended in 0016) | `(owner_id, species_id, variant_id, stage) PK`, owner and composite variant FKs, `stage` restricted to sprout/seedling/young/adult, server `recorded_at`; permanent visual discovery for that exact variant. Acquisition discovers sprout; confirmed growth discovers later stages |
 | `catalog_discovery_state` (F8.7) | `owner_id PK/FK`, nonnegative monotonic `version bigint`; advance once per transaction inserting new discoveries, separately from catalog, layout, economy and cosmetic-effect versions |
 | `garden_placements` | `plant_id FK PK`, `garden_id FK`, `x numeric(9,3)`, `y numeric(9,3)` in board-local garden units, `rotation_degrees numeric(5,2)` with `0 <= value < 360`; a plant has at most one placement; coordinates are the ground-centred anchor, not a rectangle corner |
 | `visitor_wallets` | One authoritative token balance plus hosted counters and a monotonic economy version; B6 earning entries and B7 collection-event token deltas reconcile to it. No ticket or water wallet |
@@ -1392,7 +1409,7 @@ Costs to monitor: asset egress, art sizes, authentication users, database capaci
 - Completed draw retries return the same owned sprout ID; unboxing does not require an available planting position.
 - Placing/storing a plant preserves ownership, stage, variant and growth; no separate seed consumption occurs.
 - Every supported stage/variant resolves to a model and transparent thumbnail; all stages use the same ground anchor.
-- Catalog discovery: all sprouts remain visible; later stages unlock permanently only for the exact account/species/variant/stage, including intermediate crossings. Verify transactional rollback/replay, pinned-profile backfill across stored/planted copies, versioned account-scoped cache behavior, loading/error masking and variant/account isolation.
+- Catalog discovery: acquisition unlocks sprout; growth unlocks later stages permanently for the exact account/species/variant/stage, including intermediate crossings. Conceal all undiscovered catalog artwork with generic placeholders. Verify transactional rollback/replay, sold-sprout receipt backfill, pinned-profile progress, versioned account-scoped cache behavior, loading/error masking and variant/account isolation.
 - Explicit 1.0 multipliers preserve configured normalised contributions; resolved 0 plant multipliers (after workout fallback) stay zero under ordinary activity/water boosts. Overlapping metrics receive only their deliberate configured contributions.
 - Growth activity scope requires a valid metric; growth water and visitor scopes forbid one. Effects route by explicit system/scope, each applies once, and base plant coefficients remain unchanged.
 - Same-layer bonuses add after strongest-per-group resolution and caps; the two layers deliberately compound. Check 10×1.20×1.10 = 13.2 before limits, and verify the water factor applies once after summing different metrics.

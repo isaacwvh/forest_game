@@ -140,7 +140,7 @@ final class LevelUpTests: XCTestCase {
         XCTAssertEqual(expanded.plantLimit, 60)
         XCTAssertEqual(expanded.ownedPlants, 50)
         XCTAssertEqual(expanded.storedPlants, 30)
-        XCTAssertEqual(expanded.plantedLimit, 20)
+        XCTAssertEqual(expanded.plantedLimit, 60)
         XCTAssertEqual(expanded.packLimit, 50)
         XCTAssertFalse(expanded.plantFull)
         XCTAssertEqual(original.applyingPlantLimit(75).applyingPlantLimit(60).plantLimit, 75,

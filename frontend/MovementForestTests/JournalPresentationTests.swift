@@ -174,16 +174,73 @@ final class JournalPresentationTests: XCTestCase {
     func testCollectionSummaryFitsNarrowScreensWithLargeTextAndOverLimitCounts() {
         let capacity = APIInventoryCapacity(ownedPlants: 125, plantedPlants: 25, storedPlants: 100,
                                            plantLimit: 50, plantedLimit: 20, unopenedPacks: 110, packLimit: 50)
-        for textSize: DynamicTypeSize in [.large, .accessibility3] {
-            for balance: String? in [nil, "0", "9223372036854775807"] {
-                let host = UIHostingController(rootView:
-                    CollectionWalletSummary(balance: balance, capacity: capacity, showsPlants: true, cached: true)
-                        .environment(\.dynamicTypeSize, textSize))
-                let size = host.sizeThatFits(in: CGSize(width: 288, height: 2000))
-                XCTAssertLessThanOrEqual(size.width, 289)
-                XCTAssertTrue(size.height.isFinite)
-                XCTAssertGreaterThan(size.height, 44)
+        for width: CGFloat in [248, 288, 358] {
+            for textSize: DynamicTypeSize in [.large, .xxxLarge, .accessibility3] {
+                for balance: String? in [nil, "0", "9223372036854775807"] {
+                    let host = UIHostingController(rootView:
+                        CollectionWalletSummary(balance: balance, capacity: capacity, showsPlants: true,
+                            cached: true, gems: "9223372036854775807")
+                            .environment(\.dynamicTypeSize, textSize))
+                    let size = host.sizeThatFits(in: CGSize(width: width, height: 2000))
+                    XCTAssertLessThanOrEqual(size.width, width + 1)
+                    XCTAssertTrue(size.height.isFinite)
+                    XCTAssertGreaterThan(size.height, 44)
+                }
             }
         }
+    }
+
+    func testCatalogSortsByRarityThenNameWithUnknownRaritiesLast() {
+        func species(_ id: String, _ name: String, _ rarity: String?) -> APISpecies {
+            APISpecies(speciesId: id, displayName: name, clearanceRadius: 1, variants: [], rarity: rarity)
+        }
+        let items = [species("unknown", "A", nil), species("legendary", "A", "legendary"),
+            species("epic", "A", "epic"), species("rare", "A", "rare"),
+            species("oak", "Oak", "common"), species("amber", "Amber", "common")]
+        XCTAssertEqual(CatalogPresentation.sortedSpecies(items).map(\.speciesId),
+                       ["amber", "oak", "rare", "epic", "legendary", "unknown"])
+        let ties = [species("b", "Oak", "common"), species("a", "Oak", "common")]
+        XCTAssertEqual(CatalogPresentation.sortedSpecies(ties).map(\.speciesId), ["a", "b"])
+    }
+
+    func testSpeciesPortraitUsesOnlyAnAcquiredVariantAndPrefersStandard() {
+        let variants = ["standard", "vined", "blue"].map {
+            APIVariant(variantId: $0, displayName: $0, assetCatalogVersion: "1.0.0", stages: [:])
+        }
+        let species = APISpecies(speciesId: "oak", displayName: "Oak", clearanceRadius: 1, variants: variants)
+        var keys = Set<CatalogDiscoveryKey>()
+        XCTAssertNil(CatalogPresentation.portraitVariant(species, discovered: keys))
+        keys.insert(.init(species: "oak", variant: "vined", stage: .sprout))
+        XCTAssertEqual(CatalogPresentation.portraitVariant(species, discovered: keys)?.variantId, "vined")
+        keys.insert(.init(species: "oak", variant: "blue", stage: .sprout))
+        XCTAssertEqual(CatalogPresentation.portraitVariant(species, discovered: keys)?.variantId, "blue")
+        keys.insert(.init(species: "oak", variant: "standard", stage: .sprout))
+        XCTAssertEqual(CatalogPresentation.portraitVariant(species, discovered: keys)?.variantId, "standard")
+    }
+
+    @MainActor
+    func testLockedCatalogArtworkNeverResolvesSpeciesImage() {
+        let assets = CatalogImageProbe()
+        let plant = GardenPlant(id: UUID(), speciesId: "oak", variantId: "standard", assetVersion: "1.0.0",
+                                growthStage: .adult, x: 0, y: 0, rotationDegrees: 0)
+        let host = UIHostingController(rootView: CatalogPlantArtwork(plant: plant, catalog: assets, revealed: false)
+            .frame(width: 100, height: 100))
+        _ = host.sizeThatFits(in: CGSize(width: 100, height: 100))
+        host.view.layoutIfNeeded()
+        XCTAssertEqual(assets.resolutions, 0)
+        let revealed = UIHostingController(rootView: CatalogPlantArtwork(plant: plant, catalog: assets, revealed: true)
+            .frame(width: 100, height: 100))
+        _ = revealed.sizeThatFits(in: CGSize(width: 100, height: 100))
+        revealed.view.layoutIfNeeded()
+        XCTAssertGreaterThan(assets.resolutions, 0, "The rendered positive control must attempt image resolution")
+    }
+}
+
+private final class CatalogImageProbe: AssetCatalogProviding {
+    let species: [SpeciesManifest] = []
+    var resolutions = 0
+    func resolve(speciesId: String, version: String, stage: GrowthStage, variant: String) throws -> ResolvedPlantAsset {
+        resolutions += 1
+        throw ForestError.missingResource("test image")
     }
 }

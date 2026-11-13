@@ -10,8 +10,24 @@
     "catalogVersion": "development-oak-v1",
     "discoveryVersion": 2,
     "entries": [
-      {"speciesId": "oak", "variantId": "blue", "stages": ["seedling"]},
-      {"speciesId": "oak", "variantId": "standard", "stages": ["seedling", "young", "adult"]}
+      {
+        "speciesId": "oak",
+        "variantId": "blue",
+        "stages": [
+          "sprout",
+          "seedling"
+        ]
+      },
+      {
+        "speciesId": "oak",
+        "variantId": "standard",
+        "stages": [
+          "sprout",
+          "seedling",
+          "young",
+          "adult"
+        ]
+      }
     ]
   }
 }

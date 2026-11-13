@@ -1,5 +1,11 @@
 **Woodland release, 13 November 2026:** the app bundles all 30 species and supports Standard/Enchanted/Premium artwork and token/gem purchasing. Build this client before backend publication. See [upgrade, storage measurements and device flow](../backend/WOODLAND_RELEASE.md). Native Xcode/device acceptance remains separate from portable checks.
 
+**Catalog/capacity follow-up, 13 November 2026:** two-column Packs balances;
+rarity/name catalog ordering; exact-variant earned sprout and later-stage artwork;
+generic locked placeholders; count-only Planted labels with placement following
+owned capacity and clearance. Backend schema `0016_sprout_discovery` requires an
+explicit existing-database upgrade. See [acceptance](CATALOG_CAPACITY_ACCEPTANCE.md).
+
 # Movement Forest — native frontend, activity, authentication and visitors
 
 **Account progression foundation, 6 November 2026:** shared, account-scoped gem/

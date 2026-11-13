@@ -302,8 +302,8 @@ def test_two_sale_requests_only_pay_once(economy):
 
 def test_placement_limit_allows_swap_and_grandfathered_reduction(economy):
     app = economy["app"]
-    app.state.settings.planted_capacity = 1
     one, two = grant(economy), grant(economy)
+    app.state.settings.plant_capacity = 1
 
     def edit(*actions, version=0):
         return economy["client"].post(
@@ -319,9 +319,9 @@ def test_placement_limit_allows_swap_and_grandfathered_reduction(economy):
         == 200
     )
     # Simulate an already over-limit account after a configuration decrease.
-    app.state.settings.planted_capacity = 2
+    app.state.settings.plant_capacity = 2
     assert edit(plant_action(one, x=6), version=2).status_code == 200
-    app.state.settings.planted_capacity = 1
+    app.state.settings.plant_capacity = 1
     assert (
         edit(
             {"action": "rotate", "plantId": str(one), "rotationDegrees": 90}, version=3
@@ -336,6 +336,47 @@ def test_internal_awards_respect_the_same_configured_limit(economy):
     app.state.settings.plant_capacity = 1
     with pytest.raises(ApiError, match="Plant collection full"):
         grant(economy)
+
+
+@pytest.mark.parametrize("count", [21, 50, 100])
+def test_garden_can_fill_owned_capacity_when_clearance_permits(economy, count):
+    app = economy["app"]
+    app.state.settings.plant_capacity = count
+    app.state.settings.planted_capacity = 1  # Legacy setting no longer restricts placement.
+    with app.state.database.sessions.begin() as session:
+        plants = list(session.scalars(select(OwnedPlant)))
+        for index in range(count - 1):
+            plants.append(
+                services.award_plant(
+                    session, economy["owner"], "oak", "standard", "test", f"dense-{index}"
+                )
+            )
+        for plant in plants:
+            plant.clearance_radius = 0.1
+        identifiers = [plant.id for plant in plants]
+    actions = [
+        plant_action(plant, x=0.5 + index % 10, y=0.5 + index // 10)
+        for index, plant in enumerate(identifiers)
+    ]
+    result = economy["client"].post(
+        "/v1/me/garden/edits", headers=economy["headers"], json=edit_body(*actions)
+    )
+    assert result.status_code == 200, result.text
+    assert len(result.json()["garden"]["plants"]) == count
+    capacity = (
+        economy["client"].get("/v1/me/inventory", headers=economy["headers"]).json()["capacity"]
+    )
+    assert capacity["plantedLimit"] == capacity["plantLimit"] == count
+    # More plants never bypass the pinned-circle collision checks.
+    collision = economy["client"].post(
+        "/v1/me/garden/edits",
+        headers=economy["headers"],
+        json=edit_body(
+            {"action": "move", "plantId": str(identifiers[-1]), "x": 0.5, "y": 0.5}, version=1
+        ),
+    )
+    assert collision.status_code == 422
+    assert collision.json()["error"]["code"] == "clearance_overlap"
 
 
 def test_sold_identity_cannot_be_reinserted(economy):
@@ -402,7 +443,7 @@ def test_default_fifty_pack_limit_and_exact_remaining_quantity(economy):
         "plantedPlants": 0,
         "storedPlants": 1,
         "plantLimit": 50,
-        "plantedLimit": 20,
+        "plantedLimit": 50,
         "unopenedPacks": 50,
         "packLimit": 50,
     }
@@ -437,7 +478,7 @@ def test_sale_keeps_discovery_and_progress(economy):
                 )
             )
         )
-        assert stages == {"seedling", "young", "adult"}
+        assert stages == {"sprout", "seedling", "young", "adult"}
         progress = session.get(PlayerProgress, economy["owner"])
         assert progress.activity_steps == 1000 and progress.first_maturity_count == 1
 

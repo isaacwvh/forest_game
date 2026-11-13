@@ -43,7 +43,7 @@ def capacity(session, owner, settings):
         "plantedPlants": planted,
         "storedPlants": owned - planted,
         "plantLimit": owned_limit(session, owner, settings.plant_capacity),
-        "plantedLimit": settings.planted_capacity,
+        "plantedLimit": owned_limit(session, owner, settings.plant_capacity),
         "unopenedPacks": packs,
         "packLimit": settings.pack_capacity,
     }

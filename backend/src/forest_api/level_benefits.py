@@ -71,7 +71,7 @@ def snapshot(session, owner, settings, boundary):
         ),
         maximum_offline_capacity=3 * base,
         plant_limit=plant_limit(progress.level),
-        planted_limit=settings.planted_capacity if settings else 20,
+        planted_limit=plant_limit(progress.level),
         next_base_increase=base_capacity(progress.level + 1) - base,
         next_plant_level=next_plant[0] if next_plant else None,
         next_plant_limit=next_plant[1] if next_plant else None,

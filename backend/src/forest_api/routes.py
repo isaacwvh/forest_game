@@ -38,7 +38,7 @@ from forest_api.server_clock import request_clock
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0015_woodland_release"
+SCHEMA_REVISION = "0016_sprout_discovery"
 
 
 @router.get("/health/live", tags=["health"])
@@ -125,7 +125,12 @@ def catalog_discovery(
     identity: Identity = Depends(get_identity),
     session: Session = Depends(get_session),
 ) -> discovery.DiscoverySnapshot:
-    return discovery.read(session, request.app.state.settings, identity)
+    return discovery.read(
+        session,
+        request.app.state.settings,
+        identity,
+        include_sprouts=request.headers.get("X-Forest-Discovery") == "2",
+    )
 
 
 @router.get("/v1/me/inventory", response_model=InventoryDTO, tags=["inventory"])

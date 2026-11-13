@@ -164,6 +164,9 @@ def award_plant(
         plant.growth_profile_id, plant.growth_profile_version = starter["id"], starter["version"]
     session.add(plant)
     session.flush()
+    from forest_api.discovery import record_reached
+
+    record_reached(session, owner_id, [plant], session.scalar(select(func.clock_timestamp())))
     return plant
 
 

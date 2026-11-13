@@ -11,7 +11,8 @@ struct CatalogDiscoveryDiskStore: CatalogDiscoveryPersisting {
     let disk: AccountDiskStore
     init(disk: AccountDiskStore = AccountDiskStore()) { self.disk = disk }
     func load(server: String, user: UUID) throws -> CatalogDiscoveryCache? {
-        try disk.load(CatalogDiscoveryCache.self, kind: "catalog-discovery", server: server, user: user)
+        guard let saved = try disk.load(CatalogDiscoveryCache.self, kind: "catalog-discovery", server: server, user: user) else { return nil }
+        return try saved.upgraded(user: user)
     }
     func save(_ value: CatalogDiscoveryCache, server: String, user: UUID) throws {
         try disk.save(value, kind: "catalog-discovery", server: server, user: user)
@@ -46,12 +47,11 @@ final class CatalogDiscoveryStore: ObservableObject {
     }
 
     func revealed(species: String, variant: String, stage: GrowthStage) -> Bool {
-        stage == .sprout || (attached && snapshot?.keys.contains(
-            CatalogDiscoveryKey(species: species, variant: variant, stage: stage)) == true)
+        attached && snapshot?.keys.contains(
+            CatalogDiscoveryKey(species: species, variant: variant, stage: stage)) == true
     }
 
     func status(species: String, variant: String, stage: GrowthStage) -> String {
-        if stage == .sprout { return "Always visible" }
         guard snapshot != nil, attached else {
             return failed && !refreshing ? "Discovery unavailable" : "Checking discovery…"
         }

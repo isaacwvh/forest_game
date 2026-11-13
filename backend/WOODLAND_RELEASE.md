@@ -127,7 +127,7 @@ docker compose -f backend/compose.yaml up -d --wait
 ```
 
 Check each command succeeds before continuing. Migration head must be
-`0015_woodland_release`. Publication requires the existing `launch-visitors-v2`
+`0016_sprout_discovery` (which includes `0015_woodland_release`). Publication requires the existing `launch-visitors-v2`
 economy. Do not run seed/reset commands. Preview makes no publication changes;
 apply locks existing accounts/gardens, settles visitor time and publishes the
 catalog and offers in one transaction. Repeating apply returns `alreadyPublished`
@@ -143,7 +143,8 @@ game database is implied by automated tests.
 1. Sign in to an existing account. Verify plants, positions, growth, tokens, gems,
    stored visitors and old unopened packs survived. Existing layouts still edit.
 2. Open Catalog: 30 species, correct rarities, variants, four stages and concise
-   skill descriptions. Locked discovery art stays masked; sprouts remain visible.
+   skill descriptions. All undiscovered artwork, including sprouts, uses generic
+   locked placeholders. Acquiring an exact variant permanently reveals its sprout.
 3. Open Exchange: all three pack designs, correct currency icons/prices and odds.
    Check insufficient currency, quantity totals and pack-capacity behavior.
 4. Buy/open Standard, Enchanted and Premium when funded. Each gives one stored
@@ -151,8 +152,9 @@ game database is implied by automated tests.
 5. Interrupt a purchase/opening, relaunch and retry. Confirm one spend, one pack
    or plant, and the same confirmed result. Open an old pack and verify old contents.
 6. Plant new species, rotate/store/replant, grow through stages and verify each
-   model/thumbnail, wind, anchor, clearance and discovery. Test a 20-plant garden
-   where geometry permits, including duplicate and tree-heavy arrangements.
+   model/thumbnail, wind, anchor, clearance and discovery. Test more than 20 plants
+   where geometry permits, including dense small-plant and tree-heavy arrangements;
+   test device performance up to the effective 50–100 owned capacity.
 7. Place an adult Moonwillow: 8% water, no duplicate stacking. Store it and verify
    the bonus stops. Check companion skills and both Afterglow components.
 8. Cross 2,000 accepted daily steps with First Drops/Mirror Leaf. Sync several

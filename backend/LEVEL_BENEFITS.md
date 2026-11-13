@@ -21,8 +21,10 @@ The complete base formula is
 `600 + 75*min(L-1,4) + 60*min(max(L-5,0),15)` for `L >= 1`.
 Levels 1–5 add 75 per level; levels 6–20 add 60 per level. The base plateaus at 20.
 Owned plants use tiers 1–4:50, 5–9:60, 10–14:75, 15–19:90, 20+:100. This limit
-counts planted plus stored copies. The configured planted and unopened-pack
-limits are unchanged (defaults 20 and 50).
+counts planted plus stored copies. Placement shares this same limit and remains
+subject to pinned clearance and garden boundaries; the separate planted ceiling
+is retired. Both `plantLimit` and compatibility field `plantedLimit` report this
+tier. The configured unopened-pack limit remains 50 by default.
 
 Effective offline capacity is
 `floor(min(base*(1+resolvedPercent)+resolvedFlat, 3*base))`.

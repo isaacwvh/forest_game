@@ -1,4 +1,4 @@
-**Woodland release, 13 November 2026:** migration head is `0015_woodland_release`. Thirty species, three packs, gem spending and extended skills are source-implemented. Use the [preview/apply upgrade and device walkthrough](WOODLAND_RELEASE.md); migrations alone do not activate the release. Earlier delivery records below remain historical.
+**Woodland release and catalog follow-up, 13 November 2026:** migration head is `0016_sprout_discovery`. Thirty species, three packs, gem spending, extended skills and earned sprout discovery are source-implemented. Use the [preview/apply upgrade and device walkthrough](WOODLAND_RELEASE.md); migrations alone do not activate the Woodland release. Earlier delivery records below remain historical.
 
 # Movement Forest backend — B1–B7 collection slice
 
@@ -8,7 +8,11 @@ schema: `0013_account_progression`. Follow [rules, explicit upgrade/backfill and
 disposable validation](PROGRESSION_API.md) before running the updated server.
 
 Inventory capacity/selling source is implemented in `0012_inventory_management`.
-Defaults: 50 owned plants total, 20 planted, 50 unopened packs. See
+Defaults: 50 owned plants total and 50 unopened packs; level benefits can raise
+owned capacity to 100. Placement shares owned capacity and clearance/boundary rules,
+with no independent 20-planted ceiling. Current migration head is
+`0016_sprout_discovery`, adding permanent acquisition-based sprout artwork unlocks.
+See [catalog/capacity acceptance](../frontend/CATALOG_CAPACITY_ACCEPTANCE.md) and
 [inventory rules, resale formula and explicit upgrade](INVENTORY_MANAGEMENT.md).
 The personal database requires that migration before running the updated API.
 

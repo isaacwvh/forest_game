@@ -1,3 +1,23 @@
+## Catalog and capacity follow-up — 13 November 2026
+
+Implemented two-column collection summaries, ordered rarity/name catalog display,
+generic locked artwork for all undiscovered stages including sprouts, permanent
+exact-variant acquisition unlocks, safe legacy-cache conversion, opening/recovery
+invalidation and count-only Planted labels. Capacity overrides propagate the
+effective owned limit to the placement compatibility field.
+
+Passed on Windows: frontend resource/project/contract/contrast validation,
+Woodland asset/release validation and all **92 Swift syntax parses**. Regression
+sources cover four-metric narrow/large-text summaries, ordering, acquired-only
+portraits, concealed-image resolution, legacy caches, response/account isolation,
+opening recovery and level-limit propagation.
+
+Xcode/Apple SDK typechecking, XCTest/UI execution, Release builds and native visual/
+dense-garden performance acceptance were **not run on this Windows host**. Run
+`bash frontend/scripts/test-mac.sh` on Mac and follow
+[CATALOG_CAPACITY_ACCEPTANCE.md](CATALOG_CAPACITY_ACCEPTANCE.md).
+No push/CI run or personal game database migration was performed.
+
 ## First Woodland catalog release — 13 November 2026
 
 The app indexes all 30 species/47 variants (188 models and 188 thumbnails), uses

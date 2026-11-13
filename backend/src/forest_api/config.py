@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     db_max_overflow: int = Field(default=5, ge=0, le=50)
     operation_metrics_enabled: bool = False
     plant_capacity: int = Field(default=50, ge=1, le=10000)
+    # Accepted for existing deployments; placement now follows the owned-plant limit.
     planted_capacity: int = Field(default=20, ge=1, le=10000)
     pack_capacity: int = Field(default=50, ge=1, le=10000)
     maintenance_responses_enabled: bool = False
