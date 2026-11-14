@@ -72,34 +72,34 @@
       "thumbnail": "ui/swiftgrass-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.07761,
-          -0.027751,
+          -0.278984305,
+          -0.09975639,
           0.0
         ],
         "max": [
-          0.301869,
-          0.111992,
-          0.180822
+          1.085127086,
+          0.40257712,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.07762,
-          -0.03334,
+          -0.279020252,
+          -0.119847142,
           0.0
         ],
         "max": [
-          0.302007,
-          0.112092,
-          0.181866
+          1.085623154,
+          0.40293659,
+          0.653752862
         ]
       },
       "animation": "swiftgrass_sprout_sway",
       "triangles": 1740,
       "joints": 4,
       "materials": 2,
-      "bytes": 112193,
-      "sha256": "0e980b45cddaee7c29f0d6dac4b7ba9cd6f29b6fe245e2808914a3a0951faa2a",
+      "bytes": 112871,
+      "sha256": "562bd42ae06ea2a16ade0c3980afe12e50bce75a2938e2a724d253ca149dbd22",
       "leafCount": 3,
       "basalFanCount": 1,
       "seedheadCount": 0,
@@ -112,34 +112,34 @@
       "thumbnail": "ui/swiftgrass-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.217605,
-          -0.134486,
+          -0.613465291,
+          -0.379138775,
           0.0
         ],
         "max": [
-          0.465157,
-          0.214912,
-          0.319243
+          1.31135624,
+          0.605873269,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.217673,
-          -0.141232,
+          -0.613656995,
+          -0.39815689,
           0.0
         ],
         "max": [
-          0.465555,
-          0.215695,
-          0.320566
+          1.312478269,
+          0.608080678,
+          0.903729761
         ]
       },
       "animation": "swiftgrass_seedling_sway",
       "triangles": 5712,
       "joints": 7,
       "materials": 2,
-      "bytes": 282995,
-      "sha256": "a7cd6043209bedd39c709ffac1e4b08a4543b291092d7b1c3203e130f1d2238e",
+      "bytes": 283680,
+      "sha256": "c45e8bdbf1a28d4d477f692d6814bc1c4df05f90536eec533e0e8e9a6357b905",
       "leafCount": 12,
       "basalFanCount": 2,
       "seedheadCount": 0,
@@ -152,34 +152,34 @@
       "thumbnail": "ui/swiftgrass-young-standard.png",
       "bounds": {
         "min": [
-          -0.635675,
-          -0.364625,
+          -0.820308215,
+          -0.470531141,
           0.0
         ],
         "max": [
-          1.135957,
-          0.485357,
-          1.084891
+          1.465898233,
+          0.626330018,
+          1.4
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.635819,
-          -0.366784,
+          -0.82049404,
+          -0.473317227,
           0.0
         ],
         "max": [
-          1.199097,
-          0.487263,
-          1.085923
+          1.547377386,
+          0.62878962,
+          1.401331747
         ]
       },
       "animation": "swiftgrass_young_sway",
       "triangles": 21052,
       "joints": 16,
       "materials": 2,
-      "bytes": 938954,
-      "sha256": "a1144bf6e7d90c0af2076dc88c1f120bfecbe81de8bf5baccbbcef43005a480a",
+      "bytes": 939512,
+      "sha256": "f14a79229f68ef13e8b3ff92fedf4cc8d43b62df4a292cc6009349e540be0171",
       "leafCount": 35,
       "basalFanCount": 3,
       "seedheadCount": 2,

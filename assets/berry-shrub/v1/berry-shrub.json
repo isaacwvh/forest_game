@@ -63,33 +63,33 @@
       "thumbnail": "ui/berry-shrub-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.13499,
-          -0.04877,
+          -0.310212127,
+          -0.112075305,
           0.0
         ],
         "max": [
-          0.11005,
-          0.04976,
-          0.28285
+          0.252899063,
+          0.114350362,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.13681,
-          -0.05165,
+          -0.314394555,
+          -0.118693654,
           0.0
         ],
         "max": [
-          0.11155,
-          0.05119,
-          0.2831
+          0.25634612,
+          0.117636556,
+          0.650574509
         ]
       },
       "animation": "berry-shrub_sprout_sway",
       "triangles": 2654,
       "joints": 12,
-      "bytes": 198732,
-      "sha256": "fbeeb4d252063fb3ee1dd86c57cf9b7d0d9ee6619a95606eaccb60bba847feaa"
+      "bytes": 199252,
+      "sha256": "c875359c09a7c7043f92b0494945802926b77ac9d04b3f641bf68a7877c764b9"
     },
     {
       "stage": "sprout",
@@ -98,33 +98,33 @@
       "thumbnail": "ui/berry-shrub-sprout-red-berry.png",
       "bounds": {
         "min": [
-          -0.13499,
-          -0.04877,
+          -0.310212127,
+          -0.112075305,
           0.0
         ],
         "max": [
-          0.11005,
-          0.04976,
-          0.28285
+          0.252899063,
+          0.114350362,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.13681,
-          -0.05165,
+          -0.314394555,
+          -0.118693654,
           0.0
         ],
         "max": [
-          0.11155,
-          0.05119,
-          0.2831
+          0.25634612,
+          0.117636556,
+          0.650574509
         ]
       },
       "animation": "berry-shrub_sprout_sway",
       "triangles": 2654,
       "joints": 12,
-      "bytes": 197247,
-      "sha256": "5117438a5d2c360cb645f824061c214e4006ca266fd7a984d52d90cf2d1b1701"
+      "bytes": 197769,
+      "sha256": "23ffba6fb8c04cd1bc20d3132548ab62d72f7d771bcf011a1c8a77cfd875ae77"
     },
     {
       "stage": "seedling",
@@ -133,33 +133,33 @@
       "thumbnail": "ui/berry-shrub-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.26442,
-          -0.20329,
+          -0.513503366,
+          -0.394788969,
           0.0
         ],
         "max": [
-          0.26507,
-          0.25563,
-          0.46344
+          0.514765665,
+          0.496433195,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.26529,
-          -0.20674,
+          -0.515192905,
+          -0.401488866,
           0.0
         ],
         "max": [
-          0.26665,
-          0.25884,
-          0.46752
+          0.517834024,
+          0.502667012,
+          0.907923356
         ]
       },
       "animation": "berry-shrub_seedling_sway",
       "triangles": 6480,
       "joints": 30,
-      "bytes": 394937,
-      "sha256": "709194019c18cbfe3d990e702b775707f95284d6252cf673856c6dbd03b02fbf"
+      "bytes": 395444,
+      "sha256": "20191e0a2b72cef3de909289cd43479825323c840eb5da99e2a3c08d934418ac"
     },
     {
       "stage": "seedling",
@@ -168,33 +168,33 @@
       "thumbnail": "ui/berry-shrub-seedling-red-berry.png",
       "bounds": {
         "min": [
-          -0.26442,
-          -0.20329,
+          -0.513503366,
+          -0.394788969,
           0.0
         ],
         "max": [
-          0.26507,
-          0.25563,
-          0.46344
+          0.514765665,
+          0.496433195,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.26529,
-          -0.20674,
+          -0.515192905,
+          -0.401488866,
           0.0
         ],
         "max": [
-          0.26665,
-          0.25884,
-          0.46752
+          0.517834024,
+          0.502667012,
+          0.907923356
         ]
       },
       "animation": "berry-shrub_seedling_sway",
       "triangles": 6480,
       "joints": 30,
-      "bytes": 393580,
-      "sha256": "1bc2b6f6ca46635be1b2c38691b2ecfd7c492dd06ffdf2b05cc49c1b6be70c84"
+      "bytes": 394218,
+      "sha256": "8b9851adfafa5399533d04df84b22a497490677ed857e7e407d94ea95d237041"
     },
     {
       "stage": "young",
@@ -203,33 +203,33 @@
       "thumbnail": "ui/berry-shrub-young-standard.png",
       "bounds": {
         "min": [
-          -0.52829,
-          -0.57271,
+          -0.699737973,
+          -0.758573765,
           0.0
         ],
         "max": [
-          0.44443,
-          0.55637,
-          0.86823
+          0.588662566,
+          0.736930882,
+          1.15
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.58803,
-          -0.58787,
+          -0.778865623,
+          -0.778653698,
           0.0
         ],
         "max": [
-          0.46397,
-          0.5958,
-          0.88922
+          0.614543957,
+          0.789157251,
+          1.177801965
         ]
       },
       "animation": "berry-shrub_young_sway",
       "triangles": 17634,
       "joints": 18,
-      "bytes": 848690,
-      "sha256": "ea376231e44ad522794ebecacd45b3aecfdc7a30d5fe7e0b24f4f167d89aebe1"
+      "bytes": 849207,
+      "sha256": "58e315f726e7435c99d1efeb18bfe71814018b0b20a225bb264d4695b6858ca2"
     },
     {
       "stage": "young",
@@ -238,33 +238,33 @@
       "thumbnail": "ui/berry-shrub-young-red-berry.png",
       "bounds": {
         "min": [
-          -0.52829,
-          -0.57271,
+          -0.699737973,
+          -0.758573765,
           0.0
         ],
         "max": [
-          0.44443,
-          0.55637,
-          0.86823
+          0.588662566,
+          0.736930882,
+          1.15
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.58803,
-          -0.58787,
+          -0.778865623,
+          -0.778653698,
           0.0
         ],
         "max": [
-          0.46397,
-          0.5958,
-          0.88922
+          0.614543957,
+          0.789157251,
+          1.177801965
         ]
       },
       "animation": "berry-shrub_young_sway",
       "triangles": 17634,
       "joints": 18,
-      "bytes": 847334,
-      "sha256": "650f8565c647bc3d5fdb5b582a80b93d11a081d07a5ec924cf1ca9bcd334a7b8"
+      "bytes": 847853,
+      "sha256": "7410a1f51bc8c032707e988017b698eaf236df82cde1a9601fedeb2f4328f155"
     },
     {
       "stage": "adult",

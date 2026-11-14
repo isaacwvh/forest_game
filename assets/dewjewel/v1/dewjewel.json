@@ -58,34 +58,34 @@
       "thumbnail": "ui/dewjewel-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.089384,
-          -0.033308,
+          -0.385447541,
+          -0.14363294,
           0.0
         ],
         "max": [
-          0.064015,
-          0.027092,
-          0.139138
+          0.276049677,
+          0.116827897,
+          0.6
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.089622,
-          -0.033959,
+          -0.38647386,
+          -0.146440225,
           0.0
         ],
         "max": [
-          0.064425,
-          0.028374,
-          0.139517
+          0.277817706,
+          0.122356222,
+          0.601634349
         ]
       },
       "animation": "dewjewel_sprout_sway",
       "triangles": 2032,
       "joints": 3,
       "materials": 1,
-      "bytes": 214848,
-      "sha256": "94b566a6db6d27c41103c004469ddafa943dff3826d011401159b99add9ef607",
+      "bytes": 215338,
+      "sha256": "5819cd9ac6b2234bf30b8f740e827b169732b7f979a9ff48aa8762b12a0edcdb",
       "leafCount": 2,
       "flowerCount": 0,
       "budCount": 0,
@@ -100,34 +100,34 @@
       "thumbnail": "ui/dewjewel-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.146642,
-          -0.055673,
+          -0.339206467,
+          -0.128780579,
           0.0
         ],
         "max": [
-          0.153543,
-          0.047881,
-          0.337201
+          0.355169587,
+          0.110756433,
+          0.78
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.146742,
-          -0.056221,
+          -0.339437783,
+          -0.130048191,
           0.0
         ],
         "max": [
-          0.153652,
-          0.052567,
-          0.337655
+          0.355421722,
+          0.121595903,
+          0.781050175
         ]
       },
       "animation": "dewjewel_seedling_sway",
       "triangles": 3000,
       "joints": 3,
       "materials": 1,
-      "bytes": 256649,
-      "sha256": "a309d6cf6f5380f083547332ebace30335f7108a758e38ed1785b530665cbfb4",
+      "bytes": 257274,
+      "sha256": "00d05558acddc36989f09b68c84c07a9f070c338e71d60710e382182e141631c",
       "leafCount": 3,
       "flowerCount": 0,
       "budCount": 1,
@@ -142,34 +142,34 @@
       "thumbnail": "ui/dewjewel-young-standard.png",
       "bounds": {
         "min": [
-          -0.390507,
-          -0.113072,
+          -0.534777488,
+          -0.154845778,
           0.0
         ],
         "max": [
-          0.360307,
-          0.199786,
-          0.657201
+          0.493420278,
+          0.273595749,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.395338,
-          -0.117651,
+          -0.541393272,
+          -0.161116462,
           0.0
         ],
         "max": [
-          0.366194,
-          0.20576,
-          0.657216
+          0.501482195,
+          0.281776808,
+          0.900020542
         ]
       },
       "animation": "dewjewel_young_sway",
       "triangles": 15552,
       "joints": 7,
       "materials": 1,
-      "bytes": 748961,
-      "sha256": "e649e42c0421c98d4ca754ca36468a70382a23939e3132fc63ab00ab5be8e5de",
+      "bytes": 749454,
+      "sha256": "8be520b4283c365a36c7e6c95ea12e059f58457a997662ab48a193ef0f58c9f3",
       "leafCount": 4,
       "flowerCount": 2,
       "budCount": 1,

@@ -58,34 +58,34 @@
       "thumbnail": "ui/pearlseal-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.052335,
-          -0.041503,
+          -0.132638062,
+          -0.105185392,
           0.0
         ],
         "max": [
-          0.051682,
-          0.032985,
-          0.236742
+          0.130983096,
+          0.083597334,
+          0.6
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.053374,
-          -0.044262,
+          -0.135271308,
+          -0.112177814,
           0.0
         ],
         "max": [
-          0.05374,
-          0.037333,
-          0.236832
+          0.1361989,
+          0.094616925,
+          0.600228096
         ]
       },
       "animation": "pearlseal_sprout_sway",
       "triangles": 2960,
       "joints": 4,
       "materials": 1,
-      "bytes": 169127,
-      "sha256": "9f195ad5463f18604e4a8a8583993a12199b3d64f44b62fa800e06a3b51671a3",
+      "bytes": 169749,
+      "sha256": "c965ca14c0d0970baef0705196b2665be452b0e1a524c96a3a19a5db20d324c3",
       "leafCount": 5,
       "pairedLeafCount": 4,
       "flowerCount": 0,
@@ -99,34 +99,34 @@
       "thumbnail": "ui/pearlseal-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.098502,
-          -0.052475,
+          -0.171122567,
+          -0.091162177,
           0.0
         ],
         "max": [
-          0.144719,
-          0.10007,
-          0.460498
+          0.251413035,
+          0.173846575,
+          0.8
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.099649,
-          -0.052475,
+          -0.173115193,
+          -0.091162177,
           0.0
         ],
         "max": [
-          0.148483,
-          0.105186,
-          0.460877
+          0.257952043,
+          0.182734344,
+          0.800658418
         ]
       },
       "animation": "pearlseal_seedling_sway",
       "triangles": 3784,
       "joints": 4,
       "materials": 1,
-      "bytes": 205328,
-      "sha256": "0e3197591f76ea7a038d187df80173d3082b9112bf5dd731915bdd57847b0990",
+      "bytes": 205823,
+      "sha256": "9e7fa0fbfab10af7b771f494a953f92be25925c4347906685cc936c9e0e04827",
       "leafCount": 7,
       "pairedLeafCount": 6,
       "flowerCount": 0,
@@ -140,34 +140,34 @@
       "thumbnail": "ui/pearlseal-young-standard.png",
       "bounds": {
         "min": [
-          -0.331683,
-          -0.118609,
+          -0.442351406,
+          -0.158183741,
           0.0
         ],
         "max": [
-          0.369735,
-          0.114959,
-          0.712327
+          0.493099728,
+          0.153315893,
+          0.95
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.334281,
-          -0.126269,
+          -0.445816247,
+          -0.168399555,
           0.0
         ],
         "max": [
-          0.377298,
-          0.129128,
-          0.713403
+          0.503186177,
+          0.172212481,
+          0.951435015
         ]
       },
       "animation": "pearlseal_young_sway",
       "triangles": 10568,
       "joints": 7,
       "materials": 1,
-      "bytes": 466600,
-      "sha256": "f1fb37de2d37328d34351b4311392c0aeb08237084d0caec935c14f1393047b0",
+      "bytes": 467219,
+      "sha256": "c037b1dd5bfb8e6fbc75701d78df8101eb1ed750275a27505cdf013685386372",
       "leafCount": 12,
       "pairedLeafCount": 10,
       "flowerCount": 4,

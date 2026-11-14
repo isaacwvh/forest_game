@@ -120,20 +120,20 @@
           "file": "models/oak-seedling-standard.usdz",
           "bounds": {
             "min": [
-              -0.44857,
-              -0.07491,
+              -0.479888518,
+              -0.080140109,
               0.0
             ],
             "max": [
-              0.46995,
-              0.065,
-              1.35537
+              0.502761239,
+              0.069538207,
+              1.45
             ]
           },
           "animation": "oak_seedling_sway",
           "thumbnail": "ui/oak-seedling-standard.png",
-          "bytes": 110665,
-          "sha256": "d31f62be86d48bcd28a5c67f7695ae0d81a1ba708979046545850455c39819fa"
+          "bytes": 111182,
+          "sha256": "e82d6472f44a21b2ac778dfc771e5924e1ef1a4c5794371bc2eb0599ddd954de"
         },
         {
           "stage": "seedling",
@@ -141,20 +141,20 @@
           "file": "models/oak-seedling-blue.usdz",
           "bounds": {
             "min": [
-              -0.44857,
-              -0.07491,
+              -0.479888518,
+              -0.080140109,
               0.0
             ],
             "max": [
-              0.46995,
-              0.065,
-              1.35537
+              0.502761239,
+              0.069538207,
+              1.45
             ]
           },
           "animation": "oak_seedling_sway",
           "thumbnail": "ui/oak-seedling-blue.png",
-          "bytes": 112901,
-          "sha256": "d8bd17b2ed48a748e7e3aa4a1d5fab3392c4b982dd74fc086c50d28aeece9a5d"
+          "bytes": 113418,
+          "sha256": "6b1b78bb25a4ba80feb4f8f43db45c3095b8e9a00259b37da49bd8c03230fd7d"
         },
         {
           "stage": "seedling",
@@ -162,20 +162,20 @@
           "file": "models/oak-seedling-vined.usdz",
           "bounds": {
             "min": [
-              -0.44857,
-              -0.21866,
+              -0.479888518,
+              -0.233926529,
               0.0
             ],
             "max": [
-              0.46995,
-              0.2196,
-              1.35537
+              0.502761239,
+              0.234932159,
+              1.45
             ]
           },
           "animation": "oak_seedling_sway",
           "thumbnail": "ui/oak-seedling-vined.png",
-          "bytes": 156618,
-          "sha256": "8672eec6b4b7827e7d1ea7e416a0bb3cf5b14ca28de655938e5e03486083133a"
+          "bytes": 157132,
+          "sha256": "5037763bc6079e98712a60ea7200782c8603e47d4c1523f924cab50657944db7"
         },
         {
           "stage": "young",
@@ -183,20 +183,20 @@
           "file": "models/oak-young-standard.usdz",
           "bounds": {
             "min": [
-              -1.49154,
-              -0.74059,
+              -1.523564051,
+              -0.756490808,
               0.0
             ],
             "max": [
-              1.28711,
-              0.70749,
-              3.06421
+              1.314744845,
+              0.722680136,
+              3.13
             ]
           },
           "animation": "oak_young_sway",
           "thumbnail": "ui/oak-young-standard.png",
-          "bytes": 180774,
-          "sha256": "b5e60e99d5ca7d2b81bc920173462e8a152bac5f74e9eee5c0ce174072cda3bd"
+          "bytes": 181292,
+          "sha256": "0f1b96e7bc3428def89e4dc3d6f6b5cfbff56c11b6a48f4d6392d749e3ecc61f"
         },
         {
           "stage": "young",
@@ -204,20 +204,20 @@
           "file": "models/oak-young-blue.usdz",
           "bounds": {
             "min": [
-              -1.49154,
-              -0.74059,
+              -1.523564051,
+              -0.756490808,
               0.0
             ],
             "max": [
-              1.28711,
-              0.70749,
-              3.06421
+              1.314744845,
+              0.722680136,
+              3.13
             ]
           },
           "animation": "oak_young_sway",
           "thumbnail": "ui/oak-young-blue.png",
-          "bytes": 183010,
-          "sha256": "772d851a293082509408497f12c6b57f028d27957db59335a914d2a3a3044176"
+          "bytes": 183528,
+          "sha256": "ce32a2009532c2634127392c56f5cae1fce2cbfbc9b0b09a30bc88eef6c0bdef"
         },
         {
           "stage": "young",
@@ -225,20 +225,20 @@
           "file": "models/oak-young-vined.usdz",
           "bounds": {
             "min": [
-              -1.49154,
-              -0.74059,
+              -1.523564051,
+              -0.756490808,
               0.0
             ],
             "max": [
-              1.28711,
-              0.70749,
-              3.06421
+              1.314744845,
+              0.722680136,
+              3.13
             ]
           },
           "animation": "oak_young_sway",
           "thumbnail": "ui/oak-young-vined.png",
-          "bytes": 234853,
-          "sha256": "40a2188ec352415d7be9c99b69ab728c1e6412636b1d175aa05b97128e8f73e0"
+          "bytes": 235366,
+          "sha256": "258c5358aaeb2861b1fb2783aa2866103f96e78f57fd4a301874c183b53d2d52"
         },
         {
           "stage": "adult",
@@ -517,33 +517,33 @@
           "thumbnail": "ui/moonwillow-young-standard.png",
           "bounds": {
             "min": [
-              -1.29718,
-              -1.13505,
+              -1.385191486,
+              -1.212061238,
               0.0
             ],
             "max": [
-              1.44313,
-              1.2692,
-              2.7532
+              1.541043949,
+              1.35531309,
+              2.94
             ]
           },
           "animatedBounds": {
             "min": [
-              -1.42198,
-              -1.31901,
+              -1.518458957,
+              -1.408502615,
               0.0
             ],
             "max": [
-              1.56391,
-              1.42642,
-              2.76012
+              1.670018669,
+              1.523200203,
+              2.94738951
             ]
           },
           "animation": "moonwillow_young_sway",
           "triangles": 14680,
           "joints": 33,
-          "bytes": 807700,
-          "sha256": "1f5bd8f65b22d290d5b00399b29df8aac2e2434340cc8274c5602145cf0d0dba"
+          "bytes": 808217,
+          "sha256": "1b17179696f89ad65dda3b5048f94ea584cbe1d36152c20d4af6eb6211250037"
         },
         {
           "stage": "young",
@@ -552,33 +552,33 @@
           "thumbnail": "ui/moonwillow-young-golden.png",
           "bounds": {
             "min": [
-              -1.29718,
-              -1.13505,
+              -1.385191486,
+              -1.212061238,
               0.0
             ],
             "max": [
-              1.44313,
-              1.2692,
-              2.7532
+              1.541043949,
+              1.35531309,
+              2.94
             ]
           },
           "animatedBounds": {
             "min": [
-              -1.42198,
-              -1.31901,
+              -1.518458957,
+              -1.408502615,
               0.0
             ],
             "max": [
-              1.56391,
-              1.42642,
-              2.76012
+              1.670018669,
+              1.523200203,
+              2.94738951
             ]
           },
           "animation": "moonwillow_young_sway",
           "triangles": 14680,
           "joints": 33,
-          "bytes": 842183,
-          "sha256": "223c16ee6c1c4ab4dba71660c09366cf49acd922a60c280d0471f648b8910fd5"
+          "bytes": 842702,
+          "sha256": "4296fff9977e0886f64696a971d336521e3fe6c8f74a7dee2505768aa1b14bdb"
         },
         {
           "stage": "adult",
@@ -729,26 +729,26 @@
           "thumbnail": "ui/bluebell-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.025595,
-              -0.08164,
+              -0.078123312,
+              -0.249188796,
               0.0
             ],
             "max": [
-              0.086451,
-              0.030551,
-              0.212955
+              0.263873354,
+              0.093250452,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.025759,
-              -0.081956,
+              -0.078623888,
+              -0.250153319,
               0.0
             ],
             "max": [
-              0.086778,
-              0.033934,
-              0.21451
+              0.264871452,
+              0.103576342,
+              0.654746308
             ]
           },
           "animation": "bluebell_sprout_sway",
@@ -760,8 +760,8 @@
           "basalSheathCount": 0,
           "triangles": 3436,
           "joints": 5,
-          "bytes": 189963,
-          "sha256": "2cf2326780ff0cb386c73d38b68690c762dfdd6897caab6dcf2a555994c85584"
+          "bytes": 190571,
+          "sha256": "d366b4f2c76d25f18fcf30409ce6cc4fc7db3766c3f2f950fafb40871be267d6"
         },
         {
           "stage": "seedling",
@@ -770,26 +770,26 @@
           "thumbnail": "ui/bluebell-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.156029,
-              -0.190456,
+              -0.370412839,
+              -0.452142535,
               0.0
             ],
             "max": [
-              0.17864,
-              0.074737,
-              0.379107
+              0.424091352,
+              0.177425634,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.159798,
-              -0.190602,
+              -0.379360444,
+              -0.452489139,
               0.0
             ],
             "max": [
-              0.179091,
-              0.080354,
-              0.379491
+              0.425162025,
+              0.190760392,
+              0.900911616
             ]
           },
           "animation": "bluebell_seedling_sway",
@@ -801,8 +801,8 @@
           "basalSheathCount": 0,
           "triangles": 7004,
           "joints": 9,
-          "bytes": 324029,
-          "sha256": "af883a6a9765eb2fa17f8c2666928798d6bfc6688e007c362736ca2d7ed20550"
+          "bytes": 324515,
+          "sha256": "418f170efe89919bd7200751d85403d853c5364c2d4b92738ea6f2a6c1af2712"
         },
         {
           "stage": "young",
@@ -811,26 +811,26 @@
           "thumbnail": "ui/bluebell-young-standard.png",
           "bounds": {
             "min": [
-              -0.256119,
-              -0.344574,
+              -0.355879002,
+              -0.478787795,
               0.0
             ],
             "max": [
-              0.367155,
-              0.251337,
-              0.791648
+              0.51016424,
+              0.349234382,
+              1.1
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.260968,
-              -0.347166,
+              -0.362616719,
+              -0.482389395,
               0.0
             ],
             "max": [
-              0.368166,
-              0.252114,
-              0.791935
+              0.511569031,
+              0.350314028,
+              1.100398788
             ]
           },
           "animation": "bluebell_young_sway",
@@ -842,8 +842,8 @@
           "basalSheathCount": 0,
           "triangles": 13404,
           "joints": 16,
-          "bytes": 563966,
-          "sha256": "ef8b590ca0921a19b41ea813e575b71d6a34b4f5f2f6d32035aae7d5ecdce644"
+          "bytes": 564447,
+          "sha256": "71a22abdcac79515a639129b19ac8e962401723e0b6e9ca4ce837eab7f0061a5"
         },
         {
           "stage": "adult",
@@ -944,34 +944,34 @@
           "thumbnail": "ui/starcap-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.085352,
-              -0.085443,
+              -0.330821705,
+              -0.331174419,
               0.0
             ],
             "max": [
-              0.085668,
-              0.085577,
-              0.1548
+              0.332046512,
+              0.331693798,
+              0.6
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.085352,
-              -0.085526,
+              -0.330821705,
+              -0.331496124,
               0.0
             ],
             "max": [
-              0.085668,
-              0.08569,
-              0.1548
+              0.332046512,
+              0.332131783,
+              0.6
             ]
           },
           "animation": "starcap_sprout_sway",
           "mushroomCount": 1,
           "triangles": 7100,
           "joints": 3,
-          "bytes": 345728,
-          "sha256": "a8f9d496b0dfc5af92b343e565e8e0da7a55e3f1d5d72b5c26585447dfc0f345"
+          "bytes": 346237,
+          "sha256": "5db4df62ec6e3d437a97f868bfb8d9f003e32d0cd391960076d7db7b885a8568"
         },
         {
           "stage": "sprout",
@@ -980,34 +980,34 @@
           "thumbnail": "ui/starcap-sprout-blue-gold.png",
           "bounds": {
             "min": [
-              -0.085352,
-              -0.085443,
+              -0.330821705,
+              -0.331174419,
               0.0
             ],
             "max": [
-              0.085668,
-              0.085577,
-              0.1548
+              0.332046512,
+              0.331693798,
+              0.6
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.085352,
-              -0.085526,
+              -0.330821705,
+              -0.331496124,
               0.0
             ],
             "max": [
-              0.085668,
-              0.08569,
-              0.1548
+              0.332046512,
+              0.332131783,
+              0.6
             ]
           },
           "animation": "starcap_sprout_sway",
           "mushroomCount": 1,
           "triangles": 7100,
           "joints": 3,
-          "bytes": 345945,
-          "sha256": "16dd84adb7b3b9f045b32550bae2bd5918f26ebb436c135adbe2c22246f9e3e0"
+          "bytes": 346456,
+          "sha256": "9500b264a2b4358f6c5ddd8828c67b8b7a9b67c52552bde8218cbc77cd066d35"
         },
         {
           "stage": "seedling",
@@ -1016,34 +1016,34 @@
           "thumbnail": "ui/starcap-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.130064,
-              -0.140529,
+              -0.301038338,
+              -0.32526,
               0.0
             ],
             "max": [
-              0.161676,
-              0.151211,
-              0.337
+              0.374205579,
+              0.349983917,
+              0.78
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.130089,
-              -0.14095,
+              -0.301096202,
+              -0.326234421,
               0.0
             ],
             "max": [
-              0.161711,
-              0.151796,
-              0.337011
+              0.374286588,
+              0.351337923,
+              0.78002546
             ]
           },
           "animation": "starcap_seedling_sway",
           "mushroomCount": 1,
           "triangles": 7676,
           "joints": 3,
-          "bytes": 367689,
-          "sha256": "466408508a60e6f8ae4c8c657c8670f9aeaf1daeb46c4d9f809dc25ce1c7c17f"
+          "bytes": 368205,
+          "sha256": "a9bf0292c485f556eea696c4263a27fab56f06bdc7fa10bd54120237e6a804d4"
         },
         {
           "stage": "seedling",
@@ -1052,34 +1052,34 @@
           "thumbnail": "ui/starcap-seedling-blue-gold.png",
           "bounds": {
             "min": [
-              -0.130064,
-              -0.140529,
+              -0.301038338,
+              -0.32526,
               0.0
             ],
             "max": [
-              0.161676,
-              0.151211,
-              0.337
+              0.374205579,
+              0.349983917,
+              0.78
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.130089,
-              -0.14095,
+              -0.301096202,
+              -0.326234421,
               0.0
             ],
             "max": [
-              0.161711,
-              0.151796,
-              0.337011
+              0.374286588,
+              0.351337923,
+              0.78002546
             ]
           },
           "animation": "starcap_seedling_sway",
           "mushroomCount": 1,
           "triangles": 7676,
           "joints": 3,
-          "bytes": 367908,
-          "sha256": "dba35e32a00696a5dbe08336f771d202c77ca6fefea07c36a2bb60da002b0570"
+          "bytes": 368426,
+          "sha256": "bc64d0bb15dc2d463e8daa0f9464874544086976386d30058d323632991172da"
         },
         {
           "stage": "young",
@@ -1088,34 +1088,34 @@
           "thumbnail": "ui/starcap-young-standard.png",
           "bounds": {
             "min": [
-              -0.39507,
-              -0.290493,
+              -0.596582215,
+              -0.438663926,
               0.0
             ],
             "max": [
-              0.331561,
-              0.277004,
-              0.596
+              0.500679362,
+              0.418294631,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.395553,
-              -0.290504,
+              -0.597311577,
+              -0.438680537,
               0.0
             ],
             "max": [
-              0.332041,
-              0.278187,
-              0.596038
+              0.501404195,
+              0.42008104,
+              0.900057383
             ]
           },
           "animation": "starcap_young_sway",
           "mushroomCount": 3,
           "triangles": 23028,
           "joints": 7,
-          "bytes": 911800,
-          "sha256": "52d8d1e2ff359517239799c9c312fae5914b2e87e62de4678a328d4fdc33ef07"
+          "bytes": 912182,
+          "sha256": "eae7bee5372636f6e7f95f0d0ec93603ac71de4561757b8c8e3cbba75bfdf7ba"
         },
         {
           "stage": "young",
@@ -1124,34 +1124,34 @@
           "thumbnail": "ui/starcap-young-blue-gold.png",
           "bounds": {
             "min": [
-              -0.39507,
-              -0.290493,
+              -0.596582215,
+              -0.438663926,
               0.0
             ],
             "max": [
-              0.331561,
-              0.277004,
-              0.596
+              0.500679362,
+              0.418294631,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.395553,
-              -0.290504,
+              -0.597311577,
+              -0.438680537,
               0.0
             ],
             "max": [
-              0.332041,
-              0.278187,
-              0.596038
+              0.501404195,
+              0.42008104,
+              0.900057383
             ]
           },
           "animation": "starcap_young_sway",
           "mushroomCount": 3,
           "triangles": 23028,
           "joints": 7,
-          "bytes": 911887,
-          "sha256": "427042b0c595b18328848a17a17bff32b46b901693534480bd8962ba001bd2f2"
+          "bytes": 912400,
+          "sha256": "8ea1c927cee89fe388dc605a593ae180955947d4fdeba7d21a99cce1af74ef17"
         },
         {
           "stage": "adult",
@@ -1282,26 +1282,26 @@
           "thumbnail": "ui/lanternbirch-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.156021,
-              -0.08123,
+              -0.422191855,
+              -0.219807874,
               0.0
             ],
             "max": [
-              0.169065,
-              0.080396,
-              0.258685
+              0.457488838,
+              0.217551076,
+              0.7
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.156578,
-              -0.081883,
+              -0.423699093,
+              -0.221574888,
               0.0
             ],
             "max": [
-              0.169274,
-              0.082044,
-              0.259635
+              0.45805439,
+              0.222010553,
+              0.702570694
             ]
           },
           "animation": "lanternbirch_sprout_sway",
@@ -1310,8 +1310,8 @@
           "sprayCount": 0,
           "triangles": 2698,
           "joints": 3,
-          "bytes": 341333,
-          "sha256": "9860169fc5f81f750d34bc1e706f9b1395b4a2b968c7b782fc9f6a41712733d8"
+          "bytes": 341820,
+          "sha256": "9437dc8152d276902846eef308de586ba968b3873a98d853b2447f9a7189ee2b"
         },
         {
           "stage": "sprout",
@@ -1320,26 +1320,26 @@
           "thumbnail": "ui/lanternbirch-sprout-gold-glow.png",
           "bounds": {
             "min": [
-              -0.156021,
-              -0.08123,
+              -0.422191855,
+              -0.219807874,
               0.0
             ],
             "max": [
-              0.169065,
-              0.080396,
-              0.258685
+              0.457488838,
+              0.217551076,
+              0.7
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.156578,
-              -0.081883,
+              -0.423699093,
+              -0.221574888,
               0.0
             ],
             "max": [
-              0.169274,
-              0.082044,
-              0.259635
+              0.45805439,
+              0.222010553,
+              0.702570694
             ]
           },
           "animation": "lanternbirch_sprout_sway",
@@ -1348,8 +1348,8 @@
           "sprayCount": 0,
           "triangles": 2698,
           "joints": 3,
-          "bytes": 371895,
-          "sha256": "c46211acedb935b7bcf196beb8c19b1525bc1a272fc9ece053e6bfe6e3fcade0"
+          "bytes": 372510,
+          "sha256": "db455196eb5b3162c7fd141c5794b1dd05f20e8ead1150297f016a5ed52e9011"
         },
         {
           "stage": "seedling",
@@ -1358,26 +1358,26 @@
           "thumbnail": "ui/lanternbirch-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.261506,
-              -0.187484,
+              -0.405491838,
+              -0.290713145,
               0.0
             ],
             "max": [
-              0.3199,
-              0.227299,
-              0.909324
+              0.496037716,
+              0.352450381,
+              1.41
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.26161,
-              -0.192439,
+              -0.405653101,
+              -0.29839638,
               0.0
             ],
             "max": [
-              0.319975,
-              0.22899,
-              0.909664
+              0.496154011,
+              0.355072449,
+              1.410527205
             ]
           },
           "animation": "lanternbirch_seedling_sway",
@@ -1386,8 +1386,8 @@
           "sprayCount": 0,
           "triangles": 3410,
           "joints": 3,
-          "bytes": 373545,
-          "sha256": "de9116dac8d32cfe83598156db6c94473a78025e91c21cf2e6b7c31e6aff4aa1"
+          "bytes": 374032,
+          "sha256": "5c2af43ee3737176e9fedf1b5c47acb8ed01daa7a098555369acb49440ecc0fb"
         },
         {
           "stage": "seedling",
@@ -1396,26 +1396,26 @@
           "thumbnail": "ui/lanternbirch-seedling-gold-glow.png",
           "bounds": {
             "min": [
-              -0.261506,
-              -0.187484,
+              -0.405491838,
+              -0.290713145,
               0.0
             ],
             "max": [
-              0.3199,
-              0.227299,
-              0.909324
+              0.496037716,
+              0.352450381,
+              1.41
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.26161,
-              -0.192439,
+              -0.405653101,
+              -0.29839638,
               0.0
             ],
             "max": [
-              0.319975,
-              0.22899,
-              0.909664
+              0.496154011,
+              0.355072449,
+              1.410527205
             ]
           },
           "animation": "lanternbirch_seedling_sway",
@@ -1424,8 +1424,8 @@
           "sprayCount": 0,
           "triangles": 3410,
           "joints": 3,
-          "bytes": 404235,
-          "sha256": "4c697ba4b22e34e6cf4a3cc3153718ef07499d7a888576ce93c2d9c82636ff54"
+          "bytes": 404850,
+          "sha256": "e933738de4a1dc5c58d1c3abe6999ddc986672232cc026d85b6518f889062622"
         },
         {
           "stage": "young",
@@ -1434,26 +1434,26 @@
           "thumbnail": "ui/lanternbirch-young-standard.png",
           "bounds": {
             "min": [
-              -1.056012,
-              -0.539529,
+              -1.265527804,
+              -0.646573098,
               0.0
             ],
             "max": [
-              1.068921,
-              0.858265,
-              2.545054
+              1.280997987,
+              1.028547233,
+              3.05
             ]
           },
           "animatedBounds": {
             "min": [
-              -1.064069,
-              -0.55553,
+              -1.275183336,
+              -0.665748742,
               0.0
             ],
             "max": [
-              1.080369,
-              0.872002,
-              2.545465
+              1.294717303,
+              1.045009693,
+              3.050492544
             ]
           },
           "animation": "lanternbirch_young_sway",
@@ -1462,8 +1462,8 @@
           "sprayCount": 4,
           "triangles": 33274,
           "joints": 13,
-          "bytes": 1699983,
-          "sha256": "04602b171d0d6fdb674d362ccf5aa385d26a16e7097ba1baa1ec847187a30133"
+          "bytes": 1700593,
+          "sha256": "9ce0b842a7ad4be1e8e040d97981736b4b46b42d9d8c5795be4ecfd80479e760"
         },
         {
           "stage": "young",
@@ -1472,26 +1472,26 @@
           "thumbnail": "ui/lanternbirch-young-gold-glow.png",
           "bounds": {
             "min": [
-              -1.056012,
-              -0.539529,
+              -1.265527804,
+              -0.646573098,
               0.0
             ],
             "max": [
-              1.068921,
-              0.858265,
-              2.545054
+              1.280997987,
+              1.028547233,
+              3.05
             ]
           },
           "animatedBounds": {
             "min": [
-              -1.064069,
-              -0.55553,
+              -1.275183336,
+              -0.665748742,
               0.0
             ],
             "max": [
-              1.080369,
-              0.872002,
-              2.545465
+              1.294717303,
+              1.045009693,
+              3.050492544
             ]
           },
           "animation": "lanternbirch_young_sway",
@@ -1500,8 +1500,8 @@
           "sprayCount": 4,
           "triangles": 33274,
           "joints": 13,
-          "bytes": 1730802,
-          "sha256": "dd977beee4436641770fec93b6eb748e81a6efa2c504346ead1a4e04df81f4f1"
+          "bytes": 1731284,
+          "sha256": "88219cf51fc06bc1cf8ad01585c4f4cefd35d92e64331684d90d4f0fd735a3b8"
         },
         {
           "stage": "adult",
@@ -1659,33 +1659,33 @@
           "thumbnail": "ui/berry-shrub-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.13499,
-              -0.04877,
+              -0.310212127,
+              -0.112075305,
               0.0
             ],
             "max": [
-              0.11005,
-              0.04976,
-              0.28285
+              0.252899063,
+              0.114350362,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.13681,
-              -0.05165,
+              -0.314394555,
+              -0.118693654,
               0.0
             ],
             "max": [
-              0.11155,
-              0.05119,
-              0.2831
+              0.25634612,
+              0.117636556,
+              0.650574509
             ]
           },
           "animation": "berry-shrub_sprout_sway",
           "triangles": 2654,
           "joints": 12,
-          "bytes": 198732,
-          "sha256": "fbeeb4d252063fb3ee1dd86c57cf9b7d0d9ee6619a95606eaccb60bba847feaa"
+          "bytes": 199252,
+          "sha256": "c875359c09a7c7043f92b0494945802926b77ac9d04b3f641bf68a7877c764b9"
         },
         {
           "stage": "sprout",
@@ -1694,33 +1694,33 @@
           "thumbnail": "ui/berry-shrub-sprout-red-berry.png",
           "bounds": {
             "min": [
-              -0.13499,
-              -0.04877,
+              -0.310212127,
+              -0.112075305,
               0.0
             ],
             "max": [
-              0.11005,
-              0.04976,
-              0.28285
+              0.252899063,
+              0.114350362,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.13681,
-              -0.05165,
+              -0.314394555,
+              -0.118693654,
               0.0
             ],
             "max": [
-              0.11155,
-              0.05119,
-              0.2831
+              0.25634612,
+              0.117636556,
+              0.650574509
             ]
           },
           "animation": "berry-shrub_sprout_sway",
           "triangles": 2654,
           "joints": 12,
-          "bytes": 197247,
-          "sha256": "5117438a5d2c360cb645f824061c214e4006ca266fd7a984d52d90cf2d1b1701"
+          "bytes": 197769,
+          "sha256": "23ffba6fb8c04cd1bc20d3132548ab62d72f7d771bcf011a1c8a77cfd875ae77"
         },
         {
           "stage": "seedling",
@@ -1729,33 +1729,33 @@
           "thumbnail": "ui/berry-shrub-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.26442,
-              -0.20329,
+              -0.513503366,
+              -0.394788969,
               0.0
             ],
             "max": [
-              0.26507,
-              0.25563,
-              0.46344
+              0.514765665,
+              0.496433195,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.26529,
-              -0.20674,
+              -0.515192905,
+              -0.401488866,
               0.0
             ],
             "max": [
-              0.26665,
-              0.25884,
-              0.46752
+              0.517834024,
+              0.502667012,
+              0.907923356
             ]
           },
           "animation": "berry-shrub_seedling_sway",
           "triangles": 6480,
           "joints": 30,
-          "bytes": 394937,
-          "sha256": "709194019c18cbfe3d990e702b775707f95284d6252cf673856c6dbd03b02fbf"
+          "bytes": 395444,
+          "sha256": "20191e0a2b72cef3de909289cd43479825323c840eb5da99e2a3c08d934418ac"
         },
         {
           "stage": "seedling",
@@ -1764,33 +1764,33 @@
           "thumbnail": "ui/berry-shrub-seedling-red-berry.png",
           "bounds": {
             "min": [
-              -0.26442,
-              -0.20329,
+              -0.513503366,
+              -0.394788969,
               0.0
             ],
             "max": [
-              0.26507,
-              0.25563,
-              0.46344
+              0.514765665,
+              0.496433195,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.26529,
-              -0.20674,
+              -0.515192905,
+              -0.401488866,
               0.0
             ],
             "max": [
-              0.26665,
-              0.25884,
-              0.46752
+              0.517834024,
+              0.502667012,
+              0.907923356
             ]
           },
           "animation": "berry-shrub_seedling_sway",
           "triangles": 6480,
           "joints": 30,
-          "bytes": 393580,
-          "sha256": "1bc2b6f6ca46635be1b2c38691b2ecfd7c492dd06ffdf2b05cc49c1b6be70c84"
+          "bytes": 394218,
+          "sha256": "8b9851adfafa5399533d04df84b22a497490677ed857e7e407d94ea95d237041"
         },
         {
           "stage": "young",
@@ -1799,33 +1799,33 @@
           "thumbnail": "ui/berry-shrub-young-standard.png",
           "bounds": {
             "min": [
-              -0.52829,
-              -0.57271,
+              -0.699737973,
+              -0.758573765,
               0.0
             ],
             "max": [
-              0.44443,
-              0.55637,
-              0.86823
+              0.588662566,
+              0.736930882,
+              1.15
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.58803,
-              -0.58787,
+              -0.778865623,
+              -0.778653698,
               0.0
             ],
             "max": [
-              0.46397,
-              0.5958,
-              0.88922
+              0.614543957,
+              0.789157251,
+              1.177801965
             ]
           },
           "animation": "berry-shrub_young_sway",
           "triangles": 17634,
           "joints": 18,
-          "bytes": 848690,
-          "sha256": "ea376231e44ad522794ebecacd45b3aecfdc7a30d5fe7e0b24f4f167d89aebe1"
+          "bytes": 849207,
+          "sha256": "58e315f726e7435c99d1efeb18bfe71814018b0b20a225bb264d4695b6858ca2"
         },
         {
           "stage": "young",
@@ -1834,33 +1834,33 @@
           "thumbnail": "ui/berry-shrub-young-red-berry.png",
           "bounds": {
             "min": [
-              -0.52829,
-              -0.57271,
+              -0.699737973,
+              -0.758573765,
               0.0
             ],
             "max": [
-              0.44443,
-              0.55637,
-              0.86823
+              0.588662566,
+              0.736930882,
+              1.15
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.58803,
-              -0.58787,
+              -0.778865623,
+              -0.778653698,
               0.0
             ],
             "max": [
-              0.46397,
-              0.5958,
-              0.88922
+              0.614543957,
+              0.789157251,
+              1.177801965
             ]
           },
           "animation": "berry-shrub_young_sway",
           "triangles": 17634,
           "joints": 18,
-          "bytes": 847334,
-          "sha256": "650f8565c647bc3d5fdb5b582a80b93d11a081d07a5ec924cf1ca9bcd334a7b8"
+          "bytes": 847853,
+          "sha256": "7410a1f51bc8c032707e988017b698eaf236df82cde1a9601fedeb2f4328f155"
         },
         {
           "stage": "adult",
@@ -2017,26 +2017,26 @@
           "thumbnail": "ui/dewfern-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.063451,
-              -0.011184,
+              -0.154837553,
+              -0.027291976,
               0.0
             ],
             "max": [
-              0.043001,
-              0.011184,
-              0.266364
+              0.104934038,
+              0.027291976,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.063451,
-              -0.013401,
+              -0.154837553,
+              -0.032702054,
               0.0
             ],
             "max": [
-              0.043433,
-              0.014682,
-              0.266364
+              0.105988234,
+              0.03582804,
+              0.65
             ]
           },
           "animation": "dewfern_sprout_sway",
@@ -2046,8 +2046,8 @@
           "triangles": 3104,
           "joints": 3,
           "materials": 1,
-          "bytes": 154108,
-          "sha256": "73607ac5175957c108f888932867afadf98794c5b6b483f32b73b86d7e0fd9bd"
+          "bytes": 154618,
+          "sha256": "eda36951a205de73997a3b56defcecf46f40a9da0ce280504a16e71c4ba963a7"
         },
         {
           "stage": "seedling",
@@ -2056,26 +2056,26 @@
           "thumbnail": "ui/dewfern-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.096064,
-              -0.228694,
+              -0.232326497,
+              -0.553086234,
               0.0
             ],
             "max": [
-              0.284871,
-              0.072907,
-              0.351464
+              0.688947801,
+              0.176322326,
+              0.85
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.096147,
-              -0.234787,
+              -0.232527229,
+              -0.567821882,
               0.0
             ],
             "max": [
-              0.285718,
-              0.07309,
-              0.351476
+              0.690996233,
+              0.176764903,
+              0.850029021
             ]
           },
           "animation": "dewfern_seedling_sway",
@@ -2085,8 +2085,8 @@
           "triangles": 10568,
           "joints": 6,
           "materials": 2,
-          "bytes": 441752,
-          "sha256": "7229ac968b088ce998ef25674f20039e72b372010bcf37a4291c5af672016da0"
+          "bytes": 442324,
+          "sha256": "d9ef36929414509ea19da34c980710dbd9623bc28febf0d8e5e3997023c283f2"
         },
         {
           "stage": "young",
@@ -2095,26 +2095,26 @@
           "thumbnail": "ui/dewfern-young-standard.png",
           "bounds": {
             "min": [
-              -0.516554,
-              -0.364215,
+              -0.681265637,
+              -0.480350871,
               0.0
             ],
             "max": [
-              0.471212,
-              0.3102,
-              0.758227
+              0.621465603,
+              0.409112311,
+              1.0
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.518366,
-              -0.368113,
+              -0.683655422,
+              -0.485491812,
               0.0
             ],
             "max": [
-              0.477435,
-              0.323682,
-              0.76201
+              0.629672908,
+              0.426893265,
+              1.004989271
             ]
           },
           "animation": "dewfern_young_sway",
@@ -2124,8 +2124,8 @@
           "triangles": 30664,
           "joints": 12,
           "materials": 2,
-          "bytes": 1214681,
-          "sha256": "cb8652cd3deec7c85e5847bfe339abf76029e10b5b46c60e091b45e3c6cc3c04"
+          "bytes": 1215367,
+          "sha256": "bc1ea93aacfd95099fcfade34f03824245d8f54d6f116bc1a708926dcba4fdc9"
         },
         {
           "stage": "adult",
@@ -2224,34 +2224,34 @@
           "thumbnail": "ui/dawnsorrel-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.045256,
-              -0.056377,
+              -0.078305444,
+              -0.097547862,
               0.0
             ],
             "max": [
-              0.035437,
-              0.036659,
-              0.179162
+              0.061315848,
+              0.063430247,
+              0.31
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.046337,
-              -0.060225,
+              -0.080175874,
+              -0.10420597,
               0.0
             ],
             "max": [
-              0.03768,
-              0.036659,
-              0.179409
+              0.065196861,
+              0.063430247,
+              0.310427379
             ]
           },
           "animation": "dawnsorrel_sprout_sway",
           "triangles": 1142,
           "joints": 3,
           "materials": 1,
-          "bytes": 91643,
-          "sha256": "5b28c57e3295ffe43e62725bfe0abf35e4c3ca22088bab4e6426623c76d17988",
+          "bytes": 92260,
+          "sha256": "0dd203af0332119a174b489590830e0557c7ec75f570398ec3144aae93b71945",
           "leafHeadCount": 1,
           "leafletCount": 3,
           "flowerCount": 0,
@@ -2265,34 +2265,34 @@
           "thumbnail": "ui/dawnsorrel-sprout-yellow.png",
           "bounds": {
             "min": [
-              -0.045256,
-              -0.056377,
+              -0.078305444,
+              -0.097547862,
               0.0
             ],
             "max": [
-              0.035437,
-              0.036659,
-              0.179162
+              0.061315848,
+              0.063430247,
+              0.31
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.046337,
-              -0.060225,
+              -0.080175874,
+              -0.10420597,
               0.0
             ],
             "max": [
-              0.03768,
-              0.036659,
-              0.179409
+              0.065196861,
+              0.063430247,
+              0.310427379
             ]
           },
           "animation": "dawnsorrel_sprout_sway",
           "triangles": 1142,
           "joints": 3,
           "materials": 1,
-          "bytes": 90920,
-          "sha256": "7ecdf5fdd5b1e56ab4104d1aac5cf1b7f77c3f851d6149f816d2cb1a84f8a402",
+          "bytes": 91406,
+          "sha256": "631fb9f79ba59d45b50e1f01169b2b686c4154498e7f5198e9d694284054b23a",
           "leafHeadCount": 1,
           "leafletCount": 3,
           "flowerCount": 0,
@@ -2306,34 +2306,34 @@
           "thumbnail": "ui/dawnsorrel-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.145809,
-              -0.113105,
+              -0.221704173,
+              -0.171977384,
               0.0
             ],
             "max": [
-              0.156663,
-              0.062849,
-              0.249916
+              0.238207798,
+              0.095562589,
+              0.38
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.147208,
-              -0.114937,
+              -0.223831367,
+              -0.17476296,
               0.0
             ],
             "max": [
-              0.163463,
-              0.072607,
-              0.249963
+              0.248547272,
+              0.110399734,
+              0.380071464
             ]
           },
           "animation": "dawnsorrel_seedling_sway",
           "triangles": 3426,
           "joints": 7,
           "materials": 1,
-          "bytes": 184420,
-          "sha256": "44fd0896e7461d2817e5c442cf451baba6d8e59722231ad314d9c22f3cc8becf",
+          "bytes": 184915,
+          "sha256": "1f787c7f170ce23e866a31ba3936850a82917e23dc23a1453226d45815f72330",
           "leafHeadCount": 3,
           "leafletCount": 9,
           "flowerCount": 0,
@@ -2347,34 +2347,34 @@
           "thumbnail": "ui/dawnsorrel-seedling-yellow.png",
           "bounds": {
             "min": [
-              -0.145809,
-              -0.113105,
+              -0.221704173,
+              -0.171977384,
               0.0
             ],
             "max": [
-              0.156663,
-              0.062849,
-              0.249916
+              0.238207798,
+              0.095562589,
+              0.38
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.147208,
-              -0.114937,
+              -0.223831367,
+              -0.17476296,
               0.0
             ],
             "max": [
-              0.163463,
-              0.072607,
-              0.249963
+              0.248547272,
+              0.110399734,
+              0.380071464
             ]
           },
           "animation": "dawnsorrel_seedling_sway",
           "triangles": 3426,
           "joints": 7,
           "materials": 1,
-          "bytes": 183694,
-          "sha256": "f4efd390954d2b651d6af86d3ddfada8b4b799d7fb12383ac43381462c2139f3",
+          "bytes": 184317,
+          "sha256": "4ffbee212677654f950ffd9ebe3ac52195d72400b9f6b7f3eca080d3857b1686",
           "leafHeadCount": 3,
           "leafletCount": 9,
           "flowerCount": 0,
@@ -2388,34 +2388,34 @@
           "thumbnail": "ui/dawnsorrel-young-standard.png",
           "bounds": {
             "min": [
-              -0.344132,
-              -0.267495,
+              -0.40780451,
+              -0.316987863,
               0.0
             ],
             "max": [
-              0.367709,
-              0.226954,
-              0.362862
+              0.435743809,
+              0.268945825,
+              0.43
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.344425,
-              -0.271883,
+              -0.408151722,
+              -0.322187746,
               0.0
             ],
             "max": [
-              0.368543,
-              0.240291,
-              0.368684
+              0.436732119,
+              0.284750484,
+              0.436899207
             ]
           },
           "animation": "dawnsorrel_young_sway",
           "triangles": 12902,
           "joints": 19,
           "materials": 1,
-          "bytes": 613112,
-          "sha256": "8acb5273cf259a86b76494c06da9cf6b1bb27d672254f403caae42983b9967da",
+          "bytes": 613722,
+          "sha256": "2fe4ccaf2e4a149a8625d13ba80cd23dd30a909bd53ea1e77cbb6e4d74887ed9",
           "leafHeadCount": 7,
           "leafletCount": 21,
           "flowerCount": 1,
@@ -2429,34 +2429,34 @@
           "thumbnail": "ui/dawnsorrel-young-yellow.png",
           "bounds": {
             "min": [
-              -0.344132,
-              -0.267495,
+              -0.40780451,
+              -0.316987863,
               0.0
             ],
             "max": [
-              0.367709,
-              0.226954,
-              0.362862
+              0.435743809,
+              0.268945825,
+              0.43
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.344425,
-              -0.271883,
+              -0.408151722,
+              -0.322187746,
               0.0
             ],
             "max": [
-              0.368543,
-              0.240291,
-              0.368684
+              0.436732119,
+              0.284750484,
+              0.436899207
             ]
           },
           "animation": "dawnsorrel_young_sway",
           "triangles": 12902,
           "joints": 19,
           "materials": 1,
-          "bytes": 612506,
-          "sha256": "71c29e3220f1b8d2e96ebc6b3303ba66e13e73d413151601e9ada20d8e507dd3",
+          "bytes": 613120,
+          "sha256": "183d8978fe0542a42c8b7d80085cf3f109ec2396389d03eaec30761f61b64167",
           "leafHeadCount": 7,
           "leafletCount": 21,
           "flowerCount": 1,
@@ -2619,34 +2619,34 @@
           "thumbnail": "ui/pearlseal-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.052335,
-              -0.041503,
+              -0.132638062,
+              -0.105185392,
               0.0
             ],
             "max": [
-              0.051682,
-              0.032985,
-              0.236742
+              0.130983096,
+              0.083597334,
+              0.6
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.053374,
-              -0.044262,
+              -0.135271308,
+              -0.112177814,
               0.0
             ],
             "max": [
-              0.05374,
-              0.037333,
-              0.236832
+              0.1361989,
+              0.094616925,
+              0.600228096
             ]
           },
           "animation": "pearlseal_sprout_sway",
           "triangles": 2960,
           "joints": 4,
           "materials": 1,
-          "bytes": 169127,
-          "sha256": "9f195ad5463f18604e4a8a8583993a12199b3d64f44b62fa800e06a3b51671a3",
+          "bytes": 169749,
+          "sha256": "c965ca14c0d0970baef0705196b2665be452b0e1a524c96a3a19a5db20d324c3",
           "leafCount": 5,
           "pairedLeafCount": 4,
           "flowerCount": 0,
@@ -2660,34 +2660,34 @@
           "thumbnail": "ui/pearlseal-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.098502,
-              -0.052475,
+              -0.171122567,
+              -0.091162177,
               0.0
             ],
             "max": [
-              0.144719,
-              0.10007,
-              0.460498
+              0.251413035,
+              0.173846575,
+              0.8
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.099649,
-              -0.052475,
+              -0.173115193,
+              -0.091162177,
               0.0
             ],
             "max": [
-              0.148483,
-              0.105186,
-              0.460877
+              0.257952043,
+              0.182734344,
+              0.800658418
             ]
           },
           "animation": "pearlseal_seedling_sway",
           "triangles": 3784,
           "joints": 4,
           "materials": 1,
-          "bytes": 205328,
-          "sha256": "0e3197591f76ea7a038d187df80173d3082b9112bf5dd731915bdd57847b0990",
+          "bytes": 205823,
+          "sha256": "9e7fa0fbfab10af7b771f494a953f92be25925c4347906685cc936c9e0e04827",
           "leafCount": 7,
           "pairedLeafCount": 6,
           "flowerCount": 0,
@@ -2701,34 +2701,34 @@
           "thumbnail": "ui/pearlseal-young-standard.png",
           "bounds": {
             "min": [
-              -0.331683,
-              -0.118609,
+              -0.442351406,
+              -0.158183741,
               0.0
             ],
             "max": [
-              0.369735,
-              0.114959,
-              0.712327
+              0.493099728,
+              0.153315893,
+              0.95
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.334281,
-              -0.126269,
+              -0.445816247,
+              -0.168399555,
               0.0
             ],
             "max": [
-              0.377298,
-              0.129128,
-              0.713403
+              0.503186177,
+              0.172212481,
+              0.951435015
             ]
           },
           "animation": "pearlseal_young_sway",
           "triangles": 10568,
           "joints": 7,
           "materials": 1,
-          "bytes": 466600,
-          "sha256": "f1fb37de2d37328d34351b4311392c0aeb08237084d0caec935c14f1393047b0",
+          "bytes": 467219,
+          "sha256": "c037b1dd5bfb8e6fbc75701d78df8101eb1ed750275a27505cdf013685386372",
           "leafCount": 12,
           "pairedLeafCount": 10,
           "flowerCount": 4,
@@ -2839,34 +2839,34 @@
           "thumbnail": "ui/emberrowan-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.166739,
-              -0.108124,
+              -0.371804481,
+              -0.241101288,
               0.0
             ],
             "max": [
-              0.213034,
-              0.025093,
-              0.304952
+              0.475035809,
+              0.055953855,
+              0.68
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.167519,
-              -0.108494,
+              -0.373543771,
+              -0.241926336,
               0.0
             ],
             "max": [
-              0.213327,
-              0.025665,
-              0.304982
+              0.475689158,
+              0.057229334,
+              0.680066896
             ]
           },
           "animation": "emberrowan_sprout_sway",
           "triangles": 3136,
           "joints": 3,
           "materials": 1,
-          "bytes": 204452,
-          "sha256": "0599b5f3c13f53ac865e616b03972fd4fcb0d459ab4726617bc43e609b8dcb56",
+          "bytes": 205066,
+          "sha256": "9c8bacf7ee6147a6d400f3cbbdd11593538d3b137a9bcd13e67124736ee04e03",
           "leafCount": 13,
           "compoundCount": 3,
           "berryCount": 0,
@@ -2880,34 +2880,34 @@
           "thumbnail": "ui/emberrowan-sprout-autumn-gold.png",
           "bounds": {
             "min": [
-              -0.166739,
-              -0.108124,
+              -0.371804481,
+              -0.241101288,
               0.0
             ],
             "max": [
-              0.213034,
-              0.025093,
-              0.304952
+              0.475035809,
+              0.055953855,
+              0.68
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.167519,
-              -0.108494,
+              -0.373543771,
+              -0.241926336,
               0.0
             ],
             "max": [
-              0.213327,
-              0.025665,
-              0.304982
+              0.475689158,
+              0.057229334,
+              0.680066896
             ]
           },
           "animation": "emberrowan_sprout_sway",
           "triangles": 3136,
           "joints": 3,
           "materials": 1,
-          "bytes": 204209,
-          "sha256": "c56f5232b28bc0bba4911e16427e757f068c4fd6fac9082f3bbee754d28274ad",
+          "bytes": 204695,
+          "sha256": "21859885534feac338f9329d5641300c7cf4891b12b52861241176f3a4628022",
           "leafCount": 13,
           "compoundCount": 3,
           "berryCount": 0,
@@ -2921,34 +2921,34 @@
           "thumbnail": "ui/emberrowan-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.373755,
-              -0.214059,
+              -0.535310528,
+              -0.306585962,
               0.0
             ],
             "max": [
-              0.374106,
-              0.337049,
-              0.942573
+              0.535813247,
+              0.482738366,
+              1.35
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.373903,
-              -0.214351,
+              -0.535522501,
+              -0.307004179,
               0.0
             ],
             "max": [
-              0.37424,
-              0.340789,
-              0.942786
+              0.536005169,
+              0.48809498,
+              1.350305069
             ]
           },
           "animation": "emberrowan_seedling_sway",
           "triangles": 4604,
           "joints": 3,
           "materials": 1,
-          "bytes": 248366,
-          "sha256": "cd33b000952fa50d3049f11fc8a9d6f5b86cccc32c40488dcca0e684baf83262",
+          "bytes": 248976,
+          "sha256": "f6349f5ceffdbf3ea845d5c4cfdedbc4b3fa2c04e48b0057475160b3dbaa7ec3",
           "leafCount": 26,
           "compoundCount": 4,
           "berryCount": 0,
@@ -2962,34 +2962,34 @@
           "thumbnail": "ui/emberrowan-seedling-autumn-gold.png",
           "bounds": {
             "min": [
-              -0.373755,
-              -0.214059,
+              -0.535310528,
+              -0.306585962,
               0.0
             ],
             "max": [
-              0.374106,
-              0.337049,
-              0.942573
+              0.535813247,
+              0.482738366,
+              1.35
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.373903,
-              -0.214351,
+              -0.535522501,
+              -0.307004179,
               0.0
             ],
             "max": [
-              0.37424,
-              0.340789,
-              0.942786
+              0.536005169,
+              0.48809498,
+              1.350305069
             ]
           },
           "animation": "emberrowan_seedling_sway",
           "triangles": 4604,
           "joints": 3,
           "materials": 1,
-          "bytes": 248250,
-          "sha256": "a8edf6b21bf0b180eb83a97be057626d9fbb7b4997aedce418f06862d86201dd",
+          "bytes": 248732,
+          "sha256": "f0db38c7ae28b1ccc1d7e35e43d536b015b17ddbab7ba7ffa271b9905f7aca28",
           "leafCount": 26,
           "compoundCount": 4,
           "berryCount": 0,
@@ -3003,34 +3003,34 @@
           "thumbnail": "ui/emberrowan-young-standard.png",
           "bounds": {
             "min": [
-              -0.907482,
-              -0.645364,
+              -1.057759688,
+              -0.752235332,
               0.0
             ],
             "max": [
-              0.939739,
-              0.826123,
-              2.51373
+              1.0953584,
+              0.962927757,
+              2.93
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.912148,
-              -0.65725,
+              -1.063198371,
+              -0.766089636,
               0.0
             ],
             "max": [
-              0.959861,
-              0.846646,
-              2.514877
+              1.118812573,
+              0.986849335,
+              2.931336942
             ]
           },
           "animation": "emberrowan_young_sway",
           "triangles": 25006,
           "joints": 11,
           "materials": 1,
-          "bytes": 1210184,
-          "sha256": "ee5715ab1c937088207773744c5790ab0409ad727acd32dba3d3cbec023c0b2c",
+          "bytes": 1210667,
+          "sha256": "1c2a78a7cb16db7a525c79fe0e233dca3ee7d9f56ca99dc56401627563fb1651",
           "leafCount": 144,
           "compoundCount": 16,
           "berryCount": 20,
@@ -3044,34 +3044,34 @@
           "thumbnail": "ui/emberrowan-young-autumn-gold.png",
           "bounds": {
             "min": [
-              -0.907482,
-              -0.645364,
+              -1.057759688,
+              -0.752235332,
               0.0
             ],
             "max": [
-              0.939739,
-              0.826123,
-              2.51373
+              1.0953584,
+              0.962927757,
+              2.93
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.912148,
-              -0.65725,
+              -1.063198371,
+              -0.766089636,
               0.0
             ],
             "max": [
-              0.959861,
-              0.846646,
-              2.514877
+              1.118812573,
+              0.986849335,
+              2.931336942
             ]
           },
           "animation": "emberrowan_young_sway",
           "triangles": 25006,
           "joints": 11,
           "materials": 1,
-          "bytes": 1210070,
-          "sha256": "580144ec025e556e9a2b54a88e81832f80d2321a64e1bf14ec515873a8c81404",
+          "bytes": 1210681,
+          "sha256": "dfe7d643dfa511f9ae47486e3cc7fe475cdf87a71d25828643d152a7ebe9f638",
           "leafCount": 144,
           "compoundCount": 16,
           "berryCount": 20,
@@ -3242,34 +3242,34 @@
           "thumbnail": "ui/duskwand-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.053844,
-              -0.069969,
+              -0.22619874,
+              -0.293939893,
               0.0
             ],
             "max": [
-              0.060715,
-              0.041529,
-              0.154725
+              0.255063823,
+              0.174463403,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.054258,
-              -0.070162,
+              -0.227937954,
+              -0.294750687,
               0.0
             ],
             "max": [
-              0.061427,
-              0.042659,
-              0.154776
+              0.258054936,
+              0.179210535,
+              0.650214251
             ]
           },
           "animation": "duskwand_sprout_sway",
           "triangles": 4864,
           "joints": 8,
           "materials": 1,
-          "bytes": 414945,
-          "sha256": "f8ff1fb99d28e0cbe4740a9a47c15091282644619f922f9bea81a88f028ce19c",
+          "bytes": 415433,
+          "sha256": "04375764d697a22f9fbb10b1688d39f6423080818c0b9b4d6ca00a85edb3f751",
           "leafCount": 2,
           "stemCount": 1,
           "bellCount": 0,
@@ -3282,34 +3282,34 @@
           "thumbnail": "ui/duskwand-sprout-pure.png",
           "bounds": {
             "min": [
-              -0.053844,
-              -0.069969,
+              -0.22619874,
+              -0.293939893,
               0.0
             ],
             "max": [
-              0.060715,
-              0.041529,
-              0.154725
+              0.255063823,
+              0.174463403,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.054258,
-              -0.070162,
+              -0.227937954,
+              -0.294750687,
               0.0
             ],
             "max": [
-              0.061427,
-              0.042659,
-              0.154776
+              0.258054936,
+              0.179210535,
+              0.650214251
             ]
           },
           "animation": "duskwand_sprout_sway",
           "triangles": 4864,
           "joints": 8,
           "materials": 1,
-          "bytes": 350851,
-          "sha256": "d2a19e36316d8da78182ae6cc2c834619775f4dd41b04a9fe67adb24578913de",
+          "bytes": 351339,
+          "sha256": "3d812682161b73b532bd8b0d01d6edb31f848bdfac4b82fe777d44ed84944eb3",
           "leafCount": 2,
           "stemCount": 1,
           "bellCount": 0,
@@ -3322,34 +3322,34 @@
           "thumbnail": "ui/duskwand-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.12566,
-              -0.197031,
+              -0.341619016,
+              -0.535648068,
               0.0
             ],
             "max": [
-              0.179348,
-              0.054212,
-              0.331053
+              0.487575101,
+              0.147380631,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.128104,
-              -0.197728,
+              -0.348263269,
+              -0.537542931,
               0.0
             ],
             "max": [
-              0.179539,
-              0.057101,
-              0.331216
+              0.488094353,
+              0.15523466,
+              0.900443131
             ]
           },
           "animation": "duskwand_seedling_sway",
           "triangles": 10532,
           "joints": 12,
           "materials": 1,
-          "bytes": 620317,
-          "sha256": "19fedc59fefabbd867d35b16b87eaef76449560896e870c0cc0b1105b31d262d",
+          "bytes": 620928,
+          "sha256": "9551ded3af037de649b679433abeba0222ea60bb00441a711ce9f3ed145becb3",
           "leafCount": 4,
           "stemCount": 1,
           "bellCount": 0,
@@ -3362,34 +3362,34 @@
           "thumbnail": "ui/duskwand-seedling-pure.png",
           "bounds": {
             "min": [
-              -0.12566,
-              -0.197031,
+              -0.341619016,
+              -0.535648068,
               0.0
             ],
             "max": [
-              0.179348,
-              0.054212,
-              0.331053
+              0.487575101,
+              0.147380631,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.128104,
-              -0.197728,
+              -0.348263269,
+              -0.537542931,
               0.0
             ],
             "max": [
-              0.179539,
-              0.057101,
-              0.331216
+              0.488094353,
+              0.15523466,
+              0.900443131
             ]
           },
           "animation": "duskwand_seedling_sway",
           "triangles": 10532,
           "joints": 12,
           "materials": 1,
-          "bytes": 556096,
-          "sha256": "c79c75e6a5b32fc9f94d5f8d68fb72d46624f60cc239a19ae140f1ea7609935e",
+          "bytes": 556579,
+          "sha256": "f621ea4596680a7d896632c44458f356441757236865530338bce674b9b016fd",
           "leafCount": 4,
           "stemCount": 1,
           "bellCount": 0,
@@ -3402,34 +3402,34 @@
           "thumbnail": "ui/duskwand-young-standard.png",
           "bounds": {
             "min": [
-              -0.216321,
-              -0.290272,
+              -0.348159184,
+              -0.467180083,
               0.0
             ],
             "max": [
-              0.309252,
-              0.189622,
-              0.869859
+              0.497727563,
+              0.305188312,
+              1.4
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.220373,
-              -0.290555,
+              -0.354680701,
+              -0.467635559,
               0.0
             ],
             "max": [
-              0.309608,
-              0.190129,
-              0.870231
+              0.498300529,
+              0.306004306,
+              1.400598718
             ]
           },
           "animation": "duskwand_young_sway",
           "triangles": 22272,
           "joints": 16,
           "materials": 1,
-          "bytes": 1036768,
-          "sha256": "0dc147ce1687e7c366a7d1e3738a2090f03e2fc4239237a2ba6779047e6d78b3",
+          "bytes": 1037256,
+          "sha256": "f5b5c79b3407fa90491012ccf9c184026e35e8047ca87445e80b488dcb7099e3",
           "leafCount": 6,
           "stemCount": 1,
           "bellCount": 3,
@@ -3442,34 +3442,34 @@
           "thumbnail": "ui/duskwand-young-pure.png",
           "bounds": {
             "min": [
-              -0.216321,
-              -0.290272,
+              -0.348159184,
+              -0.467180083,
               0.0
             ],
             "max": [
-              0.309252,
-              0.189622,
-              0.869859
+              0.497727563,
+              0.305188312,
+              1.4
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.220373,
-              -0.290555,
+              -0.354680701,
+              -0.467635559,
               0.0
             ],
             "max": [
-              0.309608,
-              0.190129,
-              0.870231
+              0.498300529,
+              0.306004306,
+              1.400598718
             ]
           },
           "animation": "duskwand_young_sway",
           "triangles": 22272,
           "joints": 16,
           "materials": 1,
-          "bytes": 972674,
-          "sha256": "6e53af603513f96a3ad09281fa9dd87f8ce2aa7accd9a22c6f6f2e1f5dfcf535",
+          "bytes": 973162,
+          "sha256": "b2048fa4c46736da3c0c33eaa9d004bc1f32477fb81cce934d67c3a59c6ed868",
           "leafCount": 6,
           "stemCount": 1,
           "bellCount": 3,
@@ -3633,34 +3633,34 @@
           "thumbnail": "ui/wispflower-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.014299,
-              -0.02602,
+              -0.053140054,
+              -0.096699365,
               0.0
             ],
             "max": [
-              0.024238,
-              0.010356,
-              0.115705
+              0.090076833,
+              0.038486496,
+              0.43
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.014597,
-              -0.026739,
+              -0.054247526,
+              -0.099371419,
               0.0
             ],
             "max": [
-              0.025069,
-              0.011186,
-              0.116048
+              0.093165118,
+              0.041571064,
+              0.431274707
             ]
           },
           "animation": "wispflower_sprout_sway",
           "triangles": 1994,
           "joints": 3,
           "materials": 1,
-          "bytes": 268741,
-          "sha256": "1da6838bd993161cbe020d3e851814ff86e448ecfd5e3bf3422c17978a760a18",
+          "bytes": 269350,
+          "sha256": "31b96a3def1d42c138bdd9ee464d02a4c47f4ccfbdef0f6dbda0212f1e33b441",
           "leafHeadCount": 1,
           "leafletCount": 3,
           "flowerCount": 0,
@@ -3676,34 +3676,34 @@
           "thumbnail": "ui/wispflower-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.139804,
-              -0.088789,
+              -0.31524954,
+              -0.200213809,
               0.0
             ],
             "max": [
-              0.14409,
-              0.079387,
-              0.243909
+              0.32491421,
+              0.17901287,
+              0.55
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.141257,
-              -0.089481,
+              -0.318525967,
+              -0.201774227,
               0.0
             ],
             "max": [
-              0.146314,
-              0.082833,
-              0.24393
+              0.329929195,
+              0.186783391,
+              0.550047354
             ]
           },
           "animation": "wispflower_seedling_sway",
           "triangles": 7116,
           "joints": 9,
           "materials": 1,
-          "bytes": 499899,
-          "sha256": "8d5dcbdfaf72a9b1a9824cae0f4ed42c4f66b300472662232c7fca6b2c9fb0d1",
+          "bytes": 500507,
+          "sha256": "b8b626628a74cef963626093c050f58540e34bb1742e527f609554f4db20ab33",
           "leafHeadCount": 3,
           "leafletCount": 9,
           "flowerCount": 0,
@@ -3719,34 +3719,34 @@
           "thumbnail": "ui/wispflower-young-standard.png",
           "bounds": {
             "min": [
-              -0.311251,
-              -0.258797,
+              -0.433496256,
+              -0.360440707,
               0.0
             ],
             "max": [
-              0.360444,
-              0.193755,
-              0.452341
+              0.502010032,
+              0.269853164,
+              0.63
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.312937,
-              -0.259241,
+              -0.43584444,
+              -0.36105909,
               0.0
             ],
             "max": [
-              0.361506,
-              0.198307,
-              0.45557
+              0.503489138,
+              0.276192983,
+              0.634497205
             ]
           },
           "animation": "wispflower_young_sway",
           "triangles": 27510,
           "joints": 19,
           "materials": 1,
-          "bytes": 1355845,
-          "sha256": "0cc5a680384a4f020a1e578a90cece6cca9742888ad65e8ecd262bfaa5bac1c8",
+          "bytes": 1356460,
+          "sha256": "a70d86a03829bec8ab2e0668c58a713e74f23505dba9d59c37bfb40599bd9f0f",
           "leafHeadCount": 7,
           "leafletCount": 21,
           "flowerCount": 1,
@@ -3894,34 +3894,34 @@
           "thumbnail": "ui/moonbell-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.045226,
-              -0.024527,
+              -0.150844678,
+              -0.081806205,
               0.0
             ],
             "max": [
-              0.028642,
-              0.042532,
-              0.179891
+              0.095531183,
+              0.141859237,
+              0.6
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.045713,
-              -0.02656,
+              -0.152468995,
+              -0.088586978,
               0.0
             ],
             "max": [
-              0.030456,
-              0.049294,
-              0.17999
+              0.101581513,
+              0.164412894,
+              0.6003302
             ]
           },
           "animation": "moonbell_sprout_sway",
           "triangles": 3296,
           "joints": 5,
           "materials": 1,
-          "bytes": 256141,
-          "sha256": "5fea85f521ff0cb54c01e780cd45a9bfe6212507d5c043060aa6629d5ee36ac5",
+          "bytes": 256635,
+          "sha256": "0b3c8d1033200b2b08bb7b3dfa6e4a942b4ca78e2e8d01460951d9f45e729b05",
           "leafCount": 2,
           "flowerCount": 0,
           "budCount": 0,
@@ -3936,34 +3936,34 @@
           "thumbnail": "ui/moonbell-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.230672,
-              -0.036454,
+              -0.5681279,
+              -0.089783478,
               0.0
             ],
             "max": [
-              0.194399,
-              0.13798,
-              0.324817
+              0.478790211,
+              0.33983443,
+              0.8
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.231127,
-              -0.038527,
+              -0.569248531,
+              -0.094889122,
               0.0
             ],
             "max": [
-              0.197502,
-              0.151468,
-              0.324925
+              0.486432668,
+              0.373054366,
+              0.800265996
             ]
           },
           "animation": "moonbell_seedling_sway",
           "triangles": 5156,
           "joints": 9,
           "materials": 1,
-          "bytes": 338497,
-          "sha256": "4c805f3f8549e61b8d0e4bd4933737c4bd54497464f7ee7dc9b992b2b2e9aa9f",
+          "bytes": 339107,
+          "sha256": "0987c2d4f8c47cd91832535f9861bc0b3d7088c724f839b5eebcdaef7010107c",
           "leafCount": 3,
           "flowerCount": 0,
           "budCount": 1,
@@ -3978,34 +3978,34 @@
           "thumbnail": "ui/moonbell-young-standard.png",
           "bounds": {
             "min": [
-              -0.417672,
-              -0.213635,
+              -0.605265484,
+              -0.309587168,
               0.0
             ],
             "max": [
-              0.392258,
-              0.302852,
-              0.634859
+              0.568437023,
+              0.438875152,
+              0.92
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.418,
-              -0.214536,
+              -0.605740802,
+              -0.310892844,
               0.0
             ],
             "max": [
-              0.396407,
-              0.321466,
-              0.63521
+              0.574449508,
+              0.465849456,
+              0.920508648
             ]
           },
           "animation": "moonbell_young_sway",
           "triangles": 25948,
           "joints": 17,
           "materials": 1,
-          "bytes": 1353594,
-          "sha256": "57a18ac7b59a96c5622c1750978f6c189fe867008871c5b166bca68b1ea47477",
+          "bytes": 1354087,
+          "sha256": "cdd10c5a3c51f78edffb3e0cd54b33b62a578bd45320b460d499d45ecffa2c61",
           "leafCount": 5,
           "flowerCount": 2,
           "budCount": 1,
@@ -4112,34 +4112,34 @@
           "thumbnail": "ui/heartleaf-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.04272,
-              -0.033096,
+              -0.082287861,
+              -0.063749977,
               0.0
             ],
             "max": [
-              0.042273,
-              0.047939,
-              0.166129
+              0.081426843,
+              0.092340771,
+              0.32
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.043011,
-              -0.033662,
+              -0.082848389,
+              -0.064840215,
               0.0
             ],
             "max": [
-              0.04257,
-              0.051072,
-              0.166763
+              0.081998929,
+              0.0983756,
+              0.32122122
             ]
           },
           "animation": "heartleaf_sprout_sway",
           "triangles": 1520,
           "joints": 3,
           "materials": 1,
-          "bytes": 190321,
-          "sha256": "754b3f46a9a1f5d9ec6b93710234e5ec6e7ed9ec40d13f83940f7edb9287cbbe",
+          "bytes": 190928,
+          "sha256": "f94fb7eba3efc12669b3f3199010c79c4f3f2dfe3bae95685b75e5fc304dddc0",
           "leafCount": 1,
           "flowerCount": 0,
           "budCount": 0,
@@ -4154,34 +4154,34 @@
           "thumbnail": "ui/heartleaf-sprout-redvein.png",
           "bounds": {
             "min": [
-              -0.04272,
-              -0.033096,
+              -0.082287861,
+              -0.063749977,
               0.0
             ],
             "max": [
-              0.042273,
-              0.047939,
-              0.166129
+              0.081426843,
+              0.092340771,
+              0.32
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.043011,
-              -0.033662,
+              -0.082848389,
+              -0.064840215,
               0.0
             ],
             "max": [
-              0.04257,
-              0.051072,
-              0.166763
+              0.081998929,
+              0.0983756,
+              0.32122122
             ]
           },
           "animation": "heartleaf_sprout_sway",
           "triangles": 1520,
           "joints": 3,
           "materials": 1,
-          "bytes": 277306,
-          "sha256": "067ff93e7a697926bd7830351d8b740dc1e15807b455ae4878c3319a2133b622",
+          "bytes": 277793,
+          "sha256": "c20376f861b7bc9fd6da16a16c8d752c749528d6e9a32bae161d2b22e93f0f1d",
           "leafCount": 1,
           "flowerCount": 0,
           "budCount": 0,
@@ -4196,34 +4196,34 @@
           "thumbnail": "ui/heartleaf-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.148804,
-              -0.124325,
+              -0.233627588,
+              -0.195194684,
               0.0
             ],
             "max": [
-              0.169419,
-              0.090408,
-              0.248402
+              0.265993873,
+              0.141943785,
+              0.39
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.151298,
-              -0.126106,
+              -0.237543256,
+              -0.197990918,
               0.0
             ],
             "max": [
-              0.171764,
-              0.09515,
-              0.248456
+              0.269675606,
+              0.149388894,
+              0.390084782
             ]
           },
           "animation": "heartleaf_seedling_sway",
           "triangles": 4560,
           "joints": 7,
           "materials": 1,
-          "bytes": 324687,
-          "sha256": "371d58f221db0e27099c51758397f68e115ac0bb3e70e19ef3ec04f2a8b5f10d",
+          "bytes": 325167,
+          "sha256": "e401e38ad0ee2780c21230293060f0ab0e6fc3d6928fb4a7e740df854c84c268",
           "leafCount": 3,
           "flowerCount": 0,
           "budCount": 0,
@@ -4238,34 +4238,34 @@
           "thumbnail": "ui/heartleaf-seedling-redvein.png",
           "bounds": {
             "min": [
-              -0.148804,
-              -0.124325,
+              -0.233627588,
+              -0.195194684,
               0.0
             ],
             "max": [
-              0.169419,
-              0.090408,
-              0.248402
+              0.265993873,
+              0.141943785,
+              0.39
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.151298,
-              -0.126106,
+              -0.237543256,
+              -0.197990918,
               0.0
             ],
             "max": [
-              0.171764,
-              0.09515,
-              0.248456
+              0.269675606,
+              0.149388894,
+              0.390084782
             ]
           },
           "animation": "heartleaf_seedling_sway",
           "triangles": 4560,
           "joints": 7,
           "materials": 1,
-          "bytes": 411539,
-          "sha256": "6d1cfd0161604b889d83216429ee012b74a1380d5840f40251a6761ee1a96cad",
+          "bytes": 412153,
+          "sha256": "3d99d4a434d6980697d6ed108e58160bb8d7d1043f9de375900e5657ad36b735",
           "leafCount": 3,
           "flowerCount": 0,
           "budCount": 0,
@@ -4280,34 +4280,34 @@
           "thumbnail": "ui/heartleaf-young-standard.png",
           "bounds": {
             "min": [
-              -0.333702,
-              -0.224506,
+              -0.437028434,
+              -0.294021329,
               0.0
             ],
             "max": [
-              0.349836,
-              0.275349,
-              0.335971
+              0.458158115,
+              0.360607195,
+              0.44
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.339578,
-              -0.22768,
+              -0.44472386,
+              -0.298178117,
               0.0
             ],
             "max": [
-              0.353249,
-              0.283443,
-              0.34054
+              0.462627905,
+              0.371207396,
+              0.445983731
             ]
           },
           "animation": "heartleaf_young_sway",
           "triangles": 9120,
           "joints": 13,
           "materials": 1,
-          "bytes": 525645,
-          "sha256": "8ba64045f6af42cd0d6dc6ab3c1dc2afa30263d516a6f44e5428236d271e63e4",
+          "bytes": 526127,
+          "sha256": "697a9d481ce590931d16251da1fc18867d55cf85ed482468791e49d06e1f3803",
           "leafCount": 6,
           "flowerCount": 0,
           "budCount": 0,
@@ -4322,34 +4322,34 @@
           "thumbnail": "ui/heartleaf-young-redvein.png",
           "bounds": {
             "min": [
-              -0.333702,
-              -0.224506,
+              -0.437028434,
+              -0.294021329,
               0.0
             ],
             "max": [
-              0.349836,
-              0.275349,
-              0.335971
+              0.458158115,
+              0.360607195,
+              0.44
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.339578,
-              -0.22768,
+              -0.44472386,
+              -0.298178117,
               0.0
             ],
             "max": [
-              0.353249,
-              0.283443,
-              0.34054
+              0.462627905,
+              0.371207396,
+              0.445983731
             ]
           },
           "animation": "heartleaf_young_sway",
           "triangles": 9120,
           "joints": 13,
           "materials": 1,
-          "bytes": 612497,
-          "sha256": "0de872e9478aa8d14deca039530da18b0e0f1dd21c2a929f522a82ece6b68480",
+          "bytes": 613115,
+          "sha256": "b7f2ef94af02797cf342316a1ebfbefd58ee45d90270e754e4bafc04ae7221d3",
           "leafCount": 6,
           "flowerCount": 0,
           "budCount": 0,
@@ -4530,26 +4530,26 @@
           "thumbnail": "ui/havenbough-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.120049,
-              -0.021839,
+              -0.189841138,
+              -0.034535403,
               0.0
             ],
             "max": [
-              0.144049,
-              0.027437,
-              0.385743
+              0.227793868,
+              0.043387877,
+              0.61
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.122161,
-              -0.023809,
+              -0.193180978,
+              -0.03765069,
               0.0
             ],
             "max": [
-              0.151258,
-              0.033155,
-              0.388368
+              0.239193919,
+              0.052430115,
+              0.61415108
             ]
           },
           "animation": "havenbough_sprout_sway",
@@ -4560,8 +4560,8 @@
           "fanCount": 0,
           "flowerCount": 0,
           "stageIdentity": "inward cupped cotyledons, copper backs, twisted shoot, furled tip",
-          "bytes": 152861,
-          "sha256": "bf7d52d5e90e46c716e5e055a763cca6eff048213ecbf28c15e3bf41120a7873"
+          "bytes": 153296,
+          "sha256": "ee7c76cda75dacf32943d411b21bd77a412ecf84e4a325fd8b475668f769012a"
         },
         {
           "stage": "seedling",
@@ -4570,26 +4570,26 @@
           "thumbnail": "ui/havenbough-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.445575,
-              -0.114868,
+              -0.547113972,
+              -0.141044465,
               0.0
             ],
             "max": [
-              0.415575,
-              0.050771,
-              0.99358
+              0.510277481,
+              0.062340848,
+              1.22
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.447535,
-              -0.118663,
+              -0.549520622,
+              -0.145704281,
               0.0
             ],
             "max": [
-              0.423197,
-              0.053903,
-              0.994485
+              0.519636406,
+              0.066186578,
+              1.221111234
             ]
           },
           "animation": "havenbough_seedling_sway",
@@ -4600,8 +4600,8 @@
           "fanCount": 0,
           "flowerCount": 0,
           "stageIdentity": "sinuous single stem, curled fork arms, three juvenile leaf groups",
-          "bytes": 234274,
-          "sha256": "50ce2d25d2159f21c11832a7c3ef05bea995a7253d3a0704bc68ac1430fcc90f"
+          "bytes": 234724,
+          "sha256": "70c5a48d1f20f8ee5d63790c39301275feba921abb11fc04fc886423d3704c10"
         },
         {
           "stage": "young",
@@ -4610,26 +4610,26 @@
           "thumbnail": "ui/havenbough-young-standard.png",
           "bounds": {
             "min": [
-              -1.410956,
-              -0.619053,
+              -1.626823155,
+              -0.713764111,
               0.0
             ],
             "max": [
-              1.43354,
-              0.769217,
-              2.298365
+              1.652862361,
+              0.886902233,
+              2.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -1.416663,
-              -0.628707,
+              -1.633403289,
+              -0.72489511,
               0.0
             ],
             "max": [
-              1.435155,
-              0.792691,
-              2.303333
+              1.654724445,
+              0.913967603,
+              2.655728072
             ]
           },
           "animation": "havenbough_young_sway",
@@ -4640,8 +4640,8 @@
           "fanCount": 5,
           "flowerCount": 2,
           "stageIdentity": "upright open sapling, ascending side branches, five sparse fans and two ivory buds",
-          "bytes": 714309,
-          "sha256": "49789b81eeb489048f35a00d9234480943ce8d8f336494e3e55f71d42a8a0f94"
+          "bytes": 714759,
+          "sha256": "9db13d26b9203c0cb25124d7eeca27ac1d757f027b7338efe575d2a4161f4cc7"
         },
         {
           "stage": "adult",
@@ -5185,34 +5185,34 @@
           "thumbnail": "ui/swiftgrass-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.07761,
-              -0.027751,
+              -0.278984305,
+              -0.09975639,
               0.0
             ],
             "max": [
-              0.301869,
-              0.111992,
-              0.180822
+              1.085127086,
+              0.40257712,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.07762,
-              -0.03334,
+              -0.279020252,
+              -0.119847142,
               0.0
             ],
             "max": [
-              0.302007,
-              0.112092,
-              0.181866
+              1.085623154,
+              0.40293659,
+              0.653752862
             ]
           },
           "animation": "swiftgrass_sprout_sway",
           "triangles": 1740,
           "joints": 4,
           "materials": 2,
-          "bytes": 112193,
-          "sha256": "0e980b45cddaee7c29f0d6dac4b7ba9cd6f29b6fe245e2808914a3a0951faa2a",
+          "bytes": 112871,
+          "sha256": "562bd42ae06ea2a16ade0c3980afe12e50bce75a2938e2a724d253ca149dbd22",
           "leafCount": 3,
           "basalFanCount": 1,
           "seedheadCount": 0,
@@ -5225,34 +5225,34 @@
           "thumbnail": "ui/swiftgrass-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.217605,
-              -0.134486,
+              -0.613465291,
+              -0.379138775,
               0.0
             ],
             "max": [
-              0.465157,
-              0.214912,
-              0.319243
+              1.31135624,
+              0.605873269,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.217673,
-              -0.141232,
+              -0.613656995,
+              -0.39815689,
               0.0
             ],
             "max": [
-              0.465555,
-              0.215695,
-              0.320566
+              1.312478269,
+              0.608080678,
+              0.903729761
             ]
           },
           "animation": "swiftgrass_seedling_sway",
           "triangles": 5712,
           "joints": 7,
           "materials": 2,
-          "bytes": 282995,
-          "sha256": "a7cd6043209bedd39c709ffac1e4b08a4543b291092d7b1c3203e130f1d2238e",
+          "bytes": 283680,
+          "sha256": "c45e8bdbf1a28d4d477f692d6814bc1c4df05f90536eec533e0e8e9a6357b905",
           "leafCount": 12,
           "basalFanCount": 2,
           "seedheadCount": 0,
@@ -5265,34 +5265,34 @@
           "thumbnail": "ui/swiftgrass-young-standard.png",
           "bounds": {
             "min": [
-              -0.635675,
-              -0.364625,
+              -0.820308215,
+              -0.470531141,
               0.0
             ],
             "max": [
-              1.135957,
-              0.485357,
-              1.084891
+              1.465898233,
+              0.626330018,
+              1.4
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.635819,
-              -0.366784,
+              -0.82049404,
+              -0.473317227,
               0.0
             ],
             "max": [
-              1.199097,
-              0.487263,
-              1.085923
+              1.547377386,
+              0.62878962,
+              1.401331747
             ]
           },
           "animation": "swiftgrass_young_sway",
           "triangles": 21052,
           "joints": 16,
           "materials": 2,
-          "bytes": 938954,
-          "sha256": "a1144bf6e7d90c0af2076dc88c1f120bfecbe81de8bf5baccbbcef43005a480a",
+          "bytes": 939512,
+          "sha256": "f14a79229f68ef13e8b3ff92fedf4cc8d43b62df4a292cc6009349e540be0171",
           "leafCount": 35,
           "basalFanCount": 3,
           "seedheadCount": 2,
@@ -5508,34 +5508,34 @@
           "thumbnail": "ui/ironheart-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.103155,
-              -0.041674,
+              -0.248314039,
+              -0.100317379,
               0.0
             ],
             "max": [
-              0.102931,
-              0.041674,
-              0.270024
+              0.247774827,
+              0.100317379,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.103626,
-              -0.041743,
+              -0.249447827,
+              -0.100483476,
               0.0
             ],
             "max": [
-              0.103608,
-              0.041836,
-              0.270025
+              0.249404497,
+              0.100707345,
+              0.650002407
             ]
           },
           "animation": "ironheart_sprout_sway",
           "triangles": 3212,
           "joints": 7,
           "materials": 1,
-          "bytes": 169707,
-          "sha256": "30f695c5b93d0d33eede10d451d78c1ac7c9c6b4bbe845e237056a1b96c1fb78",
+          "bytes": 170209,
+          "sha256": "9ea52f761cf6a550fc9d2819def55ac5965fd232f5796c708fb505dd9d79c829",
           "leafCount": 3,
           "rosetteTierCount": 1,
           "attachedWeatheredFlakes": 0
@@ -5547,34 +5547,34 @@
           "thumbnail": "ui/ironheart-sprout-hardened.png",
           "bounds": {
             "min": [
-              -0.103155,
-              -0.041674,
+              -0.248314039,
+              -0.100317379,
               0.0
             ],
             "max": [
-              0.099894,
-              0.041674,
-              0.270024
+              0.240464181,
+              0.100317379,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.103626,
-              -0.041707,
+              -0.249447827,
+              -0.100396817,
               0.0
             ],
             "max": [
-              0.10051,
-              0.041836,
-              0.270025
+              0.241947012,
+              0.100707345,
+              0.650002407
             ]
           },
           "animation": "ironheart_sprout_sway",
           "triangles": 3276,
           "joints": 7,
           "materials": 1,
-          "bytes": 359637,
-          "sha256": "284d78c039a2d6ff9bc95696f21ba384169213fa03b9b732d1c19e91a1590c01",
+          "bytes": 360130,
+          "sha256": "cf914e2e3d7783932a6b77e9b392bc0b535bc921553f6322956f38b74219cfc6",
           "leafCount": 3,
           "rosetteTierCount": 1,
           "attachedWeatheredFlakes": 1
@@ -5586,34 +5586,34 @@
           "thumbnail": "ui/ironheart-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.246986,
-              -0.285195,
+              -0.516040171,
+              -0.595872141,
               0.0
             ],
             "max": [
-              0.246986,
-              0.154235,
-              0.430756
+              0.516040171,
+              0.32225088,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.246998,
-              -0.285477,
+              -0.516065243,
+              -0.596461338,
               0.0
             ],
             "max": [
-              0.247702,
-              0.154749,
-              0.430761
+              0.517536146,
+              0.323324806,
+              0.900010447
             ]
           },
           "animation": "ironheart_seedling_sway",
           "triangles": 6332,
           "joints": 13,
           "materials": 1,
-          "bytes": 295507,
-          "sha256": "8179e5e02b2895358456c67ccb432d2764b22a04fbf336c0d9dc2c87114afe70",
+          "bytes": 296008,
+          "sha256": "92d186db096522cf834016e429fa8b370071e1564cf15ae787786590b2c99705",
           "leafCount": 6,
           "rosetteTierCount": 2,
           "attachedWeatheredFlakes": 0
@@ -5625,34 +5625,34 @@
           "thumbnail": "ui/ironheart-seedling-hardened.png",
           "bounds": {
             "min": [
-              -0.246986,
-              -0.269747,
+              -0.516040171,
+              -0.563595864,
               0.0
             ],
             "max": [
-              0.246986,
-              0.154235,
-              0.430756
+              0.516040171,
+              0.32225088,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.246998,
-              -0.270015,
+              -0.516065243,
+              -0.56415581,
               0.0
             ],
             "max": [
-              0.247702,
-              0.154749,
-              0.430761
+              0.517536146,
+              0.323324806,
+              0.900010447
             ]
           },
           "animation": "ironheart_seedling_sway",
           "triangles": 6460,
           "joints": 13,
           "materials": 1,
-          "bytes": 488399,
-          "sha256": "57a5c98803f2e2ea9d1f0e8ef5ad0d7c0f7e4d70f9d4d6609b605345b2084537",
+          "bytes": 488888,
+          "sha256": "4aaeabf107ea2451f8b35324459906b00d3f2965cff2dc2e86d18fd781dc18d9",
           "leafCount": 6,
           "rosetteTierCount": 2,
           "attachedWeatheredFlakes": 2
@@ -5664,34 +5664,34 @@
           "thumbnail": "ui/ironheart-young-standard.png",
           "bounds": {
             "min": [
-              -0.553279,
-              -0.619704,
+              -0.691262171,
+              -0.774253013,
               0.0
             ],
             "max": [
-              0.556858,
-              0.600741,
-              0.840409
+              0.695733744,
+              0.750560798,
+              1.05
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.553421,
-              -0.620565,
+              -0.691439585,
+              -0.775328739,
               0.0
             ],
             "max": [
-              0.559498,
-              0.602387,
-              0.840467
+              0.699032138,
+              0.752617297,
+              1.050072465
             ]
           },
           "animation": "ironheart_young_sway",
           "triangles": 13612,
           "joints": 27,
           "materials": 1,
-          "bytes": 587413,
-          "sha256": "04b7b196ecb3e0b93c810818e525fae1096fc6bc8c42196e956d8dcf6e5ca2ab",
+          "bytes": 587911,
+          "sha256": "0737dba889638a31f0716cb18c0a19f34db3b267336fd0a930342065cbac3aaf",
           "leafCount": 13,
           "rosetteTierCount": 2,
           "attachedWeatheredFlakes": 0
@@ -5703,34 +5703,34 @@
           "thumbnail": "ui/ironheart-young-hardened.png",
           "bounds": {
             "min": [
-              -0.553279,
-              -0.574588,
+              -0.691262171,
+              -0.717885458,
               0.0
             ],
             "max": [
-              0.556858,
-              0.600741,
-              0.840409
+              0.695733744,
+              0.750560798,
+              1.05
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.553421,
-              -0.575379,
+              -0.691439585,
+              -0.718873727,
               0.0
             ],
             "max": [
-              0.559498,
-              0.602387,
-              0.840467
+              0.699032138,
+              0.752617297,
+              1.050072465
             ]
           },
           "animation": "ironheart_young_sway",
           "triangles": 13804,
           "joints": 27,
           "materials": 1,
-          "bytes": 782816,
-          "sha256": "6cad3e891b895ce79af1eb4ddc5b41fa318da6e41daaf9a02ae6fdc8bb1ae270",
+          "bytes": 783304,
+          "sha256": "9040a7575eed889b10fd468822aebff41a1bd999a1a55a226bb0b5f1616dc2d6",
           "leafCount": 13,
           "rosetteTierCount": 2,
           "attachedWeatheredFlakes": 3
@@ -5888,34 +5888,34 @@
           "thumbnail": "ui/dewjewel-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.089384,
-              -0.033308,
+              -0.385447541,
+              -0.14363294,
               0.0
             ],
             "max": [
-              0.064015,
-              0.027092,
-              0.139138
+              0.276049677,
+              0.116827897,
+              0.6
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.089622,
-              -0.033959,
+              -0.38647386,
+              -0.146440225,
               0.0
             ],
             "max": [
-              0.064425,
-              0.028374,
-              0.139517
+              0.277817706,
+              0.122356222,
+              0.601634349
             ]
           },
           "animation": "dewjewel_sprout_sway",
           "triangles": 2032,
           "joints": 3,
           "materials": 1,
-          "bytes": 214848,
-          "sha256": "94b566a6db6d27c41103c004469ddafa943dff3826d011401159b99add9ef607",
+          "bytes": 215338,
+          "sha256": "5819cd9ac6b2234bf30b8f740e827b169732b7f979a9ff48aa8762b12a0edcdb",
           "leafCount": 2,
           "flowerCount": 0,
           "budCount": 0,
@@ -5930,34 +5930,34 @@
           "thumbnail": "ui/dewjewel-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.146642,
-              -0.055673,
+              -0.339206467,
+              -0.128780579,
               0.0
             ],
             "max": [
-              0.153543,
-              0.047881,
-              0.337201
+              0.355169587,
+              0.110756433,
+              0.78
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.146742,
-              -0.056221,
+              -0.339437783,
+              -0.130048191,
               0.0
             ],
             "max": [
-              0.153652,
-              0.052567,
-              0.337655
+              0.355421722,
+              0.121595903,
+              0.781050175
             ]
           },
           "animation": "dewjewel_seedling_sway",
           "triangles": 3000,
           "joints": 3,
           "materials": 1,
-          "bytes": 256649,
-          "sha256": "a309d6cf6f5380f083547332ebace30335f7108a758e38ed1785b530665cbfb4",
+          "bytes": 257274,
+          "sha256": "00d05558acddc36989f09b68c84c07a9f070c338e71d60710e382182e141631c",
           "leafCount": 3,
           "flowerCount": 0,
           "budCount": 1,
@@ -5972,34 +5972,34 @@
           "thumbnail": "ui/dewjewel-young-standard.png",
           "bounds": {
             "min": [
-              -0.390507,
-              -0.113072,
+              -0.534777488,
+              -0.154845778,
               0.0
             ],
             "max": [
-              0.360307,
-              0.199786,
-              0.657201
+              0.493420278,
+              0.273595749,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.395338,
-              -0.117651,
+              -0.541393272,
+              -0.161116462,
               0.0
             ],
             "max": [
-              0.366194,
-              0.20576,
-              0.657216
+              0.501482195,
+              0.281776808,
+              0.900020542
             ]
           },
           "animation": "dewjewel_young_sway",
           "triangles": 15552,
           "joints": 7,
           "materials": 1,
-          "bytes": 748961,
-          "sha256": "e649e42c0421c98d4ca754ca36468a70382a23939e3132fc63ab00ab5be8e5de",
+          "bytes": 749454,
+          "sha256": "8be520b4283c365a36c7e6c95ea12e059f58457a997662ab48a193ef0f58c9f3",
           "leafCount": 4,
           "flowerCount": 2,
           "budCount": 1,
@@ -6140,34 +6140,34 @@
           "thumbnail": "ui/sunspike-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.111992,
-              -0.067419,
+              -0.242987085,
+              -0.146277826,
               0.0
             ],
             "max": [
-              0.090324,
-              0.036735,
-              0.299583
+              0.195974404,
+              0.079703288,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.112044,
-              -0.067859,
+              -0.243099909,
+              -0.147232486,
               0.0
             ],
             "max": [
-              0.090326,
-              0.041551,
-              0.299589
+              0.195978744,
+              0.090152479,
+              0.650013018
             ]
           },
           "animation": "sunspike_sprout_sway",
           "triangles": 1820,
           "joints": 7,
           "materials": 1,
-          "bytes": 115349,
-          "sha256": "52816c01879b374f6860e4e79d57ce9d932af483f9af7338fd9b475406206a9b",
+          "bytes": 115962,
+          "sha256": "82d684ef46b911de32c7c5cc4b9050f66ae352b8b0c7e78c93b1649513662930",
           "growthStructure": "Three clasping blades: an upright tightly folded spear between two short opening ribbon leaves; no flowers.",
           "leafCount": 3,
           "flowerCount": 0,
@@ -6184,34 +6184,34 @@
           "thumbnail": "ui/sunspike-sprout-moon.png",
           "bounds": {
             "min": [
-              -0.111992,
-              -0.067419,
+              -0.242987085,
+              -0.146277826,
               0.0
             ],
             "max": [
-              0.090324,
-              0.036735,
-              0.299583
+              0.195974404,
+              0.079703288,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.112044,
-              -0.067859,
+              -0.243099909,
+              -0.147232486,
               0.0
             ],
             "max": [
-              0.090326,
-              0.041551,
-              0.299589
+              0.195978744,
+              0.090152479,
+              0.650013018
             ]
           },
           "animation": "sunspike_sprout_sway",
           "triangles": 1820,
           "joints": 7,
           "materials": 1,
-          "bytes": 114834,
-          "sha256": "aa666bf56577aef2daf70a9c5cdcf850b96b086001c015e04151aa3fc0e7f602",
+          "bytes": 115319,
+          "sha256": "76f375c8945d4b5299280083e9bb0d1ef75c534baeaeb9bceed0dbaf1e2b65c8",
           "growthStructure": "Three clasping blades: an upright tightly folded spear between two short opening ribbon leaves; no flowers.",
           "leafCount": 3,
           "flowerCount": 0,
@@ -6228,34 +6228,34 @@
           "thumbnail": "ui/sunspike-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.251992,
-              -0.179413,
+              -0.465311449,
+              -0.331291957,
               0.0
             ],
             "max": [
-              0.253882,
-              0.086983,
-              0.4874
+              0.468801395,
+              0.160616947,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.252249,
-              -0.179458,
+              -0.465786007,
+              -0.331375051,
               0.0
             ],
             "max": [
-              0.253882,
-              0.088826,
-              0.487881
+              0.468801395,
+              0.164020107,
+              0.900888182
             ]
           },
           "animation": "sunspike_seedling_sway",
           "triangles": 4880,
           "joints": 13,
           "materials": 1,
-          "bytes": 237166,
-          "sha256": "cfa2680a0ccd45616046d628eccbe7d7a449ad223d02a34d7c903050ac54ca84",
+          "bytes": 237644,
+          "sha256": "f35868b98b1c918a58264ceb14a7ec00ef7a60ae34523d650755c63a91449c14",
           "growthStructure": "Open five-blade basal fan and one short scape with a compact imbricate colored torch bud.",
           "leafCount": 5,
           "flowerCount": 0,
@@ -6272,34 +6272,34 @@
           "thumbnail": "ui/sunspike-seedling-moon.png",
           "bounds": {
             "min": [
-              -0.251992,
-              -0.179413,
+              -0.465311449,
+              -0.331291957,
               0.0
             ],
             "max": [
-              0.253882,
-              0.086983,
-              0.4874
+              0.468801395,
+              0.160616947,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.252249,
-              -0.179458,
+              -0.465786007,
+              -0.331375051,
               0.0
             ],
             "max": [
-              0.253882,
-              0.088826,
-              0.487881
+              0.468801395,
+              0.164020107,
+              0.900888182
             ]
           },
           "animation": "sunspike_seedling_sway",
           "triangles": 4880,
           "joints": 13,
           "materials": 1,
-          "bytes": 236480,
-          "sha256": "1bc6e0a99612362f7a0d84e00e36547380a96deb225f20887b80c4433fe4e9d8",
+          "bytes": 237096,
+          "sha256": "53fd011f7409276b3364005c919629b03ebc0f81e18b963f7f9b48dd21b09c17",
           "growthStructure": "Open five-blade basal fan and one short scape with a compact imbricate colored torch bud.",
           "leafCount": 5,
           "flowerCount": 0,
@@ -6316,34 +6316,34 @@
           "thumbnail": "ui/sunspike-young-standard.png",
           "bounds": {
             "min": [
-              -0.421642,
-              -0.261411,
+              -0.624886254,
+              -0.387419044,
               0.0
             ],
             "max": [
-              0.426508,
-              0.294666,
-              0.94465
+              0.632097814,
+              0.436703964,
+              1.4
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.422291,
-              -0.261552,
+              -0.625848092,
+              -0.38762801,
               0.0
             ],
             "max": [
-              0.426525,
-              0.295714,
-              0.944667
+              0.632123009,
+              0.438257132,
+              1.400025195
             ]
           },
           "animation": "sunspike_young_sway",
           "triangles": 21640,
           "joints": 23,
           "materials": 1,
-          "bytes": 853029,
-          "sha256": "1aa00685d4238f295077c6c904be96361020f12f2f9f6916896e19f22cc147a4",
+          "bytes": 853507,
+          "sha256": "0fa7b827d7cb07abe992ecf0799af6c6abccd1ecce0a7406813594ec947d2837",
           "growthStructure": "Eight-blade spreading rosette, first two unequal open torches and a separate developing third bud.",
           "leafCount": 8,
           "flowerCount": 2,
@@ -6360,34 +6360,34 @@
           "thumbnail": "ui/sunspike-young-moon.png",
           "bounds": {
             "min": [
-              -0.421642,
-              -0.261411,
+              -0.624886254,
+              -0.387419044,
               0.0
             ],
             "max": [
-              0.426508,
-              0.294666,
-              0.94465
+              0.632097814,
+              0.436703964,
+              1.4
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.422291,
-              -0.261552,
+              -0.625848092,
+              -0.38762801,
               0.0
             ],
             "max": [
-              0.426525,
-              0.295714,
-              0.944667
+              0.632123009,
+              0.438257132,
+              1.400025195
             ]
           },
           "animation": "sunspike_young_sway",
           "triangles": 21640,
           "joints": 23,
           "materials": 1,
-          "bytes": 852598,
-          "sha256": "60733626b293e38ac7df01c90abea8e1b3e5be50dd100d826631c599647d22f7",
+          "bytes": 853083,
+          "sha256": "3be4557a148ce628183f4d64fdcdf2cf60b72d8c96be3fa7d98e49c68699f0a1",
           "growthStructure": "Eight-blade spreading rosette, first two unequal open torches and a separate developing third bud.",
           "leafCount": 8,
           "flowerCount": 2,
@@ -6541,34 +6541,34 @@
           "thumbnail": "ui/coilrush-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.110989,
-              -0.029885,
+              -0.420608967,
+              -0.113253556,
               0.0
             ],
             "max": [
-              0.076081,
-              0.055536,
-              0.17152
+              0.288320021,
+              0.210461754,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.111039,
-              -0.030328,
+              -0.420798449,
+              -0.114932369,
               0.0
             ],
             "max": [
-              0.076407,
-              0.055858,
-              0.17166
+              0.289555445,
+              0.21168202,
+              0.65053055
             ]
           },
           "animation": "coilrush_sprout_sway",
           "triangles": 5176,
           "joints": 9,
           "materials": 1,
-          "bytes": 234256,
-          "sha256": "cadac8d6a133e8fa81363d9901bf4379153dbb3649bf276824cd9ba722113aa9",
+          "bytes": 234853,
+          "sha256": "e21af53b15c873be87259ad6312c7cb4dd9f08a6de0aa8e3aca904fcb3098c5e",
           "growthStructure": "Low patch of three curled spindles, with a fine first companion winding around an existing hook.",
           "leafCount": 2,
           "flowerCount": 0,
@@ -6587,34 +6587,34 @@
           "thumbnail": "ui/coilrush-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.25168,
-              -0.119659,
+              -0.50072618,
+              -0.238065774,
               0.0
             ],
             "max": [
-              0.216253,
-              0.162927,
-              0.452367
+              0.430242922,
+              0.324148976,
+              0.9
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.254369,
-              -0.120823,
+              -0.50607604,
+              -0.240381593,
               0.0
             ],
             "max": [
-              0.216256,
-              0.166661,
-              0.452957
+              0.430248891,
+              0.3315779,
+              0.901173826
             ]
           },
           "animation": "coilrush_seedling_sway",
           "triangles": 16468,
           "joints": 19,
           "materials": 1,
-          "bytes": 643726,
-          "sha256": "8a23a9c78bda6fedc08df29640480a9eccd766d70e80b93f2b911c2950a01974",
+          "bytes": 644324,
+          "sha256": "437e8e0f9422c143fa6d5a743d62a1a6802a33db858291e352e2e6dd37f45f78",
           "growthStructure": "Six corkscrew spindles with loose intertwined pairs, offset rooting points and the first purple bud.",
           "leafCount": 6,
           "flowerCount": 0,
@@ -6633,34 +6633,34 @@
           "thumbnail": "ui/coilrush-young-standard.png",
           "bounds": {
             "min": [
-              -0.384463,
-              -0.33567,
+              -0.537193712,
+              -0.469017339,
               0.0
             ],
             "max": [
-              0.37394,
-              0.231392,
-              0.823041
+              0.522490374,
+              0.323314148,
+              1.15
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.388651,
-              -0.336235,
+              -0.543045425,
+              -0.46980679,
               0.0
             ],
             "max": [
-              0.375475,
-              0.23653,
-              0.823653
+              0.524635164,
+              0.330493256,
+              1.150855121
             ]
           },
           "animation": "coilrush_young_sway",
           "triangles": 37672,
           "joints": 31,
           "materials": 1,
-          "bytes": 1704371,
-          "sha256": "b1542286425c607a21b452ba210e7eedaa96508c8d218f4caa80e7e38d2af809",
+          "bytes": 1704954,
+          "sha256": "423c135bd2c96912a623162bf81cbaa99cbdad5f83c75f7f872a173f79fa38a0",
           "growthStructure": "Twelve spindles forming a widening woven patch, with three lilac flowers and one closed bud.",
           "leafCount": 10,
           "flowerCount": 3,
@@ -6796,26 +6796,26 @@
           "thumbnail": "ui/cloudveil-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.140665,
-              -0.071934,
+              -0.315690522,
+              -0.161439462,
               0.0
             ],
             "max": [
-              0.171166,
-              0.035992,
-              0.294082
+              0.384143062,
+              0.080775838,
+              0.66
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.140754,
-              -0.072232,
+              -0.315890262,
+              -0.162108256,
               0.0
             ],
             "max": [
-              0.171209,
-              0.03697,
-              0.29412
+              0.384239566,
+              0.082970736,
+              0.660085282
             ]
           },
           "animation": "cloudveil_sprout_sway",
@@ -6826,8 +6826,8 @@
             1024,
             1024
           ],
-          "bytes": 242756,
-          "sha256": "902a76dc8e2c754e68e0c94f07eb176ab7f959d32eca9738d1a93c60905a515a",
+          "bytes": 243247,
+          "sha256": "a290fafea6441c1027aa6ec7d75a29d225478f62a28e3f5b5de8b95ce9669884",
           "leafCount": 2,
           "bractCount": 3,
           "clusterCount": 0,
@@ -6840,26 +6840,26 @@
           "thumbnail": "ui/cloudveil-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.346939,
-              -0.217756,
+              -0.479850248,
+              -0.301177644,
               0.0
             ],
             "max": [
-              0.466939,
-              0.196796,
-              0.95438
+              0.645821874,
+              0.272187934,
+              1.32
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.349654,
-              -0.219849,
+              -0.483605356,
+              -0.304072466,
               0.0
             ],
             "max": [
-              0.468716,
-              0.203093,
-              0.954601
+              0.648279637,
+              0.280897295,
+              1.320305664
             ]
           },
           "animation": "cloudveil_seedling_sway",
@@ -6870,8 +6870,8 @@
             1024,
             1024
           ],
-          "bytes": 378850,
-          "sha256": "e53cd2d8defd299f3ba8a1dc1b4eec9eda6524cc2ff1e9dab3e15a8344d7c79a",
+          "bytes": 379464,
+          "sha256": "9eda14f9de8459553711fb98545a78d1cfbe8b0dabcc895588e01d8514cd1e45",
           "leafCount": 7,
           "bractCount": 10,
           "clusterCount": 1,
@@ -6884,26 +6884,26 @@
           "thumbnail": "ui/cloudveil-young-standard.png",
           "bounds": {
             "min": [
-              -1.085774,
-              -0.617082,
+              -1.274046435,
+              -0.724083577,
               0.0
             ],
             "max": [
-              1.007932,
-              0.909231,
-              2.437363
+              1.182706688,
+              1.066891005,
+              2.86
             ]
           },
           "animatedBounds": {
             "min": [
-              -1.085805,
-              -0.626258,
+              -1.27408281,
+              -0.734850689,
               0.0
             ],
             "max": [
-              1.021167,
-              0.919057,
-              2.438486
+              1.198236627,
+              1.078420826,
+              2.861317727
             ]
           },
           "animation": "cloudveil_young_sway",
@@ -6914,8 +6914,8 @@
             1024,
             1024
           ],
-          "bytes": 1312349,
-          "sha256": "476f3af4778a5622b33d1661cfbd057cf60e05692d0b525aa0d301e3af7c480a",
+          "bytes": 1312962,
+          "sha256": "0b2ff43844753f495898c9638e981dad3be67443e6107b890bdb3bdfe1cba8f9",
           "leafCount": 30,
           "bractCount": 90,
           "clusterCount": 6,
@@ -7041,34 +7041,34 @@
           "thumbnail": "ui/mirrorleaf-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.057877,
-              -0.042029,
+              -0.181560921,
+              -0.131845533,
               0.0
             ],
             "max": [
-              0.063604,
-              0.062756,
-              0.175326
+              0.199526596,
+              0.196866409,
+              0.55
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.058042,
-              -0.042708,
+              -0.182078528,
+              -0.133975566,
               0.0
             ],
             "max": [
-              0.064064,
-              0.065349,
-              0.176128
+              0.200969622,
+              0.205000684,
+              0.552515885
             ]
           },
           "animation": "mirrorleaf_sprout_sway",
           "triangles": 2288,
           "joints": 3,
           "materials": 1,
-          "bytes": 191359,
-          "sha256": "8843c665a90e74edc4443b4301d12ca7c89f704ad215d4be0b196f7b4548e01f",
+          "bytes": 191844,
+          "sha256": "178b0d390c434e171627f6927025a99c3c3594b3510b50035303f091c576e355",
           "leafCount": 1,
           "flowerCount": 0,
           "budCount": 0,
@@ -7083,34 +7083,34 @@
           "thumbnail": "ui/mirrorleaf-sprout-speckled.png",
           "bounds": {
             "min": [
-              -0.057877,
-              -0.042029,
+              -0.181560921,
+              -0.131845533,
               0.0
             ],
             "max": [
-              0.063604,
-              0.062756,
-              0.175326
+              0.199526596,
+              0.196866409,
+              0.55
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.058042,
-              -0.042708,
+              -0.182078528,
+              -0.133975566,
               0.0
             ],
             "max": [
-              0.064064,
-              0.065349,
-              0.176128
+              0.200969622,
+              0.205000684,
+              0.552515885
             ]
           },
           "animation": "mirrorleaf_sprout_sway",
           "triangles": 2288,
           "joints": 3,
           "materials": 1,
-          "bytes": 275755,
-          "sha256": "7c37f73d6ffb52ed34a30bcccdbfea5823541b91068e9caf9d684a7c3e30fd09",
+          "bytes": 276240,
+          "sha256": "5460be6f4fa7d078a0a0439983faf4023a497062c79d38cf90221d184c96d4ff",
           "leafCount": 1,
           "flowerCount": 0,
           "budCount": 0,
@@ -7125,34 +7125,34 @@
           "thumbnail": "ui/mirrorleaf-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.228475,
-              -0.157082,
+              -0.507225955,
+              -0.348729915,
               0.0
             ],
             "max": [
-              0.225699,
-              0.154394,
-              0.324317
+              0.501063096,
+              0.342762421,
+              0.72
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.229764,
-              -0.158495,
+              -0.510087599,
+              -0.351866846,
               0.0
             ],
             "max": [
-              0.227271,
-              0.161631,
-              0.324406
+              0.504553014,
+              0.358828924,
+              0.720197584
             ]
           },
           "animation": "mirrorleaf_seedling_sway",
           "triangles": 6864,
           "joints": 7,
           "materials": 1,
-          "bytes": 396238,
-          "sha256": "ad76f7f524c44548303eda7830ebd90359ae338187d16acadf0967c635f8cae5",
+          "bytes": 396728,
+          "sha256": "586eb9e21dd06da35353cc20cf84b5e9624ead849ec472c8e0291827945ebecf",
           "leafCount": 3,
           "flowerCount": 0,
           "budCount": 0,
@@ -7167,34 +7167,34 @@
           "thumbnail": "ui/mirrorleaf-seedling-speckled.png",
           "bounds": {
             "min": [
-              -0.228475,
-              -0.157082,
+              -0.507225955,
+              -0.348729915,
               0.0
             ],
             "max": [
-              0.225699,
-              0.154394,
-              0.324317
+              0.501063096,
+              0.342762421,
+              0.72
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.229764,
-              -0.158495,
+              -0.510087599,
+              -0.351866846,
               0.0
             ],
             "max": [
-              0.227271,
-              0.161631,
-              0.324406
+              0.504553014,
+              0.358828924,
+              0.720197584
             ]
           },
           "animation": "mirrorleaf_seedling_sway",
           "triangles": 6864,
           "joints": 7,
           "materials": 1,
-          "bytes": 480595,
-          "sha256": "82b4b1ec37e5d8eb605c1340bcd53c43fb74a44fde1faf30264cde58af8ac09d",
+          "bytes": 481211,
+          "sha256": "ab1317cbec83003b935647ee79c215b72385302b9e11316c39dd93e8b1d3a43e",
           "leafCount": 3,
           "flowerCount": 0,
           "budCount": 0,
@@ -7209,34 +7209,34 @@
           "thumbnail": "ui/mirrorleaf-young-standard.png",
           "bounds": {
             "min": [
-              -0.366719,
-              -0.379139,
+              -0.536370314,
+              -0.554536046,
               0.0
             ],
             "max": [
-              0.319159,
-              0.335908,
-              0.560638
+              0.466808136,
+              0.491305548,
+              0.82
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.368211,
-              -0.379311,
+              -0.538552542,
+              -0.554787617,
               0.0
             ],
             "max": [
-              0.320812,
-              0.336677,
-              0.564099
+              0.469225846,
+              0.492430303,
+              0.825062126
             ]
           },
           "animation": "mirrorleaf_young_sway",
           "triangles": 18304,
           "joints": 17,
           "materials": 1,
-          "bytes": 908170,
-          "sha256": "5a6ebe909215d2312b262a291e21a2c709620d471745b6a11190151e06664854",
+          "bytes": 908658,
+          "sha256": "b02f19be1018eedff41b6210dd27b751e78a6c450aedf1b5ba05b0ff1223ab9e",
           "leafCount": 8,
           "flowerCount": 0,
           "budCount": 0,
@@ -7251,34 +7251,34 @@
           "thumbnail": "ui/mirrorleaf-young-speckled.png",
           "bounds": {
             "min": [
-              -0.366719,
-              -0.379139,
+              -0.536370314,
+              -0.554536046,
               0.0
             ],
             "max": [
-              0.319159,
-              0.335908,
-              0.560638
+              0.466808136,
+              0.491305548,
+              0.82
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.368211,
-              -0.379311,
+              -0.538552542,
+              -0.554787617,
               0.0
             ],
             "max": [
-              0.320812,
-              0.336677,
-              0.564099
+              0.469225846,
+              0.492430303,
+              0.825062126
             ]
           },
           "animation": "mirrorleaf_young_sway",
           "triangles": 18304,
           "joints": 17,
           "materials": 1,
-          "bytes": 992522,
-          "sha256": "f57f42a95d0ecb4a44b2a19a711f97cd395c2275d647dcb3def02a3fad1c427f",
+          "bytes": 993135,
+          "sha256": "baa0afdd2ef7c20e9ec04e54c7dba1521199aa078a7e4fd5dd9e934fe093b837",
           "leafCount": 8,
           "flowerCount": 0,
           "budCount": 0,
@@ -7428,34 +7428,34 @@
           "thumbnail": "ui/bronze-bugle-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.11324,
-              -0.056529,
+              -0.487146886,
+              -0.24318197,
               0.0
             ],
             "max": [
-              0.113472,
-              0.062891,
-              0.104605
+              0.488144926,
+              0.270550643,
+              0.45
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.113317,
-              -0.05678,
+              -0.487478132,
+              -0.244261747,
               0.0
             ],
             "max": [
-              0.113528,
-              0.063392,
-              0.104615
+              0.488385832,
+              0.272705894,
+              0.450043019
             ]
           },
           "animation": "bronze-bugle_sprout_sway",
           "triangles": 3420,
           "joints": 7,
           "materials": 1,
-          "bytes": 284658,
-          "sha256": "8a300865cf2575e0cd196a7e4a2dad1be5a62f9efb32b7604e040ee8ea3dc0e3",
+          "bytes": 285127,
+          "sha256": "8682a972aa3a2136531bed3cf0ebc9f114c9a8cddc81da5fde823ba21123e828",
           "leafCount": 3,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -7469,34 +7469,34 @@
           "thumbnail": "ui/bronze-bugle-sprout-pink-lightning.png",
           "bounds": {
             "min": [
-              -0.11324,
-              -0.056529,
+              -0.487146886,
+              -0.24318197,
               0.0
             ],
             "max": [
-              0.113472,
-              0.062891,
-              0.104605
+              0.488144926,
+              0.270550643,
+              0.45
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.113317,
-              -0.05678,
+              -0.487478132,
+              -0.244261747,
               0.0
             ],
             "max": [
-              0.113528,
-              0.063392,
-              0.104615
+              0.488385832,
+              0.272705894,
+              0.450043019
             ]
           },
           "animation": "bronze-bugle_sprout_sway",
           "triangles": 3420,
           "joints": 7,
           "materials": 1,
-          "bytes": 270792,
-          "sha256": "87f43cfec02dca2675f4e999d606874e1ee729be344727f8bf4a1752a842413a",
+          "bytes": 271385,
+          "sha256": "17a507c1a7565a65430b54d47cbda830859e2a6af2974389a3344e5e4e7a93d0",
           "leafCount": 3,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -7510,34 +7510,34 @@
           "thumbnail": "ui/bronze-bugle-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.220336,
-              -0.220823,
+              -0.902760768,
+              -0.904756105,
               0.0
             ],
             "max": [
-              0.220302,
-              0.220847,
-              0.134238
+              0.902621463,
+              0.904854438,
+              0.55
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.220353,
-              -0.221116,
+              -0.902830421,
+              -0.905956585,
               0.0
             ],
             "max": [
-              0.22045,
-              0.22086,
-              0.134827
+              0.903227849,
+              0.904907701,
+              0.552413251
             ]
           },
           "animation": "bronze-bugle_seedling_sway",
           "triangles": 6840,
           "joints": 13,
           "materials": 1,
-          "bytes": 447624,
-          "sha256": "29d2a0e6dfd7a41b492ffa4e44d41bc57dcfe35cbbb4caeca3fa43bbf33728d4",
+          "bytes": 448216,
+          "sha256": "00d3907604829912c5c3201748662290e082b6fe36d07fb5362f16916675b5ac",
           "leafCount": 6,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -7551,34 +7551,34 @@
           "thumbnail": "ui/bronze-bugle-seedling-pink-lightning.png",
           "bounds": {
             "min": [
-              -0.220336,
-              -0.220823,
+              -0.902760768,
+              -0.904756105,
               0.0
             ],
             "max": [
-              0.220302,
-              0.220847,
-              0.134238
+              0.902621463,
+              0.904854438,
+              0.55
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.220353,
-              -0.221116,
+              -0.902830421,
+              -0.905956585,
               0.0
             ],
             "max": [
-              0.22045,
-              0.22086,
-              0.134827
+              0.903227849,
+              0.904907701,
+              0.552413251
             ]
           },
           "animation": "bronze-bugle_seedling_sway",
           "triangles": 6840,
           "joints": 13,
           "materials": 1,
-          "bytes": 433885,
-          "sha256": "d02f684a324c41c27c76cf6b3a175baffe59ebdabf372f90669ad4aa4af656c1",
+          "bytes": 434345,
+          "sha256": "05430142a10b19c1182cc1b79d905f6334fecb7f9469a4a75b83e728e2035882",
           "leafCount": 6,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -7592,34 +7592,34 @@
           "thumbnail": "ui/bronze-bugle-young-standard.png",
           "bounds": {
             "min": [
-              -0.410506,
-              -0.344775,
+              -0.781061238,
+              -0.65599623,
               0.0
             ],
             "max": [
-              0.368887,
-              0.240506,
-              0.394181
+              0.701873632,
+              0.45760577,
+              0.75
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.410519,
-              -0.344781,
+              -0.781085973,
+              -0.656007646,
               0.0
             ],
             "max": [
-              0.368982,
-              0.24054,
-              0.394249
+              0.702054386,
+              0.457670461,
+              0.750129382
             ]
           },
           "animation": "bronze-bugle_young_sway",
           "triangles": 19632,
           "joints": 29,
           "materials": 1,
-          "bytes": 1033587,
-          "sha256": "7ffe5457bb0a4264fe416f49838ff58b4e30528e52458908e329394fd1b7c610",
+          "bytes": 1034173,
+          "sha256": "75d7f24b1b7669487363588fc2ff53452a831125afdde847211f3183071370e3",
           "leafCount": 12,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -7633,34 +7633,34 @@
           "thumbnail": "ui/bronze-bugle-young-pink-lightning.png",
           "bounds": {
             "min": [
-              -0.410506,
-              -0.344775,
+              -0.781061238,
+              -0.65599623,
               0.0
             ],
             "max": [
-              0.368887,
-              0.240506,
-              0.394181
+              0.701873632,
+              0.45760577,
+              0.75
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.410519,
-              -0.344781,
+              -0.781085973,
+              -0.656007646,
               0.0
             ],
             "max": [
-              0.368982,
-              0.24054,
-              0.394249
+              0.702054386,
+              0.457670461,
+              0.750129382
             ]
           },
           "animation": "bronze-bugle_young_sway",
           "triangles": 19632,
           "joints": 29,
           "materials": 1,
-          "bytes": 1019628,
-          "sha256": "b6486e5fd56de0527ef6140d2005bf549ca8c1ab9dd263abcd032df7cc72d7d2",
+          "bytes": 1020209,
+          "sha256": "d10c4fb6735264c58b501576d6ebca19198b7cb07b70e07a4e41c897033ba061",
           "leafCount": 12,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -7806,34 +7806,34 @@
           "thumbnail": "ui/ribbon-fern-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.022908,
-              -0.095353,
+              -0.066845938,
+              -0.278241693,
               0.0
             ],
             "max": [
-              0.050342,
-              0.052358,
-              0.222754
+              0.146898821,
+              0.152781544,
+              0.65
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.023205,
-              -0.095466,
+              -0.067712589,
+              -0.278571429,
               0.0
             ],
             "max": [
-              0.050724,
-              0.054159,
-              0.222972
+              0.148013504,
+              0.158036893,
+              0.650636128
             ]
           },
           "animation": "ribbon-fern_sprout_sway",
           "triangles": 3560,
           "joints": 5,
           "materials": 1,
-          "bytes": 250276,
-          "sha256": "d7979dd4ab5f66fbd1794bb1d9b5b9b9f33f683750e59b50ec061ae9ac97e3bd",
+          "bytes": 250872,
+          "sha256": "2aabcbedd1a0ba515668381e8031b96d978028aa9e5db5f4f2dc397a00aea01e",
           "leafCount": 2,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -7847,34 +7847,34 @@
           "thumbnail": "ui/ribbon-fern-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.094911,
-              -0.186777,
+              -0.201534724,
+              -0.396603672,
               0.0
             ],
             "max": [
-              0.211234,
-              0.120441,
-              0.4003
+              0.448535848,
+              0.255745316,
+              0.85
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.095673,
-              -0.187105,
+              -0.20315276,
+              -0.39730015,
               0.0
             ],
             "max": [
-              0.211805,
-              0.123994,
-              0.401094
+              0.449748314,
+              0.263289783,
+              0.851685986
             ]
           },
           "animation": "ribbon-fern_seedling_sway",
           "triangles": 5340,
           "joints": 7,
           "materials": 1,
-          "bytes": 333603,
-          "sha256": "25e279b8f47e0674a5d54c2b2ec17cc2a008799f8a5cb9f12f4972ba58c6fa02",
+          "bytes": 334196,
+          "sha256": "511c9e7219936928f0172a0c557cd1814a8e9d74fb68051814aff004a0d9855a",
           "leafCount": 3,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -7888,34 +7888,34 @@
           "thumbnail": "ui/ribbon-fern-young-standard.png",
           "bounds": {
             "min": [
-              -0.363468,
-              -0.396603,
+              -0.526322801,
+              -0.574304208,
               0.0
             ],
             "max": [
-              0.424426,
-              0.229877,
-              0.69058
+              0.61459353,
+              0.332875264,
+              1.0
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.363674,
-              -0.396687,
+              -0.526621101,
+              -0.574425845,
               0.0
             ],
             "max": [
-              0.42469,
-              0.235814,
-              0.692142
+              0.614975817,
+              0.341472386,
+              1.002261867
             ]
           },
           "animation": "ribbon-fern_young_sway",
           "triangles": 8900,
           "joints": 11,
           "materials": 1,
-          "bytes": 500680,
-          "sha256": "758160ca58dc4c4e33a4aa8e0524d803f435a3387bf3ea800cf64ae5a6581ad3",
+          "bytes": 501271,
+          "sha256": "25aefec8f564e326ff9342d3db5e7e908e1fcdce7846a8191854102c109e6169",
           "leafCount": 5,
           "flowerCount": 0,
           "flowerSpikeCount": 0,
@@ -8046,34 +8046,34 @@
           "thumbnail": "ui/paper-lantern-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.06951,
-              -0.024959,
+              -0.247945971,
+              -0.089030118,
               0.0
             ],
             "max": [
-              0.07762,
-              0.033629,
-              0.168206
+              0.276874784,
+              0.119956482,
+              0.6
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.069704,
-              -0.025756,
+              -0.24863798,
+              -0.09187306,
               0.0
             ],
             "max": [
-              0.077919,
-              0.034387,
-              0.16835
+              0.277941334,
+              0.122660309,
+              0.600513656
             ]
           },
           "animation": "paper-lantern_sprout_sway",
           "triangles": 2956,
           "joints": 3,
           "materials": 1,
-          "bytes": 262927,
-          "sha256": "df1cf18bac93087d40e436662d25f8effdbc48dc97fe08622b7e33b913bea4c5",
+          "bytes": 263414,
+          "sha256": "33ee77ac80c8a321c54a27d6df5b5b948665444db0ebd1e01d12245be2cdc051",
           "leafCount": 3,
           "lanternCount": 0,
           "budCount": 0,
@@ -8088,34 +8088,34 @@
           "thumbnail": "ui/paper-lantern-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.160151,
-              -0.068555,
+              -0.361635082,
+              -0.154803236,
               0.0
             ],
             "max": [
-              0.15157,
-              0.089662,
-              0.354282
+              0.342258427,
+              0.202464703,
+              0.8
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.160216,
-              -0.070829,
+              -0.361781857,
+              -0.159938128,
               0.0
             ],
             "max": [
-              0.151876,
-              0.092001,
-              0.35483
+              0.342949402,
+              0.207746372,
+              0.801237432
             ]
           },
           "animation": "paper-lantern_seedling_sway",
           "triangles": 8118,
           "joints": 3,
           "materials": 1,
-          "bytes": 461244,
-          "sha256": "cd3d5330746e99fede0837612dfe68c810ac5f6205370721edf9fedb51294a93",
+          "bytes": 461852,
+          "sha256": "259ea21c163907b75f301a940fb1c4d1e60b4482e7ed86fa2cbd568e212595ea",
           "leafCount": 4,
           "lanternCount": 0,
           "budCount": 1,
@@ -8130,34 +8130,34 @@
           "thumbnail": "ui/paper-lantern-young-standard.png",
           "bounds": {
             "min": [
-              -0.235838,
-              -0.167461,
+              -0.330448063,
+              -0.234640572,
               0.0
             ],
             "max": [
-              0.259943,
-              0.208014,
-              0.678007
+              0.364223157,
+              0.291462035,
+              0.95
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.235858,
-              -0.167461,
+              -0.330476087,
+              -0.234640572,
               0.0
             ],
             "max": [
-              0.26005,
-              0.209321,
-              0.678734
+              0.364373082,
+              0.293293358,
+              0.951018647
             ]
           },
           "animation": "paper-lantern_young_sway",
           "triangles": 63280,
           "joints": 7,
           "materials": 1,
-          "bytes": 2648251,
-          "sha256": "31ca8f2282994dacfbbd33b36e4be8e09d5f1570f5e445b2ea06f5994393a414",
+          "bytes": 2648853,
+          "sha256": "6d298681352baf38800d81af3e1e817ad3ad883cab09d0f0c53bd6dba9269827",
           "leafCount": 4,
           "lanternCount": 2,
           "budCount": 1,
@@ -8286,34 +8286,34 @@
           "thumbnail": "ui/coppercurl-maple-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.164347,
-              -0.095741,
+              -0.414912901,
+              -0.241709164,
               0.0
             ],
             "max": [
-              0.200563,
-              0.090376,
-              0.265387
+              0.506344357,
+              0.228164605,
+              0.67
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.164508,
-              -0.096596,
+              -0.415319364,
+              -0.24386771,
               0.0
             ],
             "max": [
-              0.200604,
-              0.091625,
-              0.266452
+              0.506447867,
+              0.231317849,
+              0.672688715
             ]
           },
           "animation": "coppercurl_maple_sprout_sway",
           "triangles": 4668,
           "joints": 3,
           "materials": 1,
-          "bytes": 435210,
-          "sha256": "49bfca99b300615a934de2510412662258be8ed268e8f5475df2405883375f40",
+          "bytes": 435695,
+          "sha256": "4ca8b2fa15041eddfd8c1862c2d3e2a4f3e56847c1eba55c7197addbdd33e2f3",
           "leafCount": 6,
           "compoundCount": 2,
           "sprayCount": 0,
@@ -8327,34 +8327,34 @@
           "thumbnail": "ui/coppercurl-maple-sprout-autumn.png",
           "bounds": {
             "min": [
-              -0.164347,
-              -0.095741,
+              -0.414912901,
+              -0.241709164,
               0.0
             ],
             "max": [
-              0.200563,
-              0.090376,
-              0.265387
+              0.506344357,
+              0.228164605,
+              0.67
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.164508,
-              -0.096596,
+              -0.415319364,
+              -0.24386771,
               0.0
             ],
             "max": [
-              0.200604,
-              0.091625,
-              0.266452
+              0.506447867,
+              0.231317849,
+              0.672688715
             ]
           },
           "animation": "coppercurl_maple_sprout_sway",
           "triangles": 4788,
           "joints": 3,
           "materials": 1,
-          "bytes": 422804,
-          "sha256": "01af14f8df48e82943c4e2e3472b98e6181f51c2cbb6cad8e00095dc1276f4c8",
+          "bytes": 423293,
+          "sha256": "fdc888eceffcd3b78f1b9df851b0387e7d57c71ff168230ad20f30daa4cad280",
           "leafCount": 6,
           "compoundCount": 2,
           "sprayCount": 0,
@@ -8368,34 +8368,34 @@
           "thumbnail": "ui/coppercurl-maple-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.308521,
-              -0.207583,
+              -0.451174289,
+              -0.30356479,
               0.0
             ],
             "max": [
-              0.275111,
-              0.100263,
-              0.923154
+              0.402316244,
+              0.146622395,
+              1.35
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.308715,
-              -0.208314,
+              -0.451457991,
+              -0.304633788,
               0.0
             ],
             "max": [
-              0.283892,
-              0.100618,
-              0.92426
+              0.415157384,
+              0.147141539,
+              1.35161739
             ]
           },
           "animation": "coppercurl_maple_seedling_sway",
           "triangles": 5706,
           "joints": 7,
           "materials": 1,
-          "bytes": 500782,
-          "sha256": "0ca653d74f745dab2000ad051ef3f416242197d10827813bb5188ad6f6d01ed4",
+          "bytes": 501393,
+          "sha256": "ca6c1dccacd149c3c5eed6ec3f77fcbdb920d4fd573e79d7354eb55e9e72958e",
           "leafCount": 15,
           "compoundCount": 5,
           "sprayCount": 2,
@@ -8409,34 +8409,34 @@
           "thumbnail": "ui/coppercurl-maple-seedling-autumn.png",
           "bounds": {
             "min": [
-              -0.308521,
-              -0.207583,
+              -0.451174289,
+              -0.30356479,
               0.0
             ],
             "max": [
-              0.275111,
-              0.100263,
-              0.923154
+              0.402316244,
+              0.146622395,
+              1.35
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.308715,
-              -0.208314,
+              -0.451457991,
+              -0.304633788,
               0.0
             ],
             "max": [
-              0.283892,
-              0.100618,
-              0.92426
+              0.415157384,
+              0.147141539,
+              1.35161739
             ]
           },
           "animation": "coppercurl_maple_seedling_sway",
           "triangles": 6246,
           "joints": 7,
           "materials": 1,
-          "bytes": 509019,
-          "sha256": "ad76572544db21ab9f1941f0f4c1c66689ae9b72d56df2479ed5481c393da065",
+          "bytes": 509506,
+          "sha256": "57f5d91bc085736c724483bef7478b15db1ee8a02e5ecdba5b29c2a25c47b614",
           "leafCount": 15,
           "compoundCount": 5,
           "sprayCount": 2,
@@ -8450,34 +8450,34 @@
           "thumbnail": "ui/coppercurl-maple-young-standard.png",
           "bounds": {
             "min": [
-              -0.884633,
-              -0.515392,
+              -1.125745768,
+              -0.655865611,
               0.0
             ],
             "max": [
-              0.883815,
-              0.818978,
-              2.294593
+              1.124704817,
+              1.04219605,
+              2.92
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.893032,
-              -0.521715,
+              -1.136433973,
+              -0.663911988,
               0.0
             ],
             "max": [
-              0.897539,
-              0.820317,
-              2.299222
+              1.142169387,
+              1.043900003,
+              2.925890666
             ]
           },
           "animation": "coppercurl_maple_young_sway",
           "triangles": 24652,
           "joints": 15,
           "materials": 1,
-          "bytes": 1448744,
-          "sha256": "da2a9d6a744a118b37e9135de29b14b94c179498d539cdfcc4a8fcd0780b61bf",
+          "bytes": 1449355,
+          "sha256": "d36393cbe549e3fa050d23f82ce277547f64225fa17add0829882b1c1d26b280",
           "leafCount": 126,
           "compoundCount": 42,
           "sprayCount": 6,
@@ -8491,34 +8491,34 @@
           "thumbnail": "ui/coppercurl-maple-young-autumn.png",
           "bounds": {
             "min": [
-              -0.884633,
-              -0.515392,
+              -1.125745768,
+              -0.655865611,
               0.0
             ],
             "max": [
-              0.883815,
-              0.818978,
-              2.294593
+              1.124704817,
+              1.04219605,
+              2.92
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.893032,
-              -0.521715,
+              -1.136433973,
+              -0.663911988,
               0.0
             ],
             "max": [
-              0.897539,
-              0.820317,
-              2.299222
+              1.142169387,
+              1.043900003,
+              2.925890666
             ]
           },
           "animation": "coppercurl_maple_young_sway",
           "triangles": 26692,
           "joints": 15,
           "materials": 1,
-          "bytes": 1529664,
-          "sha256": "d2098127a246d15bc6deb15629d2cb9c2ed14e4fe66c29af7c06683dea960692",
+          "bytes": 1530145,
+          "sha256": "56ebabd1003166ac2484983b91d03a03b86a40d339c36d59fcf32c3a5b752430",
           "leafCount": 126,
           "compoundCount": 42,
           "sprayCount": 6,
@@ -8696,34 +8696,34 @@
           "thumbnail": "ui/amberfan-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.104527,
-              -0.043238,
+              -0.233497545,
+              -0.096587167,
               0.0
             ],
             "max": [
-              0.106797,
-              0.02063,
-              0.286501
+              0.238568382,
+              0.046084307,
+              0.64
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.104649,
-              -0.043769,
+              -0.233770074,
+              -0.097773341,
               0.0
             ],
             "max": [
-              0.106865,
-              0.022135,
-              0.286609
+              0.238720284,
+              0.04944625,
+              0.640241256
             ]
           },
           "animation": "amberfan_sprout_sway",
           "triangles": 4484,
           "joints": 3,
           "materials": 1,
-          "bytes": 476281,
-          "sha256": "fc3d3e4e268b8164e449111b9d53105bae9e6af5c63fc05802d3e9a173ef5f87",
+          "bytes": 476882,
+          "sha256": "4f7ed3e6416c45b8627cc55b1cea340baf8b30a5ec00dcb0f443eed120dba600",
           "leafCount": 2,
           "sprayCount": 0,
           "stemCount": 1,
@@ -8738,34 +8738,34 @@
           "thumbnail": "ui/amberfan-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.34354,
-              -0.140648,
+              -0.542137617,
+              -0.221955439,
               0.0
             ],
             "max": [
-              0.325811,
-              0.157965,
-              0.817443
+              0.514159629,
+              0.249283253,
+              1.29
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.343738,
-              -0.146132,
+              -0.542450079,
+              -0.230609694,
               0.0
             ],
             "max": [
-              0.327798,
-              0.165817,
-              0.818208
+              0.517295298,
+              0.261674429,
+              1.29120724
             ]
           },
           "animation": "amberfan_seedling_sway",
           "triangles": 8408,
           "joints": 7,
           "materials": 1,
-          "bytes": 700812,
-          "sha256": "c4f619692346bcf3f841dfd58134521d3e4536baf0263481f2b6e3a688aa3554",
+          "bytes": 701412,
+          "sha256": "ae0a24bbb687d27a24d4ba481a78b19eae7236835eaaf4a1f39f422206450295",
           "leafCount": 8,
           "sprayCount": 2,
           "stemCount": 1,
@@ -8780,34 +8780,34 @@
           "thumbnail": "ui/amberfan-young-standard.png",
           "bounds": {
             "min": [
-              -0.86446,
-              -0.46078,
+              -1.025638982,
+              -0.546692652,
               0.0
             ],
             "max": [
-              0.868493,
-              0.742244,
-              2.351552
+              1.030423937,
+              0.88063575,
+              2.79
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.865111,
-              -0.471132,
+              -1.026411362,
+              -0.558974788,
               0.0
             ],
             "max": [
-              0.874865,
-              0.742921,
-              2.351989
+              1.037984,
+              0.881438977,
+              2.790518479
             ]
           },
           "animation": "amberfan_young_sway",
           "triangles": 27044,
           "joints": 17,
           "materials": 1,
-          "bytes": 1675179,
-          "sha256": "c38f51033ce7fa3c50d587e38facebe6d17b9e7222b7265ebe3a6dfe7e100d93",
+          "bytes": 1675651,
+          "sha256": "9241445459aa4bb8ff66698051560c64b4d7b7bcceb38e3f0cd36ae01eb9a0b1",
           "leafCount": 61,
           "sprayCount": 7,
           "stemCount": 3,
@@ -8966,26 +8966,26 @@
           "thumbnail": "ui/silverlace-fern-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.040901,
-              -0.01464,
+              -0.126604965,
+              -0.045316659,
               0.0
             ],
             "max": [
-              0.027194,
-              0.009409,
-              0.145377
+              0.084176314,
+              0.029124621,
+              0.45
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.040933,
-              -0.01464,
+              -0.126704018,
+              -0.045316659,
               0.0
             ],
             "max": [
-              0.027242,
-              0.009409,
-              0.14538
+              0.084324893,
+              0.029124621,
+              0.450009286
             ]
           },
           "animation": "silverlace-fern_sprout_sway",
@@ -8994,8 +8994,8 @@
           "triangles": 2852,
           "joints": 3,
           "materials": 1,
-          "bytes": 155839,
-          "sha256": "fba19ab9e980bbb8f99f119e08397c2729631908f1ccfc762deeba18ce8e69e7"
+          "bytes": 156346,
+          "sha256": "c645a0fa87bcd5110b11ff4c60d9c607834cd27019d948683aa65e15f7a0392f"
         },
         {
           "stage": "seedling",
@@ -9004,26 +9004,26 @@
           "thumbnail": "ui/silverlace-fern-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.088419,
-              -0.03294,
+              -0.23515368,
+              -0.087605178,
               0.0
             ],
             "max": [
-              0.103206,
-              0.216349,
-              0.218083
+              0.274480267,
+              0.575388361,
+              0.58
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.088424,
-              -0.03294,
+              -0.235166978,
+              -0.087605178,
               0.0
             ],
             "max": [
-              0.103208,
-              0.216608,
-              0.218407
+              0.274485586,
+              0.576077182,
+              0.58086169
             ]
           },
           "animation": "silverlace-fern_seedling_sway",
@@ -9032,8 +9032,8 @@
           "triangles": 9680,
           "joints": 6,
           "materials": 1,
-          "bytes": 423800,
-          "sha256": "f10871ad24c7bc2099e05f0a9da98f06135f09d5158bdaa5d5acb3afef8b6844"
+          "bytes": 424306,
+          "sha256": "3ab43a4fe85e1a65cd4c01684bc52da712f1335e6d2f362b3050a9636ea3862f"
         },
         {
           "stage": "young",
@@ -9042,26 +9042,26 @@
           "thumbnail": "ui/silverlace-fern-young-standard.png",
           "bounds": {
             "min": [
-              -0.317929,
-              -0.364927,
+              -0.489635346,
+              -0.562015916,
               0.0
             ],
             "max": [
-              0.379544,
-              0.222957,
-              0.435043
+              0.584527231,
+              0.343371092,
+              0.67
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.317958,
-              -0.365083,
+              -0.489680009,
+              -0.562256168,
               0.0
             ],
             "max": [
-              0.379684,
-              0.224353,
-              0.43542
+              0.584742842,
+              0.34552104,
+              0.670580609
             ]
           },
           "animation": "silverlace-fern_young_sway",
@@ -9070,8 +9070,8 @@
           "triangles": 45664,
           "joints": 20,
           "materials": 1,
-          "bytes": 1820544,
-          "sha256": "44dba280e7368fe308e7b73cbe57f3beb0776d93727db2a61c58b09b304fa6bb"
+          "bytes": 1821038,
+          "sha256": "857d5cab299a5505ccfaf9de6a1fe9a703eb471dacec874ed6e84235848d7d6e"
         },
         {
           "stage": "adult",
@@ -9226,26 +9226,26 @@
           "thumbnail": "ui/honeycluster-sprout-standard.png",
           "bounds": {
             "min": [
-              -0.044774,
-              -0.044991,
+              -0.207311717,
+              -0.208316466,
               0.0
             ],
             "max": [
-              0.045496,
-              0.045279,
-              0.075591
+              0.210654708,
+              0.209649958,
+              0.35
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.04478,
-              -0.045048,
+              -0.207339498,
+              -0.208580387,
               0.0
             ],
             "max": [
-              0.045511,
-              0.045348,
-              0.075611
+              0.21072416,
+              0.209969441,
+              0.350092604
             ]
           },
           "animation": "honeycluster_sprout_sway",
@@ -9253,8 +9253,8 @@
           "triangles": 4740,
           "joints": 3,
           "materials": 1,
-          "bytes": 323012,
-          "sha256": "6ee2db1bedcd9dff225d43a5e5e0c81c365f68daf6d506d9f02ee81f58b74d09"
+          "bytes": 323522,
+          "sha256": "e26009d9ffbf5b13d6741fe2b4f25524336ea31ae8c60633baf2493c024dc9d8"
         },
         {
           "stage": "sprout",
@@ -9263,26 +9263,26 @@
           "thumbnail": "ui/honeycluster-sprout-maple.png",
           "bounds": {
             "min": [
-              -0.044774,
-              -0.044991,
+              -0.207311717,
+              -0.208316466,
               0.0
             ],
             "max": [
-              0.045496,
-              0.045279,
-              0.075591
+              0.210654708,
+              0.209649958,
+              0.35
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.04478,
-              -0.045048,
+              -0.207339498,
+              -0.208580387,
               0.0
             ],
             "max": [
-              0.045511,
-              0.045348,
-              0.075611
+              0.21072416,
+              0.209969441,
+              0.350092604
             ]
           },
           "animation": "honeycluster_sprout_sway",
@@ -9290,8 +9290,8 @@
           "triangles": 4740,
           "joints": 3,
           "materials": 1,
-          "bytes": 308661,
-          "sha256": "c2b50ca925ab60717971a4433f619477c6896ec6aa67fbcb1393bacfade438df"
+          "bytes": 309170,
+          "sha256": "89a0e727c2c37d7f5217e3492a5cd58b2fa994a65114d52e4c595d1978193558"
         },
         {
           "stage": "seedling",
@@ -9300,26 +9300,26 @@
           "thumbnail": "ui/honeycluster-seedling-standard.png",
           "bounds": {
             "min": [
-              -0.064157,
-              -0.076842,
+              -0.143183061,
+              -0.171492944,
               0.0
             ],
             "max": [
-              0.100977,
-              0.089122,
-              0.192673
+              0.225356485,
+              0.198898964,
+              0.43
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.064236,
-              -0.07721,
+              -0.143359371,
+              -0.172314232,
               0.0
             ],
             "max": [
-              0.101156,
-              0.089671,
-              0.192744
+              0.22575597,
+              0.2001242,
+              0.430158455
             ]
           },
           "animation": "honeycluster_seedling_sway",
@@ -9327,8 +9327,8 @@
           "triangles": 10068,
           "joints": 3,
           "materials": 1,
-          "bytes": 509469,
-          "sha256": "ad38477484ecc2555184ae408210b841cf5b32b4c9d4f1213f8a1e1b99885ce0"
+          "bytes": 509975,
+          "sha256": "a9e96e47644785f985478b1089dcc3effb750b96743868dce4ea02410d0fcf6e"
         },
         {
           "stage": "seedling",
@@ -9337,26 +9337,26 @@
           "thumbnail": "ui/honeycluster-seedling-maple.png",
           "bounds": {
             "min": [
-              -0.064157,
-              -0.076842,
+              -0.143183061,
+              -0.171492944,
               0.0
             ],
             "max": [
-              0.100977,
-              0.089122,
-              0.192673
+              0.225356485,
+              0.198898964,
+              0.43
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.064236,
-              -0.07721,
+              -0.143359371,
+              -0.172314232,
               0.0
             ],
             "max": [
-              0.101156,
-              0.089671,
-              0.192744
+              0.22575597,
+              0.2001242,
+              0.430158455
             ]
           },
           "animation": "honeycluster_seedling_sway",
@@ -9364,8 +9364,8 @@
           "triangles": 10068,
           "joints": 3,
           "materials": 1,
-          "bytes": 495375,
-          "sha256": "7baf81760b4385f8611b36062767ed4169517a76f08388c7caae8d4aba482cbd"
+          "bytes": 495879,
+          "sha256": "02f977067319e5e30c3f00975179c518adccfe8f179bdac10a9b1cf1f462d475"
         },
         {
           "stage": "young",
@@ -9374,26 +9374,26 @@
           "thumbnail": "ui/honeycluster-young-standard.png",
           "bounds": {
             "min": [
-              -0.297313,
-              -0.20939,
+              -0.425240361,
+              -0.299485994,
               0.0
             ],
             "max": [
-              0.227366,
-              0.188235,
-              0.335599
+              0.325196678,
+              0.269228454,
+              0.48
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.297866,
-              -0.209436,
+              -0.426031305,
+              -0.299551787,
               0.0
             ],
             "max": [
-              0.228077,
-              0.189303,
-              0.335786
+              0.326213606,
+              0.270755992,
+              0.480267462
             ]
           },
           "animation": "honeycluster_young_sway",
@@ -9401,8 +9401,8 @@
           "triangles": 34424,
           "joints": 9,
           "materials": 1,
-          "bytes": 1367967,
-          "sha256": "54c1a1b23d81571a737cc8fd5fed8ef962f28ced4adcca8ef25cf247c5cca3b2"
+          "bytes": 1368468,
+          "sha256": "38e7a10fcece0383dd35c007ae63c156100dacfb2e238c5ed4e20b7f1d9dcf8a"
         },
         {
           "stage": "young",
@@ -9411,26 +9411,26 @@
           "thumbnail": "ui/honeycluster-young-maple.png",
           "bounds": {
             "min": [
-              -0.297313,
-              -0.20939,
+              -0.425240361,
+              -0.299485994,
               0.0
             ],
             "max": [
-              0.227366,
-              0.188235,
-              0.335599
+              0.325196678,
+              0.269228454,
+              0.48
             ]
           },
           "animatedBounds": {
             "min": [
-              -0.297866,
-              -0.209436,
+              -0.426031305,
+              -0.299551787,
               0.0
             ],
             "max": [
-              0.228077,
-              0.189303,
-              0.335786
+              0.326213606,
+              0.270755992,
+              0.480267462
             ]
           },
           "animation": "honeycluster_young_sway",
@@ -9438,8 +9438,8 @@
           "triangles": 34424,
           "joints": 9,
           "materials": 1,
-          "bytes": 1353743,
-          "sha256": "c01d752b1dc318e6a7c479430bb82b8bc43bb5d1345ac95f8b0ecc6a2ab895e0"
+          "bytes": 1354245,
+          "sha256": "9820bd96e2ef4a048f63cd09fd453dfb19adde475ba1000f47b9e3cf4b284aa8"
         },
         {
           "stage": "adult",

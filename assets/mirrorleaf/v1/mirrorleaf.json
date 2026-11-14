@@ -63,34 +63,34 @@
       "thumbnail": "ui/mirrorleaf-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.057877,
-          -0.042029,
+          -0.181560921,
+          -0.131845533,
           0.0
         ],
         "max": [
-          0.063604,
-          0.062756,
-          0.175326
+          0.199526596,
+          0.196866409,
+          0.55
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.058042,
-          -0.042708,
+          -0.182078528,
+          -0.133975566,
           0.0
         ],
         "max": [
-          0.064064,
-          0.065349,
-          0.176128
+          0.200969622,
+          0.205000684,
+          0.552515885
         ]
       },
       "animation": "mirrorleaf_sprout_sway",
       "triangles": 2288,
       "joints": 3,
       "materials": 1,
-      "bytes": 191359,
-      "sha256": "8843c665a90e74edc4443b4301d12ca7c89f704ad215d4be0b196f7b4548e01f",
+      "bytes": 191844,
+      "sha256": "178b0d390c434e171627f6927025a99c3c3594b3510b50035303f091c576e355",
       "leafCount": 1,
       "flowerCount": 0,
       "budCount": 0,
@@ -105,34 +105,34 @@
       "thumbnail": "ui/mirrorleaf-sprout-speckled.png",
       "bounds": {
         "min": [
-          -0.057877,
-          -0.042029,
+          -0.181560921,
+          -0.131845533,
           0.0
         ],
         "max": [
-          0.063604,
-          0.062756,
-          0.175326
+          0.199526596,
+          0.196866409,
+          0.55
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.058042,
-          -0.042708,
+          -0.182078528,
+          -0.133975566,
           0.0
         ],
         "max": [
-          0.064064,
-          0.065349,
-          0.176128
+          0.200969622,
+          0.205000684,
+          0.552515885
         ]
       },
       "animation": "mirrorleaf_sprout_sway",
       "triangles": 2288,
       "joints": 3,
       "materials": 1,
-      "bytes": 275755,
-      "sha256": "7c37f73d6ffb52ed34a30bcccdbfea5823541b91068e9caf9d684a7c3e30fd09",
+      "bytes": 276240,
+      "sha256": "5460be6f4fa7d078a0a0439983faf4023a497062c79d38cf90221d184c96d4ff",
       "leafCount": 1,
       "flowerCount": 0,
       "budCount": 0,
@@ -147,34 +147,34 @@
       "thumbnail": "ui/mirrorleaf-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.228475,
-          -0.157082,
+          -0.507225955,
+          -0.348729915,
           0.0
         ],
         "max": [
-          0.225699,
-          0.154394,
-          0.324317
+          0.501063096,
+          0.342762421,
+          0.72
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.229764,
-          -0.158495,
+          -0.510087599,
+          -0.351866846,
           0.0
         ],
         "max": [
-          0.227271,
-          0.161631,
-          0.324406
+          0.504553014,
+          0.358828924,
+          0.720197584
         ]
       },
       "animation": "mirrorleaf_seedling_sway",
       "triangles": 6864,
       "joints": 7,
       "materials": 1,
-      "bytes": 396238,
-      "sha256": "ad76f7f524c44548303eda7830ebd90359ae338187d16acadf0967c635f8cae5",
+      "bytes": 396728,
+      "sha256": "586eb9e21dd06da35353cc20cf84b5e9624ead849ec472c8e0291827945ebecf",
       "leafCount": 3,
       "flowerCount": 0,
       "budCount": 0,
@@ -189,34 +189,34 @@
       "thumbnail": "ui/mirrorleaf-seedling-speckled.png",
       "bounds": {
         "min": [
-          -0.228475,
-          -0.157082,
+          -0.507225955,
+          -0.348729915,
           0.0
         ],
         "max": [
-          0.225699,
-          0.154394,
-          0.324317
+          0.501063096,
+          0.342762421,
+          0.72
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.229764,
-          -0.158495,
+          -0.510087599,
+          -0.351866846,
           0.0
         ],
         "max": [
-          0.227271,
-          0.161631,
-          0.324406
+          0.504553014,
+          0.358828924,
+          0.720197584
         ]
       },
       "animation": "mirrorleaf_seedling_sway",
       "triangles": 6864,
       "joints": 7,
       "materials": 1,
-      "bytes": 480595,
-      "sha256": "82b4b1ec37e5d8eb605c1340bcd53c43fb74a44fde1faf30264cde58af8ac09d",
+      "bytes": 481211,
+      "sha256": "ab1317cbec83003b935647ee79c215b72385302b9e11316c39dd93e8b1d3a43e",
       "leafCount": 3,
       "flowerCount": 0,
       "budCount": 0,
@@ -231,34 +231,34 @@
       "thumbnail": "ui/mirrorleaf-young-standard.png",
       "bounds": {
         "min": [
-          -0.366719,
-          -0.379139,
+          -0.536370314,
+          -0.554536046,
           0.0
         ],
         "max": [
-          0.319159,
-          0.335908,
-          0.560638
+          0.466808136,
+          0.491305548,
+          0.82
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.368211,
-          -0.379311,
+          -0.538552542,
+          -0.554787617,
           0.0
         ],
         "max": [
-          0.320812,
-          0.336677,
-          0.564099
+          0.469225846,
+          0.492430303,
+          0.825062126
         ]
       },
       "animation": "mirrorleaf_young_sway",
       "triangles": 18304,
       "joints": 17,
       "materials": 1,
-      "bytes": 908170,
-      "sha256": "5a6ebe909215d2312b262a291e21a2c709620d471745b6a11190151e06664854",
+      "bytes": 908658,
+      "sha256": "b02f19be1018eedff41b6210dd27b751e78a6c450aedf1b5ba05b0ff1223ab9e",
       "leafCount": 8,
       "flowerCount": 0,
       "budCount": 0,
@@ -273,34 +273,34 @@
       "thumbnail": "ui/mirrorleaf-young-speckled.png",
       "bounds": {
         "min": [
-          -0.366719,
-          -0.379139,
+          -0.536370314,
+          -0.554536046,
           0.0
         ],
         "max": [
-          0.319159,
-          0.335908,
-          0.560638
+          0.466808136,
+          0.491305548,
+          0.82
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.368211,
-          -0.379311,
+          -0.538552542,
+          -0.554787617,
           0.0
         ],
         "max": [
-          0.320812,
-          0.336677,
-          0.564099
+          0.469225846,
+          0.492430303,
+          0.825062126
         ]
       },
       "animation": "mirrorleaf_young_sway",
       "triangles": 18304,
       "joints": 17,
       "materials": 1,
-      "bytes": 992522,
-      "sha256": "f57f42a95d0ecb4a44b2a19a711f97cd395c2275d647dcb3def02a3fad1c427f",
+      "bytes": 993135,
+      "sha256": "baa0afdd2ef7c20e9ec04e54c7dba1521199aa078a7e4fd5dd9e934fe093b837",
       "leafCount": 8,
       "flowerCount": 0,
       "budCount": 0,

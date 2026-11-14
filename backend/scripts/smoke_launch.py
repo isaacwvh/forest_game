@@ -219,7 +219,7 @@ def main():
             assert discovered == {
                 "userId": account["profile"]["userId"],
                 "catalogVersion": VERSION,
-                "discoveryVersion": 1,
+                "discoveryVersion": 2,
                 "entries": [{"speciesId": "oak", "variantId": "standard", "stages": ["seedling"]}],
             }
             milestone_body = {"requestId": str(uuid4())}

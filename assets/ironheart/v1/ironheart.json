@@ -83,34 +83,34 @@
       "thumbnail": "ui/ironheart-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.103155,
-          -0.041674,
+          -0.248314039,
+          -0.100317379,
           0.0
         ],
         "max": [
-          0.102931,
-          0.041674,
-          0.270024
+          0.247774827,
+          0.100317379,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.103626,
-          -0.041743,
+          -0.249447827,
+          -0.100483476,
           0.0
         ],
         "max": [
-          0.103608,
-          0.041836,
-          0.270025
+          0.249404497,
+          0.100707345,
+          0.650002407
         ]
       },
       "animation": "ironheart_sprout_sway",
       "triangles": 3212,
       "joints": 7,
       "materials": 1,
-      "bytes": 169707,
-      "sha256": "30f695c5b93d0d33eede10d451d78c1ac7c9c6b4bbe845e237056a1b96c1fb78",
+      "bytes": 170209,
+      "sha256": "9ea52f761cf6a550fc9d2819def55ac5965fd232f5796c708fb505dd9d79c829",
       "leafCount": 3,
       "rosetteTierCount": 1,
       "attachedWeatheredFlakes": 0
@@ -122,34 +122,34 @@
       "thumbnail": "ui/ironheart-sprout-hardened.png",
       "bounds": {
         "min": [
-          -0.103155,
-          -0.041674,
+          -0.248314039,
+          -0.100317379,
           0.0
         ],
         "max": [
-          0.099894,
-          0.041674,
-          0.270024
+          0.240464181,
+          0.100317379,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.103626,
-          -0.041707,
+          -0.249447827,
+          -0.100396817,
           0.0
         ],
         "max": [
-          0.10051,
-          0.041836,
-          0.270025
+          0.241947012,
+          0.100707345,
+          0.650002407
         ]
       },
       "animation": "ironheart_sprout_sway",
       "triangles": 3276,
       "joints": 7,
       "materials": 1,
-      "bytes": 359637,
-      "sha256": "284d78c039a2d6ff9bc95696f21ba384169213fa03b9b732d1c19e91a1590c01",
+      "bytes": 360130,
+      "sha256": "cf914e2e3d7783932a6b77e9b392bc0b535bc921553f6322956f38b74219cfc6",
       "leafCount": 3,
       "rosetteTierCount": 1,
       "attachedWeatheredFlakes": 1
@@ -161,34 +161,34 @@
       "thumbnail": "ui/ironheart-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.246986,
-          -0.285195,
+          -0.516040171,
+          -0.595872141,
           0.0
         ],
         "max": [
-          0.246986,
-          0.154235,
-          0.430756
+          0.516040171,
+          0.32225088,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.246998,
-          -0.285477,
+          -0.516065243,
+          -0.596461338,
           0.0
         ],
         "max": [
-          0.247702,
-          0.154749,
-          0.430761
+          0.517536146,
+          0.323324806,
+          0.900010447
         ]
       },
       "animation": "ironheart_seedling_sway",
       "triangles": 6332,
       "joints": 13,
       "materials": 1,
-      "bytes": 295507,
-      "sha256": "8179e5e02b2895358456c67ccb432d2764b22a04fbf336c0d9dc2c87114afe70",
+      "bytes": 296008,
+      "sha256": "92d186db096522cf834016e429fa8b370071e1564cf15ae787786590b2c99705",
       "leafCount": 6,
       "rosetteTierCount": 2,
       "attachedWeatheredFlakes": 0
@@ -200,34 +200,34 @@
       "thumbnail": "ui/ironheart-seedling-hardened.png",
       "bounds": {
         "min": [
-          -0.246986,
-          -0.269747,
+          -0.516040171,
+          -0.563595864,
           0.0
         ],
         "max": [
-          0.246986,
-          0.154235,
-          0.430756
+          0.516040171,
+          0.32225088,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.246998,
-          -0.270015,
+          -0.516065243,
+          -0.56415581,
           0.0
         ],
         "max": [
-          0.247702,
-          0.154749,
-          0.430761
+          0.517536146,
+          0.323324806,
+          0.900010447
         ]
       },
       "animation": "ironheart_seedling_sway",
       "triangles": 6460,
       "joints": 13,
       "materials": 1,
-      "bytes": 488399,
-      "sha256": "57a5c98803f2e2ea9d1f0e8ef5ad0d7c0f7e4d70f9d4d6609b605345b2084537",
+      "bytes": 488888,
+      "sha256": "4aaeabf107ea2451f8b35324459906b00d3f2965cff2dc2e86d18fd781dc18d9",
       "leafCount": 6,
       "rosetteTierCount": 2,
       "attachedWeatheredFlakes": 2
@@ -239,34 +239,34 @@
       "thumbnail": "ui/ironheart-young-standard.png",
       "bounds": {
         "min": [
-          -0.553279,
-          -0.619704,
+          -0.691262171,
+          -0.774253013,
           0.0
         ],
         "max": [
-          0.556858,
-          0.600741,
-          0.840409
+          0.695733744,
+          0.750560798,
+          1.05
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.553421,
-          -0.620565,
+          -0.691439585,
+          -0.775328739,
           0.0
         ],
         "max": [
-          0.559498,
-          0.602387,
-          0.840467
+          0.699032138,
+          0.752617297,
+          1.050072465
         ]
       },
       "animation": "ironheart_young_sway",
       "triangles": 13612,
       "joints": 27,
       "materials": 1,
-      "bytes": 587413,
-      "sha256": "04b7b196ecb3e0b93c810818e525fae1096fc6bc8c42196e956d8dcf6e5ca2ab",
+      "bytes": 587911,
+      "sha256": "0737dba889638a31f0716cb18c0a19f34db3b267336fd0a930342065cbac3aaf",
       "leafCount": 13,
       "rosetteTierCount": 2,
       "attachedWeatheredFlakes": 0
@@ -278,34 +278,34 @@
       "thumbnail": "ui/ironheart-young-hardened.png",
       "bounds": {
         "min": [
-          -0.553279,
-          -0.574588,
+          -0.691262171,
+          -0.717885458,
           0.0
         ],
         "max": [
-          0.556858,
-          0.600741,
-          0.840409
+          0.695733744,
+          0.750560798,
+          1.05
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.553421,
-          -0.575379,
+          -0.691439585,
+          -0.718873727,
           0.0
         ],
         "max": [
-          0.559498,
-          0.602387,
-          0.840467
+          0.699032138,
+          0.752617297,
+          1.050072465
         ]
       },
       "animation": "ironheart_young_sway",
       "triangles": 13804,
       "joints": 27,
       "materials": 1,
-      "bytes": 782816,
-      "sha256": "6cad3e891b895ce79af1eb4ddc5b41fa318da6e41daaf9a02ae6fdc8bb1ae270",
+      "bytes": 783304,
+      "sha256": "9040a7575eed889b10fd468822aebff41a1bd999a1a55a226bb0b5f1616dc2d6",
       "leafCount": 13,
       "rosetteTierCount": 2,
       "attachedWeatheredFlakes": 3

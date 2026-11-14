@@ -58,34 +58,34 @@
       "thumbnail": "ui/moonbell-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.045226,
-          -0.024527,
+          -0.150844678,
+          -0.081806205,
           0.0
         ],
         "max": [
-          0.028642,
-          0.042532,
-          0.179891
+          0.095531183,
+          0.141859237,
+          0.6
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.045713,
-          -0.02656,
+          -0.152468995,
+          -0.088586978,
           0.0
         ],
         "max": [
-          0.030456,
-          0.049294,
-          0.17999
+          0.101581513,
+          0.164412894,
+          0.6003302
         ]
       },
       "animation": "moonbell_sprout_sway",
       "triangles": 3296,
       "joints": 5,
       "materials": 1,
-      "bytes": 256141,
-      "sha256": "5fea85f521ff0cb54c01e780cd45a9bfe6212507d5c043060aa6629d5ee36ac5",
+      "bytes": 256635,
+      "sha256": "0b3c8d1033200b2b08bb7b3dfa6e4a942b4ca78e2e8d01460951d9f45e729b05",
       "leafCount": 2,
       "flowerCount": 0,
       "budCount": 0,
@@ -100,34 +100,34 @@
       "thumbnail": "ui/moonbell-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.230672,
-          -0.036454,
+          -0.5681279,
+          -0.089783478,
           0.0
         ],
         "max": [
-          0.194399,
-          0.13798,
-          0.324817
+          0.478790211,
+          0.33983443,
+          0.8
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.231127,
-          -0.038527,
+          -0.569248531,
+          -0.094889122,
           0.0
         ],
         "max": [
-          0.197502,
-          0.151468,
-          0.324925
+          0.486432668,
+          0.373054366,
+          0.800265996
         ]
       },
       "animation": "moonbell_seedling_sway",
       "triangles": 5156,
       "joints": 9,
       "materials": 1,
-      "bytes": 338497,
-      "sha256": "4c805f3f8549e61b8d0e4bd4933737c4bd54497464f7ee7dc9b992b2b2e9aa9f",
+      "bytes": 339107,
+      "sha256": "0987c2d4f8c47cd91832535f9861bc0b3d7088c724f839b5eebcdaef7010107c",
       "leafCount": 3,
       "flowerCount": 0,
       "budCount": 1,
@@ -142,34 +142,34 @@
       "thumbnail": "ui/moonbell-young-standard.png",
       "bounds": {
         "min": [
-          -0.417672,
-          -0.213635,
+          -0.605265484,
+          -0.309587168,
           0.0
         ],
         "max": [
-          0.392258,
-          0.302852,
-          0.634859
+          0.568437023,
+          0.438875152,
+          0.92
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.418,
-          -0.214536,
+          -0.605740802,
+          -0.310892844,
           0.0
         ],
         "max": [
-          0.396407,
-          0.321466,
-          0.63521
+          0.574449508,
+          0.465849456,
+          0.920508648
         ]
       },
       "animation": "moonbell_young_sway",
       "triangles": 25948,
       "joints": 17,
       "materials": 1,
-      "bytes": 1353594,
-      "sha256": "57a18ac7b59a96c5622c1750978f6c189fe867008871c5b166bca68b1ea47477",
+      "bytes": 1354087,
+      "sha256": "cdd10c5a3c51f78edffb3e0cd54b33b62a578bd45320b460d499d45ecffa2c61",
       "leafCount": 5,
       "flowerCount": 2,
       "budCount": 1,

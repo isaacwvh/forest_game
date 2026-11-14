@@ -69,34 +69,34 @@
       "thumbnail": "ui/duskwand-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.053844,
-          -0.069969,
+          -0.22619874,
+          -0.293939893,
           0.0
         ],
         "max": [
-          0.060715,
-          0.041529,
-          0.154725
+          0.255063823,
+          0.174463403,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.054258,
-          -0.070162,
+          -0.227937954,
+          -0.294750687,
           0.0
         ],
         "max": [
-          0.061427,
-          0.042659,
-          0.154776
+          0.258054936,
+          0.179210535,
+          0.650214251
         ]
       },
       "animation": "duskwand_sprout_sway",
       "triangles": 4864,
       "joints": 8,
       "materials": 1,
-      "bytes": 414945,
-      "sha256": "f8ff1fb99d28e0cbe4740a9a47c15091282644619f922f9bea81a88f028ce19c",
+      "bytes": 415433,
+      "sha256": "04375764d697a22f9fbb10b1688d39f6423080818c0b9b4d6ca00a85edb3f751",
       "leafCount": 2,
       "stemCount": 1,
       "bellCount": 0,
@@ -109,34 +109,34 @@
       "thumbnail": "ui/duskwand-sprout-pure.png",
       "bounds": {
         "min": [
-          -0.053844,
-          -0.069969,
+          -0.22619874,
+          -0.293939893,
           0.0
         ],
         "max": [
-          0.060715,
-          0.041529,
-          0.154725
+          0.255063823,
+          0.174463403,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.054258,
-          -0.070162,
+          -0.227937954,
+          -0.294750687,
           0.0
         ],
         "max": [
-          0.061427,
-          0.042659,
-          0.154776
+          0.258054936,
+          0.179210535,
+          0.650214251
         ]
       },
       "animation": "duskwand_sprout_sway",
       "triangles": 4864,
       "joints": 8,
       "materials": 1,
-      "bytes": 350851,
-      "sha256": "d2a19e36316d8da78182ae6cc2c834619775f4dd41b04a9fe67adb24578913de",
+      "bytes": 351339,
+      "sha256": "3d812682161b73b532bd8b0d01d6edb31f848bdfac4b82fe777d44ed84944eb3",
       "leafCount": 2,
       "stemCount": 1,
       "bellCount": 0,
@@ -149,34 +149,34 @@
       "thumbnail": "ui/duskwand-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.12566,
-          -0.197031,
+          -0.341619016,
+          -0.535648068,
           0.0
         ],
         "max": [
-          0.179348,
-          0.054212,
-          0.331053
+          0.487575101,
+          0.147380631,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.128104,
-          -0.197728,
+          -0.348263269,
+          -0.537542931,
           0.0
         ],
         "max": [
-          0.179539,
-          0.057101,
-          0.331216
+          0.488094353,
+          0.15523466,
+          0.900443131
         ]
       },
       "animation": "duskwand_seedling_sway",
       "triangles": 10532,
       "joints": 12,
       "materials": 1,
-      "bytes": 620317,
-      "sha256": "19fedc59fefabbd867d35b16b87eaef76449560896e870c0cc0b1105b31d262d",
+      "bytes": 620928,
+      "sha256": "9551ded3af037de649b679433abeba0222ea60bb00441a711ce9f3ed145becb3",
       "leafCount": 4,
       "stemCount": 1,
       "bellCount": 0,
@@ -189,34 +189,34 @@
       "thumbnail": "ui/duskwand-seedling-pure.png",
       "bounds": {
         "min": [
-          -0.12566,
-          -0.197031,
+          -0.341619016,
+          -0.535648068,
           0.0
         ],
         "max": [
-          0.179348,
-          0.054212,
-          0.331053
+          0.487575101,
+          0.147380631,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.128104,
-          -0.197728,
+          -0.348263269,
+          -0.537542931,
           0.0
         ],
         "max": [
-          0.179539,
-          0.057101,
-          0.331216
+          0.488094353,
+          0.15523466,
+          0.900443131
         ]
       },
       "animation": "duskwand_seedling_sway",
       "triangles": 10532,
       "joints": 12,
       "materials": 1,
-      "bytes": 556096,
-      "sha256": "c79c75e6a5b32fc9f94d5f8d68fb72d46624f60cc239a19ae140f1ea7609935e",
+      "bytes": 556579,
+      "sha256": "f621ea4596680a7d896632c44458f356441757236865530338bce674b9b016fd",
       "leafCount": 4,
       "stemCount": 1,
       "bellCount": 0,
@@ -229,34 +229,34 @@
       "thumbnail": "ui/duskwand-young-standard.png",
       "bounds": {
         "min": [
-          -0.216321,
-          -0.290272,
+          -0.348159184,
+          -0.467180083,
           0.0
         ],
         "max": [
-          0.309252,
-          0.189622,
-          0.869859
+          0.497727563,
+          0.305188312,
+          1.4
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.220373,
-          -0.290555,
+          -0.354680701,
+          -0.467635559,
           0.0
         ],
         "max": [
-          0.309608,
-          0.190129,
-          0.870231
+          0.498300529,
+          0.306004306,
+          1.400598718
         ]
       },
       "animation": "duskwand_young_sway",
       "triangles": 22272,
       "joints": 16,
       "materials": 1,
-      "bytes": 1036768,
-      "sha256": "0dc147ce1687e7c366a7d1e3738a2090f03e2fc4239237a2ba6779047e6d78b3",
+      "bytes": 1037256,
+      "sha256": "f5b5c79b3407fa90491012ccf9c184026e35e8047ca87445e80b488dcb7099e3",
       "leafCount": 6,
       "stemCount": 1,
       "bellCount": 3,
@@ -269,34 +269,34 @@
       "thumbnail": "ui/duskwand-young-pure.png",
       "bounds": {
         "min": [
-          -0.216321,
-          -0.290272,
+          -0.348159184,
+          -0.467180083,
           0.0
         ],
         "max": [
-          0.309252,
-          0.189622,
-          0.869859
+          0.497727563,
+          0.305188312,
+          1.4
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.220373,
-          -0.290555,
+          -0.354680701,
+          -0.467635559,
           0.0
         ],
         "max": [
-          0.309608,
-          0.190129,
-          0.870231
+          0.498300529,
+          0.306004306,
+          1.400598718
         ]
       },
       "animation": "duskwand_young_sway",
       "triangles": 22272,
       "joints": 16,
       "materials": 1,
-      "bytes": 972674,
-      "sha256": "6e53af603513f96a3ad09281fa9dd87f8ce2aa7accd9a22c6f6f2e1f5dfcf535",
+      "bytes": 973162,
+      "sha256": "b2048fa4c46736da3c0c33eaa9d004bc1f32477fb81cce934d67c3a59c6ed868",
       "leafCount": 6,
       "stemCount": 1,
       "bellCount": 3,

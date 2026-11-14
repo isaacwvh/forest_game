@@ -67,34 +67,34 @@
       "thumbnail": "ui/coilrush-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.110989,
-          -0.029885,
+          -0.420608967,
+          -0.113253556,
           0.0
         ],
         "max": [
-          0.076081,
-          0.055536,
-          0.17152
+          0.288320021,
+          0.210461754,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.111039,
-          -0.030328,
+          -0.420798449,
+          -0.114932369,
           0.0
         ],
         "max": [
-          0.076407,
-          0.055858,
-          0.17166
+          0.289555445,
+          0.21168202,
+          0.65053055
         ]
       },
       "animation": "coilrush_sprout_sway",
       "triangles": 5176,
       "joints": 9,
       "materials": 1,
-      "bytes": 234256,
-      "sha256": "cadac8d6a133e8fa81363d9901bf4379153dbb3649bf276824cd9ba722113aa9",
+      "bytes": 234853,
+      "sha256": "e21af53b15c873be87259ad6312c7cb4dd9f08a6de0aa8e3aca904fcb3098c5e",
       "growthStructure": "Low patch of three curled spindles, with a fine first companion winding around an existing hook.",
       "leafCount": 2,
       "flowerCount": 0,
@@ -113,34 +113,34 @@
       "thumbnail": "ui/coilrush-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.25168,
-          -0.119659,
+          -0.50072618,
+          -0.238065774,
           0.0
         ],
         "max": [
-          0.216253,
-          0.162927,
-          0.452367
+          0.430242922,
+          0.324148976,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.254369,
-          -0.120823,
+          -0.50607604,
+          -0.240381593,
           0.0
         ],
         "max": [
-          0.216256,
-          0.166661,
-          0.452957
+          0.430248891,
+          0.3315779,
+          0.901173826
         ]
       },
       "animation": "coilrush_seedling_sway",
       "triangles": 16468,
       "joints": 19,
       "materials": 1,
-      "bytes": 643726,
-      "sha256": "8a23a9c78bda6fedc08df29640480a9eccd766d70e80b93f2b911c2950a01974",
+      "bytes": 644324,
+      "sha256": "437e8e0f9422c143fa6d5a743d62a1a6802a33db858291e352e2e6dd37f45f78",
       "growthStructure": "Six corkscrew spindles with loose intertwined pairs, offset rooting points and the first purple bud.",
       "leafCount": 6,
       "flowerCount": 0,
@@ -159,34 +159,34 @@
       "thumbnail": "ui/coilrush-young-standard.png",
       "bounds": {
         "min": [
-          -0.384463,
-          -0.33567,
+          -0.537193712,
+          -0.469017339,
           0.0
         ],
         "max": [
-          0.37394,
-          0.231392,
-          0.823041
+          0.522490374,
+          0.323314148,
+          1.15
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.388651,
-          -0.336235,
+          -0.543045425,
+          -0.46980679,
           0.0
         ],
         "max": [
-          0.375475,
-          0.23653,
-          0.823653
+          0.524635164,
+          0.330493256,
+          1.150855121
         ]
       },
       "animation": "coilrush_young_sway",
       "triangles": 37672,
       "joints": 31,
       "materials": 1,
-      "bytes": 1704371,
-      "sha256": "b1542286425c607a21b452ba210e7eedaa96508c8d218f4caa80e7e38d2af809",
+      "bytes": 1704954,
+      "sha256": "423c135bd2c96912a623162bf81cbaa99cbdad5f83c75f7f872a173f79fa38a0",
       "growthStructure": "Twelve spindles forming a widening woven patch, with three lilac flowers and one closed bud.",
       "leafCount": 10,
       "flowerCount": 3,

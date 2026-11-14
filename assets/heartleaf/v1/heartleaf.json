@@ -63,34 +63,34 @@
       "thumbnail": "ui/heartleaf-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.04272,
-          -0.033096,
+          -0.082287861,
+          -0.063749977,
           0.0
         ],
         "max": [
-          0.042273,
-          0.047939,
-          0.166129
+          0.081426843,
+          0.092340771,
+          0.32
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.043011,
-          -0.033662,
+          -0.082848389,
+          -0.064840215,
           0.0
         ],
         "max": [
-          0.04257,
-          0.051072,
-          0.166763
+          0.081998929,
+          0.0983756,
+          0.32122122
         ]
       },
       "animation": "heartleaf_sprout_sway",
       "triangles": 1520,
       "joints": 3,
       "materials": 1,
-      "bytes": 190321,
-      "sha256": "754b3f46a9a1f5d9ec6b93710234e5ec6e7ed9ec40d13f83940f7edb9287cbbe",
+      "bytes": 190928,
+      "sha256": "f94fb7eba3efc12669b3f3199010c79c4f3f2dfe3bae95685b75e5fc304dddc0",
       "leafCount": 1,
       "flowerCount": 0,
       "budCount": 0,
@@ -105,34 +105,34 @@
       "thumbnail": "ui/heartleaf-sprout-redvein.png",
       "bounds": {
         "min": [
-          -0.04272,
-          -0.033096,
+          -0.082287861,
+          -0.063749977,
           0.0
         ],
         "max": [
-          0.042273,
-          0.047939,
-          0.166129
+          0.081426843,
+          0.092340771,
+          0.32
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.043011,
-          -0.033662,
+          -0.082848389,
+          -0.064840215,
           0.0
         ],
         "max": [
-          0.04257,
-          0.051072,
-          0.166763
+          0.081998929,
+          0.0983756,
+          0.32122122
         ]
       },
       "animation": "heartleaf_sprout_sway",
       "triangles": 1520,
       "joints": 3,
       "materials": 1,
-      "bytes": 277306,
-      "sha256": "067ff93e7a697926bd7830351d8b740dc1e15807b455ae4878c3319a2133b622",
+      "bytes": 277793,
+      "sha256": "c20376f861b7bc9fd6da16a16c8d752c749528d6e9a32bae161d2b22e93f0f1d",
       "leafCount": 1,
       "flowerCount": 0,
       "budCount": 0,
@@ -147,34 +147,34 @@
       "thumbnail": "ui/heartleaf-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.148804,
-          -0.124325,
+          -0.233627588,
+          -0.195194684,
           0.0
         ],
         "max": [
-          0.169419,
-          0.090408,
-          0.248402
+          0.265993873,
+          0.141943785,
+          0.39
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.151298,
-          -0.126106,
+          -0.237543256,
+          -0.197990918,
           0.0
         ],
         "max": [
-          0.171764,
-          0.09515,
-          0.248456
+          0.269675606,
+          0.149388894,
+          0.390084782
         ]
       },
       "animation": "heartleaf_seedling_sway",
       "triangles": 4560,
       "joints": 7,
       "materials": 1,
-      "bytes": 324687,
-      "sha256": "371d58f221db0e27099c51758397f68e115ac0bb3e70e19ef3ec04f2a8b5f10d",
+      "bytes": 325167,
+      "sha256": "e401e38ad0ee2780c21230293060f0ab0e6fc3d6928fb4a7e740df854c84c268",
       "leafCount": 3,
       "flowerCount": 0,
       "budCount": 0,
@@ -189,34 +189,34 @@
       "thumbnail": "ui/heartleaf-seedling-redvein.png",
       "bounds": {
         "min": [
-          -0.148804,
-          -0.124325,
+          -0.233627588,
+          -0.195194684,
           0.0
         ],
         "max": [
-          0.169419,
-          0.090408,
-          0.248402
+          0.265993873,
+          0.141943785,
+          0.39
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.151298,
-          -0.126106,
+          -0.237543256,
+          -0.197990918,
           0.0
         ],
         "max": [
-          0.171764,
-          0.09515,
-          0.248456
+          0.269675606,
+          0.149388894,
+          0.390084782
         ]
       },
       "animation": "heartleaf_seedling_sway",
       "triangles": 4560,
       "joints": 7,
       "materials": 1,
-      "bytes": 411539,
-      "sha256": "6d1cfd0161604b889d83216429ee012b74a1380d5840f40251a6761ee1a96cad",
+      "bytes": 412153,
+      "sha256": "3d99d4a434d6980697d6ed108e58160bb8d7d1043f9de375900e5657ad36b735",
       "leafCount": 3,
       "flowerCount": 0,
       "budCount": 0,
@@ -231,34 +231,34 @@
       "thumbnail": "ui/heartleaf-young-standard.png",
       "bounds": {
         "min": [
-          -0.333702,
-          -0.224506,
+          -0.437028434,
+          -0.294021329,
           0.0
         ],
         "max": [
-          0.349836,
-          0.275349,
-          0.335971
+          0.458158115,
+          0.360607195,
+          0.44
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.339578,
-          -0.22768,
+          -0.44472386,
+          -0.298178117,
           0.0
         ],
         "max": [
-          0.353249,
-          0.283443,
-          0.34054
+          0.462627905,
+          0.371207396,
+          0.445983731
         ]
       },
       "animation": "heartleaf_young_sway",
       "triangles": 9120,
       "joints": 13,
       "materials": 1,
-      "bytes": 525645,
-      "sha256": "8ba64045f6af42cd0d6dc6ab3c1dc2afa30263d516a6f44e5428236d271e63e4",
+      "bytes": 526127,
+      "sha256": "697a9d481ce590931d16251da1fc18867d55cf85ed482468791e49d06e1f3803",
       "leafCount": 6,
       "flowerCount": 0,
       "budCount": 0,
@@ -273,34 +273,34 @@
       "thumbnail": "ui/heartleaf-young-redvein.png",
       "bounds": {
         "min": [
-          -0.333702,
-          -0.224506,
+          -0.437028434,
+          -0.294021329,
           0.0
         ],
         "max": [
-          0.349836,
-          0.275349,
-          0.335971
+          0.458158115,
+          0.360607195,
+          0.44
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.339578,
-          -0.22768,
+          -0.44472386,
+          -0.298178117,
           0.0
         ],
         "max": [
-          0.353249,
-          0.283443,
-          0.34054
+          0.462627905,
+          0.371207396,
+          0.445983731
         ]
       },
       "animation": "heartleaf_young_sway",
       "triangles": 9120,
       "joints": 13,
       "materials": 1,
-      "bytes": 612497,
-      "sha256": "0de872e9478aa8d14deca039530da18b0e0f1dd21c2a929f522a82ece6b68480",
+      "bytes": 613115,
+      "sha256": "b7f2ef94af02797cf342316a1ebfbefd58ee45d90270e754e4bafc04ae7221d3",
       "leafCount": 6,
       "flowerCount": 0,
       "budCount": 0,

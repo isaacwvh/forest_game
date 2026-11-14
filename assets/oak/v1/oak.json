@@ -129,20 +129,20 @@
       "file": "models/oak-seedling-standard.usdz",
       "bounds": {
         "min": [
-          -0.44857,
-          -0.07491,
+          -0.479888518,
+          -0.080140109,
           0.0
         ],
         "max": [
-          0.46995,
-          0.065,
-          1.35537
+          0.502761239,
+          0.069538207,
+          1.45
         ]
       },
       "animation": "oak_seedling_sway",
       "thumbnail": "ui/oak-seedling-standard.png",
-      "bytes": 110665,
-      "sha256": "d31f62be86d48bcd28a5c67f7695ae0d81a1ba708979046545850455c39819fa"
+      "bytes": 111182,
+      "sha256": "e82d6472f44a21b2ac778dfc771e5924e1ef1a4c5794371bc2eb0599ddd954de"
     },
     {
       "stage": "seedling",
@@ -150,20 +150,20 @@
       "file": "models/oak-seedling-blue.usdz",
       "bounds": {
         "min": [
-          -0.44857,
-          -0.07491,
+          -0.479888518,
+          -0.080140109,
           0.0
         ],
         "max": [
-          0.46995,
-          0.065,
-          1.35537
+          0.502761239,
+          0.069538207,
+          1.45
         ]
       },
       "animation": "oak_seedling_sway",
       "thumbnail": "ui/oak-seedling-blue.png",
-      "bytes": 112901,
-      "sha256": "d8bd17b2ed48a748e7e3aa4a1d5fab3392c4b982dd74fc086c50d28aeece9a5d"
+      "bytes": 113418,
+      "sha256": "6b1b78bb25a4ba80feb4f8f43db45c3095b8e9a00259b37da49bd8c03230fd7d"
     },
     {
       "stage": "seedling",
@@ -171,20 +171,20 @@
       "file": "models/oak-seedling-vined.usdz",
       "bounds": {
         "min": [
-          -0.44857,
-          -0.21866,
+          -0.479888518,
+          -0.233926529,
           0.0
         ],
         "max": [
-          0.46995,
-          0.2196,
-          1.35537
+          0.502761239,
+          0.234932159,
+          1.45
         ]
       },
       "animation": "oak_seedling_sway",
       "thumbnail": "ui/oak-seedling-vined.png",
-      "bytes": 156618,
-      "sha256": "8672eec6b4b7827e7d1ea7e416a0bb3cf5b14ca28de655938e5e03486083133a"
+      "bytes": 157132,
+      "sha256": "5037763bc6079e98712a60ea7200782c8603e47d4c1523f924cab50657944db7"
     },
     {
       "stage": "young",
@@ -192,20 +192,20 @@
       "file": "models/oak-young-standard.usdz",
       "bounds": {
         "min": [
-          -1.49154,
-          -0.74059,
+          -1.523564051,
+          -0.756490808,
           0.0
         ],
         "max": [
-          1.28711,
-          0.70749,
-          3.06421
+          1.314744845,
+          0.722680136,
+          3.13
         ]
       },
       "animation": "oak_young_sway",
       "thumbnail": "ui/oak-young-standard.png",
-      "bytes": 180774,
-      "sha256": "b5e60e99d5ca7d2b81bc920173462e8a152bac5f74e9eee5c0ce174072cda3bd"
+      "bytes": 181292,
+      "sha256": "0f1b96e7bc3428def89e4dc3d6f6b5cfbff56c11b6a48f4d6392d749e3ecc61f"
     },
     {
       "stage": "young",
@@ -213,20 +213,20 @@
       "file": "models/oak-young-blue.usdz",
       "bounds": {
         "min": [
-          -1.49154,
-          -0.74059,
+          -1.523564051,
+          -0.756490808,
           0.0
         ],
         "max": [
-          1.28711,
-          0.70749,
-          3.06421
+          1.314744845,
+          0.722680136,
+          3.13
         ]
       },
       "animation": "oak_young_sway",
       "thumbnail": "ui/oak-young-blue.png",
-      "bytes": 183010,
-      "sha256": "772d851a293082509408497f12c6b57f028d27957db59335a914d2a3a3044176"
+      "bytes": 183528,
+      "sha256": "ce32a2009532c2634127392c56f5cae1fce2cbfbc9b0b09a30bc88eef6c0bdef"
     },
     {
       "stage": "young",
@@ -234,20 +234,20 @@
       "file": "models/oak-young-vined.usdz",
       "bounds": {
         "min": [
-          -1.49154,
-          -0.74059,
+          -1.523564051,
+          -0.756490808,
           0.0
         ],
         "max": [
-          1.28711,
-          0.70749,
-          3.06421
+          1.314744845,
+          0.722680136,
+          3.13
         ]
       },
       "animation": "oak_young_sway",
       "thumbnail": "ui/oak-young-vined.png",
-      "bytes": 234853,
-      "sha256": "40a2188ec352415d7be9c99b69ab728c1e6412636b1d175aa05b97128e8f73e0"
+      "bytes": 235366,
+      "sha256": "258c5358aaeb2861b1fb2783aa2866103f96e78f57fd4a301874c183b53d2d52"
     },
     {
       "stage": "adult",

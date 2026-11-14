@@ -67,34 +67,34 @@
       "thumbnail": "ui/amberfan-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.104527,
-          -0.043238,
+          -0.233497545,
+          -0.096587167,
           0.0
         ],
         "max": [
-          0.106797,
-          0.02063,
-          0.286501
+          0.238568382,
+          0.046084307,
+          0.64
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.104649,
-          -0.043769,
+          -0.233770074,
+          -0.097773341,
           0.0
         ],
         "max": [
-          0.106865,
-          0.022135,
-          0.286609
+          0.238720284,
+          0.04944625,
+          0.640241256
         ]
       },
       "animation": "amberfan_sprout_sway",
       "triangles": 4484,
       "joints": 3,
       "materials": 1,
-      "bytes": 476281,
-      "sha256": "fc3d3e4e268b8164e449111b9d53105bae9e6af5c63fc05802d3e9a173ef5f87",
+      "bytes": 476882,
+      "sha256": "4f7ed3e6416c45b8627cc55b1cea340baf8b30a5ec00dcb0f443eed120dba600",
       "leafCount": 2,
       "sprayCount": 0,
       "stemCount": 1,
@@ -109,34 +109,34 @@
       "thumbnail": "ui/amberfan-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.34354,
-          -0.140648,
+          -0.542137617,
+          -0.221955439,
           0.0
         ],
         "max": [
-          0.325811,
-          0.157965,
-          0.817443
+          0.514159629,
+          0.249283253,
+          1.29
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.343738,
-          -0.146132,
+          -0.542450079,
+          -0.230609694,
           0.0
         ],
         "max": [
-          0.327798,
-          0.165817,
-          0.818208
+          0.517295298,
+          0.261674429,
+          1.29120724
         ]
       },
       "animation": "amberfan_seedling_sway",
       "triangles": 8408,
       "joints": 7,
       "materials": 1,
-      "bytes": 700812,
-      "sha256": "c4f619692346bcf3f841dfd58134521d3e4536baf0263481f2b6e3a688aa3554",
+      "bytes": 701412,
+      "sha256": "ae0a24bbb687d27a24d4ba481a78b19eae7236835eaaf4a1f39f422206450295",
       "leafCount": 8,
       "sprayCount": 2,
       "stemCount": 1,
@@ -151,34 +151,34 @@
       "thumbnail": "ui/amberfan-young-standard.png",
       "bounds": {
         "min": [
-          -0.86446,
-          -0.46078,
+          -1.025638982,
+          -0.546692652,
           0.0
         ],
         "max": [
-          0.868493,
-          0.742244,
-          2.351552
+          1.030423937,
+          0.88063575,
+          2.79
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.865111,
-          -0.471132,
+          -1.026411362,
+          -0.558974788,
           0.0
         ],
         "max": [
-          0.874865,
-          0.742921,
-          2.351989
+          1.037984,
+          0.881438977,
+          2.790518479
         ]
       },
       "animation": "amberfan_young_sway",
       "triangles": 27044,
       "joints": 17,
       "materials": 1,
-      "bytes": 1675179,
-      "sha256": "c38f51033ce7fa3c50d587e38facebe6d17b9e7222b7265ebe3a6dfe7e100d93",
+      "bytes": 1675651,
+      "sha256": "9241445459aa4bb8ff66698051560c64b4d7b7bcceb38e3f0cd36ae01eb9a0b1",
       "leafCount": 61,
       "sprayCount": 7,
       "stemCount": 3,

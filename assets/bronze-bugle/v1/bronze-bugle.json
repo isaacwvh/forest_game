@@ -84,34 +84,34 @@
       "thumbnail": "ui/bronze-bugle-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.11324,
-          -0.056529,
+          -0.487146886,
+          -0.24318197,
           0.0
         ],
         "max": [
-          0.113472,
-          0.062891,
-          0.104605
+          0.488144926,
+          0.270550643,
+          0.45
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.113317,
-          -0.05678,
+          -0.487478132,
+          -0.244261747,
           0.0
         ],
         "max": [
-          0.113528,
-          0.063392,
-          0.104615
+          0.488385832,
+          0.272705894,
+          0.450043019
         ]
       },
       "animation": "bronze-bugle_sprout_sway",
       "triangles": 3420,
       "joints": 7,
       "materials": 1,
-      "bytes": 284658,
-      "sha256": "8a300865cf2575e0cd196a7e4a2dad1be5a62f9efb32b7604e040ee8ea3dc0e3",
+      "bytes": 285127,
+      "sha256": "8682a972aa3a2136531bed3cf0ebc9f114c9a8cddc81da5fde823ba21123e828",
       "leafCount": 3,
       "flowerCount": 0,
       "flowerSpikeCount": 0,
@@ -125,34 +125,34 @@
       "thumbnail": "ui/bronze-bugle-sprout-pink-lightning.png",
       "bounds": {
         "min": [
-          -0.11324,
-          -0.056529,
+          -0.487146886,
+          -0.24318197,
           0.0
         ],
         "max": [
-          0.113472,
-          0.062891,
-          0.104605
+          0.488144926,
+          0.270550643,
+          0.45
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.113317,
-          -0.05678,
+          -0.487478132,
+          -0.244261747,
           0.0
         ],
         "max": [
-          0.113528,
-          0.063392,
-          0.104615
+          0.488385832,
+          0.272705894,
+          0.450043019
         ]
       },
       "animation": "bronze-bugle_sprout_sway",
       "triangles": 3420,
       "joints": 7,
       "materials": 1,
-      "bytes": 270792,
-      "sha256": "87f43cfec02dca2675f4e999d606874e1ee729be344727f8bf4a1752a842413a",
+      "bytes": 271385,
+      "sha256": "17a507c1a7565a65430b54d47cbda830859e2a6af2974389a3344e5e4e7a93d0",
       "leafCount": 3,
       "flowerCount": 0,
       "flowerSpikeCount": 0,
@@ -166,34 +166,34 @@
       "thumbnail": "ui/bronze-bugle-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.220336,
-          -0.220823,
+          -0.902760768,
+          -0.904756105,
           0.0
         ],
         "max": [
-          0.220302,
-          0.220847,
-          0.134238
+          0.902621463,
+          0.904854438,
+          0.55
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.220353,
-          -0.221116,
+          -0.902830421,
+          -0.905956585,
           0.0
         ],
         "max": [
-          0.22045,
-          0.22086,
-          0.134827
+          0.903227849,
+          0.904907701,
+          0.552413251
         ]
       },
       "animation": "bronze-bugle_seedling_sway",
       "triangles": 6840,
       "joints": 13,
       "materials": 1,
-      "bytes": 447624,
-      "sha256": "29d2a0e6dfd7a41b492ffa4e44d41bc57dcfe35cbbb4caeca3fa43bbf33728d4",
+      "bytes": 448216,
+      "sha256": "00d3907604829912c5c3201748662290e082b6fe36d07fb5362f16916675b5ac",
       "leafCount": 6,
       "flowerCount": 0,
       "flowerSpikeCount": 0,
@@ -207,34 +207,34 @@
       "thumbnail": "ui/bronze-bugle-seedling-pink-lightning.png",
       "bounds": {
         "min": [
-          -0.220336,
-          -0.220823,
+          -0.902760768,
+          -0.904756105,
           0.0
         ],
         "max": [
-          0.220302,
-          0.220847,
-          0.134238
+          0.902621463,
+          0.904854438,
+          0.55
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.220353,
-          -0.221116,
+          -0.902830421,
+          -0.905956585,
           0.0
         ],
         "max": [
-          0.22045,
-          0.22086,
-          0.134827
+          0.903227849,
+          0.904907701,
+          0.552413251
         ]
       },
       "animation": "bronze-bugle_seedling_sway",
       "triangles": 6840,
       "joints": 13,
       "materials": 1,
-      "bytes": 433885,
-      "sha256": "d02f684a324c41c27c76cf6b3a175baffe59ebdabf372f90669ad4aa4af656c1",
+      "bytes": 434345,
+      "sha256": "05430142a10b19c1182cc1b79d905f6334fecb7f9469a4a75b83e728e2035882",
       "leafCount": 6,
       "flowerCount": 0,
       "flowerSpikeCount": 0,
@@ -248,34 +248,34 @@
       "thumbnail": "ui/bronze-bugle-young-standard.png",
       "bounds": {
         "min": [
-          -0.410506,
-          -0.344775,
+          -0.781061238,
+          -0.65599623,
           0.0
         ],
         "max": [
-          0.368887,
-          0.240506,
-          0.394181
+          0.701873632,
+          0.45760577,
+          0.75
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.410519,
-          -0.344781,
+          -0.781085973,
+          -0.656007646,
           0.0
         ],
         "max": [
-          0.368982,
-          0.24054,
-          0.394249
+          0.702054386,
+          0.457670461,
+          0.750129382
         ]
       },
       "animation": "bronze-bugle_young_sway",
       "triangles": 19632,
       "joints": 29,
       "materials": 1,
-      "bytes": 1033587,
-      "sha256": "7ffe5457bb0a4264fe416f49838ff58b4e30528e52458908e329394fd1b7c610",
+      "bytes": 1034173,
+      "sha256": "75d7f24b1b7669487363588fc2ff53452a831125afdde847211f3183071370e3",
       "leafCount": 12,
       "flowerCount": 0,
       "flowerSpikeCount": 0,
@@ -289,34 +289,34 @@
       "thumbnail": "ui/bronze-bugle-young-pink-lightning.png",
       "bounds": {
         "min": [
-          -0.410506,
-          -0.344775,
+          -0.781061238,
+          -0.65599623,
           0.0
         ],
         "max": [
-          0.368887,
-          0.240506,
-          0.394181
+          0.701873632,
+          0.45760577,
+          0.75
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.410519,
-          -0.344781,
+          -0.781085973,
+          -0.656007646,
           0.0
         ],
         "max": [
-          0.368982,
-          0.24054,
-          0.394249
+          0.702054386,
+          0.457670461,
+          0.750129382
         ]
       },
       "animation": "bronze-bugle_young_sway",
       "triangles": 19632,
       "joints": 29,
       "materials": 1,
-      "bytes": 1019628,
-      "sha256": "b6486e5fd56de0527ef6140d2005bf549ca8c1ab9dd263abcd032df7cc72d7d2",
+      "bytes": 1020209,
+      "sha256": "d10c4fb6735264c58b501576d6ebca19198b7cb07b70e07a4e41c897033ba061",
       "leafCount": 12,
       "flowerCount": 0,
       "flowerSpikeCount": 0,

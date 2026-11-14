@@ -63,34 +63,34 @@
       "thumbnail": "ui/dawnsorrel-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.045256,
-          -0.056377,
+          -0.078305444,
+          -0.097547862,
           0.0
         ],
         "max": [
-          0.035437,
-          0.036659,
-          0.179162
+          0.061315848,
+          0.063430247,
+          0.31
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.046337,
-          -0.060225,
+          -0.080175874,
+          -0.10420597,
           0.0
         ],
         "max": [
-          0.03768,
-          0.036659,
-          0.179409
+          0.065196861,
+          0.063430247,
+          0.310427379
         ]
       },
       "animation": "dawnsorrel_sprout_sway",
       "triangles": 1142,
       "joints": 3,
       "materials": 1,
-      "bytes": 91643,
-      "sha256": "5b28c57e3295ffe43e62725bfe0abf35e4c3ca22088bab4e6426623c76d17988",
+      "bytes": 92260,
+      "sha256": "0dd203af0332119a174b489590830e0557c7ec75f570398ec3144aae93b71945",
       "leafHeadCount": 1,
       "leafletCount": 3,
       "flowerCount": 0,
@@ -104,34 +104,34 @@
       "thumbnail": "ui/dawnsorrel-sprout-yellow.png",
       "bounds": {
         "min": [
-          -0.045256,
-          -0.056377,
+          -0.078305444,
+          -0.097547862,
           0.0
         ],
         "max": [
-          0.035437,
-          0.036659,
-          0.179162
+          0.061315848,
+          0.063430247,
+          0.31
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.046337,
-          -0.060225,
+          -0.080175874,
+          -0.10420597,
           0.0
         ],
         "max": [
-          0.03768,
-          0.036659,
-          0.179409
+          0.065196861,
+          0.063430247,
+          0.310427379
         ]
       },
       "animation": "dawnsorrel_sprout_sway",
       "triangles": 1142,
       "joints": 3,
       "materials": 1,
-      "bytes": 90920,
-      "sha256": "7ecdf5fdd5b1e56ab4104d1aac5cf1b7f77c3f851d6149f816d2cb1a84f8a402",
+      "bytes": 91406,
+      "sha256": "631fb9f79ba59d45b50e1f01169b2b686c4154498e7f5198e9d694284054b23a",
       "leafHeadCount": 1,
       "leafletCount": 3,
       "flowerCount": 0,
@@ -145,34 +145,34 @@
       "thumbnail": "ui/dawnsorrel-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.145809,
-          -0.113105,
+          -0.221704173,
+          -0.171977384,
           0.0
         ],
         "max": [
-          0.156663,
-          0.062849,
-          0.249916
+          0.238207798,
+          0.095562589,
+          0.38
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.147208,
-          -0.114937,
+          -0.223831367,
+          -0.17476296,
           0.0
         ],
         "max": [
-          0.163463,
-          0.072607,
-          0.249963
+          0.248547272,
+          0.110399734,
+          0.380071464
         ]
       },
       "animation": "dawnsorrel_seedling_sway",
       "triangles": 3426,
       "joints": 7,
       "materials": 1,
-      "bytes": 184420,
-      "sha256": "44fd0896e7461d2817e5c442cf451baba6d8e59722231ad314d9c22f3cc8becf",
+      "bytes": 184915,
+      "sha256": "1f787c7f170ce23e866a31ba3936850a82917e23dc23a1453226d45815f72330",
       "leafHeadCount": 3,
       "leafletCount": 9,
       "flowerCount": 0,
@@ -186,34 +186,34 @@
       "thumbnail": "ui/dawnsorrel-seedling-yellow.png",
       "bounds": {
         "min": [
-          -0.145809,
-          -0.113105,
+          -0.221704173,
+          -0.171977384,
           0.0
         ],
         "max": [
-          0.156663,
-          0.062849,
-          0.249916
+          0.238207798,
+          0.095562589,
+          0.38
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.147208,
-          -0.114937,
+          -0.223831367,
+          -0.17476296,
           0.0
         ],
         "max": [
-          0.163463,
-          0.072607,
-          0.249963
+          0.248547272,
+          0.110399734,
+          0.380071464
         ]
       },
       "animation": "dawnsorrel_seedling_sway",
       "triangles": 3426,
       "joints": 7,
       "materials": 1,
-      "bytes": 183694,
-      "sha256": "f4efd390954d2b651d6af86d3ddfada8b4b799d7fb12383ac43381462c2139f3",
+      "bytes": 184317,
+      "sha256": "4ffbee212677654f950ffd9ebe3ac52195d72400b9f6b7f3eca080d3857b1686",
       "leafHeadCount": 3,
       "leafletCount": 9,
       "flowerCount": 0,
@@ -227,34 +227,34 @@
       "thumbnail": "ui/dawnsorrel-young-standard.png",
       "bounds": {
         "min": [
-          -0.344132,
-          -0.267495,
+          -0.40780451,
+          -0.316987863,
           0.0
         ],
         "max": [
-          0.367709,
-          0.226954,
-          0.362862
+          0.435743809,
+          0.268945825,
+          0.43
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.344425,
-          -0.271883,
+          -0.408151722,
+          -0.322187746,
           0.0
         ],
         "max": [
-          0.368543,
-          0.240291,
-          0.368684
+          0.436732119,
+          0.284750484,
+          0.436899207
         ]
       },
       "animation": "dawnsorrel_young_sway",
       "triangles": 12902,
       "joints": 19,
       "materials": 1,
-      "bytes": 613112,
-      "sha256": "8acb5273cf259a86b76494c06da9cf6b1bb27d672254f403caae42983b9967da",
+      "bytes": 613722,
+      "sha256": "2fe4ccaf2e4a149a8625d13ba80cd23dd30a909bd53ea1e77cbb6e4d74887ed9",
       "leafHeadCount": 7,
       "leafletCount": 21,
       "flowerCount": 1,
@@ -268,34 +268,34 @@
       "thumbnail": "ui/dawnsorrel-young-yellow.png",
       "bounds": {
         "min": [
-          -0.344132,
-          -0.267495,
+          -0.40780451,
+          -0.316987863,
           0.0
         ],
         "max": [
-          0.367709,
-          0.226954,
-          0.362862
+          0.435743809,
+          0.268945825,
+          0.43
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.344425,
-          -0.271883,
+          -0.408151722,
+          -0.322187746,
           0.0
         ],
         "max": [
-          0.368543,
-          0.240291,
-          0.368684
+          0.436732119,
+          0.284750484,
+          0.436899207
         ]
       },
       "animation": "dawnsorrel_young_sway",
       "triangles": 12902,
       "joints": 19,
       "materials": 1,
-      "bytes": 612506,
-      "sha256": "71c29e3220f1b8d2e96ebc6b3303ba66e13e73d413151601e9ada20d8e507dd3",
+      "bytes": 613120,
+      "sha256": "183d8978fe0542a42c8b7d80085cf3f109ec2396389d03eaec30761f61b64167",
       "leafHeadCount": 7,
       "leafletCount": 21,
       "flowerCount": 1,

@@ -1,6 +1,6 @@
 # Plant asset production workflow
 
-Updated: 17 October 2026  
+Updated: 14 November 2026
 Companion: [forest_game_v1_spec.md](forest_game_v1_spec.md)  
 Scope: approved adult 2D schematics → complete, consistent, game-ready species package.
 
@@ -91,6 +91,55 @@ For a half-buried seed/acorn appearance, model only the visible portion and clos
 Review the species' fixed circular clearance against adult ground/base geometry, exposed roots, substantial lower growth and a deliberate spacing allowance; check that it also accommodates all younger stages and variants. Reserve that same space from sprout through adult. Treat the larger visual crown/leaf envelope separately: moderate outer-foliage overlap is allowed, so the full adult bounding box is not automatically exclusive ground space. Low plants may sit under outer crowns where their ground clearances fit. Root/contact vertices should remain stationary during wind. Review a temporary thin ground plane and an oblique camera in the authoring scene to catch gaps or protrusion; exclude that plane from the export.
 
 Validate mature mixed gardens of approximately 10–15 plants using shared ground, consistent lighting/contact shadows and readable height layers. Check neighbouring crowns, branches and wind at intended spacing, and tree-heavy/duplicate combinations. This is an aesthetic target, not an approved count cap. V1 placement uses circles on a continuous ground plane; model yaw does not change clearance. Clearance rings and adult placement previews are shared app presentation, not meshes baked into plant exports.
+
+### 4.1. Required garden sizing and growth progression
+
+The approved sizing table below is the final packaged world-height requirement for the current catalog, in authoring metres. These are physical USDZ sizes, not thumbnail framing sizes. Adult assets retain their existing exact dimensions; the adult column is rounded for reference. An existing early stage already matching its target when rounded to two decimal places can retain its exact dimensions rather than receive a negligible rounding-only adjustment.
+
+| Species | Sprout | Seedling | Young | Adult, unchanged |
+| --- | ---: | ---: | ---: | ---: |
+| Oak | 0.76 | 1.45 | 3.13 | 4.82 |
+| Moonwillow | 0.76 | 1.38 | 2.94 | 4.53 |
+| Lanternbirch | 0.70 | 1.41 | 3.05 | 4.69 |
+| Emberrowan | 0.68 | 1.35 | 2.93 | 4.51 |
+| Coppercurl Maple | 0.67 | 1.35 | 2.92 | 4.50 |
+| Cloudveil | 0.66 | 1.32 | 2.86 | 4.40 |
+| Amberfan | 0.64 | 1.29 | 2.79 | 4.29 |
+| Havenbough | 0.61 | 1.22 | 2.65 | 4.07 |
+| Berry Shrub | 0.65 | 0.90 | 1.15 | 1.36 |
+| Swiftgrass | 0.65 | 0.90 | 1.40 | 1.67 |
+| Sunspike | 0.65 | 0.90 | 1.40 | 1.66 |
+| Duskwand | 0.65 | 0.90 | 1.40 | 1.64 |
+| Coilrush | 0.65 | 0.90 | 1.15 | 1.34 |
+| Bluebell | 0.65 | 0.90 | 1.10 | 1.28 |
+| Ironheart | 0.65 | 0.90 | 1.05 | 1.21 |
+| Dewfern | 0.65 | 0.85 | 1.00 | 1.13 |
+| Ribbon Fern | 0.65 | 0.85 | 1.00 | 1.16 |
+| Silverlace Fern | 0.45 | 0.58 | 0.67 | 0.74 |
+| Dawnsorrel | 0.31 | 0.38 | 0.43 | 0.48 |
+| Pearlseal | 0.60 | 0.80 | 0.95 | 1.05 |
+| Wispflower | 0.43 | 0.55 | 0.63 | 0.70 |
+| Moonbell | 0.60 | 0.80 | 0.92 | 1.03 |
+| Heartleaf | 0.32 | 0.39 | 0.44 | 0.49 |
+| Dewjewel | 0.60 | 0.78 | 0.90 | 0.99 |
+| Mirrorleaf | 0.55 | 0.72 | 0.82 | 0.91 |
+| Bronze Bugle | 0.45 | 0.55 | 0.75 | 0.91 |
+| Paper Lantern | 0.60 | 0.80 | 0.95 | 1.06 |
+| Starcap | 0.60 | 0.78 | 0.90 | 0.98 |
+| Honeycluster | 0.35 | 0.43 | 0.48 | 0.54 |
+| Boughrunner | 1.65 | 1.65 | 1.65 | 1.90 |
+
+Boughrunner is the deliberate exception to increasing whole-model height: its wooden support stays at 1.65 m while the living vine progressively fills it. Preserve that support and the existing stage models; judge growth by vine coverage and structure rather than scaling the support. Bronze Bugle has lower early-stage height targets because its broad rosettes otherwise look larger than later stages.
+
+For every other species and every approved variant, require strictly increasing actual height from sprout through adult. Also check increasing front-view bounding area (width times height), then visually inspect silhouette and foliage mass from the garden camera; height alone does not prevent a broad sprout or seedling from appearing larger than the next stage. Keep adjacent stages structurally distinct. Small adults leave less height headroom, so do not impose a universal 20% height gap or enlarge an early stage beyond a later stage.
+
+For a new species, approve its adult size alongside the existing garden before building younger forms, then record explicit targets for all four stages. Use canopy sprouts around 0.61-0.76 m and seedlings around 1.22-1.45 m as the tree benchmark, with young trees around 60-70% of adult height. Most shrubs, flowers and ferns with adults around 1-1.7 m should begin near 0.60-0.65 m and reach 0.80-0.90 m as seedlings. For very small adults below about 0.8 m, start with approximately 60-65% / 78-80% / 90% of adult height for sprout / seedling / young, then adjust against comparable rows above and garden readability. These are starting benchmarks for new species, not permission to override an approved existing target. Keep larger existing early stages where already approved. Review any support-based or unusually broad species explicitly.
+
+Enforce the approved size in the exported USDZ itself, either directly in the source or as a uniform final packaging transform around the existing ground origin. Scale the complete hierarchy, including the mesh and skeleton, together. A sizing-only correction must preserve geometry, topology, materials, UVs, embedded texture bytes, animation samples, bindings, stage/variant IDs, and ground anchoring; do not re-export through Blender if a plant/rig-root transform can preserve those contents. Apply it below an identity packaging wrapper such as /root: some importers discard the outer wrapper and would ignore a scale placed only there. Fresh-import validation must confirm actual evaluated vertex positions and skeletal motion scale correctly, not merely that USD metadata or declared bounds changed. Do not change units or rely on plant-specific client renderer scaling. Apply the same species/stage factor to its variants, using the standard stage as the reference, and record each variant's actual resulting bounds.
+
+Derive any packaging correction from the current measured height and the approved absolute target. Do not repeatedly multiply already-resized assets by an old factor. Reapply this sizing check after every export from an older editable master so a future rebuild cannot silently restore the old tiny stages. Recalculate rest and animated bounds, USDZ byte sizes and SHA-256 hashes after a change, and keep the compiled catalog's asset records identical to the species manifests. For a uniform positive scale around zero, existing verified bounds scale by that same factor; confirm them with fresh imports and sampled wind frames. Individually framed thumbnails need not be rerendered for a pure world-size correction. Review enlarged early ground/base geometry against the existing clearance; a visual sizing adjustment does not automatically authorize changing gameplay radii.
+
+For this authorized single-account local-v1 correction, replace the existing tracked models and manifests in place, preserving paths, filenames, asset versions, Xcode folder references and existing owned-plant compatibility. Commit the unpacked runtime assets and matching catalog data together. After a push/pull, the Mac uses the existing Xcode project and a normal Build & Run; duplicate ZIP packages are not the app's resource source. The immutable-version rule in section 13 still applies to future released/CDN content.
 
 ## 5. Build and approve the adult first
 

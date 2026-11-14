@@ -79,34 +79,34 @@
       "thumbnail": "ui/ribbon-fern-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.022908,
-          -0.095353,
+          -0.066845938,
+          -0.278241693,
           0.0
         ],
         "max": [
-          0.050342,
-          0.052358,
-          0.222754
+          0.146898821,
+          0.152781544,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.023205,
-          -0.095466,
+          -0.067712589,
+          -0.278571429,
           0.0
         ],
         "max": [
-          0.050724,
-          0.054159,
-          0.222972
+          0.148013504,
+          0.158036893,
+          0.650636128
         ]
       },
       "animation": "ribbon-fern_sprout_sway",
       "triangles": 3560,
       "joints": 5,
       "materials": 1,
-      "bytes": 250276,
-      "sha256": "d7979dd4ab5f66fbd1794bb1d9b5b9b9f33f683750e59b50ec061ae9ac97e3bd",
+      "bytes": 250872,
+      "sha256": "2aabcbedd1a0ba515668381e8031b96d978028aa9e5db5f4f2dc397a00aea01e",
       "leafCount": 2,
       "flowerCount": 0,
       "flowerSpikeCount": 0,
@@ -120,34 +120,34 @@
       "thumbnail": "ui/ribbon-fern-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.094911,
-          -0.186777,
+          -0.201534724,
+          -0.396603672,
           0.0
         ],
         "max": [
-          0.211234,
-          0.120441,
-          0.4003
+          0.448535848,
+          0.255745316,
+          0.85
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.095673,
-          -0.187105,
+          -0.20315276,
+          -0.39730015,
           0.0
         ],
         "max": [
-          0.211805,
-          0.123994,
-          0.401094
+          0.449748314,
+          0.263289783,
+          0.851685986
         ]
       },
       "animation": "ribbon-fern_seedling_sway",
       "triangles": 5340,
       "joints": 7,
       "materials": 1,
-      "bytes": 333603,
-      "sha256": "25e279b8f47e0674a5d54c2b2ec17cc2a008799f8a5cb9f12f4972ba58c6fa02",
+      "bytes": 334196,
+      "sha256": "511c9e7219936928f0172a0c557cd1814a8e9d74fb68051814aff004a0d9855a",
       "leafCount": 3,
       "flowerCount": 0,
       "flowerSpikeCount": 0,
@@ -161,34 +161,34 @@
       "thumbnail": "ui/ribbon-fern-young-standard.png",
       "bounds": {
         "min": [
-          -0.363468,
-          -0.396603,
+          -0.526322801,
+          -0.574304208,
           0.0
         ],
         "max": [
-          0.424426,
-          0.229877,
-          0.69058
+          0.61459353,
+          0.332875264,
+          1.0
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.363674,
-          -0.396687,
+          -0.526621101,
+          -0.574425845,
           0.0
         ],
         "max": [
-          0.42469,
-          0.235814,
-          0.692142
+          0.614975817,
+          0.341472386,
+          1.002261867
         ]
       },
       "animation": "ribbon-fern_young_sway",
       "triangles": 8900,
       "joints": 11,
       "materials": 1,
-      "bytes": 500680,
-      "sha256": "758160ca58dc4c4e33a4aa8e0524d803f435a3387bf3ea800cf64ae5a6581ad3",
+      "bytes": 501271,
+      "sha256": "25aefec8f564e326ff9342d3db5e7e908e1fcdce7846a8191854102c109e6169",
       "leafCount": 5,
       "flowerCount": 0,
       "flowerSpikeCount": 0,

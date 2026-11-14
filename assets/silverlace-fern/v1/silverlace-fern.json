@@ -58,26 +58,26 @@
       "thumbnail": "ui/silverlace-fern-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.040901,
-          -0.01464,
+          -0.126604965,
+          -0.045316659,
           0.0
         ],
         "max": [
-          0.027194,
-          0.009409,
-          0.145377
+          0.084176314,
+          0.029124621,
+          0.45
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.040933,
-          -0.01464,
+          -0.126704018,
+          -0.045316659,
           0.0
         ],
         "max": [
-          0.027242,
-          0.009409,
-          0.14538
+          0.084324893,
+          0.029124621,
+          0.450009286
         ]
       },
       "animation": "silverlace-fern_sprout_sway",
@@ -86,8 +86,8 @@
       "triangles": 2852,
       "joints": 3,
       "materials": 1,
-      "bytes": 155839,
-      "sha256": "fba19ab9e980bbb8f99f119e08397c2729631908f1ccfc762deeba18ce8e69e7"
+      "bytes": 156346,
+      "sha256": "c645a0fa87bcd5110b11ff4c60d9c607834cd27019d948683aa65e15f7a0392f"
     },
     {
       "stage": "seedling",
@@ -96,26 +96,26 @@
       "thumbnail": "ui/silverlace-fern-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.088419,
-          -0.03294,
+          -0.23515368,
+          -0.087605178,
           0.0
         ],
         "max": [
-          0.103206,
-          0.216349,
-          0.218083
+          0.274480267,
+          0.575388361,
+          0.58
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.088424,
-          -0.03294,
+          -0.235166978,
+          -0.087605178,
           0.0
         ],
         "max": [
-          0.103208,
-          0.216608,
-          0.218407
+          0.274485586,
+          0.576077182,
+          0.58086169
         ]
       },
       "animation": "silverlace-fern_seedling_sway",
@@ -124,8 +124,8 @@
       "triangles": 9680,
       "joints": 6,
       "materials": 1,
-      "bytes": 423800,
-      "sha256": "f10871ad24c7bc2099e05f0a9da98f06135f09d5158bdaa5d5acb3afef8b6844"
+      "bytes": 424306,
+      "sha256": "3ab43a4fe85e1a65cd4c01684bc52da712f1335e6d2f362b3050a9636ea3862f"
     },
     {
       "stage": "young",
@@ -134,26 +134,26 @@
       "thumbnail": "ui/silverlace-fern-young-standard.png",
       "bounds": {
         "min": [
-          -0.317929,
-          -0.364927,
+          -0.489635346,
+          -0.562015916,
           0.0
         ],
         "max": [
-          0.379544,
-          0.222957,
-          0.435043
+          0.584527231,
+          0.343371092,
+          0.67
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.317958,
-          -0.365083,
+          -0.489680009,
+          -0.562256168,
           0.0
         ],
         "max": [
-          0.379684,
-          0.224353,
-          0.43542
+          0.584742842,
+          0.34552104,
+          0.670580609
         ]
       },
       "animation": "silverlace-fern_young_sway",
@@ -162,8 +162,8 @@
       "triangles": 45664,
       "joints": 20,
       "materials": 1,
-      "bytes": 1820544,
-      "sha256": "44dba280e7368fe308e7b73cbe57f3beb0776d93727db2a61c58b09b304fa6bb"
+      "bytes": 1821038,
+      "sha256": "857d5cab299a5505ccfaf9de6a1fe9a703eb471dacec874ed6e84235848d7d6e"
     },
     {
       "stage": "adult",

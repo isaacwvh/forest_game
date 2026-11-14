@@ -63,26 +63,26 @@
       "thumbnail": "ui/honeycluster-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.044774,
-          -0.044991,
+          -0.207311717,
+          -0.208316466,
           0.0
         ],
         "max": [
-          0.045496,
-          0.045279,
-          0.075591
+          0.210654708,
+          0.209649958,
+          0.35
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.04478,
-          -0.045048,
+          -0.207339498,
+          -0.208580387,
           0.0
         ],
         "max": [
-          0.045511,
-          0.045348,
-          0.075611
+          0.21072416,
+          0.209969441,
+          0.350092604
         ]
       },
       "animation": "honeycluster_sprout_sway",
@@ -90,8 +90,8 @@
       "triangles": 4740,
       "joints": 3,
       "materials": 1,
-      "bytes": 323012,
-      "sha256": "6ee2db1bedcd9dff225d43a5e5e0c81c365f68daf6d506d9f02ee81f58b74d09"
+      "bytes": 323522,
+      "sha256": "e26009d9ffbf5b13d6741fe2b4f25524336ea31ae8c60633baf2493c024dc9d8"
     },
     {
       "stage": "sprout",
@@ -100,26 +100,26 @@
       "thumbnail": "ui/honeycluster-sprout-maple.png",
       "bounds": {
         "min": [
-          -0.044774,
-          -0.044991,
+          -0.207311717,
+          -0.208316466,
           0.0
         ],
         "max": [
-          0.045496,
-          0.045279,
-          0.075591
+          0.210654708,
+          0.209649958,
+          0.35
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.04478,
-          -0.045048,
+          -0.207339498,
+          -0.208580387,
           0.0
         ],
         "max": [
-          0.045511,
-          0.045348,
-          0.075611
+          0.21072416,
+          0.209969441,
+          0.350092604
         ]
       },
       "animation": "honeycluster_sprout_sway",
@@ -127,8 +127,8 @@
       "triangles": 4740,
       "joints": 3,
       "materials": 1,
-      "bytes": 308661,
-      "sha256": "c2b50ca925ab60717971a4433f619477c6896ec6aa67fbcb1393bacfade438df"
+      "bytes": 309170,
+      "sha256": "89a0e727c2c37d7f5217e3492a5cd58b2fa994a65114d52e4c595d1978193558"
     },
     {
       "stage": "seedling",
@@ -137,26 +137,26 @@
       "thumbnail": "ui/honeycluster-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.064157,
-          -0.076842,
+          -0.143183061,
+          -0.171492944,
           0.0
         ],
         "max": [
-          0.100977,
-          0.089122,
-          0.192673
+          0.225356485,
+          0.198898964,
+          0.43
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.064236,
-          -0.07721,
+          -0.143359371,
+          -0.172314232,
           0.0
         ],
         "max": [
-          0.101156,
-          0.089671,
-          0.192744
+          0.22575597,
+          0.2001242,
+          0.430158455
         ]
       },
       "animation": "honeycluster_seedling_sway",
@@ -164,8 +164,8 @@
       "triangles": 10068,
       "joints": 3,
       "materials": 1,
-      "bytes": 509469,
-      "sha256": "ad38477484ecc2555184ae408210b841cf5b32b4c9d4f1213f8a1e1b99885ce0"
+      "bytes": 509975,
+      "sha256": "a9e96e47644785f985478b1089dcc3effb750b96743868dce4ea02410d0fcf6e"
     },
     {
       "stage": "seedling",
@@ -174,26 +174,26 @@
       "thumbnail": "ui/honeycluster-seedling-maple.png",
       "bounds": {
         "min": [
-          -0.064157,
-          -0.076842,
+          -0.143183061,
+          -0.171492944,
           0.0
         ],
         "max": [
-          0.100977,
-          0.089122,
-          0.192673
+          0.225356485,
+          0.198898964,
+          0.43
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.064236,
-          -0.07721,
+          -0.143359371,
+          -0.172314232,
           0.0
         ],
         "max": [
-          0.101156,
-          0.089671,
-          0.192744
+          0.22575597,
+          0.2001242,
+          0.430158455
         ]
       },
       "animation": "honeycluster_seedling_sway",
@@ -201,8 +201,8 @@
       "triangles": 10068,
       "joints": 3,
       "materials": 1,
-      "bytes": 495375,
-      "sha256": "7baf81760b4385f8611b36062767ed4169517a76f08388c7caae8d4aba482cbd"
+      "bytes": 495879,
+      "sha256": "02f977067319e5e30c3f00975179c518adccfe8f179bdac10a9b1cf1f462d475"
     },
     {
       "stage": "young",
@@ -211,26 +211,26 @@
       "thumbnail": "ui/honeycluster-young-standard.png",
       "bounds": {
         "min": [
-          -0.297313,
-          -0.20939,
+          -0.425240361,
+          -0.299485994,
           0.0
         ],
         "max": [
-          0.227366,
-          0.188235,
-          0.335599
+          0.325196678,
+          0.269228454,
+          0.48
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.297866,
-          -0.209436,
+          -0.426031305,
+          -0.299551787,
           0.0
         ],
         "max": [
-          0.228077,
-          0.189303,
-          0.335786
+          0.326213606,
+          0.270755992,
+          0.480267462
         ]
       },
       "animation": "honeycluster_young_sway",
@@ -238,8 +238,8 @@
       "triangles": 34424,
       "joints": 9,
       "materials": 1,
-      "bytes": 1367967,
-      "sha256": "54c1a1b23d81571a737cc8fd5fed8ef962f28ced4adcca8ef25cf247c5cca3b2"
+      "bytes": 1368468,
+      "sha256": "38e7a10fcece0383dd35c007ae63c156100dacfb2e238c5ed4e20b7f1d9dcf8a"
     },
     {
       "stage": "young",
@@ -248,26 +248,26 @@
       "thumbnail": "ui/honeycluster-young-maple.png",
       "bounds": {
         "min": [
-          -0.297313,
-          -0.20939,
+          -0.425240361,
+          -0.299485994,
           0.0
         ],
         "max": [
-          0.227366,
-          0.188235,
-          0.335599
+          0.325196678,
+          0.269228454,
+          0.48
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.297866,
-          -0.209436,
+          -0.426031305,
+          -0.299551787,
           0.0
         ],
         "max": [
-          0.228077,
-          0.189303,
-          0.335786
+          0.326213606,
+          0.270755992,
+          0.480267462
         ]
       },
       "animation": "honeycluster_young_sway",
@@ -275,8 +275,8 @@
       "triangles": 34424,
       "joints": 9,
       "materials": 1,
-      "bytes": 1353743,
-      "sha256": "c01d752b1dc318e6a7c479430bb82b8bc43bb5d1345ac95f8b0ecc6a2ab895e0"
+      "bytes": 1354245,
+      "sha256": "9820bd96e2ef4a048f63cd09fd453dfb19adde475ba1000f47b9e3cf4b284aa8"
     },
     {
       "stage": "adult",

@@ -69,34 +69,34 @@
       "thumbnail": "ui/emberrowan-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.166739,
-          -0.108124,
+          -0.371804481,
+          -0.241101288,
           0.0
         ],
         "max": [
-          0.213034,
-          0.025093,
-          0.304952
+          0.475035809,
+          0.055953855,
+          0.68
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.167519,
-          -0.108494,
+          -0.373543771,
+          -0.241926336,
           0.0
         ],
         "max": [
-          0.213327,
-          0.025665,
-          0.304982
+          0.475689158,
+          0.057229334,
+          0.680066896
         ]
       },
       "animation": "emberrowan_sprout_sway",
       "triangles": 3136,
       "joints": 3,
       "materials": 1,
-      "bytes": 204452,
-      "sha256": "0599b5f3c13f53ac865e616b03972fd4fcb0d459ab4726617bc43e609b8dcb56",
+      "bytes": 205066,
+      "sha256": "9c8bacf7ee6147a6d400f3cbbdd11593538d3b137a9bcd13e67124736ee04e03",
       "leafCount": 13,
       "compoundCount": 3,
       "berryCount": 0,
@@ -110,34 +110,34 @@
       "thumbnail": "ui/emberrowan-sprout-autumn-gold.png",
       "bounds": {
         "min": [
-          -0.166739,
-          -0.108124,
+          -0.371804481,
+          -0.241101288,
           0.0
         ],
         "max": [
-          0.213034,
-          0.025093,
-          0.304952
+          0.475035809,
+          0.055953855,
+          0.68
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.167519,
-          -0.108494,
+          -0.373543771,
+          -0.241926336,
           0.0
         ],
         "max": [
-          0.213327,
-          0.025665,
-          0.304982
+          0.475689158,
+          0.057229334,
+          0.680066896
         ]
       },
       "animation": "emberrowan_sprout_sway",
       "triangles": 3136,
       "joints": 3,
       "materials": 1,
-      "bytes": 204209,
-      "sha256": "c56f5232b28bc0bba4911e16427e757f068c4fd6fac9082f3bbee754d28274ad",
+      "bytes": 204695,
+      "sha256": "21859885534feac338f9329d5641300c7cf4891b12b52861241176f3a4628022",
       "leafCount": 13,
       "compoundCount": 3,
       "berryCount": 0,
@@ -151,34 +151,34 @@
       "thumbnail": "ui/emberrowan-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.373755,
-          -0.214059,
+          -0.535310528,
+          -0.306585962,
           0.0
         ],
         "max": [
-          0.374106,
-          0.337049,
-          0.942573
+          0.535813247,
+          0.482738366,
+          1.35
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.373903,
-          -0.214351,
+          -0.535522501,
+          -0.307004179,
           0.0
         ],
         "max": [
-          0.37424,
-          0.340789,
-          0.942786
+          0.536005169,
+          0.48809498,
+          1.350305069
         ]
       },
       "animation": "emberrowan_seedling_sway",
       "triangles": 4604,
       "joints": 3,
       "materials": 1,
-      "bytes": 248366,
-      "sha256": "cd33b000952fa50d3049f11fc8a9d6f5b86cccc32c40488dcca0e684baf83262",
+      "bytes": 248976,
+      "sha256": "f6349f5ceffdbf3ea845d5c4cfdedbc4b3fa2c04e48b0057475160b3dbaa7ec3",
       "leafCount": 26,
       "compoundCount": 4,
       "berryCount": 0,
@@ -192,34 +192,34 @@
       "thumbnail": "ui/emberrowan-seedling-autumn-gold.png",
       "bounds": {
         "min": [
-          -0.373755,
-          -0.214059,
+          -0.535310528,
+          -0.306585962,
           0.0
         ],
         "max": [
-          0.374106,
-          0.337049,
-          0.942573
+          0.535813247,
+          0.482738366,
+          1.35
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.373903,
-          -0.214351,
+          -0.535522501,
+          -0.307004179,
           0.0
         ],
         "max": [
-          0.37424,
-          0.340789,
-          0.942786
+          0.536005169,
+          0.48809498,
+          1.350305069
         ]
       },
       "animation": "emberrowan_seedling_sway",
       "triangles": 4604,
       "joints": 3,
       "materials": 1,
-      "bytes": 248250,
-      "sha256": "a8edf6b21bf0b180eb83a97be057626d9fbb7b4997aedce418f06862d86201dd",
+      "bytes": 248732,
+      "sha256": "f0db38c7ae28b1ccc1d7e35e43d536b015b17ddbab7ba7ffa271b9905f7aca28",
       "leafCount": 26,
       "compoundCount": 4,
       "berryCount": 0,
@@ -233,34 +233,34 @@
       "thumbnail": "ui/emberrowan-young-standard.png",
       "bounds": {
         "min": [
-          -0.907482,
-          -0.645364,
+          -1.057759688,
+          -0.752235332,
           0.0
         ],
         "max": [
-          0.939739,
-          0.826123,
-          2.51373
+          1.0953584,
+          0.962927757,
+          2.93
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.912148,
-          -0.65725,
+          -1.063198371,
+          -0.766089636,
           0.0
         ],
         "max": [
-          0.959861,
-          0.846646,
-          2.514877
+          1.118812573,
+          0.986849335,
+          2.931336942
         ]
       },
       "animation": "emberrowan_young_sway",
       "triangles": 25006,
       "joints": 11,
       "materials": 1,
-      "bytes": 1210184,
-      "sha256": "ee5715ab1c937088207773744c5790ab0409ad727acd32dba3d3cbec023c0b2c",
+      "bytes": 1210667,
+      "sha256": "1c2a78a7cb16db7a525c79fe0e233dca3ee7d9f56ca99dc56401627563fb1651",
       "leafCount": 144,
       "compoundCount": 16,
       "berryCount": 20,
@@ -274,34 +274,34 @@
       "thumbnail": "ui/emberrowan-young-autumn-gold.png",
       "bounds": {
         "min": [
-          -0.907482,
-          -0.645364,
+          -1.057759688,
+          -0.752235332,
           0.0
         ],
         "max": [
-          0.939739,
-          0.826123,
-          2.51373
+          1.0953584,
+          0.962927757,
+          2.93
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.912148,
-          -0.65725,
+          -1.063198371,
+          -0.766089636,
           0.0
         ],
         "max": [
-          0.959861,
-          0.846646,
-          2.514877
+          1.118812573,
+          0.986849335,
+          2.931336942
         ]
       },
       "animation": "emberrowan_young_sway",
       "triangles": 25006,
       "joints": 11,
       "materials": 1,
-      "bytes": 1210070,
-      "sha256": "580144ec025e556e9a2b54a88e81832f80d2321a64e1bf14ec515873a8c81404",
+      "bytes": 1210681,
+      "sha256": "dfe7d643dfa511f9ae47486e3cc7fe475cdf87a71d25828643d152a7ebe9f638",
       "leafCount": 144,
       "compoundCount": 16,
       "berryCount": 20,

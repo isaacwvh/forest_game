@@ -68,26 +68,26 @@
       "thumbnail": "ui/lanternbirch-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.156021,
-          -0.08123,
+          -0.422191855,
+          -0.219807874,
           0.0
         ],
         "max": [
-          0.169065,
-          0.080396,
-          0.258685
+          0.457488838,
+          0.217551076,
+          0.7
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.156578,
-          -0.081883,
+          -0.423699093,
+          -0.221574888,
           0.0
         ],
         "max": [
-          0.169274,
-          0.082044,
-          0.259635
+          0.45805439,
+          0.222010553,
+          0.702570694
         ]
       },
       "animation": "lanternbirch_sprout_sway",
@@ -96,8 +96,8 @@
       "sprayCount": 0,
       "triangles": 2698,
       "joints": 3,
-      "bytes": 341333,
-      "sha256": "9860169fc5f81f750d34bc1e706f9b1395b4a2b968c7b782fc9f6a41712733d8"
+      "bytes": 341820,
+      "sha256": "9437dc8152d276902846eef308de586ba968b3873a98d853b2447f9a7189ee2b"
     },
     {
       "stage": "sprout",
@@ -106,26 +106,26 @@
       "thumbnail": "ui/lanternbirch-sprout-gold-glow.png",
       "bounds": {
         "min": [
-          -0.156021,
-          -0.08123,
+          -0.422191855,
+          -0.219807874,
           0.0
         ],
         "max": [
-          0.169065,
-          0.080396,
-          0.258685
+          0.457488838,
+          0.217551076,
+          0.7
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.156578,
-          -0.081883,
+          -0.423699093,
+          -0.221574888,
           0.0
         ],
         "max": [
-          0.169274,
-          0.082044,
-          0.259635
+          0.45805439,
+          0.222010553,
+          0.702570694
         ]
       },
       "animation": "lanternbirch_sprout_sway",
@@ -134,8 +134,8 @@
       "sprayCount": 0,
       "triangles": 2698,
       "joints": 3,
-      "bytes": 371895,
-      "sha256": "c46211acedb935b7bcf196beb8c19b1525bc1a272fc9ece053e6bfe6e3fcade0"
+      "bytes": 372510,
+      "sha256": "db455196eb5b3162c7fd141c5794b1dd05f20e8ead1150297f016a5ed52e9011"
     },
     {
       "stage": "seedling",
@@ -144,26 +144,26 @@
       "thumbnail": "ui/lanternbirch-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.261506,
-          -0.187484,
+          -0.405491838,
+          -0.290713145,
           0.0
         ],
         "max": [
-          0.3199,
-          0.227299,
-          0.909324
+          0.496037716,
+          0.352450381,
+          1.41
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.26161,
-          -0.192439,
+          -0.405653101,
+          -0.29839638,
           0.0
         ],
         "max": [
-          0.319975,
-          0.22899,
-          0.909664
+          0.496154011,
+          0.355072449,
+          1.410527205
         ]
       },
       "animation": "lanternbirch_seedling_sway",
@@ -172,8 +172,8 @@
       "sprayCount": 0,
       "triangles": 3410,
       "joints": 3,
-      "bytes": 373545,
-      "sha256": "de9116dac8d32cfe83598156db6c94473a78025e91c21cf2e6b7c31e6aff4aa1"
+      "bytes": 374032,
+      "sha256": "5c2af43ee3737176e9fedf1b5c47acb8ed01daa7a098555369acb49440ecc0fb"
     },
     {
       "stage": "seedling",
@@ -182,26 +182,26 @@
       "thumbnail": "ui/lanternbirch-seedling-gold-glow.png",
       "bounds": {
         "min": [
-          -0.261506,
-          -0.187484,
+          -0.405491838,
+          -0.290713145,
           0.0
         ],
         "max": [
-          0.3199,
-          0.227299,
-          0.909324
+          0.496037716,
+          0.352450381,
+          1.41
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.26161,
-          -0.192439,
+          -0.405653101,
+          -0.29839638,
           0.0
         ],
         "max": [
-          0.319975,
-          0.22899,
-          0.909664
+          0.496154011,
+          0.355072449,
+          1.410527205
         ]
       },
       "animation": "lanternbirch_seedling_sway",
@@ -210,8 +210,8 @@
       "sprayCount": 0,
       "triangles": 3410,
       "joints": 3,
-      "bytes": 404235,
-      "sha256": "4c697ba4b22e34e6cf4a3cc3153718ef07499d7a888576ce93c2d9c82636ff54"
+      "bytes": 404850,
+      "sha256": "e933738de4a1dc5c58d1c3abe6999ddc986672232cc026d85b6518f889062622"
     },
     {
       "stage": "young",
@@ -220,26 +220,26 @@
       "thumbnail": "ui/lanternbirch-young-standard.png",
       "bounds": {
         "min": [
-          -1.056012,
-          -0.539529,
+          -1.265527804,
+          -0.646573098,
           0.0
         ],
         "max": [
-          1.068921,
-          0.858265,
-          2.545054
+          1.280997987,
+          1.028547233,
+          3.05
         ]
       },
       "animatedBounds": {
         "min": [
-          -1.064069,
-          -0.55553,
+          -1.275183336,
+          -0.665748742,
           0.0
         ],
         "max": [
-          1.080369,
-          0.872002,
-          2.545465
+          1.294717303,
+          1.045009693,
+          3.050492544
         ]
       },
       "animation": "lanternbirch_young_sway",
@@ -248,8 +248,8 @@
       "sprayCount": 4,
       "triangles": 33274,
       "joints": 13,
-      "bytes": 1699983,
-      "sha256": "04602b171d0d6fdb674d362ccf5aa385d26a16e7097ba1baa1ec847187a30133"
+      "bytes": 1700593,
+      "sha256": "9ce0b842a7ad4be1e8e040d97981736b4b46b42d9d8c5795be4ecfd80479e760"
     },
     {
       "stage": "young",
@@ -258,26 +258,26 @@
       "thumbnail": "ui/lanternbirch-young-gold-glow.png",
       "bounds": {
         "min": [
-          -1.056012,
-          -0.539529,
+          -1.265527804,
+          -0.646573098,
           0.0
         ],
         "max": [
-          1.068921,
-          0.858265,
-          2.545054
+          1.280997987,
+          1.028547233,
+          3.05
         ]
       },
       "animatedBounds": {
         "min": [
-          -1.064069,
-          -0.55553,
+          -1.275183336,
+          -0.665748742,
           0.0
         ],
         "max": [
-          1.080369,
-          0.872002,
-          2.545465
+          1.294717303,
+          1.045009693,
+          3.050492544
         ]
       },
       "animation": "lanternbirch_young_sway",
@@ -286,8 +286,8 @@
       "sprayCount": 4,
       "triangles": 33274,
       "joints": 13,
-      "bytes": 1730802,
-      "sha256": "dd977beee4436641770fec93b6eb748e81a6efa2c504346ead1a4e04df81f4f1"
+      "bytes": 1731284,
+      "sha256": "88219cf51fc06bc1cf8ad01585c4f4cefd35d92e64331684d90d4f0fd735a3b8"
     },
     {
       "stage": "adult",

@@ -72,34 +72,34 @@
       "thumbnail": "ui/sunspike-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.111992,
-          -0.067419,
+          -0.242987085,
+          -0.146277826,
           0.0
         ],
         "max": [
-          0.090324,
-          0.036735,
-          0.299583
+          0.195974404,
+          0.079703288,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.112044,
-          -0.067859,
+          -0.243099909,
+          -0.147232486,
           0.0
         ],
         "max": [
-          0.090326,
-          0.041551,
-          0.299589
+          0.195978744,
+          0.090152479,
+          0.650013018
         ]
       },
       "animation": "sunspike_sprout_sway",
       "triangles": 1820,
       "joints": 7,
       "materials": 1,
-      "bytes": 115349,
-      "sha256": "52816c01879b374f6860e4e79d57ce9d932af483f9af7338fd9b475406206a9b",
+      "bytes": 115962,
+      "sha256": "82d684ef46b911de32c7c5cc4b9050f66ae352b8b0c7e78c93b1649513662930",
       "growthStructure": "Three clasping blades: an upright tightly folded spear between two short opening ribbon leaves; no flowers.",
       "leafCount": 3,
       "flowerCount": 0,
@@ -116,34 +116,34 @@
       "thumbnail": "ui/sunspike-sprout-moon.png",
       "bounds": {
         "min": [
-          -0.111992,
-          -0.067419,
+          -0.242987085,
+          -0.146277826,
           0.0
         ],
         "max": [
-          0.090324,
-          0.036735,
-          0.299583
+          0.195974404,
+          0.079703288,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.112044,
-          -0.067859,
+          -0.243099909,
+          -0.147232486,
           0.0
         ],
         "max": [
-          0.090326,
-          0.041551,
-          0.299589
+          0.195978744,
+          0.090152479,
+          0.650013018
         ]
       },
       "animation": "sunspike_sprout_sway",
       "triangles": 1820,
       "joints": 7,
       "materials": 1,
-      "bytes": 114834,
-      "sha256": "aa666bf56577aef2daf70a9c5cdcf850b96b086001c015e04151aa3fc0e7f602",
+      "bytes": 115319,
+      "sha256": "76f375c8945d4b5299280083e9bb0d1ef75c534baeaeb9bceed0dbaf1e2b65c8",
       "growthStructure": "Three clasping blades: an upright tightly folded spear between two short opening ribbon leaves; no flowers.",
       "leafCount": 3,
       "flowerCount": 0,
@@ -160,34 +160,34 @@
       "thumbnail": "ui/sunspike-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.251992,
-          -0.179413,
+          -0.465311449,
+          -0.331291957,
           0.0
         ],
         "max": [
-          0.253882,
-          0.086983,
-          0.4874
+          0.468801395,
+          0.160616947,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.252249,
-          -0.179458,
+          -0.465786007,
+          -0.331375051,
           0.0
         ],
         "max": [
-          0.253882,
-          0.088826,
-          0.487881
+          0.468801395,
+          0.164020107,
+          0.900888182
         ]
       },
       "animation": "sunspike_seedling_sway",
       "triangles": 4880,
       "joints": 13,
       "materials": 1,
-      "bytes": 237166,
-      "sha256": "cfa2680a0ccd45616046d628eccbe7d7a449ad223d02a34d7c903050ac54ca84",
+      "bytes": 237644,
+      "sha256": "f35868b98b1c918a58264ceb14a7ec00ef7a60ae34523d650755c63a91449c14",
       "growthStructure": "Open five-blade basal fan and one short scape with a compact imbricate colored torch bud.",
       "leafCount": 5,
       "flowerCount": 0,
@@ -204,34 +204,34 @@
       "thumbnail": "ui/sunspike-seedling-moon.png",
       "bounds": {
         "min": [
-          -0.251992,
-          -0.179413,
+          -0.465311449,
+          -0.331291957,
           0.0
         ],
         "max": [
-          0.253882,
-          0.086983,
-          0.4874
+          0.468801395,
+          0.160616947,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.252249,
-          -0.179458,
+          -0.465786007,
+          -0.331375051,
           0.0
         ],
         "max": [
-          0.253882,
-          0.088826,
-          0.487881
+          0.468801395,
+          0.164020107,
+          0.900888182
         ]
       },
       "animation": "sunspike_seedling_sway",
       "triangles": 4880,
       "joints": 13,
       "materials": 1,
-      "bytes": 236480,
-      "sha256": "1bc6e0a99612362f7a0d84e00e36547380a96deb225f20887b80c4433fe4e9d8",
+      "bytes": 237096,
+      "sha256": "53fd011f7409276b3364005c919629b03ebc0f81e18b963f7f9b48dd21b09c17",
       "growthStructure": "Open five-blade basal fan and one short scape with a compact imbricate colored torch bud.",
       "leafCount": 5,
       "flowerCount": 0,
@@ -248,34 +248,34 @@
       "thumbnail": "ui/sunspike-young-standard.png",
       "bounds": {
         "min": [
-          -0.421642,
-          -0.261411,
+          -0.624886254,
+          -0.387419044,
           0.0
         ],
         "max": [
-          0.426508,
-          0.294666,
-          0.94465
+          0.632097814,
+          0.436703964,
+          1.4
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.422291,
-          -0.261552,
+          -0.625848092,
+          -0.38762801,
           0.0
         ],
         "max": [
-          0.426525,
-          0.295714,
-          0.944667
+          0.632123009,
+          0.438257132,
+          1.400025195
         ]
       },
       "animation": "sunspike_young_sway",
       "triangles": 21640,
       "joints": 23,
       "materials": 1,
-      "bytes": 853029,
-      "sha256": "1aa00685d4238f295077c6c904be96361020f12f2f9f6916896e19f22cc147a4",
+      "bytes": 853507,
+      "sha256": "0fa7b827d7cb07abe992ecf0799af6c6abccd1ecce0a7406813594ec947d2837",
       "growthStructure": "Eight-blade spreading rosette, first two unequal open torches and a separate developing third bud.",
       "leafCount": 8,
       "flowerCount": 2,
@@ -292,34 +292,34 @@
       "thumbnail": "ui/sunspike-young-moon.png",
       "bounds": {
         "min": [
-          -0.421642,
-          -0.261411,
+          -0.624886254,
+          -0.387419044,
           0.0
         ],
         "max": [
-          0.426508,
-          0.294666,
-          0.94465
+          0.632097814,
+          0.436703964,
+          1.4
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.422291,
-          -0.261552,
+          -0.625848092,
+          -0.38762801,
           0.0
         ],
         "max": [
-          0.426525,
-          0.295714,
-          0.944667
+          0.632123009,
+          0.438257132,
+          1.400025195
         ]
       },
       "animation": "sunspike_young_sway",
       "triangles": 21640,
       "joints": 23,
       "materials": 1,
-      "bytes": 852598,
-      "sha256": "60733626b293e38ac7df01c90abea8e1b3e5be50dd100d826631c599647d22f7",
+      "bytes": 853083,
+      "sha256": "3be4557a148ce628183f4d64fdcdf2cf60b72d8c96be3fa7d98e49c68699f0a1",
       "growthStructure": "Eight-blade spreading rosette, first two unequal open torches and a separate developing third bud.",
       "leafCount": 8,
       "flowerCount": 2,

@@ -58,26 +58,26 @@
       "thumbnail": "ui/bluebell-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.025595,
-          -0.08164,
+          -0.078123312,
+          -0.249188796,
           0.0
         ],
         "max": [
-          0.086451,
-          0.030551,
-          0.212955
+          0.263873354,
+          0.093250452,
+          0.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.025759,
-          -0.081956,
+          -0.078623888,
+          -0.250153319,
           0.0
         ],
         "max": [
-          0.086778,
-          0.033934,
-          0.21451
+          0.264871452,
+          0.103576342,
+          0.654746308
         ]
       },
       "animation": "bluebell_sprout_sway",
@@ -89,8 +89,8 @@
       "basalSheathCount": 0,
       "triangles": 3436,
       "joints": 5,
-      "bytes": 189963,
-      "sha256": "2cf2326780ff0cb386c73d38b68690c762dfdd6897caab6dcf2a555994c85584"
+      "bytes": 190571,
+      "sha256": "d366b4f2c76d25f18fcf30409ce6cc4fc7db3766c3f2f950fafb40871be267d6"
     },
     {
       "stage": "seedling",
@@ -99,26 +99,26 @@
       "thumbnail": "ui/bluebell-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.156029,
-          -0.190456,
+          -0.370412839,
+          -0.452142535,
           0.0
         ],
         "max": [
-          0.17864,
-          0.074737,
-          0.379107
+          0.424091352,
+          0.177425634,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.159798,
-          -0.190602,
+          -0.379360444,
+          -0.452489139,
           0.0
         ],
         "max": [
-          0.179091,
-          0.080354,
-          0.379491
+          0.425162025,
+          0.190760392,
+          0.900911616
         ]
       },
       "animation": "bluebell_seedling_sway",
@@ -130,8 +130,8 @@
       "basalSheathCount": 0,
       "triangles": 7004,
       "joints": 9,
-      "bytes": 324029,
-      "sha256": "af883a6a9765eb2fa17f8c2666928798d6bfc6688e007c362736ca2d7ed20550"
+      "bytes": 324515,
+      "sha256": "418f170efe89919bd7200751d85403d853c5364c2d4b92738ea6f2a6c1af2712"
     },
     {
       "stage": "young",
@@ -140,26 +140,26 @@
       "thumbnail": "ui/bluebell-young-standard.png",
       "bounds": {
         "min": [
-          -0.256119,
-          -0.344574,
+          -0.355879002,
+          -0.478787795,
           0.0
         ],
         "max": [
-          0.367155,
-          0.251337,
-          0.791648
+          0.51016424,
+          0.349234382,
+          1.1
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.260968,
-          -0.347166,
+          -0.362616719,
+          -0.482389395,
           0.0
         ],
         "max": [
-          0.368166,
-          0.252114,
-          0.791935
+          0.511569031,
+          0.350314028,
+          1.100398788
         ]
       },
       "animation": "bluebell_young_sway",
@@ -171,8 +171,8 @@
       "basalSheathCount": 0,
       "triangles": 13404,
       "joints": 16,
-      "bytes": 563966,
-      "sha256": "ef8b590ca0921a19b41ea813e575b71d6a34b4f5f2f6d32035aae7d5ecdce644"
+      "bytes": 564447,
+      "sha256": "71a22abdcac79515a639129b19ac8e962401723e0b6e9ca4ce837eab7f0061a5"
     },
     {
       "stage": "adult",

@@ -70,26 +70,26 @@
       "thumbnail": "ui/havenbough-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.120049,
-          -0.021839,
+          -0.189841138,
+          -0.034535403,
           0.0
         ],
         "max": [
-          0.144049,
-          0.027437,
-          0.385743
+          0.227793868,
+          0.043387877,
+          0.61
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.122161,
-          -0.023809,
+          -0.193180978,
+          -0.03765069,
           0.0
         ],
         "max": [
-          0.151258,
-          0.033155,
-          0.388368
+          0.239193919,
+          0.052430115,
+          0.61415108
         ]
       },
       "animation": "havenbough_sprout_sway",
@@ -100,8 +100,8 @@
       "fanCount": 0,
       "flowerCount": 0,
       "stageIdentity": "inward cupped cotyledons, copper backs, twisted shoot, furled tip",
-      "bytes": 152861,
-      "sha256": "bf7d52d5e90e46c716e5e055a763cca6eff048213ecbf28c15e3bf41120a7873"
+      "bytes": 153296,
+      "sha256": "ee7c76cda75dacf32943d411b21bd77a412ecf84e4a325fd8b475668f769012a"
     },
     {
       "stage": "seedling",
@@ -110,26 +110,26 @@
       "thumbnail": "ui/havenbough-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.445575,
-          -0.114868,
+          -0.547113972,
+          -0.141044465,
           0.0
         ],
         "max": [
-          0.415575,
-          0.050771,
-          0.99358
+          0.510277481,
+          0.062340848,
+          1.22
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.447535,
-          -0.118663,
+          -0.549520622,
+          -0.145704281,
           0.0
         ],
         "max": [
-          0.423197,
-          0.053903,
-          0.994485
+          0.519636406,
+          0.066186578,
+          1.221111234
         ]
       },
       "animation": "havenbough_seedling_sway",
@@ -140,8 +140,8 @@
       "fanCount": 0,
       "flowerCount": 0,
       "stageIdentity": "sinuous single stem, curled fork arms, three juvenile leaf groups",
-      "bytes": 234274,
-      "sha256": "50ce2d25d2159f21c11832a7c3ef05bea995a7253d3a0704bc68ac1430fcc90f"
+      "bytes": 234724,
+      "sha256": "70c5a48d1f20f8ee5d63790c39301275feba921abb11fc04fc886423d3704c10"
     },
     {
       "stage": "young",
@@ -150,26 +150,26 @@
       "thumbnail": "ui/havenbough-young-standard.png",
       "bounds": {
         "min": [
-          -1.410956,
-          -0.619053,
+          -1.626823155,
+          -0.713764111,
           0.0
         ],
         "max": [
-          1.43354,
-          0.769217,
-          2.298365
+          1.652862361,
+          0.886902233,
+          2.65
         ]
       },
       "animatedBounds": {
         "min": [
-          -1.416663,
-          -0.628707,
+          -1.633403289,
+          -0.72489511,
           0.0
         ],
         "max": [
-          1.435155,
-          0.792691,
-          2.303333
+          1.654724445,
+          0.913967603,
+          2.655728072
         ]
       },
       "animation": "havenbough_young_sway",
@@ -180,8 +180,8 @@
       "fanCount": 5,
       "flowerCount": 2,
       "stageIdentity": "upright open sapling, ascending side branches, five sparse fans and two ivory buds",
-      "bytes": 714309,
-      "sha256": "49789b81eeb489048f35a00d9234480943ce8d8f336494e3e55f71d42a8a0f94"
+      "bytes": 714759,
+      "sha256": "9db13d26b9203c0cb25124d7eeca27ac1d757f027b7338efe575d2a4161f4cc7"
     },
     {
       "stage": "adult",

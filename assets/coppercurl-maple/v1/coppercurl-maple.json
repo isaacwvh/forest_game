@@ -73,34 +73,34 @@
       "thumbnail": "ui/coppercurl-maple-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.164347,
-          -0.095741,
+          -0.414912901,
+          -0.241709164,
           0.0
         ],
         "max": [
-          0.200563,
-          0.090376,
-          0.265387
+          0.506344357,
+          0.228164605,
+          0.67
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.164508,
-          -0.096596,
+          -0.415319364,
+          -0.24386771,
           0.0
         ],
         "max": [
-          0.200604,
-          0.091625,
-          0.266452
+          0.506447867,
+          0.231317849,
+          0.672688715
         ]
       },
       "animation": "coppercurl_maple_sprout_sway",
       "triangles": 4668,
       "joints": 3,
       "materials": 1,
-      "bytes": 435210,
-      "sha256": "49bfca99b300615a934de2510412662258be8ed268e8f5475df2405883375f40",
+      "bytes": 435695,
+      "sha256": "4ca8b2fa15041eddfd8c1862c2d3e2a4f3e56847c1eba55c7197addbdd33e2f3",
       "leafCount": 6,
       "compoundCount": 2,
       "sprayCount": 0,
@@ -114,34 +114,34 @@
       "thumbnail": "ui/coppercurl-maple-sprout-autumn.png",
       "bounds": {
         "min": [
-          -0.164347,
-          -0.095741,
+          -0.414912901,
+          -0.241709164,
           0.0
         ],
         "max": [
-          0.200563,
-          0.090376,
-          0.265387
+          0.506344357,
+          0.228164605,
+          0.67
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.164508,
-          -0.096596,
+          -0.415319364,
+          -0.24386771,
           0.0
         ],
         "max": [
-          0.200604,
-          0.091625,
-          0.266452
+          0.506447867,
+          0.231317849,
+          0.672688715
         ]
       },
       "animation": "coppercurl_maple_sprout_sway",
       "triangles": 4788,
       "joints": 3,
       "materials": 1,
-      "bytes": 422804,
-      "sha256": "01af14f8df48e82943c4e2e3472b98e6181f51c2cbb6cad8e00095dc1276f4c8",
+      "bytes": 423293,
+      "sha256": "fdc888eceffcd3b78f1b9df851b0387e7d57c71ff168230ad20f30daa4cad280",
       "leafCount": 6,
       "compoundCount": 2,
       "sprayCount": 0,
@@ -155,34 +155,34 @@
       "thumbnail": "ui/coppercurl-maple-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.308521,
-          -0.207583,
+          -0.451174289,
+          -0.30356479,
           0.0
         ],
         "max": [
-          0.275111,
-          0.100263,
-          0.923154
+          0.402316244,
+          0.146622395,
+          1.35
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.308715,
-          -0.208314,
+          -0.451457991,
+          -0.304633788,
           0.0
         ],
         "max": [
-          0.283892,
-          0.100618,
-          0.92426
+          0.415157384,
+          0.147141539,
+          1.35161739
         ]
       },
       "animation": "coppercurl_maple_seedling_sway",
       "triangles": 5706,
       "joints": 7,
       "materials": 1,
-      "bytes": 500782,
-      "sha256": "0ca653d74f745dab2000ad051ef3f416242197d10827813bb5188ad6f6d01ed4",
+      "bytes": 501393,
+      "sha256": "ca6c1dccacd149c3c5eed6ec3f77fcbdb920d4fd573e79d7354eb55e9e72958e",
       "leafCount": 15,
       "compoundCount": 5,
       "sprayCount": 2,
@@ -196,34 +196,34 @@
       "thumbnail": "ui/coppercurl-maple-seedling-autumn.png",
       "bounds": {
         "min": [
-          -0.308521,
-          -0.207583,
+          -0.451174289,
+          -0.30356479,
           0.0
         ],
         "max": [
-          0.275111,
-          0.100263,
-          0.923154
+          0.402316244,
+          0.146622395,
+          1.35
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.308715,
-          -0.208314,
+          -0.451457991,
+          -0.304633788,
           0.0
         ],
         "max": [
-          0.283892,
-          0.100618,
-          0.92426
+          0.415157384,
+          0.147141539,
+          1.35161739
         ]
       },
       "animation": "coppercurl_maple_seedling_sway",
       "triangles": 6246,
       "joints": 7,
       "materials": 1,
-      "bytes": 509019,
-      "sha256": "ad76572544db21ab9f1941f0f4c1c66689ae9b72d56df2479ed5481c393da065",
+      "bytes": 509506,
+      "sha256": "57f5d91bc085736c724483bef7478b15db1ee8a02e5ecdba5b29c2a25c47b614",
       "leafCount": 15,
       "compoundCount": 5,
       "sprayCount": 2,
@@ -237,34 +237,34 @@
       "thumbnail": "ui/coppercurl-maple-young-standard.png",
       "bounds": {
         "min": [
-          -0.884633,
-          -0.515392,
+          -1.125745768,
+          -0.655865611,
           0.0
         ],
         "max": [
-          0.883815,
-          0.818978,
-          2.294593
+          1.124704817,
+          1.04219605,
+          2.92
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.893032,
-          -0.521715,
+          -1.136433973,
+          -0.663911988,
           0.0
         ],
         "max": [
-          0.897539,
-          0.820317,
-          2.299222
+          1.142169387,
+          1.043900003,
+          2.925890666
         ]
       },
       "animation": "coppercurl_maple_young_sway",
       "triangles": 24652,
       "joints": 15,
       "materials": 1,
-      "bytes": 1448744,
-      "sha256": "da2a9d6a744a118b37e9135de29b14b94c179498d539cdfcc4a8fcd0780b61bf",
+      "bytes": 1449355,
+      "sha256": "d36393cbe549e3fa050d23f82ce277547f64225fa17add0829882b1c1d26b280",
       "leafCount": 126,
       "compoundCount": 42,
       "sprayCount": 6,
@@ -278,34 +278,34 @@
       "thumbnail": "ui/coppercurl-maple-young-autumn.png",
       "bounds": {
         "min": [
-          -0.884633,
-          -0.515392,
+          -1.125745768,
+          -0.655865611,
           0.0
         ],
         "max": [
-          0.883815,
-          0.818978,
-          2.294593
+          1.124704817,
+          1.04219605,
+          2.92
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.893032,
-          -0.521715,
+          -1.136433973,
+          -0.663911988,
           0.0
         ],
         "max": [
-          0.897539,
-          0.820317,
-          2.299222
+          1.142169387,
+          1.043900003,
+          2.925890666
         ]
       },
       "animation": "coppercurl_maple_young_sway",
       "triangles": 26692,
       "joints": 15,
       "materials": 1,
-      "bytes": 1529664,
-      "sha256": "d2098127a246d15bc6deb15629d2cb9c2ed14e4fe66c29af7c06683dea960692",
+      "bytes": 1530145,
+      "sha256": "56ebabd1003166ac2484983b91d03a03b86a40d339c36d59fcf32c3a5b752430",
       "leafCount": 126,
       "compoundCount": 42,
       "sprayCount": 6,

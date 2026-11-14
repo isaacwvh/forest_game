@@ -63,34 +63,34 @@
       "thumbnail": "ui/starcap-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.085352,
-          -0.085443,
+          -0.330821705,
+          -0.331174419,
           0.0
         ],
         "max": [
-          0.085668,
-          0.085577,
-          0.1548
+          0.332046512,
+          0.331693798,
+          0.6
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.085352,
-          -0.085526,
+          -0.330821705,
+          -0.331496124,
           0.0
         ],
         "max": [
-          0.085668,
-          0.08569,
-          0.1548
+          0.332046512,
+          0.332131783,
+          0.6
         ]
       },
       "animation": "starcap_sprout_sway",
       "mushroomCount": 1,
       "triangles": 7100,
       "joints": 3,
-      "bytes": 345728,
-      "sha256": "a8f9d496b0dfc5af92b343e565e8e0da7a55e3f1d5d72b5c26585447dfc0f345"
+      "bytes": 346237,
+      "sha256": "5db4df62ec6e3d437a97f868bfb8d9f003e32d0cd391960076d7db7b885a8568"
     },
     {
       "stage": "sprout",
@@ -99,34 +99,34 @@
       "thumbnail": "ui/starcap-sprout-blue-gold.png",
       "bounds": {
         "min": [
-          -0.085352,
-          -0.085443,
+          -0.330821705,
+          -0.331174419,
           0.0
         ],
         "max": [
-          0.085668,
-          0.085577,
-          0.1548
+          0.332046512,
+          0.331693798,
+          0.6
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.085352,
-          -0.085526,
+          -0.330821705,
+          -0.331496124,
           0.0
         ],
         "max": [
-          0.085668,
-          0.08569,
-          0.1548
+          0.332046512,
+          0.332131783,
+          0.6
         ]
       },
       "animation": "starcap_sprout_sway",
       "mushroomCount": 1,
       "triangles": 7100,
       "joints": 3,
-      "bytes": 345945,
-      "sha256": "16dd84adb7b3b9f045b32550bae2bd5918f26ebb436c135adbe2c22246f9e3e0"
+      "bytes": 346456,
+      "sha256": "9500b264a2b4358f6c5ddd8828c67b8b7a9b67c52552bde8218cbc77cd066d35"
     },
     {
       "stage": "seedling",
@@ -135,34 +135,34 @@
       "thumbnail": "ui/starcap-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.130064,
-          -0.140529,
+          -0.301038338,
+          -0.32526,
           0.0
         ],
         "max": [
-          0.161676,
-          0.151211,
-          0.337
+          0.374205579,
+          0.349983917,
+          0.78
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.130089,
-          -0.14095,
+          -0.301096202,
+          -0.326234421,
           0.0
         ],
         "max": [
-          0.161711,
-          0.151796,
-          0.337011
+          0.374286588,
+          0.351337923,
+          0.78002546
         ]
       },
       "animation": "starcap_seedling_sway",
       "mushroomCount": 1,
       "triangles": 7676,
       "joints": 3,
-      "bytes": 367689,
-      "sha256": "466408508a60e6f8ae4c8c657c8670f9aeaf1daeb46c4d9f809dc25ce1c7c17f"
+      "bytes": 368205,
+      "sha256": "a9bf0292c485f556eea696c4263a27fab56f06bdc7fa10bd54120237e6a804d4"
     },
     {
       "stage": "seedling",
@@ -171,34 +171,34 @@
       "thumbnail": "ui/starcap-seedling-blue-gold.png",
       "bounds": {
         "min": [
-          -0.130064,
-          -0.140529,
+          -0.301038338,
+          -0.32526,
           0.0
         ],
         "max": [
-          0.161676,
-          0.151211,
-          0.337
+          0.374205579,
+          0.349983917,
+          0.78
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.130089,
-          -0.14095,
+          -0.301096202,
+          -0.326234421,
           0.0
         ],
         "max": [
-          0.161711,
-          0.151796,
-          0.337011
+          0.374286588,
+          0.351337923,
+          0.78002546
         ]
       },
       "animation": "starcap_seedling_sway",
       "mushroomCount": 1,
       "triangles": 7676,
       "joints": 3,
-      "bytes": 367908,
-      "sha256": "dba35e32a00696a5dbe08336f771d202c77ca6fefea07c36a2bb60da002b0570"
+      "bytes": 368426,
+      "sha256": "bc64d0bb15dc2d463e8daa0f9464874544086976386d30058d323632991172da"
     },
     {
       "stage": "young",
@@ -207,34 +207,34 @@
       "thumbnail": "ui/starcap-young-standard.png",
       "bounds": {
         "min": [
-          -0.39507,
-          -0.290493,
+          -0.596582215,
+          -0.438663926,
           0.0
         ],
         "max": [
-          0.331561,
-          0.277004,
-          0.596
+          0.500679362,
+          0.418294631,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.395553,
-          -0.290504,
+          -0.597311577,
+          -0.438680537,
           0.0
         ],
         "max": [
-          0.332041,
-          0.278187,
-          0.596038
+          0.501404195,
+          0.42008104,
+          0.900057383
         ]
       },
       "animation": "starcap_young_sway",
       "mushroomCount": 3,
       "triangles": 23028,
       "joints": 7,
-      "bytes": 911800,
-      "sha256": "52d8d1e2ff359517239799c9c312fae5914b2e87e62de4678a328d4fdc33ef07"
+      "bytes": 912182,
+      "sha256": "eae7bee5372636f6e7f95f0d0ec93603ac71de4561757b8c8e3cbba75bfdf7ba"
     },
     {
       "stage": "young",
@@ -243,34 +243,34 @@
       "thumbnail": "ui/starcap-young-blue-gold.png",
       "bounds": {
         "min": [
-          -0.39507,
-          -0.290493,
+          -0.596582215,
+          -0.438663926,
           0.0
         ],
         "max": [
-          0.331561,
-          0.277004,
-          0.596
+          0.500679362,
+          0.418294631,
+          0.9
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.395553,
-          -0.290504,
+          -0.597311577,
+          -0.438680537,
           0.0
         ],
         "max": [
-          0.332041,
-          0.278187,
-          0.596038
+          0.501404195,
+          0.42008104,
+          0.900057383
         ]
       },
       "animation": "starcap_young_sway",
       "mushroomCount": 3,
       "triangles": 23028,
       "joints": 7,
-      "bytes": 911887,
-      "sha256": "427042b0c595b18328848a17a17bff32b46b901693534480bd8962ba001bd2f2"
+      "bytes": 912400,
+      "sha256": "8ea1c927cee89fe388dc605a593ae180955947d4fdeba7d21a99cce1af74ef17"
     },
     {
       "stage": "adult",

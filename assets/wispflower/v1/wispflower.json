@@ -58,34 +58,34 @@
       "thumbnail": "ui/wispflower-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.014299,
-          -0.02602,
+          -0.053140054,
+          -0.096699365,
           0.0
         ],
         "max": [
-          0.024238,
-          0.010356,
-          0.115705
+          0.090076833,
+          0.038486496,
+          0.43
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.014597,
-          -0.026739,
+          -0.054247526,
+          -0.099371419,
           0.0
         ],
         "max": [
-          0.025069,
-          0.011186,
-          0.116048
+          0.093165118,
+          0.041571064,
+          0.431274707
         ]
       },
       "animation": "wispflower_sprout_sway",
       "triangles": 1994,
       "joints": 3,
       "materials": 1,
-      "bytes": 268741,
-      "sha256": "1da6838bd993161cbe020d3e851814ff86e448ecfd5e3bf3422c17978a760a18",
+      "bytes": 269350,
+      "sha256": "31b96a3def1d42c138bdd9ee464d02a4c47f4ccfbdef0f6dbda0212f1e33b441",
       "leafHeadCount": 1,
       "leafletCount": 3,
       "flowerCount": 0,
@@ -101,34 +101,34 @@
       "thumbnail": "ui/wispflower-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.139804,
-          -0.088789,
+          -0.31524954,
+          -0.200213809,
           0.0
         ],
         "max": [
-          0.14409,
-          0.079387,
-          0.243909
+          0.32491421,
+          0.17901287,
+          0.55
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.141257,
-          -0.089481,
+          -0.318525967,
+          -0.201774227,
           0.0
         ],
         "max": [
-          0.146314,
-          0.082833,
-          0.24393
+          0.329929195,
+          0.186783391,
+          0.550047354
         ]
       },
       "animation": "wispflower_seedling_sway",
       "triangles": 7116,
       "joints": 9,
       "materials": 1,
-      "bytes": 499899,
-      "sha256": "8d5dcbdfaf72a9b1a9824cae0f4ed42c4f66b300472662232c7fca6b2c9fb0d1",
+      "bytes": 500507,
+      "sha256": "b8b626628a74cef963626093c050f58540e34bb1742e527f609554f4db20ab33",
       "leafHeadCount": 3,
       "leafletCount": 9,
       "flowerCount": 0,
@@ -144,34 +144,34 @@
       "thumbnail": "ui/wispflower-young-standard.png",
       "bounds": {
         "min": [
-          -0.311251,
-          -0.258797,
+          -0.433496256,
+          -0.360440707,
           0.0
         ],
         "max": [
-          0.360444,
-          0.193755,
-          0.452341
+          0.502010032,
+          0.269853164,
+          0.63
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.312937,
-          -0.259241,
+          -0.43584444,
+          -0.36105909,
           0.0
         ],
         "max": [
-          0.361506,
-          0.198307,
-          0.45557
+          0.503489138,
+          0.276192983,
+          0.634497205
         ]
       },
       "animation": "wispflower_young_sway",
       "triangles": 27510,
       "joints": 19,
       "materials": 1,
-      "bytes": 1355845,
-      "sha256": "0cc5a680384a4f020a1e578a90cece6cca9742888ad65e8ecd262bfaa5bac1c8",
+      "bytes": 1356460,
+      "sha256": "a70d86a03829bec8ab2e0668c58a713e74f23505dba9d59c37bfb40599bd9f0f",
       "leafHeadCount": 7,
       "leafletCount": 21,
       "flowerCount": 1,

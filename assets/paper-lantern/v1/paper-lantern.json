@@ -58,34 +58,34 @@
       "thumbnail": "ui/paper-lantern-sprout-standard.png",
       "bounds": {
         "min": [
-          -0.06951,
-          -0.024959,
+          -0.247945971,
+          -0.089030118,
           0.0
         ],
         "max": [
-          0.07762,
-          0.033629,
-          0.168206
+          0.276874784,
+          0.119956482,
+          0.6
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.069704,
-          -0.025756,
+          -0.24863798,
+          -0.09187306,
           0.0
         ],
         "max": [
-          0.077919,
-          0.034387,
-          0.16835
+          0.277941334,
+          0.122660309,
+          0.600513656
         ]
       },
       "animation": "paper-lantern_sprout_sway",
       "triangles": 2956,
       "joints": 3,
       "materials": 1,
-      "bytes": 262927,
-      "sha256": "df1cf18bac93087d40e436662d25f8effdbc48dc97fe08622b7e33b913bea4c5",
+      "bytes": 263414,
+      "sha256": "33ee77ac80c8a321c54a27d6df5b5b948665444db0ebd1e01d12245be2cdc051",
       "leafCount": 3,
       "lanternCount": 0,
       "budCount": 0,
@@ -100,34 +100,34 @@
       "thumbnail": "ui/paper-lantern-seedling-standard.png",
       "bounds": {
         "min": [
-          -0.160151,
-          -0.068555,
+          -0.361635082,
+          -0.154803236,
           0.0
         ],
         "max": [
-          0.15157,
-          0.089662,
-          0.354282
+          0.342258427,
+          0.202464703,
+          0.8
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.160216,
-          -0.070829,
+          -0.361781857,
+          -0.159938128,
           0.0
         ],
         "max": [
-          0.151876,
-          0.092001,
-          0.35483
+          0.342949402,
+          0.207746372,
+          0.801237432
         ]
       },
       "animation": "paper-lantern_seedling_sway",
       "triangles": 8118,
       "joints": 3,
       "materials": 1,
-      "bytes": 461244,
-      "sha256": "cd3d5330746e99fede0837612dfe68c810ac5f6205370721edf9fedb51294a93",
+      "bytes": 461852,
+      "sha256": "259ea21c163907b75f301a940fb1c4d1e60b4482e7ed86fa2cbd568e212595ea",
       "leafCount": 4,
       "lanternCount": 0,
       "budCount": 1,
@@ -142,34 +142,34 @@
       "thumbnail": "ui/paper-lantern-young-standard.png",
       "bounds": {
         "min": [
-          -0.235838,
-          -0.167461,
+          -0.330448063,
+          -0.234640572,
           0.0
         ],
         "max": [
-          0.259943,
-          0.208014,
-          0.678007
+          0.364223157,
+          0.291462035,
+          0.95
         ]
       },
       "animatedBounds": {
         "min": [
-          -0.235858,
-          -0.167461,
+          -0.330476087,
+          -0.234640572,
           0.0
         ],
         "max": [
-          0.26005,
-          0.209321,
-          0.678734
+          0.364373082,
+          0.293293358,
+          0.951018647
         ]
       },
       "animation": "paper-lantern_young_sway",
       "triangles": 63280,
       "joints": 7,
       "materials": 1,
-      "bytes": 2648251,
-      "sha256": "31ca8f2282994dacfbbd33b36e4be8e09d5f1570f5e445b2ea06f5994393a414",
+      "bytes": 2648853,
+      "sha256": "6d298681352baf38800d81af3e1e817ad3ad883cab09d0f0c53bd6dba9269827",
       "leafCount": 4,
       "lanternCount": 2,
       "budCount": 1,
