@@ -223,6 +223,7 @@ struct CollectionScreen: View {
     private var catalogContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                CatalogCollectionTracker(catalogue: store.catalogue, discovery: store.discovery)
                 JournalSearchField(text: $search)
                 HStack {
                     Spacer(minLength: 0)
@@ -491,12 +492,17 @@ private struct CatalogSpeciesScreen: View {
     @State private var variantID = "standard"
     @State private var discoveryViewer = UUID()
     @Environment(\.scenePhase) private var scenePhase
+    private var variants: [APIVariant] { CatalogPresentation.sortedVariants(species.variants) }
     var body: some View {
-        if let variant = species.variants.first(where: { $0.variantId == variantID }) ?? species.variants.first {
+        if let variant = variants.first(where: { $0.variantId == variantID }) ?? variants.first {
             CatalogDetailScreen(row: CatalogRow(species: species, variant: variant), catalogue: catalogue,
                                 offers: offers, assets: assets, discovery: discovery, variantID: $variantID)
                 .navigationTitle(species.displayName)
-                .task { discovery.beginViewing(discoveryViewer); await discovery.refresh() }
+                .task {
+                    variantID = variant.variantId
+                    discovery.beginViewing(discoveryViewer)
+                    await discovery.refresh()
+                }
                 .onDisappear { discovery.endViewing(discoveryViewer) }
                 .onChange(of: scenePhase) { phase in
                     if phase == .active { Task { await discovery.refresh() } }
@@ -516,6 +522,7 @@ private struct CatalogDetailScreen: View {
     @ObservedObject var discovery: CatalogDiscoveryStore
     @Binding var variantID: String
     @Environment(\.dynamicTypeSize) private var textSize
+    private var variants: [APIVariant] { CatalogPresentation.sortedVariants(row.species.variants) }
     private func profile(_ kind: String) -> APICatalogueProfile? {
         let fallback: APIProfileReference?
         switch kind {
@@ -606,7 +613,7 @@ private struct CatalogDetailScreen: View {
     private var variantPicker: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 4) {
-                ForEach(row.species.variants, id: \.variantId) { variant in
+                ForEach(variants, id: \.variantId) { variant in
                     Button { variantID = variant.variantId } label: {
                         Text(variant.displayName).font(.subheadline.weight(.medium))
                             .fixedSize().padding(.horizontal, 12).frame(minHeight: 44)
@@ -618,7 +625,7 @@ private struct CatalogDetailScreen: View {
                 }
             }.padding(4).background(JournalTheme.sage, in: Capsule())
             Picker("Variant", selection: $variantID) {
-                ForEach(row.species.variants, id: \.variantId) { Text($0.displayName).tag($0.variantId) }
+                ForEach(variants, id: \.variantId) { Text($0.displayName).tag($0.variantId) }
             }.pickerStyle(.menu).frame(minHeight: 44)
         }
     }

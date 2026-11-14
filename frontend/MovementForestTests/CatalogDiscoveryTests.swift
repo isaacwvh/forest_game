@@ -1,5 +1,7 @@
 import XCTest
 import Foundation
+import SwiftUI
+import UIKit
 @testable import MovementForest
 
 @MainActor
@@ -44,6 +46,42 @@ final class CatalogDiscoveryTests: XCTestCase {
     }
     private func revealed(_ store: CatalogDiscoveryStore, _ variant: String, _ stage: GrowthStage) -> Bool {
         store.revealed(species: "oak", variant: variant, stage: stage)
+    }
+
+    func testCollectionProgressSurvivesCachedFailuresAndClearsOnAccountDetach() async throws {
+        let grown = try fixture(), cache = MemoryDiscoveryCache(), service = FakeDiscovery(try fixture())
+        let catalogue = APICatalogue(catalogVersion: grown.catalogVersion, isFixture: true, coordinateUnit: "garden_unit",
+            gardenUnitMetres: 1, coordinateDecimalPlaces: 3, rotationDecimalPlaces: 2,
+            species: [APISpecies(speciesId: "oak", displayName: "Oak", clearanceRadius: 1,
+                variants: ["standard", "blue", "vined"].map {
+                    APIVariant(variantId: $0, displayName: $0, assetCatalogVersion: "1", stages: [:])
+                })])
+        let store = CatalogDiscoveryStore(userID: grown.userId, service: service, cache: cache)
+        XCTAssertNil(CatalogCollectionCounts(catalogue: catalogue, discovery: store.snapshot))
+        await store.refresh()
+        let confirmed = try XCTUnwrap(CatalogCollectionCounts(catalogue: catalogue, discovery: store.snapshot))
+        XCTAssertEqual(confirmed.collectedPlants, 1)
+        XCTAssertEqual(confirmed.collectedVariants, 1)
+        let restored = CatalogDiscoveryStore(userID: grown.userId, service: service, cache: cache)
+        XCTAssertEqual(CatalogCollectionCounts(catalogue: catalogue, discovery: restored.snapshot), confirmed)
+        service.fail = true
+        await restored.refresh()
+        XCTAssertEqual(CatalogCollectionCounts(catalogue: catalogue, discovery: restored.snapshot), confirmed)
+        // Both the unknown and saved-data states fit without clipping at the largest text size.
+        for width: CGFloat in [232, 302] {
+            for textSize: DynamicTypeSize in [.large, .xxxLarge, .accessibility5] {
+                for current in [restored, CatalogDiscoveryStore(userID: UUID(), service: service, cache: MemoryDiscoveryCache())] {
+                    let host = UIHostingController(rootView: CatalogCollectionTracker(catalogue: catalogue, discovery: current)
+                        .environment(\.dynamicTypeSize, textSize))
+                    let size = host.sizeThatFits(in: CGSize(width: width, height: 2000))
+                    XCTAssertLessThanOrEqual(size.width, width + 1)
+                    XCTAssertTrue(size.height.isFinite)
+                    XCTAssertGreaterThan(size.height, 44)
+                }
+            }
+        }
+        restored.deactivate()
+        XCTAssertNil(CatalogCollectionCounts(catalogue: catalogue, discovery: restored.snapshot))
     }
 
     func testUnownedSproutsStayConcealedWhileUnknownFailedOrConfirmed() async throws {

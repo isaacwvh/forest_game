@@ -1,5 +1,37 @@
 import SwiftUI
 
+struct CatalogCollectionTracker: View {
+    let catalogue: APICatalogue?
+    @ObservedObject var discovery: CatalogDiscoveryStore
+    @Environment(\.dynamicTypeSize) private var textSize
+    private var counts: CatalogCollectionCounts? {
+        CatalogCollectionCounts(catalogue: catalogue, discovery: discovery.snapshot)
+    }
+    var body: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .leading),
+                                 count: textSize.isAccessibilitySize ? 1 : 2),
+                  alignment: .leading, spacing: 12) {
+            metric("Plants collected", collected: counts?.collectedPlants, total: counts?.totalPlants,
+                   explanation: "Unique species acquired, including sold plants.", identifier: "plants")
+            metric("Variants collected", collected: counts?.collectedVariants, total: counts?.totalVariants,
+                   explanation: "Unique non-standard variants acquired, including sold plants.", identifier: "variants")
+        }.padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .background(JournalTheme.sage.opacity(0.65), in: RoundedRectangle(cornerRadius: 14))
+            .accessibilityIdentifier("catalog.collection")
+    }
+    private func metric(_ title: String, collected: Int?, total: Int?, explanation: String, identifier: String) -> some View {
+        let value = collected.flatMap { collected in total.map { "\(collected) / \($0)" } } ?? "Unavailable"
+        return VStack(alignment: .leading, spacing: 5) {
+            Text(title).font(.system(.caption, design: .serif).weight(.semibold))
+                .foregroundStyle(JournalTheme.secondary)
+            Text(value).font(.subheadline.weight(.medium)).monospacedDigit()
+        }.fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundStyle(JournalTheme.ink).accessibilityElement(children: .ignore)
+            .accessibilityLabel(title).accessibilityValue(value).accessibilityHint(explanation)
+            .accessibilityIdentifier("catalog.collection.\(identifier)")
+    }
+}
+
 /// Collection presentation only; amounts and eligibility remain owned by the coordinator.
 struct CollectionJournalFrame<Content: View>: View {
     @ViewBuilder var content: () -> Content

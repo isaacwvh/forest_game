@@ -1,5 +1,26 @@
 # Catalog and capacity follow-up — 13 November 2026
 
+## Collection summary and variant order — 14 November 2026
+
+The catalog summary above search uses permanent acquisition discovery: one count
+per species acquired through any variant, plus one per acquired non-standard
+species/variant pair. Denominators use the full current catalog, independent of
+search/rarity filters. Duplicates, later stages and sales do not inflate or reduce
+counts. Retired catalog entries are excluded. Missing or version-mismatched
+snapshots show Unavailable; confirmed empty discovery shows zero. Cached discovery
+retains the existing notice, and account detach clears the summary. Accessibility
+sizes stack the two metrics. This adds no backend/API/migration changes.
+
+Variant capsules and their menu fallback now share Standard-first ordering,
+followed by localized display name/stable ID. Initial selection remains Standard
+when present; a species without Standard selects its first sorted variant.
+
+Native acceptance: check both selector layouts, initial/changed selection, full
+catalog totals during filtering, acquisition/recovery, duplicates, sale, cached
+offline/failure/unknown states and account switching. Check narrow/large-text
+layout and VoiceOver. Added native tests cover ordering, deduplicated counts,
+unknown/version-mismatch states and cache/detach behavior; see VALIDATION.md.
+
 ## Delivered scope
 
 - Packs/Exchange summary: two flexible columns, one at accessibility text sizes;

@@ -390,6 +390,10 @@ final class ForestUITests: XCTestCase {
             XCTAssertFalse(app.staticTexts["plantDetails.stage"].label.contains("·"))
             XCTAssertTrue(app.descendants(matching: .any)["plantDetails.tags"].exists)
             XCTAssertTrue(app.descendants(matching: .any)["plantDetails.growthBar"].exists)
+            let water = app.descendants(matching: .any)["plantDetails.waterProgress"]
+            XCTAssertTrue(water.exists)
+            XCTAssertTrue((water.value as? String)?.contains(" of ") == true)
+            XCTAssertFalse(app.staticTexts["Total water"].exists)
             XCTAssertFalse(app.buttons["Growth details"].exists)
             let multiplier = app.descendants(matching: .any)["plantDetails.multiplier.steps"]
             let content = app.scrollViews["plantDetails.content"]
@@ -519,10 +523,22 @@ final class ForestUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-collection"]; app.launch()
         XCTAssertTrue(app.buttons["Catalog"].waitForExistence(timeout: 15)); app.buttons["Catalog"].tap()
+        let plants = app.descendants(matching: .any)["catalog.collection.plants"]
+        let variants = app.descendants(matching: .any)["catalog.collection.variants"]
+        XCTAssertTrue(plants.waitForExistence(timeout: 5))
+        XCTAssertTrue(variants.exists)
+        // This fixture has no confirmed discovery service; it must never imply zero acquisitions.
+        XCTAssertEqual(plants.value as? String, "Unavailable")
+        XCTAssertEqual(variants.value as? String, "Unavailable")
         let oak = app.buttons["catalog.species.oak"]
         XCTAssertTrue(oak.waitForExistence(timeout: 5)); oak.tap()
         let blue = app.buttons["catalog.variant.blue"]
-        XCTAssertTrue(blue.waitForExistence(timeout: 5)); blue.tap()
+        XCTAssertTrue(blue.waitForExistence(timeout: 5))
+        let standard = app.buttons["catalog.variant.standard"]
+        XCTAssertTrue(standard.isSelected)
+        XCTAssertLessThan(standard.frame.minX, blue.frame.minX)
+        blue.tap()
+        XCTAssertTrue(blue.isSelected)
         XCTAssertTrue(app.descendants(matching: .any)["plantDetails.tags"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["catalog.stage.sprout"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["catalog.stage.adult"].exists)

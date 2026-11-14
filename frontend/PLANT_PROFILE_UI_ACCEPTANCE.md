@@ -1,4 +1,24 @@
-# Plant profile UI refinement — 13 November 2026
+# Plant profile UI refinement
+
+## Compact water display — 14 November 2026
+
+The shared full owned profile now uses current stage/four dots, one pinned-stage
+bar, and cumulative water / next cumulative threshold beside Next: stage. Remove
+the old endpoint/remaining/stage-number rows and separate Total water attribute.
+Adults show a full bar, terminal ratio and Fully grown; missing bounds remain
+unavailable. Exact water and stage position remain accessible. Header/footer
+stack as needed. My plants, Garden details and Edit Storage use this same view.
+This supersedes the growth layout and native growth checklist in the older batch.
+
+Native checks: review all four stages, 0.1 / 45, historical 250 / 400 between
+100/400 (still a half-filled bar), zero/fractional and missing/invalid progress.
+Check narrow widths, largest text and VoiceOver; verify Total water, the old
+endpoint labels and the remaining/Stage N of 4 footer are absent. Confirm Close,
+Place/Sell, compact inventory tiles and activity recap retain their behavior.
+Added regression sources cover these amounts and narrow/largest-text layout;
+execution and portable results are recorded in VALIDATION.md.
+
+## Previous batch — 13 November 2026
 
 The user requested committing and pushing this batch for Mac testing without
 waiting for CI. No CI result, personal database migration or service deployment

@@ -121,17 +121,13 @@ struct PlantDetailScreen: View {
                 Text(plant.variantId.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
                 if !tags.isEmpty { JournalPlantTagList(tags: tags) }
             }
-            JournalGrid(minimumWidth: 52, fixedColumns: owned == nil ? 2 : owned?.baseAttractionMicroUnits == nil ? 3 : 4) {
+            JournalGrid(minimumWidth: 52, fixedColumns: owned?.baseAttractionMicroUnits == nil ? 2 : 3) {
                 JournalAttribute(title: "Variant", value: plant.variantId.capitalized,
                     explanation: plant.variantId.capitalized, symbol: "leaf")
                 JournalRarity(rarity: rarity).frame(maxWidth: .infinity)
-                if let owned = owned {
-                    JournalAttribute(title: "Total water", value: JournalAmount.water(owned.growthMicroUnits),
-                        explanation: "", metric: "water")
-                    if let attraction = owned.baseAttractionMicroUnits {
-                        JournalAttribute(title: "Base attraction", value: JournalAmount.water(attraction),
-                            explanation: "", metric: "attraction")
-                    }
+                if let attraction = owned?.baseAttractionMicroUnits {
+                    JournalAttribute(title: "Base attraction", value: JournalAmount.water(attraction),
+                        explanation: "", metric: "attraction")
                 }
             }.padding(8).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
             VStack(alignment: .leading, spacing: 8) {

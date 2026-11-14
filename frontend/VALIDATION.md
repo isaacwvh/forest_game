@@ -1,3 +1,33 @@
+## Plant progress and catalog collection — 14 November 2026
+
+Full profiles now use stage/dots, the existing pinned-stage fraction, and cumulative
+water / next threshold with Next: stage. The repeated Total water attribute and
+endpoint/remaining/stage-number rows are removed. Adults and unavailable progress
+retain explicit states. Catalog capsules/menu use Standard-first name/ID ordering.
+The summary above search uses unique permanently acquired species/non-standard
+variants across the full current catalog, including sold copies; missing/version-
+mismatched data is unavailable. Discovery is observed directly. No backend, API,
+database, game calculations, assets or owned-copy actions changed.
+
+Passed locally on Windows:
+- `python frontend/scripts/validate_frontend.py`: project freshness, resources,
+  asset checksums, wire contracts and contrast.
+- `python frontend/scripts/check_swift_syntax.py`: all 94 Swift files parse.
+- `python tools/validate_woodland_release.py`: all 30 species/47 variants and packs.
+- Focused backend schema/fixture tests: **21 passed** (editor, activity, account
+  summary and shared catalog discovery contracts).
+- Design detector over all five changed UI files: no findings.
+- Frontend diff whitespace validation: passed.
+
+Added native regressions cover cumulative versus pinned-stage water, fractional
+and historical amounts, maturity/unavailable bounds, Standard/name/ID order,
+deduplicated species/non-standard variant counts, retired entries, confirmed zero,
+missing/version-mismatched data, cached failures and account detach. Extended
+narrow/largest-text layout and profile/catalog UI assertions. These Swift tests
+were syntax-parsed, not executed: Apple SDK typechecking, XCTest/UI and native
+visual/VoiceOver acceptance require Mac/iPhone and `bash frontend/scripts/test-mac.sh`.
+Validation was local; no personal database update was performed.
+
 ## Recap stage progress — 14 November 2026
 
 The shared recap grid now uses pinned current-stage bounds instead of the lifetime

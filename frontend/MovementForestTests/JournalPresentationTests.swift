@@ -57,6 +57,35 @@ final class JournalPresentationTests: XCTestCase {
         XCTAssertEqual(display.displayRemaining, JournalAmount.water("39308141"))
         XCTAssertEqual(display.caption, "\(JournalAmount.water("39308141")) to Young")
     }
+    func testFullProfileUsesCumulativeWaterWhileTheBarTracksThePinnedStage() {
+        let sprout = JournalGrowthSummary(plant: copy(stage: .sprout, growth: "100000",
+                                                     start: "0", next: "45000000"))
+        XCTAssertEqual(sprout.waterProgress,
+                       "\(JournalAmount.water("100000")) / \(JournalAmount.water("45000000"))")
+        XCTAssertEqual(sprout.fraction ?? -1, 0.1 / 45, accuracy: 0.000001)
+        XCTAssertEqual(sprout.nextStage, "Seedling")
+        let seedling = JournalGrowthSummary(plant: copy())
+        XCTAssertEqual(seedling.waterProgress, "250 / 400")
+        XCTAssertEqual(seedling.exactWaterProgress, "250 of 400 water")
+        XCTAssertEqual(seedling.fraction, 0.5)
+        let historical = JournalGrowthSummary(plant: copy(growth: "240000000", start: "40000000", next: "840000000"))
+        XCTAssertEqual(historical.waterProgress, "240 / 840")
+        XCTAssertEqual(historical.fraction, 0.25)
+        let fractional = JournalGrowthSummary(plant: copy(growth: "399999999"))
+        XCTAssertEqual(fractional.exactWaterProgress, "\(ExactAmount.water("399999999")) of 400 water")
+    }
+    func testFullProfileHandlesMaturityAndUnavailableWaterWithoutInventingAThreshold() {
+        let adult = JournalGrowthSummary(plant: copy(stage: .adult, growth: "1000000000", start: "1000000000", next: nil))
+        XCTAssertEqual(adult.waterProgress, "\(JournalAmount.water("1000000000")) / \(JournalAmount.water("1000000000"))")
+        XCTAssertEqual(adult.fraction, 1)
+        XCTAssertNil(adult.nextStage)
+        var missing = copy(); missing.growthProgress = nil
+        for plant in [missing, copy(growth: "invalid"), copy(growth: "1000000001"), copy(next: nil)] {
+            let display = JournalGrowthSummary(plant: plant)
+            XCTAssertNil(display.waterProgress)
+            XCTAssertNil(display.exactWaterProgress)
+        }
+    }
     func testOwnedMetadataKeepsPinnedValuesWhenCurrentCatalogueHasDifferentRules() throws {
         let pinned = APIProfileReference(id: "old", version: 1)
         var plant = copy()
@@ -92,9 +121,11 @@ final class JournalPresentationTests: XCTestCase {
         let multipliers: [String: Decimal] = ["steps": 1, "flights_climbed": 10,
             "workout_minutes.*": Decimal(string: "0.25")!, "workout_minutes.running": Decimal(string: "0.375")!]
         var unavailable = copy(); unavailable.growthProgress = nil
-        for textSize: DynamicTypeSize in [.large, .xxxLarge, .accessibility3] {
+        for textSize: DynamicTypeSize in [.large, .xxxLarge, .accessibility5] {
             for width: CGFloat in [232, 302] {
                 for plant in [copy(), unavailable,
+                              copy(stage: .sprout, growth: "100000", start: "0", next: "45000000"),
+                              copy(stage: .young, growth: "999999999", start: "400000000", next: "1000000000"),
                               copy(stage: .adult, growth: "1000000000", start: "1000000000", next: nil)] {
                     let host = UIHostingController(rootView:
                         VStack {
@@ -201,6 +232,72 @@ final class JournalPresentationTests: XCTestCase {
                        ["amber", "oak", "rare", "epic", "legendary", "unknown"])
         let ties = [species("b", "Oak", "common"), species("a", "Oak", "common")]
         XCTAssertEqual(CatalogPresentation.sortedSpecies(ties).map(\.speciesId), ["a", "b"])
+    }
+
+    func testCatalogVariantsAlwaysPutStandardFirstThenNamesAndStableIDs() {
+        func variant(_ id: String, _ name: String) -> APIVariant {
+            APIVariant(variantId: id, displayName: name, assetCatalogVersion: "1", stages: [:])
+        }
+        let variants = [variant("vined", "Vined"), variant("blue-b", "Blue"),
+                        variant("standard", "Standard"), variant("blue-a", "Blue"), variant("z-amber", "Amber")]
+        let expected = ["standard", "z-amber", "blue-a", "blue-b", "vined"]
+        XCTAssertEqual(CatalogPresentation.sortedVariants(variants).map(\.variantId), expected)
+        XCTAssertEqual(CatalogPresentation.sortedVariants(Array(variants.reversed())).map(\.variantId), expected)
+        XCTAssertEqual(CatalogPresentation.sortedVariants(variants.filter { $0.variantId != "standard" }).map(\.variantId),
+                       Array(expected.dropFirst()))
+        XCTAssertTrue(CatalogPresentation.sortedVariants([]).isEmpty)
+    }
+
+    private func collectionCatalogue() -> APICatalogue {
+        let species = [("oak", ["standard", "blue", "vined"]), ("moonwillow", ["standard", "silver"])].map { id, variants in
+            APISpecies(speciesId: id, displayName: id, clearanceRadius: 1, variants: variants.map {
+                APIVariant(variantId: $0, displayName: $0, assetCatalogVersion: "1", stages: [:])
+            })
+        }
+        return APICatalogue(catalogVersion: "collection-test", isFixture: true, coordinateUnit: "garden_unit",
+                            gardenUnitMetres: 1, coordinateDecimalPlaces: 3, rotationDecimalPlaces: 2, species: species)
+    }
+
+    func testCollectionCountsUniqueAcquiredSpeciesAndNonStandardVariantsInTheFullCatalog() throws {
+        let catalogue = collectionCatalogue()
+        let discovery = APICatalogDiscovery(userId: UUID(), catalogVersion: catalogue.catalogVersion, discoveryVersion: 1,
+            entries: [.init(speciesId: "oak", variantId: "standard", stages: GrowthStage.allCases),
+                      .init(speciesId: "oak", variantId: "blue", stages: [.sprout, .seedling]),
+                      .init(speciesId: "moonwillow", variantId: "silver", stages: [.sprout]),
+                      .init(speciesId: "retired", variantId: "blue", stages: GrowthStage.allCases),
+                      .init(speciesId: "oak", variantId: "retired", stages: [.sprout])])
+        let counts = try XCTUnwrap(CatalogCollectionCounts(catalogue: catalogue, discovery: discovery))
+        XCTAssertEqual(counts.collectedPlants, 2)
+        XCTAssertEqual(counts.totalPlants, 2)
+        XCTAssertEqual(counts.collectedVariants, 2)
+        XCTAssertEqual(counts.totalVariants, 3)
+        // A coloured variant acquires its species without granting Standard or sibling variants.
+        let variantOnly = APICatalogDiscovery(userId: discovery.userId, catalogVersion: catalogue.catalogVersion,
+            discoveryVersion: 1, entries: [.init(speciesId: "oak", variantId: "blue", stages: [.sprout])])
+        let partial = try XCTUnwrap(CatalogCollectionCounts(catalogue: catalogue, discovery: variantOnly))
+        XCTAssertEqual(partial.collectedPlants, 1)
+        XCTAssertEqual(partial.totalPlants, 2)
+        XCTAssertEqual(partial.collectedVariants, 1)
+        XCTAssertEqual(partial.totalVariants, 3)
+    }
+
+    func testCollectionDistinguishesConfirmedZeroFromMissingOrMismatchedData() throws {
+        let catalogue = collectionCatalogue()
+        let empty = APICatalogDiscovery(userId: UUID(), catalogVersion: catalogue.catalogVersion, discoveryVersion: 0, entries: [])
+        let zero = try XCTUnwrap(CatalogCollectionCounts(catalogue: catalogue, discovery: empty))
+        XCTAssertEqual(zero.collectedPlants, 0)
+        XCTAssertEqual(zero.collectedVariants, 0)
+        XCTAssertEqual(zero.totalPlants, 2)
+        XCTAssertEqual(zero.totalVariants, 3)
+        XCTAssertNil(CatalogCollectionCounts(catalogue: nil, discovery: empty))
+        XCTAssertNil(CatalogCollectionCounts(catalogue: catalogue, discovery: nil))
+        let old = APICatalogDiscovery(userId: empty.userId, catalogVersion: "old", discoveryVersion: 0, entries: [])
+        XCTAssertNil(CatalogCollectionCounts(catalogue: catalogue, discovery: old))
+        let standardOnly = APICatalogue(catalogVersion: catalogue.catalogVersion, isFixture: true, coordinateUnit: "garden_unit",
+            gardenUnitMetres: 1, coordinateDecimalPlaces: 3, rotationDecimalPlaces: 2,
+            species: [APISpecies(speciesId: "oak", displayName: "Oak", clearanceRadius: 1,
+                variants: [APIVariant(variantId: "standard", displayName: "Standard", assetCatalogVersion: "1", stages: [:])])])
+        XCTAssertEqual(CatalogCollectionCounts(catalogue: standardOnly, discovery: empty)?.totalVariants, 0)
     }
 
     func testSpeciesPortraitUsesOnlyAnAcquiredVariantAndPrefersStandard() {

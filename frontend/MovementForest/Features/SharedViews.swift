@@ -50,11 +50,42 @@ enum CatalogPresentation {
         }
     }
 
+    static func sortedVariants(_ variants: [APIVariant]) -> [APIVariant] {
+        variants.sorted {
+            if ($0.variantId == "standard") != ($1.variantId == "standard") {
+                return $0.variantId == "standard"
+            }
+            let names = $0.displayName.localizedStandardCompare($1.displayName)
+            return names == .orderedSame ? $0.variantId < $1.variantId : names == .orderedAscending
+        }
+    }
+
     static func portraitVariant(_ species: APISpecies, discovered: Set<CatalogDiscoveryKey>) -> APIVariant? {
         let variants = species.variants.filter {
             discovered.contains(.init(species: species.speciesId, variant: $0.variantId, stage: .sprout))
         }
         return variants.first { $0.variantId == "standard" } ?? variants.sorted { $0.variantId < $1.variantId }.first
+    }
+}
+
+/// Permanent acquisition progress within the full current catalogue, never owned-copy/page totals.
+struct CatalogCollectionCounts: Equatable {
+    let collectedPlants: Int
+    let totalPlants: Int
+    let collectedVariants: Int
+    let totalVariants: Int
+
+    init?(catalogue: APICatalogue?, discovery: APICatalogDiscovery?) {
+        guard let catalogue = catalogue, let discovery = discovery,
+              catalogue.catalogVersion == discovery.catalogVersion else { return nil }
+        let available = Set(catalogue.species.flatMap { species in
+            species.variants.map { CatalogDiscoveryKey(species: species.speciesId, variant: $0.variantId, stage: .sprout) }
+        })
+        let collected = discovery.keys.intersection(available)
+        collectedPlants = Set(collected.map(\.species)).count
+        totalPlants = Set(catalogue.species.map(\.speciesId)).count
+        collectedVariants = collected.filter { $0.variant != "standard" }.count
+        totalVariants = available.filter { $0.variant != "standard" }.count
     }
 }
 

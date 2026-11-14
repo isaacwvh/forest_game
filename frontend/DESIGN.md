@@ -1,5 +1,27 @@
 # Native baseline conventions
 
+## Plant progress and catalog collection — 14 November 2026
+
+Full owned profiles use three rows: current stage and four dots; the pinned-stage
+progress bar; cumulative water / next cumulative threshold with the water icon
+on the left and Next: stage on the right. Dots fill through the current stage.
+This replaces endpoint labels, remaining-water/Stage N of 4 footers and the separate
+Total water attribute. Adults retain the full bar and terminal water ratio with
+Fully grown. Unknown progress remains unavailable. Header/footer rows stack when
+needed, and VoiceOver retains stage position and exact water. Compact tiles and
+recap bars keep their existing presentation and calculations.
+
+Catalog variant capsules and menu share Standard-first ordering, then localized
+display name and stable ID. The small summary above search counts acquired species
+and unique non-standard species/variant pairs against the full current catalog.
+Use permanent exact-variant sprout discovery, including sold copies; exclude
+duplicates and retired entries. Missing or mismatched catalog/discovery snapshots
+show Unavailable. Existing cached/failure notices remain; the summary observes
+discovery directly and stacks its columns at accessibility text sizes.
+
+This is frontend presentation only; backend, APIs, discovery policy, growth,
+economy and owned-copy actions are unchanged. Native acceptance remains pending.
+
 ## Milestone tracks — 13 November 2026
 
 Frontend refinement: the selector strip retains its intrinsic height independently

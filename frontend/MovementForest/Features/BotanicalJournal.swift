@@ -429,6 +429,8 @@ enum JournalAmount {
 /// Reuses the existing exact amount/progress contract; does not award or alter growth.
 struct JournalGrowthSummary: Equatable {
     let fraction: Double?
+    let waterProgress: String?
+    let exactWaterProgress: String?
     let remaining: String?
     let displayRemaining: String?
     let nextStage: String?
@@ -436,8 +438,15 @@ struct JournalGrowthSummary: Equatable {
     init(plant: APIOwnedPlant) {
         let progress = plant.growthProgress
         let resolvedFraction = progress?.fraction(growth: plant.growthMicroUnits)
+        let waterTarget = plant.growthStage == .adult ? progress?.maximumGrowthMicroUnits : progress?.nextStageMicroUnits
         fraction = resolvedFraction
         fullyGrown = plant.growthStage == .adult
+        if resolvedFraction != nil, let target = waterTarget {
+            waterProgress = "\(JournalAmount.water(plant.growthMicroUnits)) / \(JournalAmount.water(target))"
+            exactWaterProgress = "\(ExactAmount.water(plant.growthMicroUnits)) of \(ExactAmount.water(target)) water"
+        } else {
+            waterProgress = nil; exactWaterProgress = nil
+        }
         if let next = progress?.nextStageMicroUnits,
            let target = ExactAmount.integer(next), let current = ExactAmount.integer(plant.growthMicroUnits),
            resolvedFraction != nil {
@@ -492,62 +501,76 @@ struct JournalPlantProgress: View {
     }
 }
 
-/// Full profiles use the same pinned-stage fraction as tiles, with visible endpoints.
+/// One stage header, the pinned-stage bar and cumulative water/next-stage row.
 struct JournalPlantDetailProgress: View {
     let plant: APIOwnedPlant
+    @ScaledMetric(relativeTo: .caption) private var dotSize: CGFloat = 8
     private var summary: JournalGrowthSummary { JournalGrowthSummary(plant: plant) }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 16) {
-                Text(summary.fullyGrown ? "Fully grown" : plant.growthStage.title)
-                    .accessibilityIdentifier("plantDetails.stage")
-                Spacer(minLength: 0)
-                if let next = summary.nextStage { Text(next).multilineTextAlignment(.trailing) }
-            }.font(.system(.title3, design: .serif).weight(.semibold)).foregroundStyle(JournalTheme.ink)
-            if let progress = plant.growthProgress, let fraction = summary.fraction {
-                if !summary.fullyGrown {
-                    ProgressView(value: fraction).tint(JournalTheme.action)
-                        .accessibilityLabel("Progress to next stage")
-                        .accessibilityValue(fraction.formatted(.percent))
-                        .accessibilityIdentifier("plantDetails.growthBar")
-                    HStack(alignment: .firstTextBaseline, spacing: 16) {
-                        Text("\(JournalAmount.water(progress.stageStartMicroUnits)) water")
-                            .accessibilityLabel("Stage begins at \(ExactAmount.water(progress.stageStartMicroUnits)) water")
-                        Spacer(minLength: 0)
-                        if let next = progress.nextStageMicroUnits {
-                            Text("\(JournalAmount.water(next)) water").multilineTextAlignment(.trailing)
-                                .accessibilityLabel("Next stage at \(ExactAmount.water(next)) water")
-                        }
-                    }.font(.caption).monospacedDigit()
-                } else {
-                    Text("\(JournalAmount.water(progress.maximumGrowthMicroUnits)) water")
-                        .font(.caption).monospacedDigit()
-                        .accessibilityLabel("Fully grown at \(ExactAmount.water(progress.maximumGrowthMicroUnits)) water")
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 16) {
+                    stageTitle.fixedSize()
+                    Spacer(minLength: 0)
+                    stageDots
                 }
+                VStack(alignment: .leading, spacing: 8) {
+                    stageTitle
+                    stageDots
+                }
+            }
+            if let fraction = summary.fraction, let waterProgress = summary.waterProgress {
+                ProgressView(value: fraction).tint(JournalTheme.action)
+                    .accessibilityLabel(summary.fullyGrown ? "Fully grown" : "Progress to next stage")
+                    .accessibilityValue(fraction.formatted(.percent))
+                    .accessibilityIdentifier("plantDetails.growthBar")
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .center, spacing: 12) {
+                        waterLabel(waterProgress).fixedSize()
+                        Spacer(minLength: 0)
+                        nextStageLabel.fixedSize()
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        waterLabel(waterProgress)
+                        nextStageLabel
+                    }
+                }.font(.callout)
             } else {
                 Text("Growth unavailable").font(.callout)
             }
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    remainingWater.fixedSize()
-                    Spacer(minLength: 0)
-                    stageNumber.fixedSize()
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    remainingWater
-                    stageNumber
-                }
-            }.font(.caption)
         }.foregroundStyle(JournalTheme.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
-    @ViewBuilder private var remainingWater: some View {
-        if let remaining = summary.displayRemaining {
-            Text("\(remaining) water remaining").monospacedDigit()
-                .accessibilityLabel("\(summary.remaining ?? remaining) water remaining")
+    private var stageTitle: some View {
+        Text(plant.growthStage.title)
+            .font(.system(.title3, design: .serif).weight(.semibold)).foregroundStyle(JournalTheme.ink)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityLabel("\(plant.growthStage.title), stage \(plant.growthStage.number) of 4")
+            .accessibilityIdentifier("plantDetails.stage")
+    }
+    private var stageDots: some View {
+        HStack(spacing: 8) {
+            ForEach(GrowthStage.allCases) { stage in
+                Image(systemName: stage.number <= plant.growthStage.number ? "circle.fill" : "circle")
+                    .font(.system(size: dotSize, weight: .medium))
+            }
+        }.foregroundStyle(JournalTheme.action).accessibilityHidden(true)
+    }
+    private func waterLabel(_ value: String) -> some View {
+        HStack(spacing: 4) {
+            Text(value).monospacedDigit().fixedSize(horizontal: false, vertical: true)
+            QuantityIcon(metric: "water")
+        }.accessibilityElement(children: .ignore).accessibilityLabel("Cumulative water")
+            .accessibilityValue(summary.exactWaterProgress ?? "Unavailable")
+            .accessibilityIdentifier("plantDetails.waterProgress")
+    }
+    @ViewBuilder private var nextStageLabel: some View {
+        if summary.fullyGrown {
+            Text("Fully grown")
+        } else if let next = summary.nextStage {
+            Text("Next: \(next)").fixedSize(horizontal: false, vertical: true)
         }
     }
-    private var stageNumber: some View { Text("Stage \(plant.growthStage.number) of 4") }
 }
 
 /// Old caches may only have references. Never substitute current species rules.
