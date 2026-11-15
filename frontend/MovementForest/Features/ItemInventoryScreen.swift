@@ -52,6 +52,7 @@ struct ItemInventoryPanel: View {
             }.padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+            .refreshable { await store.refresh(); await collection?.refresh() }
             .fullScreenCover(item: $inspection, onDismiss: {
                 if let item = placing { placing = nil; onPlace?(item) }
             }) { selection in
@@ -59,7 +60,6 @@ struct ItemInventoryPanel: View {
                     place: onPlace.map { _ in { (item: APIOwnedItem) in placing = item; inspection = nil } },
                     collection: collection).journalModalBackground()
             }
-            .refreshable { await store.refresh(); await collection?.refresh() }
             .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || inspection != nil }
     }
 
@@ -106,7 +106,7 @@ struct ItemDetailScreen: View {
                     .frame(minHeight: 44).frame(maxWidth: .infinity).padding(16)
                     .disabled(!store.canEdit).accessibilityIdentifier("itemDetails.place")
             }
-        }.environment(\.refresh, nil)
+        }
     }
 }
 
