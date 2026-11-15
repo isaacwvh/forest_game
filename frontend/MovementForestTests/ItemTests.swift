@@ -115,6 +115,25 @@ final class ItemTests: XCTestCase {
         XCTAssertNil(store.pending)
     }
 
+    func testItemUsesTheSharedEditorPositionAndRotationState() async throws {
+        let fixture = try ItemsContract.load(), service = ItemTestService(fixture)
+        let store = GardenEditorStore(profile: fixture.profile, service: service, assets: try BundleAssetCatalog(),
+            journal: ItemEditJournal(), effectHistory: nil)
+        await store.start()
+        let item = try XCTUnwrap(store.itemInventory.first)
+        store.beginItem(item, action: "place")
+        store.updatePosition(x: 3.125, y: 4.25); store.updateRotation(45.5)
+        XCTAssertEqual(store.editCandidateID, item.id)
+        XCTAssertEqual(store.editCandidateX, Decimal(string: "3.125"))
+        XCTAssertEqual(store.editCandidateY, Decimal(string: "4.25"))
+        XCTAssertEqual(store.editCandidateRotation, Decimal(string: "45.5"))
+        XCTAssertEqual(store.editCandidateValidity, .valid)
+        XCTAssertFalse(store.editCandidateIsRotation)
+        XCTAssertEqual(store.editCandidateTitle, item.displayName)
+        store.cancelCandidate()
+        XCTAssertNil(store.editCandidateID)
+    }
+
     func testBenchImportsWithoutWindAndCopiesKeepSeparateAnchors() async throws {
         let fixture = try ItemsContract.load(), renderer = RealityGardenRenderer()
         defer { renderer.stop() }

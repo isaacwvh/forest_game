@@ -34,6 +34,41 @@ struct APIItemCapacity: Codable, Equatable {
     let placedItems: Int
     let storedItems: Int
     let itemLimit: Int
+    var full: Bool { ownedItems >= itemLimit }
+    var room: Int { max(0, itemLimit - ownedItems) }
+}
+
+struct APIItemShopOffer: Codable, Identifiable {
+    let offerId: String
+    let offerVersion: Int
+    let tokenCost: String
+    let itemId: String
+    let definitionVersion: Int
+    let displayName: String
+    let description: String
+    let rarity: String
+    let assetVersion: String
+    let modelKey: String
+    let thumbnailKey: String
+    var id: String { "\(offerId)/\(offerVersion)" }
+    var appearance: GardenItem {
+        GardenItem(id: UUID(), itemId: itemId, assetVersion: assetVersion,
+                   modelKey: modelKey, thumbnailKey: thumbnailKey, x: 0, y: 0, rotationDegrees: 0)
+    }
+}
+
+struct APIItemSaleQuote: Codable {
+    let ownedItemId: UUID
+    let valuationVersion: String
+    let tokenValue: String
+    let resaleBasisPoints: Int
+    let tokens: String
+}
+
+struct ItemSellBody: Codable {
+    let requestId: UUID
+    let valuationVersion: String
+    let expectedTokens: String
 }
 
 struct GardenItem: Codable, Identifiable, Equatable {

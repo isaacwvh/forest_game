@@ -27,7 +27,7 @@ def test_upgrade_matches_models_downgrade_and_reupgrade(database_factory):
             with engine.connect() as connection:
                 assert set(Base.metadata.tables) <= set(inspect(connection).get_table_names())
                 assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-                    "0018_garden_items"
+                    "0019_item_commerce"
                 )
             engine.dispose()
             command.downgrade(configuration, "base")

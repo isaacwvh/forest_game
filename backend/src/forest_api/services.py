@@ -235,11 +235,11 @@ def replay(
         "activity_enrolment",
     } or operation.startswith(("recap_ack:", "milestone_claim:")):
         return record.completion["outcome"]
-    if operation in {"token_exchange", "pack_open"}:
+    if operation in {"token_exchange", "pack_open", "item_purchase"}:
         from forest_api.collection_models import CollectionEvent, PackOpening
 
         facts = record.completion["outcome"]
-        event_id = facts.get("exchangeId")
+        event_id = facts.get("exchangeId") or facts.get("purchaseId")
         if facts.get("openingId"):
             opening = session.get(PackOpening, UUID(facts["openingId"]))
             event_id = opening.event_id if opening else None
@@ -253,6 +253,15 @@ def replay(
         event = session.get(PlantSale, UUID(record.completion["outcome"]["saleId"]))
         if event is None or event.owner_id != user_id:
             raise ApiError(503, "recovery_unavailable", "The original sale receipt is unavailable")
+        return event.receipt
+    if operation == "item_sell":
+        from forest_api.item_models import ItemSale
+
+        event = session.get(ItemSale, UUID(record.completion["outcome"]["saleId"]))
+        if event is None or event.owner_id != user_id:
+            raise ApiError(
+                503, "recovery_unavailable", "The original item sale receipt is unavailable"
+            )
         return event.receipt
     raise RequestRecovery(recovery.envelope(record))
 

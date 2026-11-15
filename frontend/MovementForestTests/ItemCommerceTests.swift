@@ -1,0 +1,142 @@
+import Foundation
+import XCTest
+@testable import MovementForest
+
+private struct ItemCommerceContract: Decodable {
+    let summary: APICollectionSummary
+    let catalogue: APICatalogue
+    let purchase: APICollectionReceipt
+    let sale: APICollectionReceipt
+    let quote: APIItemSaleQuote
+    static func load() throws -> Self {
+        let url = try XCTUnwrap(Bundle.main.url(forResource: "item-commerce-contract", withExtension: "json", subdirectory: "Fixtures"))
+        return try ActivityWire.decoder().decode(Self.self, from: Data(contentsOf: url))
+    }
+}
+
+@MainActor
+private final class ItemCommerceJournal: CollectionJournalPersisting {
+    var value = CollectionJournalState()
+    var failSave = false
+    func load(server: String, user: UUID) throws -> CollectionJournalState? { value }
+    func save(_ state: CollectionJournalState, server: String, user: UUID) throws {
+        if failSave { throw URLError(.cannotWriteToFile) }
+        value = state
+    }
+}
+
+@MainActor
+private final class ItemCommerceService: CollectionServing {
+    let serverID = "https://item-commerce.test"
+    let fixture: ItemCommerceContract
+    var calls: [PendingCollectionOperation] = []
+    var receipts: [UUID: APICollectionReceipt] = [:]
+    var loseResponse = false
+    var balance: String
+    var version: Int64
+    var capacity: APIItemCapacity?
+    var quoteOverride: APIItemSaleQuote?
+    init(_ fixture: ItemCommerceContract) {
+        self.fixture = fixture; balance = fixture.summary.tokenBalance
+        version = fixture.summary.economyVersion; capacity = fixture.summary.itemCapacity
+    }
+    func summary() async throws -> APICollectionSummary {
+        APICollectionSummary(tokenBalance: balance, economyVersion: version, offers: [],
+            itemOffers: fixture.summary.itemOffers, itemCapacity: capacity)
+    }
+    func catalogue() async throws -> APICatalogue { fixture.catalogue }
+    func packs(after: UUID?) async throws -> APIPackPage { APIPackPage(packs: [], nextCursor: nil) }
+    func openings(after: UUID?) async throws -> APIOpeningPage { APIOpeningPage(openings: [], nextCursor: nil) }
+    func definition(pack: String, version: Int) async throws -> APIPackDefinition {
+        throw ForestError.invalidData("No pack definitions in item fixture")
+    }
+    func itemSaleQuote(item: UUID) async throws -> APIItemSaleQuote { quoteOverride ?? fixture.quote }
+    func mutate(_ operation: PendingCollectionOperation) async throws -> APICollectionReceipt {
+        try operation.validate(); calls.append(operation)
+        if let receipt = receipts[operation.id] { return receipt }
+        let source: APICollectionReceipt
+        switch operation.kind {
+        case .itemPurchase: source = fixture.purchase
+        case .itemSell: source = fixture.sale
+        default: throw ForestError.invalidData("Unexpected operation in item fixture")
+        }
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: ActivityWire.encoder().encode(source)) as? [String: Any])
+        object["requestId"] = operation.id.uuidString
+        let receipt = try ActivityWire.decoder().decode(APICollectionReceipt.self,
+            from: JSONSerialization.data(withJSONObject: object))
+        receipts[operation.id] = receipt
+        balance = receipt.tokenBalance; version = receipt.economyVersion; capacity = receipt.itemCapacity
+        if loseResponse { loseResponse = false; throw URLError(.networkConnectionLost) }
+        return receipt
+    }
+}
+
+@MainActor
+final class ItemCommerceTests: XCTestCase {
+    func testHTTPPricesAndWholeTokenResale() throws {
+        let value = try ItemCommerceContract.load()
+        XCTAssertEqual(value.summary.itemOffers?.first?.tokenCost, "550")
+        XCTAssertEqual(value.purchase.tokensSpent, "1100")
+        XCTAssertEqual(value.purchase.ownedItemIds?.count, 2)
+        XCTAssertEqual(value.quote.tokens, "137")
+        XCTAssertEqual(value.sale.tokensEarned, "137")
+        XCTAssertEqual(value.sale.tokenBalance, "1037")
+    }
+
+    func testPurchaseAndSaleRecoverExactJournalAfterRelaunch() async throws {
+        let fixture = try ItemCommerceContract.load(), service = ItemCommerceService(fixture)
+        let journal = ItemCommerceJournal(), user = UUID()
+        let first = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await first.refresh()
+        let offer = try XCTUnwrap(first.itemOffers.first)
+        service.loseResponse = true
+        await first.buyItem(offer, quantity: 2)
+        let saved = try XCTUnwrap(journal.value.pending)
+        XCTAssertEqual(saved.kind, .itemPurchase)
+        first.deactivate()
+        let restored = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await restored.refresh()
+        XCTAssertNil(journal.value.pending)
+        XCTAssertEqual(service.calls[0], service.calls[1])
+        XCTAssertEqual(restored.tokenBalance, "900")
+        let quote = try await restored.itemSaleQuote(item: fixture.quote.ownedItemId)
+        service.loseResponse = true
+        await restored.sellItem(quote)
+        let saleBody = try XCTUnwrap(journal.value.pending?.body)
+        await restored.refresh()
+        XCTAssertNil(journal.value.pending)
+        XCTAssertEqual(service.calls[2].body, saleBody)
+        XCTAssertEqual(service.calls[2], service.calls[3])
+        XCTAssertEqual(restored.tokenBalance, "1037")
+        XCTAssertEqual(restored.itemCapacity?.ownedItems, 1)
+    }
+
+    func testFullInventoryAndFailedJournalSendNothing() async throws {
+        let service = ItemCommerceService(try ItemCommerceContract.load()), journal = ItemCommerceJournal()
+        service.capacity = APIItemCapacity(ownedItems: 50, placedItems: 1, storedItems: 49, itemLimit: 50)
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: journal)
+        await store.refresh()
+        let offer = try XCTUnwrap(store.itemOffers.first)
+        XCTAssertFalse(store.canBuyItem(offer, quantity: 1))
+        await store.buyItem(offer, quantity: 1)
+        XCTAssertTrue(service.calls.isEmpty)
+        service.capacity = APIItemCapacity(ownedItems: 0, placedItems: 0, storedItems: 0, itemLimit: 50)
+        await store.refresh()
+        journal.failSave = true
+        await store.buyItem(offer, quantity: 2)
+        XCTAssertTrue(service.calls.isEmpty)
+    }
+
+    func testUnverifiedResaleQuoteIsRejected() async throws {
+        let fixture = try ItemCommerceContract.load(), service = ItemCommerceService(fixture)
+        service.quoteOverride = APIItemSaleQuote(ownedItemId: fixture.quote.ownedItemId,
+            valuationVersion: "item-resale-v1", tokenValue: "550", resaleBasisPoints: 2500, tokens: "138")
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: ItemCommerceJournal())
+        await store.refresh()
+        do {
+            _ = try await store.itemSaleQuote(item: fixture.quote.ownedItemId)
+            XCTFail("Rounded-up sale quote must not be accepted")
+        } catch { }
+        XCTAssertTrue(service.calls.isEmpty)
+    }
+}

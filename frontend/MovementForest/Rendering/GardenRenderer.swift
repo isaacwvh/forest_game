@@ -558,7 +558,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         element.accessibilityLabel = "Garden scene"
         element.accessibilityIdentifier = "garden.scene"
         element.accessibilityTraits = .image
-        element.accessibilityHint = "Use Actions to orbit, pan, zoom or reset the camera. Inspect owned plants in My plants."
+        element.accessibilityHint = "Use Actions to orbit, pan, zoom or reset the camera. Inspect owned plants and items in Inventory."
         element.accessibilityCustomActions = GardenCameraAction.allCases.map { action in
             UIAccessibilityCustomAction(name: action.rawValue) { [weak self] _ in
                 self?.performCameraAction(action) ?? false

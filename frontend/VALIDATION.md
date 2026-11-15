@@ -1222,3 +1222,24 @@ The personal backend could not be activated because its Docker engine returned
 HTTP 500. No personal database migration or bench grant is claimed. See
 [setup and native checks](ITEMS_ACCEPTANCE.md) and [backend activation](../backend/ITEMS.md).
 No push or remote CI was run.
+
+## Garden items Stage 5 — 15 November 2026
+
+Portable frontend/project/resource validation, the HTTP-derived 550-token bench
+purchase/137-token resale contract and all 100 Swift syntax parses pass. The new
+commerce views reuse plant frames/image rendering, selection popups and edit
+controls; all Inventory tabs share one title and item details use compact sheets.
+The Impeccable detector returned no findings on the reviewed changed UI surfaces.
+
+`ItemCommerceTests` adds HTTP decoding and price checks, exact saved purchase/sale
+recovery after response loss/relaunch, capacity gating, journal-write failure and
+invalid resale quote rejection. `ItemTests` covers the common item/plant editor
+candidate state. These native tests have **not** run on Windows. Apple SDK
+typechecking, hosted XCTest, Debug/Release/InternalRelease builds, screenshots and
+iPhone accessibility/interaction acceptance remain required. Follow
+[ITEMS_ACCEPTANCE.md](ITEMS_ACCEPTANCE.md) on Mac.
+
+Backend validation: 694 passed, three opt-in benchmark skips; final focused
+commerce suite 18 passed (counts are not additive), plus all four HTTP smoke
+walkthroughs. Docker image build remains unavailable because the engine returns
+HTTP 500. No personal game operation, push or remote CI run for this stage.

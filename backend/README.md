@@ -369,8 +369,9 @@ and an application-image build. Remote CI runs after a push or manual dispatch.
 
 See `VALIDATION.md` for checks actually performed in this implementation session.
 
-**Garden items, 15 November 2026:** stages 1–4 are source-implemented: separate
-50-copy item inventory, capacity-guarded grants, a bundled Wooden Bench and atomic
-mixed garden edits. Schema `0018_garden_items` and an explicit named-account bench
-grant are required. Personal activation and native acceptance remain pending;
-see [item rules and activation](ITEMS.md).
+**Garden items, 15 November 2026:** stages 1–5 are source-implemented: separate
+50-copy item inventory, capacity-guarded grants, bundled bench, atomic mixed edits,
+permanent 550-token shop purchases and stored-only 137-token resale. Upgrade to
+`0019_item_commerce` and explicitly publish with `forest publish-item-shop --apply`.
+Existing benches and placements are preserved. See [item rules, validation and
+activation](ITEMS.md). Shop rotation and item skills remain later work.

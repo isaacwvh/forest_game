@@ -359,16 +359,26 @@ struct JournalPlantImage: View {
     let plant: GardenPlant
     let catalog: any AssetCatalogProviding
     var maximumPixels = 360
+    var body: some View {
+        JournalAssetImage(url: (try? catalog.resolve(plant))?.thumbnailURL,
+                          maximumPixels: maximumPixels, fallbackSymbol: "leaf")
+    }
+}
+
+struct JournalAssetImage: View {
+    let url: URL?
+    var maximumPixels = 360
+    var fallbackSymbol = "shippingbox"
     private static let cache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
         cache.totalCostLimit = 24 * 1024 * 1024; cache.countLimit = 64
         return cache
     }()
     private var image: UIImage? {
-        guard let asset = try? catalog.resolve(plant) else { return nil }
-        let key = "\(asset.thumbnailURL.path)#\(maximumPixels)" as NSString
+        guard let url = url else { return nil }
+        let key = "\(url.path)#\(maximumPixels)" as NSString
         if let cached = Self.cache.object(forKey: key) { return cached }
-        guard let source = CGImageSourceCreateWithURL(asset.thumbnailURL as CFURL, nil),
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
               let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceThumbnailMaxPixelSize: maximumPixels,
@@ -386,7 +396,7 @@ struct JournalPlantImage: View {
                     .resizable().scaledToFit().foregroundStyle(JournalTheme.secondary)
             } else {
                 VStack(spacing: 4) {
-                    Image(systemName: "leaf").font(.title2)
+                    Image(systemName: fallbackSymbol).font(.title2)
                     Text("Image unavailable").font(.caption2).multilineTextAlignment(.center)
                 }.foregroundStyle(JournalTheme.secondary)
             }

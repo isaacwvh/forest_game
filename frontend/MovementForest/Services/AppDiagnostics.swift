@@ -133,6 +133,13 @@ enum PlayerMessage {
     static func failure(_ error: Error, fallback: String = "This couldn’t be completed. Please try again.") -> String {
         if let error = error as? APIError {
             switch error.code {
+            case "item_capacity_full": return "Item inventory full. Sell a stored item to make room."
+            case "item_is_placed": return "Store this item before selling it."
+            case "item_not_found": return "This item is no longer available. Refresh Inventory."
+            case "item_sale_unavailable": return "This item does not have a published resale value yet."
+            case "item_commerce_client_update_required", "items_client_update_required": return "Update the app to use garden items."
+            case "insufficient_tokens": return "Not enough tokens for this purchase."
+            case "stale_offer": return "The offer changed. Refresh Shop and try again."
             case "plant_capacity_full": return "Plant collection full. Sell a stored plant to open a pack."
             case "insufficient_gems": return "Not enough gems for this pack."
             case "woodland_client_update_required": return "Update the app to use Woodland packs."
@@ -142,7 +149,7 @@ enum PlayerMessage {
             case "plant_is_planted": return "Store this plant before selling it."
             case "sale_unavailable": return "This plant does not have an approved resale value yet."
             case "stale_sale_quote": return "The sale price changed. Review the updated price before selling."
-            case "plant_not_found": return "This plant is no longer available. Refresh My plants."
+            case "plant_not_found": return "This plant is no longer available. Refresh Inventory."
             default: break
             }
             switch error.status {

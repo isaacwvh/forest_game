@@ -164,6 +164,11 @@ def reconcile(session, owner, garden):
         sales = session.scalar(
             select(func.coalesce(func.sum(PlantSale.tokens), 0)).where(PlantSale.owner_id == owner)
         )
+        from forest_api.item_models import ItemSale
+
+        sales += session.scalar(
+            select(func.coalesce(func.sum(ItemSale.tokens), 0)).where(ItemSale.owner_id == owner)
+        )
         if income + spending + sales != wallet.tokens:
             raise ValueError("Unreconciled wallet; history retained")
         from sqlalchemy import BigInteger, cast

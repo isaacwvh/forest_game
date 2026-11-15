@@ -253,12 +253,14 @@ def read(session, settings, identity, *, kind="summary", limit=30, after=None):
                         "pack": definition_dto(row, definition),
                     }
                 )
-            from forest_api import milestones
+            from forest_api import item_commerce, items, milestones
 
             return {
                 **wallet_dto(wallet),
                 "capacity": capacity(session, user.id, settings),
                 "offers": offers,
+                "itemOffers": item_commerce.offers(session),
+                "itemCapacity": items.capacity(session, user.id),
                 "milestones": milestones.summary(
                     session, user.id, services.get_catalogue_state(session, settings), wallet
                 ),
@@ -345,7 +347,7 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 )
             offer = session.get(ExchangeOffer, (body.offer_id, body.offer_version))
             if offer is None or not offer.active:
-                raise ApiError(409, "stale_offer", "Refresh Exchange to see the current offer")
+                raise ApiError(409, "stale_offer", "Refresh Shop to see the current offer")
             row, definition = pack_contract(session, settings, offer.pack_id, offer.pack_version)
             validate_dependencies(session, definition)
             require_woodland_client(session, row)

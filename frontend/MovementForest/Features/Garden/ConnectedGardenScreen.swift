@@ -21,6 +21,7 @@ struct ConnectedGardenScreen: View {
     @State private var positionControlsPresented = false
     @State private var detailCopyID: UUID?
     @State private var browsingInspection: PlantInspection?
+    @State private var browsingItemInspection: ItemInspection?
     @State private var storageInspection: PlantInspection?
     @State private var placedFromStorageInspector = false
     @State private var storageItems = false
@@ -32,7 +33,7 @@ struct ConnectedGardenScreen: View {
     @Environment(\.dynamicTypeSize) private var textSize
 
     private var visitorEligible: Bool {
-        active && visible && phase == .active && sheet == nil && store.canPresentVisitors
+        active && visible && phase == .active && sheet == nil && itemInspection == nil && store.canPresentVisitors
     }
 
     private var preview: EditorRenderPreview? {
@@ -62,7 +63,7 @@ struct ConnectedGardenScreen: View {
             if let garden = store.rendered {
                 GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
-                                    motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil,
+                                    motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil && itemInspection == nil,
                                     editorPreview: preview, itemPreview: itemPreview, growthEffects: store.effects, onSelect: { [weak store = store] id in
                         guard let store = store else { return }
                         guard store.candidate == nil && store.itemCandidate == nil else { return }
@@ -115,7 +116,7 @@ struct ConnectedGardenScreen: View {
             }
         }
         .navigationTitle("Your forest").navigationBarTitleDisplayMode(.inline)
-        .preference(key: EntryPresentationBlocker.self, value: sheet != nil || (active && store.editing))
+        .preference(key: EntryPresentationBlocker.self, value: sheet != nil || itemInspection != nil || (active && store.editing))
         .toolbar {
             if store.editing {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -152,13 +153,13 @@ struct ConnectedGardenScreen: View {
             OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
                 collection: collection).journalModalBackground()
         }
-        .fullScreenCover(item: $itemInspection) { selection in
-            ItemDetailScreen(store: store, copyID: selection.id, close: { itemInspection = nil })
-                .journalModalBackground()
+        .sheet(item: $itemInspection) { selection in
+            ItemDetailScreen(store: store, copyID: selection.id, close: { itemInspection = nil }, collection: collection)
+                .itemDetailPresentation()
         }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
         .task(id: collection?.id) { await collection?.refresh() }
-        .onChange(of: store.candidate?.plant.id) { if $0 == nil { positionControlsPresented = false } }
+        .onChange(of: store.editCandidateID) { if $0 == nil { positionControlsPresented = false } }
         .onChange(of: store.canEdit) { if !$0 && !store.preparingMembership { store.cancelCandidate() } }
         .onChange(of: active) { value in
             if !value { store.cancelCandidate() }
@@ -314,30 +315,28 @@ struct ConnectedGardenScreen: View {
 
     private var controls: some View {
         VStack(spacing: 4) {
-            if store.itemCandidate != nil {
-                ItemPlacementControls(store: store)
-            } else if let selected = store.selectedItem {
-                itemSelection(selected)
-            } else if let candidate = store.candidate {
+            if store.editCandidateID != nil {
                 if positionControlsPresented {
                     CandidateControlsScreen(store: store, close: { positionControlsPresented = false })
-                } else if candidate.kind == .rotate {
+                } else if store.editCandidateIsRotation {
                     GardenRotationControls(store: store)
                 } else {
-                    Text("\(name(of: candidate.plant)) · \(candidate.plant.variantId.capitalized)")
+                    Text(store.editCandidateTitle)
                         .font(.system(.subheadline, design: .serif)).padding(.top, 6)
                     editingLayout {
                         Button("Cancel") { store.cancelCandidate() }.accessibilityIdentifier("editor.cancel")
                         Button("Position…") { positionControlsPresented = true }.accessibilityIdentifier("editor.position")
                         Button("Apply") { Task { await store.releaseCandidate() } }
                             .buttonStyle(.journalPrimary)
-                            .disabled(candidate.validity != .valid || !store.canEdit).accessibilityIdentifier("editor.apply")
+                            .disabled(store.editCandidateValidity != .valid || !store.canEdit).accessibilityIdentifier("editor.apply")
                     }.buttonStyle(.journalSecondary).controlSize(.large).padding(.horizontal, 12)
-                    if candidate.kind == .plant {
+                    if let candidate = store.candidate, candidate.kind == .plant {
                         Toggle("Show adult preview", isOn: $store.adultPreview).font(.callout).padding(.horizontal, 12)
                             .disabled(candidate.plant.growthStage == .adult).accessibilityIdentifier("editor.adult")
                     }
                 }
+            } else if let selected = store.selectedItem {
+                itemSelection(selected)
             } else if let selected = store.selected {
                 selectionPopup(selected)
             }
@@ -360,31 +359,13 @@ struct ConnectedGardenScreen: View {
     }
 
     private func itemSelection(_ item: APIOwnedItem) -> some View {
-        VStack(spacing: 8) {
-            HStack {
-                PlantNameText(item.displayName, rarity: item.rarity).font(.system(.headline, design: .serif))
-                Spacer()
-                Button { renderer.dismissSelection() } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                    .buttonStyle(.journalIcon).accessibilityLabel("Close item selection")
-            }
-            Button("Item details") { itemInspection = ItemInspection(id: item.id) }
-                .buttonStyle(.journalQuiet).frame(minHeight: 44)
-            if store.editing {
-                ViewThatFits(in: .horizontal) {
-                    HStack { itemActions(item) }
-                    VStack { itemActions(item) }
-                }
-            }
-        }.padding(.horizontal, 16).foregroundStyle(JournalTheme.ink).background(JournalTheme.paper)
-    }
-
-    @ViewBuilder private func itemActions(_ item: APIOwnedItem) -> some View {
-        Button("Move") { store.beginItem(item, action: "move") }
-            .buttonStyle(.journalSecondary).frame(minHeight: 44).disabled(!store.canEdit)
-        Button("Rotate") { store.beginItem(item, action: "rotate") }
-            .buttonStyle(.journalSecondary).frame(minHeight: 44).disabled(!store.canEdit)
-        Button("Store") { Task { await store.storeItem(item) } }
-            .buttonStyle(.journalSecondary).frame(minHeight: 44).disabled(!store.canEdit)
+        GardenSelectionPopup(name: item.displayName, variant: "", rarity: item.rarity, stage: "",
+            close: { renderer.dismissSelection() }, details: { itemInspection = ItemInspection(id: item.id) },
+            item: item,
+            move: store.editing ? { store.beginItem(item, action: "move") } : nil,
+            rotate: store.editing ? { store.beginItem(item, action: "rotate") } : nil,
+            store: store.editing ? { Task { await store.storeItem(item) } } : nil,
+            editingDisabled: !store.canEdit || renderer.isLoading)
     }
 
     @ViewBuilder private func selectionPopup(_ selected: APIOwnedPlant) -> some View {
@@ -429,18 +410,15 @@ struct ConnectedGardenScreen: View {
                             }
                         }
                     }
-                }
-                ForEach(store.confirmed?.items ?? []) { item in
-                    Button {
-                        store.cancelCandidate(); store.selectedID = item.id; sheet = nil
-                    } label: {
-                        HStack {
-                            ItemIcon(item: item).frame(width: 64, height: 64)
-                            Text(item.displayName)
-                            Spacer()
+                    ForEach(store.confirmed?.items ?? []) { item in
+                        OwnedItemTile(item: item, identifier: "garden.item.\(item.id)") {
+                            if store.editing {
+                                store.cancelCandidate(); store.selectedID = item.id; sheet = nil
+                            } else {
+                                browsingItemInspection = ItemInspection(id: item.id)
+                            }
                         }
-                    }.buttonStyle(.journalQuiet).frame(minHeight: 44)
-                        .accessibilityIdentifier("garden.item.\(item.id)")
+                    }
                 }
             }.padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
@@ -449,6 +427,10 @@ struct ConnectedGardenScreen: View {
             .fullScreenCover(item: $browsingInspection) { selection in
                 OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
                     collection: collection).journalModalBackground()
+            }
+            .sheet(item: $browsingItemInspection) { selection in
+                ItemDetailScreen(store: store, copyID: selection.id,
+                    close: { browsingItemInspection = nil }, collection: collection).itemDetailPresentation()
             }
     }
 
@@ -476,7 +458,7 @@ struct ConnectedGardenScreen: View {
             if storageItems {
                 ItemInventoryPanel(store: store, storageOnly: true, onPlace: { item in
                     store.beginItem(item, action: "place"); sheet = nil
-                })
+                }, collection: collection)
             } else {
               ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -520,12 +502,12 @@ struct GardenRotationControls: View {
     @ObservedObject var store: GardenEditorStore
     @FocusState private var editingAngle: Bool
     private var angle: Binding<Double> {
-        Binding(get: { NSDecimalNumber(decimal: store.candidate?.rotation ?? 0).doubleValue },
+        Binding(get: { NSDecimalNumber(decimal: store.editCandidateRotation).doubleValue },
                 set: { store.updateRotation($0) })
     }
     var body: some View {
         VStack(spacing: 8) {
-            Text("Rotate plant").font(.system(.headline, design: .serif))
+            Text(store.itemCandidate == nil ? "Rotate plant" : "Rotate item").font(.system(.headline, design: .serif))
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 12) {
                 Slider(value: angle, in: 0...359.99, step: 0.01,
@@ -548,7 +530,7 @@ struct GardenRotationControls: View {
                 Button("Apply") { editingAngle = false; Task { await store.releaseCandidate() } }
                     .buttonStyle(.journalPrimary)
                     .frame(minHeight: 44)
-                    .disabled(store.candidate?.validity != .valid || !store.canEdit)
+                    .disabled(store.editCandidateValidity != .valid || !store.canEdit)
                     .accessibilityIdentifier("editor.apply")
             }.buttonStyle(.journalSecondary).controlSize(.regular)
         }.padding(.horizontal, 16).padding(.bottom, 8)
@@ -576,7 +558,7 @@ private struct CandidateControlsScreen: View {
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Position plant").font(.system(.headline, design: .serif))
+            Text(store.itemCandidate == nil ? "Position plant" : "Position item").font(.system(.headline, design: .serif))
             let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
             layout {
                 VStack(alignment: .leading, spacing: 2) {
@@ -606,7 +588,7 @@ private struct CandidateControlsScreen: View {
                 Button("Apply and save") {
                     focusedField = nil; applying = true
                     Task { await store.releaseCandidate(); close() }
-                }.buttonStyle(.journalPrimary).frame(minHeight: 44).disabled(applying || store.candidate?.validity != .valid || !store.canEdit)
+                }.buttonStyle(.journalPrimary).frame(minHeight: 44).disabled(applying || store.editCandidateValidity != .valid || !store.canEdit)
                     .accessibilityIdentifier("editor.savePosition")
             }.buttonStyle(.journalSecondary)
         }.padding(12).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
@@ -616,11 +598,9 @@ private struct CandidateControlsScreen: View {
                 Button("Done") { focusedField = nil }
             } }
             .onAppear {
-                if let candidate = store.candidate {
-                    x = NSDecimalNumber(decimal: candidate.x).doubleValue
-                    y = NSDecimalNumber(decimal: candidate.y).doubleValue
-                    angle = NSDecimalNumber(decimal: candidate.rotation).doubleValue
-                }
+                x = NSDecimalNumber(decimal: store.editCandidateX).doubleValue
+                y = NSDecimalNumber(decimal: store.editCandidateY).doubleValue
+                angle = NSDecimalNumber(decimal: store.editCandidateRotation).doubleValue
             }
             .onChange(of: x) { store.updatePosition(x: $0, y: y) }
             .onChange(of: y) { store.updatePosition(x: x, y: $0) }

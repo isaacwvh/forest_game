@@ -4,17 +4,11 @@ import UIKit
 struct ItemInspection: Identifiable { let id: UUID }
 
 struct ItemIcon: View {
-    let item: APIOwnedItem
+    let appearance: GardenItem
+    init(item: APIOwnedItem) { appearance = item.rendered() }
+    init(appearance: GardenItem) { self.appearance = appearance }
     var body: some View {
-        Group {
-            if let asset = try? BundledItemAssets.resolve(item.rendered()),
-               let image = UIImage(contentsOfFile: asset.thumbnailURL.path) {
-                Image(uiImage: image).resizable().scaledToFit()
-            } else {
-                Image(systemName: "shippingbox").resizable().scaledToFit().padding(24)
-                    .foregroundStyle(JournalTheme.secondary)
-            }
-        }.accessibilityHidden(true)
+        JournalAssetImage(url: (try? BundledItemAssets.resolve(appearance))?.thumbnailURL)
     }
 }
 
@@ -23,6 +17,7 @@ struct ItemInventoryPanel: View {
     @ObservedObject var store: GardenEditorStore
     var storageOnly = false
     var onPlace: ((APIOwnedItem) -> Void)? = nil
+    var collection: CollectionCoordinator? = nil
     @State private var inspection: ItemInspection?
     @State private var placing: APIOwnedItem?
     private var placed: [APIOwnedItem] { store.confirmed?.items ?? [] }
@@ -57,29 +52,24 @@ struct ItemInventoryPanel: View {
             }.padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .fullScreenCover(item: $inspection, onDismiss: {
+            .sheet(item: $inspection, onDismiss: {
                 if let item = placing { placing = nil; onPlace?(item) }
             }) { selection in
                 ItemDetailScreen(store: store, copyID: selection.id, close: { inspection = nil },
-                    place: onPlace.map { _ in { (item: APIOwnedItem) in placing = item; inspection = nil } })
-                    .journalModalBackground()
+                    place: onPlace.map { _ in { (item: APIOwnedItem) in placing = item; inspection = nil } },
+                    collection: collection).itemDetailPresentation()
             }
+            .refreshable { await store.refresh(); await collection?.refresh() }
+            .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || inspection != nil }
     }
 
     @ViewBuilder private func itemGrid(_ items: [APIOwnedItem]) -> some View {
         if items.isEmpty { Text("No items here yet.").foregroundStyle(JournalTheme.secondary) }
         JournalGrid {
             ForEach(items) { item in
-                Button { inspection = ItemInspection(id: item.id) } label: {
-                    VStack(spacing: 8) {
-                        ItemIcon(item: item).frame(height: 124).frame(maxWidth: .infinity)
-                        PlantNameText(item.displayName, rarity: item.rarity)
-                            .font(.system(.headline, design: .serif))
-                        Text(item.rarity.capitalized).font(.caption).foregroundStyle(JournalTheme.secondary)
-                    }.padding(12).frame(maxWidth: .infinity)
-                }.buttonStyle(.journalQuiet)
-                    .accessibilityLabel("\(item.displayName), \(item.rarity), \(item.placement == nil ? "stored" : "in garden")")
-                    .accessibilityIdentifier("inventory.item.\(item.id)")
+                OwnedItemTile(item: item, identifier: "inventory.item.\(item.id)") {
+                    inspection = ItemInspection(id: item.id)
+                }
             }
         }
     }
@@ -91,58 +81,80 @@ struct ItemDetailScreen: View {
     let copyID: UUID
     let close: () -> Void
     var place: ((APIOwnedItem) -> Void)? = nil
+    var collection: CollectionCoordinator? = nil
     private var item: APIOwnedItem? {
         ((store.confirmed?.items ?? []) + store.itemInventory).first { $0.id == copyID }
     }
     var body: some View {
-        JournalInspector(title: item?.displayName ?? "Item", close: close,
-                         closeLabel: "Close item details", identifier: "itemDetails") {
-            if let item = item {
-                ItemIcon(item: item).frame(height: 230).frame(maxWidth: .infinity)
-                Text(item.rarity.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
-                Text(item.description).frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                Text("This copy is no longer available. Refresh your inventory.")
+        VStack(spacing: 0) {
+            HStack {
+                PlantNameText(item?.displayName ?? "Item", rarity: item?.rarity)
+                    .font(.system(.title2, design: .serif).weight(.semibold)).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+                Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                    .buttonStyle(.journalIcon).accessibilityLabel("Close item details")
+            }.padding(.horizontal, 20).padding(.top, 12)
+            ScrollView {
+                VStack(spacing: 14) {
+                    if let item = item {
+                        ItemIcon(item: item).frame(height: 150).frame(maxWidth: .infinity)
+                        Text(item.rarity.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
+                        Text(item.description).frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Text("This copy is no longer available. Refresh your inventory.")
+                    }
+                }.padding(20)
             }
-        } footer: {
-            if let item = item, item.placement == nil, let place = place {
+            if let item = item, let collection = collection {
+                ItemSaleControls(store: collection, item: item, editingEnabled: store.canEdit,
+                                 place: place, close: close).padding(16).background(JournalTheme.sage.opacity(0.65))
+            } else if let item = item, item.placement == nil, let place = place {
                 Button("Place") { place(item) }.buttonStyle(.journalPrimary)
                     .frame(minHeight: 44).frame(maxWidth: .infinity).padding(16)
                     .disabled(!store.canEdit).accessibilityIdentifier("itemDetails.place")
             }
-        }
+        }.background(JournalTheme.paper).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+            .accessibilityIdentifier("itemDetails")
     }
 }
 
-@MainActor
-struct ItemPlacementControls: View {
-    @ObservedObject var store: GardenEditorStore
+struct ItemDetailPresentation: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var textSize
+    func body(content: Content) -> some View {
+        content.presentationDetents(textSize.isAccessibilitySize ? [.large] : [.height(490), .large])
+            .presentationDragIndicator(.visible)
+    }
+}
+
+extension View {
+    func itemDetailPresentation() -> some View { modifier(ItemDetailPresentation()) }
+}
+
+struct OwnedItemTile: View {
+    let item: APIOwnedItem
+    let identifier: String
+    let open: () -> Void
+    @Environment(\.dynamicTypeSize) private var textSize
+    @ScaledMetric(relativeTo: .subheadline) private var nameHeight: CGFloat = 22
     var body: some View {
-        if let value = store.itemCandidate {
-            VStack(spacing: 10) {
-                Text(value.item.displayName).font(.system(.headline, design: .serif))
-                if value.action != "rotate" {
-                    HStack {
-                        Text("X")
-                        TextField("X", value: Binding(get: { NSDecimalNumber(decimal: store.itemCandidate?.x ?? 0).doubleValue },
-                            set: { store.updatePosition(x: $0, y: NSDecimalNumber(decimal: store.itemCandidate?.y ?? 0).doubleValue) }), format: .number)
-                            .keyboardType(.decimalPad).textFieldStyle(.roundedBorder).accessibilityLabel("Item X position")
-                        Text("Y")
-                        TextField("Y", value: Binding(get: { NSDecimalNumber(decimal: store.itemCandidate?.y ?? 0).doubleValue },
-                            set: { store.updatePosition(x: NSDecimalNumber(decimal: store.itemCandidate?.x ?? 0).doubleValue, y: $0) }), format: .number)
-                            .keyboardType(.decimalPad).textFieldStyle(.roundedBorder).accessibilityLabel("Item Y position")
-                    }
-                }
-                Slider(value: Binding(get: { NSDecimalNumber(decimal: store.itemCandidate?.rotation ?? 0).doubleValue },
-                                      set: { store.updateRotation($0) }), in: 0...359.99, step: 0.01)
-                    .frame(minHeight: 44).accessibilityLabel("Item rotation")
-                HStack {
-                    Button("Cancel") { store.cancelCandidate() }.buttonStyle(.journalSecondary)
-                    Button("Apply") { Task { await store.releaseCandidate() } }.buttonStyle(.journalPrimary)
-                        .disabled(value.validity != .valid || !store.canEdit)
-                        .accessibilityIdentifier("editor.item.apply")
-                }.frame(minHeight: 44)
-            }.padding(12)
+        JournalPlantFrame(rarity: item.rarity) {
+            ZStack(alignment: .topTrailing) {
+                Button(action: open) {
+                    VStack(spacing: 6) {
+                        ItemIcon(item: item).frame(height: textSize.isAccessibilitySize ? 112 : 62)
+                            .frame(maxWidth: .infinity).padding(4).background(JournalTheme.sage.opacity(0.45))
+                        VStack(spacing: 3) {
+                            PlantNameText(item.displayName, rarity: item.rarity, announcesRarity: false)
+                                .font(.system(.subheadline, design: .serif).weight(.semibold))
+                                .lineLimit(1).minimumScaleFactor(0.65).frame(height: nameHeight)
+                            Text(item.rarity.capitalized).font(.caption2).foregroundStyle(JournalTheme.secondary)
+                                .lineLimit(1).minimumScaleFactor(0.75)
+                        }.padding(.horizontal, 6).multilineTextAlignment(.center)
+                    }.padding(.bottom, 6).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityIdentifier(identifier)
+                    .accessibilityLabel("\(item.displayName), \(item.rarity), \(item.placement == nil ? "stored" : "in garden")")
+                JournalRarity(rarity: item.rarity)
+            }.clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }
 }

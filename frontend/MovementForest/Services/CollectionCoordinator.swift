@@ -26,6 +26,8 @@ final class CollectionCoordinator: ObservableObject {
     let id = UUID()
     let discovery: CatalogDiscoveryStore
     @Published private(set) var offers: [APIExchangeOffer] = []
+    @Published private(set) var itemOffers: [APIItemShopOffer] = []
+    @Published private(set) var itemCapacity: APIItemCapacity?
     @Published private(set) var capacity: APIInventoryCapacity?
     private var levelPlantLimit: Int?
     func applyLevelPlantLimit(_ limit: Int) {
@@ -144,6 +146,16 @@ final class CollectionCoordinator: ObservableObject {
             let isOpening = pending.kind == .open
             let matchesOperation: Bool
             switch pending.kind {
+            case .itemPurchase:
+                let body = try ActivityWire.decoder().decode(CollectionExchangeBody.self, from: pending.body)
+                let ids = receipt.ownedItemIds ?? []
+                matchesOperation = receipt.requestId == pending.id && receipt.purchaseId != nil &&
+                    receipt.quantity == body.quantity && ids.count == body.quantity && Set(ids).count == ids.count &&
+                    receipt.tokensSpent.flatMap(ExactAmount.integer).map { $0 > 0 } == true
+            case .itemSell:
+                let body = try ActivityWire.decoder().decode(ItemSellBody.self, from: pending.body)
+                matchesOperation = receipt.requestId == pending.id && receipt.saleId != nil &&
+                    receipt.ownedItemId == pending.target && receipt.tokensEarned == body.expectedTokens
             case .sell:
                 let body = try ActivityWire.decoder().decode(CollectionSellBody.self, from: pending.body)
                 matchesOperation = receipt.requestId == pending.id && receipt.saleId != nil &&
@@ -175,14 +187,17 @@ final class CollectionCoordinator: ObservableObject {
                 exchangeMessage = "Purchase confirmed. Your packs are saved."
             }
             applyWallet(receipt.tokenBalance, version: receipt.economyVersion, gems: receipt.gemBalance)
+            if receipt.economyVersion == economyVersion, let capacity = receipt.itemCapacity { itemCapacity = capacity }
             if receipt.economyVersion == economyVersion, let capacity = receipt.capacity {
                 acceptCapacity(capacity)
             }
             DiagnosticHistory.shared.record("Collection", "confirmed \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
-            message = pending.kind == .sell ? "Plant sold for \(receipt.tokensEarned ?? "0") tokens." :
+            message = pending.kind == .itemPurchase ? "Item saved to Storage." :
+                pending.kind == .itemSell ? "Item sold for \(receipt.tokensEarned ?? "0") tokens." :
+                pending.kind == .sell ? "Plant sold for \(receipt.tokensEarned ?? "0") tokens." :
                 pending.kind == .milestone ? "Milestone reward saved." :
                 (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
-            if isOpening || pending.kind == .sell { await onPlantAwarded?() }
+            if isOpening || pending.kind == .sell || pending.kind == .itemPurchase || pending.kind == .itemSell { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
                     ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
             guard attached else { return }
@@ -196,6 +211,8 @@ final class CollectionCoordinator: ObservableObject {
         applyWallet(summary.tokenBalance, version: summary.economyVersion, gems: summary.gemBalance)
         if summary.economyVersion == economyVersion { acceptCapacity(summary.capacity) }
         offers = summary.offers
+        itemOffers = summary.itemOffers ?? []
+        if summary.economyVersion == economyVersion { itemCapacity = summary.itemCapacity }
         milestones = summary.milestones ?? []
         milestonesConfirmedAt = Date()
         var cached = state
@@ -324,6 +341,48 @@ final class CollectionCoordinator: ObservableObject {
     func dismissResult() {
         do { try persist(CollectionJournalState(pending: state.pending, result: nil)) }
         catch { message = "The result could not be dismissed. It is still saved." }
+    }
+
+    func canBuyItem(_ offer: APIItemShopOffer, quantity: Int) -> Bool {
+        guard canMutate, (1...20).contains(quantity), quantity <= (itemCapacity?.room ?? 0),
+              let cost = ExactAmount.integer(offer.tokenCost), cost > 0,
+              let balance = tokenBalance.flatMap(ExactAmount.integer) else { return false }
+        return balance >= cost * Decimal(quantity)
+    }
+
+    func buyItem(_ offer: APIItemShopOffer, quantity: Int) async {
+        guard canBuyItem(offer, quantity: quantity) else { return }
+        let id = UUID()
+        do {
+            let body = try ActivityWire.encoder().encode(CollectionExchangeBody(requestId: id,
+                offerId: offer.offerId, offerVersion: offer.offerVersion, quantity: quantity))
+            await submit(PendingCollectionOperation(id: id, kind: .itemPurchase, target: nil, body: body))
+        } catch { message = displayFailure(error) }
+    }
+
+    func itemSaleQuote(item: UUID) async throws -> APIItemSaleQuote {
+        guard attached, !recoveryLocked, state.pending == nil else {
+            throw ForestError.invalidData("Recover the saved collection request before selling.")
+        }
+        let quote = try await service.itemSaleQuote(item: item)
+        guard attached, quote.ownedItemId == item, quote.resaleBasisPoints == 2500,
+              !quote.valuationVersion.isEmpty,
+              let value = ExactAmount.integer(quote.tokenValue), value >= 4,
+              let tokens = ExactAmount.integer(quote.tokens), tokens > 0,
+              tokens == Decimal(NSDecimalNumber(decimal: value).int64Value / 4) else {
+            throw ForestError.invalidData("The item's resale value could not be verified.")
+        }
+        return quote
+    }
+
+    func sellItem(_ quote: APIItemSaleQuote) async {
+        guard canMutate else { return }
+        let id = UUID()
+        do {
+            let body = try ActivityWire.encoder().encode(ItemSellBody(requestId: id,
+                valuationVersion: quote.valuationVersion, expectedTokens: quote.tokens))
+            await submit(PendingCollectionOperation(id: id, kind: .itemSell, target: quote.ownedItemId, body: body))
+        } catch { message = displayFailure(error) }
     }
     func loadMore(history: Bool = false) async {
         guard attached, !busy, !recoveryLocked else { return }

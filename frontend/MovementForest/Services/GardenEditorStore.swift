@@ -392,6 +392,21 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         (confirmed?.items ?? []).first { $0.id == selectedID } ?? itemInventory.first { $0.id == selectedID }
     }
 
+    var editCandidateID: UUID? { candidate?.plant.id ?? itemCandidate?.item.id }
+    var editCandidateX: Decimal { candidate?.x ?? itemCandidate?.x ?? 0 }
+    var editCandidateY: Decimal { candidate?.y ?? itemCandidate?.y ?? 0 }
+    var editCandidateRotation: Decimal { candidate?.rotation ?? itemCandidate?.rotation ?? 0 }
+    var editCandidateValidity: PlacementValidity? { candidate?.validity ?? itemCandidate?.validity }
+    var editCandidateIsRotation: Bool { candidate?.kind == .rotate || itemCandidate?.action == "rotate" }
+    var editCandidateTitle: String {
+        if let item = itemCandidate?.item { return item.displayName }
+        if let plant = candidate?.plant {
+            let name = catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId
+            return "\(name) · \(plant.variantId.capitalized)"
+        }
+        return ""
+    }
+
     func beginItem(_ item: APIOwnedItem, action: String) {
         guard canEdit, let garden = confirmed,
               let current = ((garden.items ?? []) + itemInventory).first(where: { $0.id == item.id }),

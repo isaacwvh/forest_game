@@ -177,9 +177,9 @@ struct MyPlantsHostScreen: View {
                         Text("Packs").tag("Packs")
                     }.pickerStyle(.segmented).padding(16)
                     if section == "Items" {
-                        ItemInventoryPanel(store: editor).id(editor.id)
+                        ItemInventoryPanel(store: editor, collection: connection.collection).id(editor.id)
                     } else if section == "Packs" {
-                        CollectionHostScreen(connection: connection, destination: .draws, assets: catalog)
+                        CollectionHostScreen(connection: connection, destination: .draws, assets: catalog, inventoryEmbedded: true)
                     } else {
                         MyPlantsScreen(store: editor, catalog: catalog, collection: connection.collection).id(editor.id)
                     }
@@ -195,6 +195,11 @@ struct MyPlantsHostScreen: View {
                 }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }.background(JournalPageBackground().ignoresSafeArea()).navigationTitle("Inventory")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .principal) {
+                Text("Inventory").font(.system(.title2, design: .serif).weight(.semibold))
+                    .foregroundStyle(JournalTheme.ink)
+            } }
             .task(id: connection.collection?.id) { await connection.collection?.refresh() }
     }
 }
@@ -254,11 +259,8 @@ struct MyPlantsScreen: View {
         }
         .background(JournalPageBackground().ignoresSafeArea())
         .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-        .navigationTitle("My plants").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Inventory").navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("My plants").font(.system(.title2, design: .serif).weight(.semibold)).foregroundStyle(JournalTheme.ink)
-            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     Picker("Rarity", selection: $rarity) {

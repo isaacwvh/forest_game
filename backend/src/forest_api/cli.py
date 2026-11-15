@@ -100,6 +100,10 @@ def main() -> None:
     bench = commands.add_parser("grant-bench", help="Preview one stored bench for a named account")
     bench.add_argument("username")
     bench.add_argument("--apply", action="store_true")
+    item_shop = commands.add_parser(
+        "publish-item-shop", help="Preview the permanent bench shop and resale values"
+    )
+    item_shop.add_argument("--apply", action="store_true")
     args = parser.parse_args()
     settings = Settings()
     if args.command == "dev-token":
@@ -113,7 +117,11 @@ def main() -> None:
             run(database, settings)
             return
         with database.sessions() as session:
-            if args.command == "grant-bench":
+            if args.command == "publish-item-shop":
+                from forest_api.item_commerce import publish
+
+                print(json.dumps(publish(session, apply=args.apply)))
+            elif args.command == "grant-bench":
                 from forest_api.items import grant_bench
 
                 print(json.dumps(grant_bench(session, args.username, apply=args.apply)))

@@ -131,6 +131,7 @@ struct APIClient {
         request.setValue("2", forHTTPHeaderField: "X-Forest-Discovery")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Milestones")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Items")
+        request.setValue("1", forHTTPHeaderField: "X-Forest-Item-Commerce")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         if authenticated {
             request.setValue("Bearer \(try await tokens.token())", forHTTPHeaderField: "Authorization")

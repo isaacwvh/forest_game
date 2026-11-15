@@ -18,6 +18,7 @@ def get_session(request: Request) -> Iterator[Session]:
         session.info["woodland_release"] = request.headers.get("X-Forest-Woodland") == "1"
         session.info["milestones_client"] = request.headers.get("X-Forest-Milestones")
         session.info["items_client"] = request.headers.get("X-Forest-Items") == "1"
+        session.info["item_commerce_client"] = request.headers.get("X-Forest-Item-Commerce") == "1"
         if request.app.state.clock:
             session.info["milestone_boundary"] = request.app.state.clock()
         yield session

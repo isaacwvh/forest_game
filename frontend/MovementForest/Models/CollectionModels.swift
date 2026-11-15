@@ -115,6 +115,8 @@ struct APICollectionSummary: Codable {
     let offers: [APIExchangeOffer]
     var milestones: [APIIntroMilestone]? = nil
     var capacity: APIInventoryCapacity? = nil
+    var itemOffers: [APIItemShopOffer]? = nil
+    var itemCapacity: APIItemCapacity? = nil
 }
 
 struct APIIntroMilestone: Codable, Identifiable {
@@ -201,6 +203,10 @@ struct APICollectionReceipt: Codable, Identifiable {
     var saleId: UUID? = nil
     var plantId: UUID? = nil
     var capacity: APIInventoryCapacity? = nil
+    var purchaseId: UUID? = nil
+    var ownedItemId: UUID? = nil
+    var ownedItemIds: [UUID]? = nil
+    var itemCapacity: APIItemCapacity? = nil
     var id: UUID { openingId ?? exchangeId ?? requestId }
 }
 
@@ -250,7 +256,7 @@ struct CollectionSellBody: Codable {
 }
 
 struct PendingCollectionOperation: Codable, Equatable {
-    enum Kind: String, Codable { case exchange, open, milestone, sell }
+    enum Kind: String, Codable { case exchange, open, milestone, sell, itemPurchase, itemSell }
     let id: UUID
     let kind: Kind
     let target: UUID?
@@ -258,6 +264,19 @@ struct PendingCollectionOperation: Codable, Equatable {
     var milestoneID: String? = nil
     func validate() throws {
         switch kind {
+        case .itemPurchase:
+            let request = try ActivityWire.decoder().decode(CollectionExchangeBody.self, from: body)
+            guard request.requestId == id, target == nil, (1...20).contains(request.quantity),
+                  request.offerVersion > 0,
+                  request.offerId.range(of: "^[a-z][a-z0-9_-]{0,99}$", options: .regularExpression) != nil else {
+                throw ForestError.invalidData("The saved item purchase could not be verified.")
+            }
+        case .itemSell:
+            let request = try ActivityWire.decoder().decode(ItemSellBody.self, from: body)
+            guard request.requestId == id, target != nil, !request.valuationVersion.isEmpty,
+                  let tokens = ExactAmount.integer(request.expectedTokens), tokens > 0 else {
+                throw ForestError.invalidData("The saved item sale could not be verified.")
+            }
         case .sell:
             let request = try ActivityWire.decoder().decode(CollectionSellBody.self, from: body)
             guard request.requestId == id, target != nil, !request.valuationVersion.isEmpty,
@@ -306,9 +325,13 @@ protocol CollectionServing {
     func definition(pack: String, version: Int) async throws -> APIPackDefinition
     func mutate(_ operation: PendingCollectionOperation) async throws -> APICollectionReceipt
     func saleQuote(plant: UUID) async throws -> APIPlantSaleQuote
+    func itemSaleQuote(item: UUID) async throws -> APIItemSaleQuote
 }
 
 extension CollectionServing {
+    func itemSaleQuote(item: UUID) async throws -> APIItemSaleQuote {
+        throw ForestError.invalidData("Connect to refresh this item's resale value.")
+    }
     func saleQuote(plant: UUID) async throws -> APIPlantSaleQuote {
         throw ForestError.invalidData("Connect to refresh this plant's resale value.")
     }
@@ -320,6 +343,9 @@ struct APICollectionRepository: CollectionServing {
     func summary() async throws -> APICollectionSummary { try await client.request("v1/me/collection") }
     func saleQuote(plant: UUID) async throws -> APIPlantSaleQuote {
         try await client.request("v1/me/plants/\(plant.uuidString)/sale-quote")
+    }
+    func itemSaleQuote(item: UUID) async throws -> APIItemSaleQuote {
+        try await client.request("v1/me/items/\(item.uuidString)/sale-quote")
     }
     func catalogue() async throws -> APICatalogue { try await client.request("v1/catalog") }
     private func query(_ cursor: UUID?) -> [URLQueryItem] {
@@ -339,6 +365,8 @@ struct APICollectionRepository: CollectionServing {
         try operation.validate()
         let path: String
         switch operation.kind {
+        case .itemPurchase: path = "v1/me/item-purchases"
+        case .itemSell: path = "v1/me/items/\(operation.target!.uuidString)/sell"
         case .sell: path = "v1/me/plants/\(operation.target!.uuidString)/sell"
         case .exchange: path = "v1/me/exchanges"
         case .open: path = "v1/me/packs/\(operation.target!.uuidString)/open"

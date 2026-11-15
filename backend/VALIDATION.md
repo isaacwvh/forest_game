@@ -833,3 +833,31 @@ database was migrated or granted items. Docker engine inspection returned HTTP
 See [item rules, data classification and explicit activation](ITEMS.md) and
 [native acceptance](../frontend/ITEMS_ACCEPTANCE.md). Existing retention workers
 need no new family; item edits use the established compact recovery operation.
+
+## Garden items Stage 5 — 15 November 2026
+
+All gameplay databases were disposable `forest_test_*` databases on the dedicated
+loopback PostgreSQL cluster. No personal database migration, publication, grant or
+game service change was performed for this stage.
+
+- Full backend suite: **694 passed, 3 skipped** in 668.66s. Skips are the existing
+  opt-in physical-storage benchmarks.
+- Final focused commerce suite: **18 passed** in 70.97s. An additional populated
+  `0018` → `0019` upgrade test ran after the full suite; counts are not additive.
+  Existing account, wallet, plants and a placed bench remain identical across
+  migration. Publishing the offer enables a 137-token quote for that gifted bench.
+- Covered 550-token purchases, individual copies, 25% floor resale, stored-only
+  selling, whole-quantity capacity rejection, insufficient funds, stale offers and
+  quotes, ownership, concurrent purchase/sale, atomic failure rollback, durable
+  receipt replay after seven-day compaction, source-grant replay after sale,
+  immutable valuation, SQL restoration guard and financial reconciliation.
+- Activity, skills, visitor and nonfixture launch real-HTTP smoke walkthroughs pass.
+- Ruff lint/format, portable frontend/project/resource validation, item HTTP
+  contracts and all 100 Swift syntax parses pass.
+- Docker image build could not start: engine `_ping` returned HTTP 500. Xcode
+  build/typecheck, XCTest and iPhone acceptance remain unexecuted on Windows.
+
+New item sales and valuation records use existing durable-recovery classification;
+purchase/sale API requests use existing seven-day compaction with permanent
+financial receipt recovery. See [ITEMS.md](ITEMS.md) for explicit publication.
+No Stage 6 scheduling or skills, push or remote CI run.

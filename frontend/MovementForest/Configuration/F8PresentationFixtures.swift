@@ -155,6 +155,8 @@ private final class CleanupCollectionService: ObservableObject, CollectionServin
         if let receipt = receipts[operation.id] { return receipt }
         let receipt: APICollectionReceipt
         switch operation.kind {
+        case .itemPurchase, .itemSell:
+            throw ForestError.invalidData("Item commerce is not configured in this presentation fixture.")
         case .sell:
             throw ForestError.invalidData("Plant selling is outside this presentation fixture.")
         case .exchange:

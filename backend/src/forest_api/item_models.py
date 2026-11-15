@@ -1,21 +1,26 @@
-"""Separate item copies and permanent acquisition identity; no growth or currency."""
+"""Separate item copies, permanent acquisition identity and durable commerce facts."""
 
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
+    Index,
     Integer,
     Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from forest_api.models import Base
@@ -90,3 +95,66 @@ class ItemPlacement(Base):
     x: Mapped[Decimal] = mapped_column(Numeric(9, 3))
     y: Mapped[Decimal] = mapped_column(Numeric(9, 3))
     rotation_degrees: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+
+
+class ItemValueDefinition(Base):
+    __tablename__ = "item_value_definitions"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["item_id", "item_version"], ["item_definitions.id", "item_definitions.version"]
+        ),
+        CheckConstraint("token_value >= 4 AND resale_basis_points = 2500", name="value"),
+    )
+    item_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    item_version: Mapped[int] = mapped_column(Integer, primary_key=True)
+    valuation_version: Mapped[str] = mapped_column(String(100))
+    token_value: Mapped[int] = mapped_column(BigInteger)
+    resale_basis_points: Mapped[int] = mapped_column(Integer)
+
+
+class ItemValuation(Base):
+    __tablename__ = "item_valuations"
+    __table_args__ = (
+        CheckConstraint("token_value >= 4 AND resale_basis_points = 2500", name="value"),
+    )
+    owned_item_id: Mapped[UUID] = mapped_column(ForeignKey("item_identities.id"), primary_key=True)
+    valuation_version: Mapped[str] = mapped_column(String(100))
+    token_value: Mapped[int] = mapped_column(BigInteger)
+    resale_basis_points: Mapped[int] = mapped_column(Integer)
+
+
+class ItemShopOffer(Base):
+    __tablename__ = "item_shop_offers"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["item_id", "item_version"],
+            ["item_value_definitions.item_id", "item_value_definitions.item_version"],
+        ),
+        CheckConstraint("version > 0 AND token_cost >= 4", name="value"),
+        Index("uq_item_shop_active_offer", "id", unique=True, postgresql_where=text("active")),
+    )
+    id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[str] = mapped_column(String(100))
+    item_version: Mapped[int] = mapped_column(Integer)
+    token_cost: Mapped[int] = mapped_column(BigInteger)
+    active: Mapped[bool] = mapped_column(Boolean, server_default="true")
+
+
+class ItemSale(Base):
+    __tablename__ = "item_sales"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owned_item_id", "owner_id"], ["item_identities.id", "item_identities.owner_id"]
+        ),
+        UniqueConstraint("owner_id", "request_id"),
+        CheckConstraint("tokens > 0", name="tokens"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    owned_item_id: Mapped[UUID] = mapped_column(unique=True)
+    request_id: Mapped[UUID] = mapped_column()
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    tokens: Mapped[int] = mapped_column(BigInteger)
+    receipt: Mapped[dict] = mapped_column(JSONB)
+    sold_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

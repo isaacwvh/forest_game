@@ -25,6 +25,8 @@ GROUPS = {
         "visitor_controls",
     },
     "durable_recovery": {
+        "item_valuations",
+        "item_sales",
         "item_identities",
         "milestone_state",
         "milestone_days",
@@ -64,6 +66,8 @@ GROUPS = {
         "visitor_opportunities",
     },
     "shared_configuration": {
+        "item_value_definitions",
+        "item_shop_offers",
         "item_definitions",
         "milestone_policies",
         "milestone_events",

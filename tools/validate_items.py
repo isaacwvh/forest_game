@@ -48,10 +48,19 @@ def validate():
     assert placed["items"][0]["placement"]["rotationDegrees"] == 90
     assert placed["totalAttractionMicroUnits"] == "0"
     assert fixture["storeResult"]["garden"]["items"] == []
+    commerce = json.loads((ROOT / "frontend/MovementForest/Resources/Fixtures/item-commerce-contract.json").read_text())
+    offer = commerce["summary"]["itemOffers"][0]
+    assert offer["tokenCost"] == "550" and offer["itemId"] == "wooden-bench"
+    assert all((ROOT / offer[key]).is_file() for key in ("modelKey", "thumbnailKey"))
+    assert commerce["purchase"]["quantity"] == 2 and commerce["purchase"]["tokensSpent"] == "1100"
+    assert len(set(commerce["purchase"]["ownedItemIds"])) == 2
+    assert commerce["quote"]["tokenValue"] == "550" and commerce["quote"]["tokens"] == "137"
+    assert commerce["sale"]["ownedItemId"] in commerce["purchase"]["ownedItemIds"]
+    assert commerce["sale"]["tokenBalance"] == "1037" and commerce["sale"]["itemCapacity"]["ownedItems"] == 1
     project = (ROOT / "frontend/MovementForest.xcodeproj/project.pbxproj").read_text()
     assert "../assets/items/wooden-bench" in project
     assert "../assets/items/wooden-bench-v1.zip" not in project
-    print("PASS: bench hashes, USDZ CRC/alignment, grounded Y-up bounds, footprint, alpha icon, bundle inclusion and real HTTP item lifecycle.")
+    print("PASS: bench assets, footprint, alpha icon, bundle inclusion, HTTP placement, 550-token purchases and 137-token resale contract.")
 
 
 if __name__ == "__main__":

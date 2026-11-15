@@ -27,6 +27,7 @@ struct GardenSelectionPopup: View {
     let details: () -> Void
     var plant: GardenPlant? = nil
     var owned: APIOwnedPlant? = nil
+    var item: APIOwnedItem? = nil
     var catalog: (any AssetCatalogProviding)? = nil
     var isSample = false
     var move: (() -> Void)? = nil
@@ -40,7 +41,9 @@ struct GardenSelectionPopup: View {
                 HStack(alignment: .top, spacing: 6) {
                     if !textSize.isAccessibilitySize {
                         Group {
-                            if let plant = plant, let catalog = catalog {
+                            if let item = item {
+                                ItemIcon(item: item)
+                            } else if let plant = plant, let catalog = catalog {
                                 JournalPlantImage(plant: plant, catalog: catalog)
                             } else { Image(systemName: "leaf").foregroundStyle(JournalTheme.secondary) }
                         }.frame(width: 48, height: 56).padding(4)
@@ -51,7 +54,7 @@ struct GardenSelectionPopup: View {
                             .font(.system(.headline, design: .serif))
                             .lineLimit(textSize.isAccessibilitySize ? nil : 1)
                             .minimumScaleFactor(textSize.isAccessibilitySize ? 1 : 0.75)
-                        Text("\(variant) · \(stage)").font(.caption).foregroundStyle(JournalTheme.secondary)
+                        Text(item.map { $0.rarity.capitalized } ?? "\(variant) · \(stage)").font(.caption).foregroundStyle(JournalTheme.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         if let owned = owned {
                             let summary = JournalGrowthSummary(plant: owned)
@@ -67,7 +70,7 @@ struct GardenSelectionPopup: View {
                     }.frame(maxWidth: .infinity, alignment: .leading)
                     JournalRarity(rarity: rarity)
                     Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                        .buttonStyle(.journalIcon).accessibilityLabel("Close plant selection")
+                        .buttonStyle(.journalIcon).accessibilityLabel(item == nil ? "Close plant selection" : "Close item selection")
                         .accessibilityIdentifier("garden.selection.close")
                 }.padding(.horizontal, 8).padding(.top, 6)
                 HStack(spacing: 4) {
@@ -83,7 +86,7 @@ struct GardenSelectionPopup: View {
                         GardenActionButton(title: "Store", symbol: "tray.and.arrow.down",
                             identifier: "editor.store", action: store).disabled(editingDisabled)
                     }
-                    GardenActionButton(title: "Plant details", symbol: "info.circle",
+                    GardenActionButton(title: item == nil ? "Plant details" : "Item details", symbol: "info.circle",
                         identifier: "garden.details", action: details)
                 }.padding(.horizontal, 4).padding(.bottom, 4)
             }

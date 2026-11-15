@@ -6,7 +6,14 @@ from sqlalchemy import func, select, text
 
 from forest_api import services
 from forest_api.errors import ApiError
-from forest_api.item_models import ItemDefinition, ItemIdentity, ItemPlacement, OwnedItem
+from forest_api.item_models import (
+    ItemDefinition,
+    ItemIdentity,
+    ItemPlacement,
+    ItemValuation,
+    ItemValueDefinition,
+    OwnedItem,
+)
 from forest_api.models import User
 from forest_api.schemas import ItemDTO, PlacementDTO
 
@@ -49,7 +56,7 @@ def capacity(session, owner):
     }
 
 
-def grant(session, owner, item_id, version, *, source, reference, quantity=1):
+def grant(session, owner, item_id, version, *, source, reference, quantity=1, token_value=None):
     """Whole-bundle grant, serialized on owner. Never marks reward claims or commits.
 
     The caller must let a capacity error roll back the enclosing reward transaction.
@@ -102,6 +109,21 @@ def grant(session, owner, item_id, version, *, source, reference, quantity=1):
     ]
     session.add_all(identities)
     session.flush()
+    value = session.get(ItemValueDefinition, (item_id, version))
+    if token_value is not None and value is None:
+        raise ApiError(409, "sale_unavailable", "Item valuation is not published")
+    if value is not None:
+        session.add_all(
+            [
+                ItemValuation(
+                    owned_item_id=r.id,
+                    valuation_version=value.valuation_version,
+                    token_value=value.token_value if token_value is None else token_value,
+                    resale_basis_points=value.resale_basis_points,
+                )
+                for r in identities
+            ]
+        )
     session.add_all([OwnedItem(id=r.id, owner_id=owner) for r in identities])
     if garden.state_version >= 9223372036854775807:
         raise ApiError(503, "version_exhausted", "Garden version requires maintenance")

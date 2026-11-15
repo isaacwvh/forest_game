@@ -1,11 +1,11 @@
 import SwiftUI
 
 enum CollectionDestination: String, CaseIterable, Identifiable {
-    case exchange = "Exchange", catalog = "Catalog", draws = "Packs", milestones = "Milestones"
+    case exchange = "Shop", catalog = "Catalog", draws = "Packs", milestones = "Milestones"
     var id: String { rawValue }
     var symbol: String {
         switch self {
-        case .exchange: return "arrow.left.arrow.right"
+        case .exchange: return "bag"
         case .catalog: return "books.vertical"
         case .draws: return "shippingbox"
         case .milestones: return "checkmark.seal"
@@ -18,20 +18,22 @@ struct CollectionHostScreen: View {
     @ObservedObject var connection: GardenConnection
     let destination: CollectionDestination
     let assets: any AssetCatalogProviding
+    var inventoryEmbedded = false
     var navigate: ((CollectionDestination?) -> Void)? = nil
     var openingChanged: ((Bool) -> Void)? = nil
     var body: some View {
         Group {
             if let store = connection.collection {
                 CollectionScreen(store: store, destination: destination, assets: assets, navigate: navigate,
-                                 openingChanged: openingChanged, accountSummary: connection.accountSummary).id(store.id)
+                                 openingChanged: openingChanged, accountSummary: connection.accountSummary,
+                                 inventoryEmbedded: inventoryEmbedded).id(store.id)
             } else {
                 Text("Connect your account in Settings.")
                     .foregroundStyle(JournalTheme.secondary).padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(JournalPageBackground().ignoresSafeArea())
             }
-        }.navigationTitle(destination.rawValue).navigationBarTitleDisplayMode(.inline)
+        }.navigationTitle(inventoryEmbedded ? "Inventory" : destination.rawValue).navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -43,17 +45,19 @@ struct CollectionScreen: View {
     var navigate: ((CollectionDestination?) -> Void)? = nil
     var openingChanged: ((Bool) -> Void)? = nil
     var accountSummary: AccountSummaryStore? = nil
+    var inventoryEmbedded = false
     @State private var search = ""
     @State private var rarity = "All"
     @State private var confirmingPack: APIOwnedPack?
     @State private var openingPack: APIOwnedPack?
     @State private var inspectingPack: APIPackDefinition?
     @State private var purchasingOffer: APIExchangeOffer?
+    @State private var purchasingItem: APIItemShopOffer?
     @State private var discoveryViewer = UUID()
     @Environment(\.scenePhase) private var scenePhase
     @AccessibilityFocusState private var resultFocused: Bool
     private var catalogueSpecies: [APISpecies] { store.catalogue?.species ?? [] }
-    private var hasPackModal: Bool { confirmingPack != nil || openingPack != nil || inspectingPack != nil || purchasingOffer != nil }
+    private var hasPackModal: Bool { confirmingPack != nil || openingPack != nil || inspectingPack != nil || purchasingOffer != nil || purchasingItem != nil }
     private var latestOpening: APICollectionReceipt? {
         PackResultPresentation.latestOpening(result: store.state.result, history: store.history)
     }
@@ -97,6 +101,9 @@ struct CollectionScreen: View {
         .fullScreenCover(item: $purchasingOffer) { offer in
             PurchasePackScreen(store: store, offer: offer).journalModalBackground()
         }
+        .sheet(item: $purchasingItem) { offer in
+            PurchaseItemScreen(store: store, offer: offer)
+        }
         .onChange(of: hasPackModal) { openingChanged?($0) }
         .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || hasPackModal }
         .onDisappear { openingChanged?(false); store.discovery.endViewing(discoveryViewer) }
@@ -131,10 +138,10 @@ struct CollectionScreen: View {
         .background(JournalPageBackground().ignoresSafeArea())
         .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
         .toolbar {
-            ToolbarItem(placement: .principal) {
+            if !inventoryEmbedded { ToolbarItem(placement: .principal) {
                 Text(destination.rawValue).font(.system(.title2, design: .serif).weight(.semibold))
                     .foregroundStyle(JournalTheme.ink)
-            }
+            } }
         }
     }
     @ViewBuilder private var collectionStatus: some View {
@@ -175,6 +182,19 @@ struct CollectionScreen: View {
             if store.exchangeOfferID != nil, store.confirmedExchange == nil, let message = store.exchangeMessage {
                 Text(message).font(.callout).accessibilityIdentifier("collection.exchangeFeedback")
             }
+            JournalSectionHeading(title: "Decorations")
+            if store.itemCapacity?.full == true {
+                Text("Item inventory full. Sell a stored item to make room.").font(.callout)
+            }
+            if store.itemOffers.isEmpty && !store.busy {
+                Text("No decorations available.").foregroundStyle(JournalTheme.secondary)
+            }
+            JournalGrid(minimumWidth: 142) {
+                ForEach(store.itemOffers) { offer in
+                    ItemShopCard(store: store, offer: offer, purchase: { purchasingItem = offer })
+                }
+            }
+            if store.state.result?.purchaseId != nil { Text("Item saved to Storage.").font(.callout) }
         }
     }
     private var packsContent: some View {
@@ -182,7 +202,7 @@ struct CollectionScreen: View {
             JournalSectionHeading(title: "Unopened packs")
             if store.packs.isEmpty && !store.busy {
                 Text("No unopened packs.").foregroundStyle(JournalTheme.secondary)
-                Button("Browse Exchange") { navigate?(.exchange) }.buttonStyle(.journalSecondary).frame(minHeight: 44)
+                Button("Browse Shop") { navigate?(.exchange) }.buttonStyle(.journalSecondary).frame(minHeight: 44)
             }
             JournalGrid(minimumWidth: 142) {
                 ForEach(store.packs) { pack in

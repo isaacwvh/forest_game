@@ -1,0 +1,271 @@
+{
+  "summary": {
+    "tokenBalance": "2000",
+    "gemBalance": "0",
+    "economyVersion": 0,
+    "capacity": {
+      "ownedPlants": 1,
+      "plantedPlants": 0,
+      "storedPlants": 1,
+      "plantLimit": 50,
+      "plantedLimit": 50,
+      "unopenedPacks": 0,
+      "packLimit": 50
+    },
+    "offers": [],
+    "itemOffers": [
+      {
+        "offerId": "wooden-bench",
+        "offerVersion": 1,
+        "tokenCost": "550",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png"
+      }
+    ],
+    "itemCapacity": {
+      "ownedItems": 0,
+      "placedItems": 0,
+      "storedItems": 0,
+      "itemLimit": 50
+    },
+    "milestones": []
+  },
+  "catalogue": {
+    "catalogVersion": "development-oak-v1",
+    "isFixture": true,
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "coordinateDecimalPlaces": 3,
+    "rotationDecimalPlaces": 2,
+    "species": [
+      {
+        "speciesId": "oak",
+        "displayName": "Oak",
+        "rarity": "development_unbalanced",
+        "description": "Development fixture; balance unapproved.",
+        "clearanceRadius": 0.9,
+        "isFixture": true,
+        "defaultProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "variants": [
+          {
+            "variantId": "blue",
+            "displayName": "Blue",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-blue.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-blue.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-blue.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-blue.png"
+              }
+            }
+          },
+          {
+            "variantId": "standard",
+            "displayName": "Standard",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-standard.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-standard.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-standard.png"
+              }
+            }
+          },
+          {
+            "variantId": "vined",
+            "displayName": "Vined",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-vined.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-vined.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-vined.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-vined.png"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "profiles": {
+      "growth": [
+        {
+          "id": "dev_oak_growth",
+          "version": 1,
+          "thresholdsMicroUnits": {
+            "sprout": "0",
+            "seedling": "100000000",
+            "young": "400000000",
+            "adult": "1000000000"
+          },
+          "maximumGrowthMicroUnits": "1000000000"
+        }
+      ],
+      "behaviour": [
+        {
+          "id": "dev_oak_behaviour",
+          "version": 1,
+          "schemaVersion": 1,
+          "metricMultipliers": {
+            "steps": 1.0
+          },
+          "conditionalModifiers": [],
+          "gardenEffects": []
+        }
+      ],
+      "attraction": [
+        {
+          "id": "dev_oak_attraction",
+          "version": 1,
+          "stageAttractionMicroUnits": {
+            "sprout": "2000000",
+            "seedling": "5000000",
+            "young": "12000000",
+            "adult": "20000000"
+          },
+          "gameplayTags": [
+            "tree",
+            "woodland"
+          ]
+        }
+      ]
+    }
+  },
+  "purchaseRequest": {
+    "requestId": "73af5b7b-3452-4ad2-b96b-ae3837c8e1f9",
+    "offerId": "wooden-bench",
+    "offerVersion": 1,
+    "quantity": 2
+  },
+  "purchase": {
+    "requestId": "73af5b7b-3452-4ad2-b96b-ae3837c8e1f9",
+    "purchaseId": "6ce7980f-771f-4f27-a090-24e79e622cf4",
+    "offerId": "wooden-bench",
+    "offerVersion": 1,
+    "quantity": 2,
+    "tokensSpent": "1100",
+    "ownedItemIds": [
+      "4c02d81c-8bf5-4d30-bf82-088c269101a2",
+      "13066ed0-284f-4dc4-8b1d-a55b34ccedce"
+    ],
+    "itemCapacity": {
+      "ownedItems": 2,
+      "placedItems": 0,
+      "storedItems": 2,
+      "itemLimit": 50
+    },
+    "tokenBalance": "900",
+    "gemBalance": "0",
+    "economyVersion": 1
+  },
+  "quote": {
+    "ownedItemId": "4c02d81c-8bf5-4d30-bf82-088c269101a2",
+    "valuationVersion": "item-resale-v1",
+    "tokenValue": "550",
+    "resaleBasisPoints": 2500,
+    "tokens": "137"
+  },
+  "saleRequest": {
+    "requestId": "31e6c9c6-0676-480b-adc4-894ebc2bb0c6",
+    "valuationVersion": "item-resale-v1",
+    "expectedTokens": "137"
+  },
+  "sale": {
+    "requestId": "31e6c9c6-0676-480b-adc4-894ebc2bb0c6",
+    "saleId": "48d4770b-1cfd-4df5-8f68-a952b293e924",
+    "ownedItemId": "4c02d81c-8bf5-4d30-bf82-088c269101a2",
+    "tokensEarned": "137",
+    "soldAt": "2026-11-15T23:15:35.917198+08:00",
+    "valuation": {
+      "ownedItemId": "4c02d81c-8bf5-4d30-bf82-088c269101a2",
+      "valuationVersion": "item-resale-v1",
+      "tokenValue": "550",
+      "resaleBasisPoints": 2500,
+      "tokens": "137"
+    },
+    "itemCapacity": {
+      "ownedItems": 1,
+      "placedItems": 0,
+      "storedItems": 1,
+      "itemLimit": 50
+    },
+    "tokenBalance": "1037",
+    "gemBalance": "0",
+    "economyVersion": 2
+  }
+}

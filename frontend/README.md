@@ -243,5 +243,8 @@ for a synthetic, in-memory owned-copy/edit flow without network or Health upload
 
 **Garden items, 15 November 2026:** Inventory adds Plants/Items/Packs, and Edit
 Storage adds Plants/Items with bench placement, rotation and storage. The bench
-model/icon are bundled; static items do not require wind. Backend upgrade/grant
-and native Xcode/device checks remain separate; see [item acceptance](ITEMS_ACCEPTANCE.md).
+model/icon are bundled; static items do not require wind. Stage 5 adds permanent
+550-token bench purchases beneath packs in Shop, stored-only 137-token resale,
+compact item sheets, consistent Inventory titles and shared plant/item edit UI.
+Backend migration/publication and native Xcode/device checks remain separate;
+see [item acceptance](ITEMS_ACCEPTANCE.md). No shop rotation or item skills yet.
