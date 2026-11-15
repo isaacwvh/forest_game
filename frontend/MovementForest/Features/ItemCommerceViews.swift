@@ -87,10 +87,10 @@ struct ItemShopCard: View {
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         JournalPlantFrame(rarity: offer.rarity) {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 ZStack(alignment: .topTrailing) {
                     ItemIcon(appearance: offer.appearance)
-                        .frame(height: textSize.isAccessibilitySize ? 80 : 48)
+                        .frame(height: textSize.isAccessibilitySize ? 112 : 62)
                         .frame(maxWidth: .infinity).padding(4).background(JournalTheme.sage.opacity(0.45))
                     HStack(spacing: 0) {
                         JournalRarity(rarity: offer.rarity)
@@ -99,12 +99,15 @@ struct ItemShopCard: View {
                     }
                 }
                 PlantNameText(offer.displayName, rarity: offer.rarity).font(.system(.subheadline, design: .serif).weight(.semibold))
-                QuantityLabel(metric: "tokens", text: "\(offer.tokenCost) tokens").font(.callout)
+                    .lineLimit(textSize.isAccessibilitySize ? nil : 1).minimumScaleFactor(0.75)
+                    .padding(.horizontal, 6)
+                QuantityLabel(metric: "tokens", text: offer.tokenCost).font(.callout).monospacedDigit()
+                    .accessibilityLabel("\(offer.tokenCost) tokens")
                 Button("Purchase", action: purchase).buttonStyle(.journalPrimary)
                     .frame(minHeight: 44).disabled(!store.canBuyItem(offer, quantity: 1))
                     .accessibilityIdentifier("shop.item.\(offer.offerId)")
-            }.padding(.bottom, 8).clipShape(RoundedRectangle(cornerRadius: 16))
-        }
+            }.padding(.bottom, 6).clipShape(RoundedRectangle(cornerRadius: 16))
+        }.frame(maxWidth: textSize.isAccessibilitySize ? .infinity : 160, alignment: .leading)
     }
 }
 
