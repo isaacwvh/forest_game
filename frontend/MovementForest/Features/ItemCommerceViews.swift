@@ -90,7 +90,7 @@ struct ItemShopCard: View {
             VStack(spacing: 8) {
                 ZStack(alignment: .topTrailing) {
                     ItemIcon(appearance: offer.appearance)
-                        .frame(height: textSize.isAccessibilitySize ? 112 : 62)
+                        .frame(height: textSize.isAccessibilitySize ? 80 : 48)
                         .frame(maxWidth: .infinity).padding(4).background(JournalTheme.sage.opacity(0.45))
                     HStack(spacing: 0) {
                         JournalRarity(rarity: offer.rarity)
@@ -121,43 +121,44 @@ struct PurchaseItemScreen: View {
         return (amount * Decimal(quantity)).formatted()
     }
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("Purchase item?").font(.system(.title2, design: .serif).weight(.semibold))
-                Spacer()
-                Button { dismiss() } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                    .buttonStyle(.journalIcon).accessibilityLabel("Cancel purchase").disabled(submitted)
-            }.padding(16)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    ItemIcon(appearance: offer.appearance).frame(height: 120).frame(maxWidth: .infinity)
-                    PlantNameText(offer.displayName, rarity: offer.rarity).font(.system(.headline, design: .serif))
-                    Text(offer.description)
-                    QuantityLabel(metric: "tokens", text: "\(offer.tokenCost) per item")
-                    Stepper("Quantity: \(quantity)", value: $quantity, in: 1...max(1, min(20, store.itemCapacity?.room ?? 0)))
-                        .disabled(submitted || !store.canMutate).frame(minHeight: 44)
-                    QuantityLabel(metric: "tokens", text: "Total: \(total)").font(.headline)
-                    if let balance = store.tokenBalance { LabeledContent("Available tokens", value: balance) }
-                    if store.itemCapacity?.full == true { Text("Item inventory full. Sell a stored item to make room.") }
-                    else if !store.canBuyItem(offer, quantity: quantity) { Text("Not enough tokens or item space.") }
-                    if let message = store.message, store.refreshFailed { Text(message).font(.callout) }
-                }.padding(20)
-            }
+        JournalInspector(title: "Purchase item?", close: { if !submitted { dismiss() } },
+                         closeLabel: "Cancel purchase", identifier: "itemPurchase") {
+            ItemIcon(appearance: offer.appearance).frame(height: 120).frame(maxWidth: .infinity)
+                .frame(height: 160)
+            PlantNameText(offer.displayName, rarity: offer.rarity)
+                .font(.system(.title3, design: .serif).weight(.semibold))
+                .multilineTextAlignment(.center)
+            Text(offer.description).frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 16) {
+                QuantityLabel(metric: "tokens", text: "\(offer.tokenCost) per item").monospacedDigit()
+                Stepper("Quantity: \(quantity)", value: $quantity, in: 1...max(1, min(20, store.itemCapacity?.room ?? 0)))
+                    .disabled(submitted || !store.canMutate).accessibilityIdentifier("itemPurchase.quantity")
+                    .frame(minHeight: 44)
+                QuantityLabel(metric: "tokens", text: "Total: \(total)").monospacedDigit()
+                    .font(.headline).accessibilityLabel("Total: \(total) tokens")
+                if let balance = store.tokenBalance { LabeledContent("Available tokens", value: balance).monospacedDigit() }
+                if store.itemCapacity?.full == true { Text("Item inventory full. Sell a stored item to make room.") }
+                else if !store.canBuyItem(offer, quantity: quantity) { Text("Not enough tokens or item space.") }
+                if let message = store.message, store.refreshFailed { Text(message).font(.callout) }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        } footer: {
             let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 12))
             layout {
                 Button("Cancel") { dismiss() }.buttonStyle(.journalSecondary).disabled(submitted)
                     .frame(maxWidth: .infinity, minHeight: 44)
-                Button("Purchase") {
+                    .accessibilityIdentifier("itemPurchase.cancel")
+                Button {
                     guard !submitted, store.canBuyItem(offer, quantity: quantity) else { return }
                     submitted = true
                     let count = quantity
                     dismiss()
                     Task { await store.buyItem(offer, quantity: count) }
-                }.buttonStyle(.journalFeatured).frame(maxWidth: .infinity, minHeight: 44)
+                } label: {
+                    Text("Purchase").frame(maxWidth: .infinity, minHeight: 44)
+                }.buttonStyle(.journalFeatured)
                     .disabled(submitted || !store.canBuyItem(offer, quantity: quantity))
                     .accessibilityIdentifier("itemPurchase.confirm")
             }.padding(16).background(JournalTheme.sage.opacity(0.65))
-        }.background(JournalTheme.paper).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+        }
     }
 }

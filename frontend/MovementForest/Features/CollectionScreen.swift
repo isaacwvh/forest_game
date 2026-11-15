@@ -101,8 +101,8 @@ struct CollectionScreen: View {
         .fullScreenCover(item: $purchasingOffer) { offer in
             PurchasePackScreen(store: store, offer: offer).journalModalBackground()
         }
-        .sheet(item: $purchasingItem) { offer in
-            PurchaseItemScreen(store: store, offer: offer)
+        .fullScreenCover(item: $purchasingItem) { offer in
+            PurchaseItemScreen(store: store, offer: offer).journalModalBackground()
         }
         .onChange(of: hasPackModal) { openingChanged?($0) }
         .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || hasPackModal }

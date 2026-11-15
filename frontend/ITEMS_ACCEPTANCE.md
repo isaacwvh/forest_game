@@ -46,6 +46,8 @@ data. Stage 5 requires migration `0019_item_commerce` and explicit
     several copies sharing one asset. Source checks are not device performance proof.
 11. Open Shop. Packs appear first, followed by Decorations with a permanent
     550-token Wooden Bench. Inspect the description even when funds are insufficient.
+    Verify the smaller decoration icon. Purchase uses the same journal popup box,
+    close control, quantity/price rows and action footer as packs, with no sheet dragging.
     Confirm a two-copy purchase costs 1,100 tokens, creates separate stored copies,
     and refreshes wallet and item counts. Cancel spends nothing. Full inventory or
     insufficient funds blocks purchase; no partial purchase is granted.
