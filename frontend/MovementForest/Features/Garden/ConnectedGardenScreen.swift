@@ -153,9 +153,9 @@ struct ConnectedGardenScreen: View {
             OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
                 collection: collection).journalModalBackground()
         }
-        .sheet(item: $itemInspection) { selection in
+        .fullScreenCover(item: $itemInspection) { selection in
             ItemDetailScreen(store: store, copyID: selection.id, close: { itemInspection = nil }, collection: collection)
-                .itemDetailPresentation()
+                .journalModalBackground()
         }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
         .task(id: collection?.id) { await collection?.refresh() }
@@ -428,9 +428,9 @@ struct ConnectedGardenScreen: View {
                 OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
                     collection: collection).journalModalBackground()
             }
-            .sheet(item: $browsingItemInspection) { selection in
+            .fullScreenCover(item: $browsingItemInspection) { selection in
                 ItemDetailScreen(store: store, copyID: selection.id,
-                    close: { browsingItemInspection = nil }, collection: collection).itemDetailPresentation()
+                    close: { browsingItemInspection = nil }, collection: collection).journalModalBackground()
             }
     }
 

@@ -19,7 +19,9 @@ data. Stage 5 requires migration `0019_item_commerce` and explicit
    switching tabs retains the same Inventory title and header styling.
 2. Items shows the stored Wooden Bench, Common rarity, its supplied icon and exact
    description. Cards use the plant image size and frame design. Details open in a
-   compact sheet with a larger accessible-text presentation. No growth bars,
+   smaller centered journal popup, with no sheet dragging or pull-to-refresh.
+   The popup expands for accessible text; Place and Sell share equal button sizes,
+   and the 137-token sell value appears on its own row. No growth bars,
    watering controls or empty skill section appears.
 3. Open Edit → Storage → Items → bench details → Place. The inspector and storage
    dismiss before placement begins. Confirm ground contact, scale and icon/model

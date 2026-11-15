@@ -719,13 +719,15 @@ struct JournalInspector<Content: View, Footer: View>: View {
     let close: () -> Void
     let closeLabel: String
     let identifier: String
+    let maximumHeight: CGFloat?
     let content: Content
     let footer: Footer
     @AccessibilityFocusState private var titleFocused: Bool
     init(title: String, close: @escaping () -> Void, closeLabel: String = "Close plant details",
-         identifier: String = "plantDetails", @ViewBuilder content: () -> Content,
+         identifier: String = "plantDetails", maximumHeight: CGFloat? = nil, @ViewBuilder content: () -> Content,
          @ViewBuilder footer: () -> Footer) {
         self.title = title; self.close = close; self.closeLabel = closeLabel; self.identifier = identifier
+        self.maximumHeight = maximumHeight
         self.content = content(); self.footer = footer()
     }
     var body: some View {
@@ -745,7 +747,7 @@ struct JournalInspector<Content: View, Footer: View>: View {
                 }.accessibilityIdentifier(identifier + ".content")
                 footer
             }
-            .frame(maxWidth: 520, maxHeight: .infinity)
+            .frame(maxWidth: 520, maxHeight: maximumHeight ?? .infinity)
             .background(JournalTheme.paper, in: RoundedRectangle(cornerRadius: 24))
             .overlay(JournalVines(size: 64).padding(4))
             .clipShape(RoundedRectangle(cornerRadius: 24))

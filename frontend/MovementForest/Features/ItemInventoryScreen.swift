@@ -52,12 +52,12 @@ struct ItemInventoryPanel: View {
             }.padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .sheet(item: $inspection, onDismiss: {
+            .fullScreenCover(item: $inspection, onDismiss: {
                 if let item = placing { placing = nil; onPlace?(item) }
             }) { selection in
                 ItemDetailScreen(store: store, copyID: selection.id, close: { inspection = nil },
                     place: onPlace.map { _ in { (item: APIOwnedItem) in placing = item; inspection = nil } },
-                    collection: collection).itemDetailPresentation()
+                    collection: collection).journalModalBackground()
             }
             .refreshable { await store.refresh(); await collection?.refresh() }
             .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || inspection != nil }
@@ -82,29 +82,22 @@ struct ItemDetailScreen: View {
     let close: () -> Void
     var place: ((APIOwnedItem) -> Void)? = nil
     var collection: CollectionCoordinator? = nil
+    @Environment(\.dynamicTypeSize) private var textSize
     private var item: APIOwnedItem? {
         ((store.confirmed?.items ?? []) + store.itemInventory).first { $0.id == copyID }
     }
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                PlantNameText(item?.displayName ?? "Item", rarity: item?.rarity)
-                    .font(.system(.title2, design: .serif).weight(.semibold)).accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 8)
-                Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                    .buttonStyle(.journalIcon).accessibilityLabel("Close item details")
-            }.padding(.horizontal, 20).padding(.top, 12)
-            ScrollView {
-                VStack(spacing: 14) {
-                    if let item = item {
-                        ItemIcon(item: item).frame(height: 150).frame(maxWidth: .infinity)
-                        Text(item.rarity.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
-                        Text(item.description).frame(maxWidth: .infinity, alignment: .leading)
-                    } else {
-                        Text("This copy is no longer available. Refresh your inventory.")
-                    }
-                }.padding(20)
+        JournalInspector(title: item?.displayName ?? "Item", close: close,
+                         closeLabel: "Close item details", identifier: "itemDetails",
+                         maximumHeight: textSize.isAccessibilitySize ? nil : 490) {
+            if let item = item {
+                ItemIcon(item: item).frame(height: 150).frame(maxWidth: .infinity)
+                Text(item.rarity.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
+                Text(item.description).frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Text("This copy is no longer available. Refresh your inventory.")
             }
+        } footer: {
             if let item = item, let collection = collection {
                 ItemSaleControls(store: collection, item: item, editingEnabled: store.canEdit,
                                  place: place, close: close).padding(16).background(JournalTheme.sage.opacity(0.65))
@@ -113,21 +106,8 @@ struct ItemDetailScreen: View {
                     .frame(minHeight: 44).frame(maxWidth: .infinity).padding(16)
                     .disabled(!store.canEdit).accessibilityIdentifier("itemDetails.place")
             }
-        }.background(JournalTheme.paper).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .accessibilityIdentifier("itemDetails")
+        }.environment(\.refresh, nil)
     }
-}
-
-struct ItemDetailPresentation: ViewModifier {
-    @Environment(\.dynamicTypeSize) private var textSize
-    func body(content: Content) -> some View {
-        content.presentationDetents(textSize.isAccessibilitySize ? [.large] : [.height(490), .large])
-            .presentationDragIndicator(.visible)
-    }
-}
-
-extension View {
-    func itemDetailPresentation() -> some View { modifier(ItemDetailPresentation()) }
 }
 
 struct OwnedItemTile: View {

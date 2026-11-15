@@ -19,24 +19,33 @@ struct ItemSaleControls: View {
                 Button("Retry saved request") { Task { await store.refresh(); await loadQuote() } }
                     .buttonStyle(.journalSecondary).frame(minHeight: 44).disabled(store.busy)
             } else {
+                if let quote = quote {
+                    HStack(spacing: 12) {
+                        Text("Sell value")
+                        Spacer(minLength: 0)
+                        QuantityLabel(metric: "tokens", text: "\(quote.tokens) tokens")
+                            .monospacedDigit()
+                    }.font(.callout).accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("itemSale.value")
+                }
                 let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 12))
                 layout {
                     if item.placement == nil, let place = place {
-                        Button("Place") { place(item) }.buttonStyle(.journalFeatured).frame(minHeight: 44)
+                        Button { place(item) } label: {
+                            Text("Place").frame(maxWidth: .infinity, minHeight: 44)
+                        }.buttonStyle(.journalFeatured).frame(maxWidth: .infinity)
                             .disabled(!editingEnabled || store.busy).accessibilityIdentifier("itemDetails.place")
                     }
                     if let quote = quote {
                         if item.placement == nil {
                             Button { confirming = true } label: {
-                                QuantityLabel(metric: "tokens", text: "Sell for \(quote.tokens) tokens")
-                                    .frame(maxWidth: .infinity, minHeight: 44)
-                            }.buttonStyle(.journalSecondary).disabled(!store.canMutate || !editingEnabled)
+                                Text("Sell").frame(maxWidth: .infinity, minHeight: 44)
+                            }.buttonStyle(.journalSecondary).frame(maxWidth: .infinity)
+                                .disabled(!store.canMutate || !editingEnabled)
+                                .accessibilityLabel("Sell for \(quote.tokens) tokens")
                                 .accessibilityIdentifier("itemSale.sell")
                         } else {
-                            VStack(alignment: .leading, spacing: 6) {
-                                QuantityLabel(metric: "tokens", text: "Sell value: \(quote.tokens) tokens")
-                                Text("Store this item before selling it.").font(.callout).foregroundStyle(JournalTheme.secondary)
-                            }.accessibilityIdentifier("itemSale.value")
+                            Text("Store this item before selling it.").font(.callout).foregroundStyle(JournalTheme.secondary)
                         }
                     } else if loading { ProgressView("Checking resale value…") }
                 }
