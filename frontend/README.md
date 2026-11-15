@@ -240,3 +240,8 @@ MovementForest-Internal scheme (InternalRelease). The normal MovementForest
 scheme archives public Release without these routes. See F8_ACCEPTANCE.md for the
 full walkthrough. Debug UI tests additionally use `--fixture-health --fixture-garden`
 for a synthetic, in-memory owned-copy/edit flow without network or Health uploads.
+
+**Garden items, 15 November 2026:** Inventory adds Plants/Items/Packs, and Edit
+Storage adds Plants/Items with bench placement, rotation and storage. The bench
+model/icon are bundled; static items do not require wind. Backend upgrade/grant
+and native Xcode/device checks remain separate; see [item acceptance](ITEMS_ACCEPTANCE.md).

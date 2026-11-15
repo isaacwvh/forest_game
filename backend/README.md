@@ -368,3 +368,9 @@ and an application-image build. Remote CI runs after a push or manual dispatch.
   disable access logs. Do not add tokens, raw health inputs or request bodies to logs.
 
 See `VALIDATION.md` for checks actually performed in this implementation session.
+
+**Garden items, 15 November 2026:** stages 1–4 are source-implemented: separate
+50-copy item inventory, capacity-guarded grants, a bundled Wooden Bench and atomic
+mixed garden edits. Schema `0018_garden_items` and an explicit named-account bench
+grant are required. Personal activation and native acceptance remain pending;
+see [item rules and activation](ITEMS.md).

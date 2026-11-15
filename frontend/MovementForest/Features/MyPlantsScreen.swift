@@ -166,10 +166,24 @@ struct PlantSaleControls: View {
 struct MyPlantsHostScreen: View {
     @ObservedObject var connection: GardenConnection
     let catalog: any AssetCatalogProviding
+    @State private var section = "Plants"
     var body: some View {
         Group {
             if let editor = connection.editor {
-                MyPlantsScreen(store: editor, catalog: catalog, collection: connection.collection).id(editor.id)
+                VStack(spacing: 0) {
+                    Picker("Inventory", selection: $section) {
+                        Text("Plants").tag("Plants")
+                        Text("Items").tag("Items")
+                        Text("Packs").tag("Packs")
+                    }.pickerStyle(.segmented).padding(16)
+                    if section == "Items" {
+                        ItemInventoryPanel(store: editor).id(editor.id)
+                    } else if section == "Packs" {
+                        CollectionHostScreen(connection: connection, destination: .draws, assets: catalog)
+                    } else {
+                        MyPlantsScreen(store: editor, catalog: catalog, collection: connection.collection).id(editor.id)
+                    }
+                }
             } else if connection.connecting {
                 ProgressView("Loading your plants…")
             } else {
@@ -180,7 +194,7 @@ struct MyPlantsHostScreen: View {
                         .foregroundStyle(JournalTheme.secondary).multilineTextAlignment(.center)
                 }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-        }.background(JournalPageBackground().ignoresSafeArea()).navigationTitle("My plants")
+        }.background(JournalPageBackground().ignoresSafeArea()).navigationTitle("Inventory")
             .task(id: connection.collection?.id) { await connection.collection?.refresh() }
     }
 }

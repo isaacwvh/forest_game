@@ -48,7 +48,7 @@ final class AppContainer: ObservableObject {
 }
 
 enum ForestDestination: String, CaseIterable, Identifiable {
-    case myPlants = "My plants", garden = "Garden", edit = "Edit", activity = "Activity"
+    case myPlants = "Inventory", garden = "Garden", edit = "Edit", activity = "Activity"
     var id: String { rawValue }
     var symbol: String {
         switch self {

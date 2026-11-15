@@ -13,7 +13,7 @@ enum PlacementValidity: Equatable {
         switch self {
         case .valid: return "Ready to place"
         case .outOfBounds: return "Keep the entire clearance circle inside the garden."
-        case .overlap: return "Leave room between the plants’ clearance circles."
+        case .overlap: return "Leave room between garden objects’ clearance circles."
         case .unavailable: return "Placement rules are unavailable. Refresh your garden."
         }
     }

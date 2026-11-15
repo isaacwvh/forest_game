@@ -33,6 +33,7 @@ def main():
     if not args.allow_local_project_settings:
         subprocess.run([sys.executable, str(ROOT / "scripts/generate_project.py"), "--check"], check=True)
     project_text = (ROOT / "MovementForest.xcodeproj/project.pbxproj").read_text(encoding="utf-8")
+    subprocess.run([sys.executable, str(REPO / "tools/validate_items.py")], check=True)
     for folder in ["MovementForest", "MovementForestTests", "MovementForestUITests"]:
         for source in (ROOT / folder).rglob("*.swift"):
             require(source.relative_to(ROOT).as_posix() in project_text, f"Source missing from project: {source}")

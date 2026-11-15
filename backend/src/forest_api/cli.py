@@ -97,6 +97,9 @@ def main() -> None:
     publish.add_argument("--version", required=True)
     publish.add_argument("--effective-at", required=True)
     publish.add_argument("--fixture", action="store_true")
+    bench = commands.add_parser("grant-bench", help="Preview one stored bench for a named account")
+    bench.add_argument("username")
+    bench.add_argument("--apply", action="store_true")
     args = parser.parse_args()
     settings = Settings()
     if args.command == "dev-token":
@@ -110,7 +113,11 @@ def main() -> None:
             run(database, settings)
             return
         with database.sessions() as session:
-            if args.command == "activate-milestones":
+            if args.command == "grant-bench":
+                from forest_api.items import grant_bench
+
+                print(json.dumps(grant_bench(session, args.username, apply=args.apply)))
+            elif args.command == "activate-milestones":
                 from forest_api.milestone_tracks import activate
 
                 print(json.dumps(activate(session, settings, apply=args.apply)))

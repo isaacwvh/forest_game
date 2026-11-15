@@ -125,7 +125,10 @@ def main():
                         try:
                             if request("/health/ready", authenticated=False)["status"] == "ready":
                                 return process
-                        except urllib.error.URLError:
+                        except (urllib.error.URLError, ConnectionResetError):
+                            # Windows can reset the first probe while Uvicorn is
+                            # restarting on the same port. Retry readiness only;
+                            # gameplay requests must still fail normally.
                             if process.poll() is not None:
                                 raise RuntimeError("Launch smoke server failed to start") from None
                             time.sleep(0.1)

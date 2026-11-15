@@ -1203,3 +1203,22 @@ without replay. Apple SDK typechecking, XCTest/UI execution, Release builds,
 screenshots, VoiceOver and real-device acceptance have not run on Windows.
 Follow [LEVEL_BENEFITS_ACCEPTANCE.md](LEVEL_BENEFITS_ACCEPTANCE.md) on Mac/iPhone,
 including backend migration and explicit policy activation. No push or CI run.
+
+# Garden items stages 1–4 — 15 November 2026
+
+Portable frontend validation passes with the bundled bench hashes/CRC/alignment,
+384×448 alpha thumbnail, real synthetic HTTP item fixture, generated project and
+all existing plant/pack/environment checks. `check_swift_syntax.py` parses all
+98 Swift files. Woodland resource regression passes. The Impeccable detector
+returned no findings for the three changed UI surfaces.
+
+`ItemTests` adds native tests for HTTP item decoding, separate copy identities,
+cache round-tripping, unchanged legacy request encoding, lost-response journal
+relaunch/replay, storage, overlap rejection and static bench imports/cloned anchors.
+These tests have **not** been run: Xcode/Apple SDKs and physical iPhone acceptance
+remain required. Portable parsing does not establish typechecking or device performance.
+
+The personal backend could not be activated because its Docker engine returned
+HTTP 500. No personal database migration or bench grant is claimed. See
+[setup and native checks](ITEMS_ACCEPTANCE.md) and [backend activation](../backend/ITEMS.md).
+No push or remote CI was run.

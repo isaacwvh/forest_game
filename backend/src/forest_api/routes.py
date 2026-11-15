@@ -38,7 +38,7 @@ from forest_api.server_clock import request_clock
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0017_milestone_tracks"
+SCHEMA_REVISION = "0018_garden_items"
 
 
 @router.get("/health/live", tags=["health"])
@@ -150,6 +150,18 @@ def plant(
     session: Session = Depends(get_session),
 ) -> PlantDTO:
     return services.read_plant(session, identity, plant_id)
+
+
+@router.get("/v1/me/items", tags=["inventory"])
+def owned_items(
+    limit: int = Query(default=100, ge=1, le=100),
+    after: UUID | None = None,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+):
+    from forest_api.items import read
+
+    return read(session, identity, limit, after)
 
 
 @placement_router.post("/v1/me/garden/edits", response_model=GardenEditResult, tags=["garden"])

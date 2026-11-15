@@ -63,13 +63,15 @@ struct APIGarden: Codable, Equatable {
     let plants: [APIOwnedPlant]
     var totalAttractionMicroUnits: String? = nil
     var skillSummary: APISkillSummary? = nil
+    var items: [APIOwnedItem]? = nil
 
     func rendered(catalogue: APICatalogue, assets: any AssetCatalogProviding) throws -> GardenSnapshot {
         guard coordinateUnit == "garden_unit", catalogue.coordinateUnit == coordinateUnit,
               catalogue.catalogVersion == catalogVersion, catalogue.gardenUnitMetres == gardenUnitMetres,
               gardenUnitMetres > 0, layoutVersion >= 0, stateVersion >= 0,
               Set(plants.map(\.id)).count == plants.count,
-              plants.allSatisfy({ $0.placement?.gardenId == gardenId }) else {
+              plants.allSatisfy({ $0.placement?.gardenId == gardenId }),
+              (items ?? []).allSatisfy({ $0.placement?.gardenId == gardenId }) else {
             throw ForestError.invalidData("The garden and catalogue do not describe the same layout. Refresh your garden.")
         }
         return try GardenSnapshot(gardenId: gardenId, title: "Your forest", isSample: false,
@@ -78,7 +80,8 @@ struct APIGarden: Codable, Equatable {
                                   gardenUnitMetres: NSDecimalNumber(decimal: gardenUnitMetres).doubleValue,
                                   catalogVersion: catalogVersion, layoutVersion: Int(layoutVersion),
                                   stateVersion: Int(stateVersion),
-                                  plants: plants.map { $0.rendered(catalogue: catalogue, assets: assets) }).validated()
+                                  plants: plants.map { $0.rendered(catalogue: catalogue, assets: assets) },
+                                  items: (items ?? []).map { $0.rendered() }).validated()
     }
 }
 
@@ -288,6 +291,7 @@ struct GardenEditRequest: Codable, Equatable {
     let expectedLayoutVersion: Int64
     let catalogVersion: String
     let actions: [GardenEditAction]
+    var itemActions: [ItemEditAction]? = nil
 
     func encoded() throws -> Data {
         let encoder = JSONEncoder()

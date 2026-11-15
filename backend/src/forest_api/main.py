@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from forest_api import (
     history_models,  # noqa: F401 - register compact-history models
+    item_models,  # noqa: F401 - separate item ownership and placement
     milestone_models,  # noqa: F401 - permanent milestone progress and entitlements
     progression_models,  # noqa: F401 - register durable gem grants
     woodland_models,  # noqa: F401 - register daily skill context

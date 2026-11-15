@@ -23,6 +23,8 @@ struct ConnectedGardenScreen: View {
     @State private var browsingInspection: PlantInspection?
     @State private var storageInspection: PlantInspection?
     @State private var placedFromStorageInspector = false
+    @State private var storageItems = false
+    @State private var itemInspection: ItemInspection?
     @State private var visible = false
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -44,15 +46,26 @@ struct ConnectedGardenScreen: View {
                                    movable: candidate.kind == .move || candidate.kind == .plant)
     }
 
+    private var itemPreview: ItemRenderPreview? {
+        guard let candidate = store.itemCandidate else { return nil }
+        var item = candidate.item.rendered()
+        item.x = NSDecimalNumber(decimal: candidate.x).doubleValue
+        item.y = NSDecimalNumber(decimal: candidate.y).doubleValue
+        item.rotationDegrees = NSDecimalNumber(decimal: candidate.rotation).doubleValue
+        return ItemRenderPreview(item: item,
+            radius: NSDecimalNumber(decimal: candidate.item.clearanceRadius).doubleValue,
+            valid: candidate.validity == .valid, movable: candidate.action != "rotate")
+    }
+
     var body: some View {
         Group {
             if let garden = store.rendered {
                 GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
                                     motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil,
-                                    editorPreview: preview, growthEffects: store.effects, onSelect: { [weak store = store] id in
+                                    editorPreview: preview, itemPreview: itemPreview, growthEffects: store.effects, onSelect: { [weak store = store] id in
                         guard let store = store else { return }
-                        guard store.candidate == nil else { return }
+                        guard store.candidate == nil && store.itemCandidate == nil else { return }
                         store.selectedID = id
                     }, onGroundDrag: { [weak store = store] point, event in
                         guard let store = store else { return }
@@ -75,6 +88,7 @@ struct ConnectedGardenScreen: View {
                     else { browsingStatus }
                 } controls: {
                     if store.editing { controls }
+                    else if let selected = store.selectedItem { itemSelection(selected) }
                     else if let selected = store.selectedPlanted {
                         GardenSelectionPopup(name: name(of: selected), variant: selected.variantId.capitalized,
                             rarity: store.catalogue?.rarity(for: selected.speciesId),
@@ -137,6 +151,10 @@ struct ConnectedGardenScreen: View {
         .fullScreenCover(item: detailInspection) { selection in
             OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
                 collection: collection).journalModalBackground()
+        }
+        .fullScreenCover(item: $itemInspection) { selection in
+            ItemDetailScreen(store: store, copyID: selection.id, close: { itemInspection = nil })
+                .journalModalBackground()
         }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
         .task(id: collection?.id) { await collection?.refresh() }
@@ -233,6 +251,9 @@ struct ConnectedGardenScreen: View {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
                     .font(.callout).accessibilityIdentifier("editor.validity")
                 if candidate.kind == .plant && store.adultPreview { Text("Adult preview · Clearance stays the same").font(.caption) }
+            } else if let candidate = store.itemCandidate {
+                Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
+                    .font(.callout).accessibilityIdentifier("editor.item.validity")
             } else if let message = store.gardenMessage {
                 Text(message).font(.callout).accessibilityIdentifier("editor.status")
             }
@@ -293,7 +314,11 @@ struct ConnectedGardenScreen: View {
 
     private var controls: some View {
         VStack(spacing: 4) {
-            if let candidate = store.candidate {
+            if store.itemCandidate != nil {
+                ItemPlacementControls(store: store)
+            } else if let selected = store.selectedItem {
+                itemSelection(selected)
+            } else if let candidate = store.candidate {
                 if positionControlsPresented {
                     CandidateControlsScreen(store: store, close: { positionControlsPresented = false })
                 } else if candidate.kind == .rotate {
@@ -318,7 +343,7 @@ struct ConnectedGardenScreen: View {
             }
             if !positionControlsPresented {
                 HStack(spacing: 4) {
-                    GardenActionButton(title: "Select plant", symbol: "leaf", identifier: "garden.plants") { sheet = .plants }
+                    GardenActionButton(title: "Select object", symbol: "leaf", identifier: "garden.plants") { sheet = .plants }
                     GardenActionButton(title: "Storage", symbol: "tray", identifier: "editor.storage") { sheet = .storage }
                     GardenActionButton(title: "Zoom out", symbol: "minus.magnifyingglass", identifier: "editor.zoomOut") { renderer.zoom(by: 1.2) }
                     GardenActionButton(title: "Zoom in", symbol: "plus.magnifyingglass", identifier: "editor.zoomIn") { renderer.zoom(by: 0.8) }
@@ -332,6 +357,34 @@ struct ConnectedGardenScreen: View {
 
     private func name(of plant: APIOwnedPlant) -> String {
         store.catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId.capitalized
+    }
+
+    private func itemSelection(_ item: APIOwnedItem) -> some View {
+        VStack(spacing: 8) {
+            HStack {
+                PlantNameText(item.displayName, rarity: item.rarity).font(.system(.headline, design: .serif))
+                Spacer()
+                Button { renderer.dismissSelection() } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                    .buttonStyle(.journalIcon).accessibilityLabel("Close item selection")
+            }
+            Button("Item details") { itemInspection = ItemInspection(id: item.id) }
+                .buttonStyle(.journalQuiet).frame(minHeight: 44)
+            if store.editing {
+                ViewThatFits(in: .horizontal) {
+                    HStack { itemActions(item) }
+                    VStack { itemActions(item) }
+                }
+            }
+        }.padding(.horizontal, 16).foregroundStyle(JournalTheme.ink).background(JournalTheme.paper)
+    }
+
+    @ViewBuilder private func itemActions(_ item: APIOwnedItem) -> some View {
+        Button("Move") { store.beginItem(item, action: "move") }
+            .buttonStyle(.journalSecondary).frame(minHeight: 44).disabled(!store.canEdit)
+        Button("Rotate") { store.beginItem(item, action: "rotate") }
+            .buttonStyle(.journalSecondary).frame(minHeight: 44).disabled(!store.canEdit)
+        Button("Store") { Task { await store.storeItem(item) } }
+            .buttonStyle(.journalSecondary).frame(minHeight: 44).disabled(!store.canEdit)
     }
 
     @ViewBuilder private func selectionPopup(_ selected: APIOwnedPlant) -> some View {
@@ -377,9 +430,21 @@ struct ConnectedGardenScreen: View {
                         }
                     }
                 }
+                ForEach(store.confirmed?.items ?? []) { item in
+                    Button {
+                        store.cancelCandidate(); store.selectedID = item.id; sheet = nil
+                    } label: {
+                        HStack {
+                            ItemIcon(item: item).frame(width: 64, height: 64)
+                            Text(item.displayName)
+                            Spacer()
+                        }
+                    }.buttonStyle(.journalQuiet).frame(minHeight: 44)
+                        .accessibilityIdentifier("garden.item.\(item.id)")
+                }
             }.padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
-            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Garden plants")
+            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Garden objects")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil }.buttonStyle(.journalQuiet) } }
             .fullScreenCover(item: $browsingInspection) { selection in
                 OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
@@ -403,7 +468,17 @@ struct ConnectedGardenScreen: View {
     }
 
     private var storageList: some View {
-        ScrollView {
+        VStack(spacing: 0) {
+            Picker("Stored objects", selection: $storageItems) {
+                Text("Plants").tag(false)
+                Text("Items").tag(true)
+            }.pickerStyle(.segmented).padding(16)
+            if storageItems {
+                ItemInventoryPanel(store: store, storageOnly: true, onPlace: { item in
+                    store.beginItem(item, action: "place"); sheet = nil
+                })
+            } else {
+              ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 if let capacity = store.capacity {
                     PlantCapacitySummary(capacity: capacity, cached: store.showingCached)
@@ -421,6 +496,8 @@ struct ConnectedGardenScreen: View {
                 }
                 InventoryPagination(store: store)
             }.padding(16)
+              }
+            }
         }.background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).navigationTitle("Storage")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil }.buttonStyle(.journalQuiet) } }

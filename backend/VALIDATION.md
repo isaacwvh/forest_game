@@ -803,3 +803,33 @@ the dedicated loopback PostgreSQL validation cluster. The cluster was stopped
 after the run. No personal game migration/activation, commit, push or CI run was
 performed. Native Apple SDK/XCTest/device results are not inferred from backend
 or Windows frontend validation; follow the linked frontend acceptance flow.
+
+# Garden items stages 1–4 — 15 November 2026
+
+Executed against an isolated native PostgreSQL cluster on localhost:55451; all
+gameplay test databases were disposable `forest_test_*` databases. No personal
+database was migrated or granted items. Docker engine inspection returned HTTP
+500, so application-image building and personal activation could not run.
+
+- Full backend suite: **666 passed, 3 skipped** in 610.02s; the skips are the
+  existing opt-in physical-storage benchmarks. This included initial item tests.
+- Final expanded item suite: **16 passed** in 13.95s, including individual copies,
+  repeat-safe grants, account isolation, full-capacity/whole-reward rollback,
+  concurrent capacity enforcement, mixed swaps, collision rollback, legacy-client
+  gating, strict numeric/action validation and maintenance-compacted edit recovery.
+  The expanded suite adds checks after the full run; counts are not additive.
+- Earlier item/placement/migration stage gate: **72 passed** in 82.74s, including
+  Alembic model equivalence and downgrade/re-upgrade checks on empty item schemas.
+- `ruff check backend`, `ruff format --check backend` and `pip check`: pass.
+- Existing activity, skill, visitor and launch real-HTTP smoke walkthroughs: pass.
+  The launch smoke initially hit a Windows connection reset while probing a
+  restarting server. Its readiness loop now retries that transient reset only;
+  the repeated full walkthrough passed with gameplay failures still surfaced.
+- `tools/validate_items.py`, Woodland resources, generated Xcode project checks,
+  portable frontend validation and parsing all 98 Swift files: pass.
+- Native XCTest/RealityKit/device checks are added in `ItemTests` but not executed
+  on Windows. No Xcode build, image build, push or remote CI result is claimed.
+
+See [item rules, data classification and explicit activation](ITEMS.md) and
+[native acceptance](../frontend/ITEMS_ACCEPTANCE.md). Existing retention workers
+need no new family; item edits use the established compact recovery operation.

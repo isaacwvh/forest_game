@@ -183,6 +183,9 @@ def owned_plant(
 
 def request_hash(operation: str, body: DTO) -> str:
     payload = body.model_dump(mode="json", by_alias=True, exclude={"request_id"})
+    # Keep historical plant-only edit hashes byte-for-byte compatible.
+    if operation == "garden_edits" and not payload.get("itemActions"):
+        payload.pop("itemActions", None)
     if operation.startswith("visitor_") and payload.get("arrivalProtocol") == 1:
         payload.pop("arrivalProtocol")
     if operation.startswith("visitor_"):
@@ -537,6 +540,11 @@ def present_garden(
     presenter = presenter or PlantPresenter(session)
     skills = skill_snapshot(session, garden, presenter=presenter, rows=rows, boundary=boundary)
     presented = [presenter.plant(plant, placement) for plant, placement in rows]
+    from forest_api import items
+
+    placed_items = [
+        items.present(row) for row in items.rows(session, garden.owner_id, placed_only=True)
+    ]
     return GardenDTO(
         garden_id=garden.id,
         width=garden.width,
@@ -547,6 +555,7 @@ def present_garden(
         layout_version=garden.layout_version,
         state_version=garden.state_version,
         plants=presented,
+        items=placed_items,
         total_attraction_micro_units=str(skills.attraction()),
         skill_summary=skills.summary(),
     )

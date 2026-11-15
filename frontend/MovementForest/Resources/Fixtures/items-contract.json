@@ -1,0 +1,405 @@
+{
+  "profile": {
+    "userId": "f4b88a19-1313-4a20-aafc-9e23eb7090cb",
+    "username": "alice",
+    "displayName": "Alice",
+    "gameTimezone": "Asia/Singapore",
+    "createdAt": "2026-11-15T20:35:32.044617+08:00"
+  },
+  "catalogue": {
+    "catalogVersion": "development-oak-v1",
+    "isFixture": true,
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "coordinateDecimalPlaces": 3,
+    "rotationDecimalPlaces": 2,
+    "species": [
+      {
+        "speciesId": "oak",
+        "displayName": "Oak",
+        "rarity": "development_unbalanced",
+        "description": "Development fixture; balance unapproved.",
+        "clearanceRadius": 0.9,
+        "isFixture": true,
+        "defaultProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "variants": [
+          {
+            "variantId": "blue",
+            "displayName": "Blue",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-blue.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-blue.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-blue.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-blue.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-blue.png"
+              }
+            }
+          },
+          {
+            "variantId": "standard",
+            "displayName": "Standard",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-standard.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-standard.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-standard.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-standard.png"
+              }
+            }
+          },
+          {
+            "variantId": "vined",
+            "displayName": "Vined",
+            "description": "Development fixture",
+            "rarity": "development_unbalanced",
+            "assetCatalogKey": "assets/oak/v1/oak.json",
+            "assetCatalogVersion": "1.0.0",
+            "profileOverrides": {
+              "growth": null,
+              "behaviour": null,
+              "attraction": null
+            },
+            "stages": {
+              "adult": {
+                "modelKey": "assets/oak/v1/models/oak-adult-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-adult-vined.png"
+              },
+              "seedling": {
+                "modelKey": "assets/oak/v1/models/oak-seedling-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-seedling-vined.png"
+              },
+              "sprout": {
+                "modelKey": "assets/oak/v1/models/oak-sprout-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-sprout-vined.png"
+              },
+              "young": {
+                "modelKey": "assets/oak/v1/models/oak-young-vined.usdz",
+                "thumbnailKey": "assets/oak/v1/ui/oak-young-vined.png"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "profiles": {
+      "growth": [
+        {
+          "id": "dev_oak_growth",
+          "version": 1,
+          "thresholdsMicroUnits": {
+            "sprout": "0",
+            "seedling": "100000000",
+            "young": "400000000",
+            "adult": "1000000000"
+          },
+          "maximumGrowthMicroUnits": "1000000000"
+        }
+      ],
+      "behaviour": [
+        {
+          "id": "dev_oak_behaviour",
+          "version": 1,
+          "schemaVersion": 1,
+          "metricMultipliers": {
+            "steps": 1.0
+          },
+          "conditionalModifiers": [],
+          "gardenEffects": []
+        }
+      ],
+      "attraction": [
+        {
+          "id": "dev_oak_attraction",
+          "version": 1,
+          "stageAttractionMicroUnits": {
+            "sprout": "2000000",
+            "seedling": "5000000",
+            "young": "12000000",
+            "adult": "20000000"
+          },
+          "gameplayTags": [
+            "tree",
+            "woodland"
+          ]
+        }
+      ]
+    }
+  },
+  "emptyGarden": {
+    "gardenId": "684ba54b-4670-4f69-9e92-6b8308af202d",
+    "width": 10.0,
+    "depth": 10.0,
+    "visibility": "friends",
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "catalogVersion": "development-oak-v1",
+    "layoutVersion": 0,
+    "stateVersion": 1,
+    "plants": [],
+    "items": [],
+    "totalAttractionMicroUnits": "0",
+    "skillSummary": {
+      "policyVersion": "b8-caps-v1",
+      "caps": {
+        "schemaVersion": 1,
+        "activityBonus": "1.5",
+        "waterBonus": "1.5",
+        "plantAttractionBonus": "0.5",
+        "gardenAttractionBonus": "0.5",
+        "totalAttractionBonus": "1",
+        "flatAttractionPoints": "10",
+        "flatAttractionBaseFraction": "0.25",
+        "capacityBonus": "2",
+        "flatCapacity": 10
+      },
+      "activeSkills": [],
+      "growthFactors": []
+    }
+  },
+  "storedInventory": {
+    "items": [
+      {
+        "ownedItemId": "6e59db67-cd31-400a-8a4e-181fd0960835",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+        "clearanceRadius": 0.9,
+        "placement": null
+      },
+      {
+        "ownedItemId": "769e7ea8-097d-42bd-93e3-f2405f249a73",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+        "clearanceRadius": 0.9,
+        "placement": null
+      }
+    ],
+    "capacity": {
+      "ownedItems": 2,
+      "placedItems": 0,
+      "storedItems": 2,
+      "itemLimit": 50
+    },
+    "nextCursor": null
+  },
+  "placeRequest": {
+    "requestId": "4c76d9d9-8d8b-4123-bf69-e00712dcac00",
+    "expectedLayoutVersion": 0,
+    "catalogVersion": "development-oak-v1",
+    "actions": [],
+    "itemActions": [
+      {
+        "action": "place",
+        "itemId": "769e7ea8-097d-42bd-93e3-f2405f249a73",
+        "x": 2,
+        "y": 2,
+        "rotationDegrees": 90
+      }
+    ]
+  },
+  "placeResult": {
+    "requestId": "4c76d9d9-8d8b-4123-bf69-e00712dcac00",
+    "garden": {
+      "gardenId": "684ba54b-4670-4f69-9e92-6b8308af202d",
+      "width": 10.0,
+      "depth": 10.0,
+      "visibility": "friends",
+      "coordinateUnit": "garden_unit",
+      "gardenUnitMetres": 1.0,
+      "catalogVersion": "development-oak-v1",
+      "layoutVersion": 1,
+      "stateVersion": 2,
+      "plants": [],
+      "items": [
+        {
+          "ownedItemId": "769e7ea8-097d-42bd-93e3-f2405f249a73",
+          "itemId": "wooden-bench",
+          "definitionVersion": 1,
+          "displayName": "Wooden Bench",
+          "description": "a basic bench, allows weary travelers to find rest in your garden",
+          "rarity": "common",
+          "assetVersion": "1.0.0",
+          "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+          "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+          "clearanceRadius": 0.9,
+          "placement": {
+            "gardenId": "684ba54b-4670-4f69-9e92-6b8308af202d",
+            "x": 2.0,
+            "y": 2.0,
+            "rotationDegrees": 90.0
+          }
+        }
+      ],
+      "totalAttractionMicroUnits": "0",
+      "skillSummary": {
+        "policyVersion": "b8-caps-v1",
+        "caps": {
+          "schemaVersion": 1,
+          "activityBonus": "1.5",
+          "waterBonus": "1.5",
+          "plantAttractionBonus": "0.5",
+          "gardenAttractionBonus": "0.5",
+          "totalAttractionBonus": "1",
+          "flatAttractionPoints": "10",
+          "flatAttractionBaseFraction": "0.25",
+          "capacityBonus": "2",
+          "flatCapacity": 10
+        },
+        "activeSkills": [],
+        "growthFactors": []
+      }
+    },
+    "updatedPlants": []
+  },
+  "placedInventory": {
+    "items": [
+      {
+        "ownedItemId": "6e59db67-cd31-400a-8a4e-181fd0960835",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+        "clearanceRadius": 0.9,
+        "placement": null
+      },
+      {
+        "ownedItemId": "769e7ea8-097d-42bd-93e3-f2405f249a73",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+        "clearanceRadius": 0.9,
+        "placement": {
+          "gardenId": "684ba54b-4670-4f69-9e92-6b8308af202d",
+          "x": 2.0,
+          "y": 2.0,
+          "rotationDegrees": 90.0
+        }
+      }
+    ],
+    "capacity": {
+      "ownedItems": 2,
+      "placedItems": 1,
+      "storedItems": 1,
+      "itemLimit": 50
+    },
+    "nextCursor": null
+  },
+  "storeRequest": {
+    "requestId": "4a1e87fe-3127-4326-a66d-0347d74a066a",
+    "expectedLayoutVersion": 1,
+    "catalogVersion": "development-oak-v1",
+    "actions": [],
+    "itemActions": [
+      {
+        "action": "store",
+        "itemId": "769e7ea8-097d-42bd-93e3-f2405f249a73"
+      }
+    ]
+  },
+  "storeResult": {
+    "requestId": "4a1e87fe-3127-4326-a66d-0347d74a066a",
+    "garden": {
+      "gardenId": "684ba54b-4670-4f69-9e92-6b8308af202d",
+      "width": 10.0,
+      "depth": 10.0,
+      "visibility": "friends",
+      "coordinateUnit": "garden_unit",
+      "gardenUnitMetres": 1.0,
+      "catalogVersion": "development-oak-v1",
+      "layoutVersion": 2,
+      "stateVersion": 3,
+      "plants": [],
+      "items": [],
+      "totalAttractionMicroUnits": "0",
+      "skillSummary": {
+        "policyVersion": "b8-caps-v1",
+        "caps": {
+          "schemaVersion": 1,
+          "activityBonus": "1.5",
+          "waterBonus": "1.5",
+          "plantAttractionBonus": "0.5",
+          "gardenAttractionBonus": "0.5",
+          "totalAttractionBonus": "1",
+          "flatAttractionPoints": "10",
+          "flatAttractionBaseFraction": "0.25",
+          "capacityBonus": "2",
+          "flatCapacity": 10
+        },
+        "activeSkills": [],
+        "growthFactors": []
+      }
+    },
+    "updatedPlants": []
+  }
+}

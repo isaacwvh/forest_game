@@ -6,6 +6,8 @@ from forest_api.models import Base
 
 GROUPS = {
     "current_state": {
+        "owned_items",
+        "item_placements",
         "daily_skill_activity",
         "account_level_state",
         "users",
@@ -23,6 +25,7 @@ GROUPS = {
         "visitor_controls",
     },
     "durable_recovery": {
+        "item_identities",
         "milestone_state",
         "milestone_days",
         "milestone_species",
@@ -61,6 +64,7 @@ GROUPS = {
         "visitor_opportunities",
     },
     "shared_configuration": {
+        "item_definitions",
         "milestone_policies",
         "milestone_events",
         "level_benefits_policy",

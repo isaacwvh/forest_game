@@ -28,6 +28,17 @@ final class PlantModelLoader {
     }
 
     func load(_ resolved: ResolvedPlantAsset) async throws -> LoadedModel {
+        try await load(RuntimeModelAsset(key: resolved.key, modelURL: resolved.modelURL,
+            bytes: resolved.asset.bytes, sha256: resolved.asset.sha256,
+            bounds: resolved.asset.bounds, correctZUp: true))
+    }
+
+    func load(_ resolved: ResolvedItemAsset) async throws -> LoadedModel {
+        try await load(RuntimeModelAsset(key: resolved.key, modelURL: resolved.modelURL,
+            bytes: resolved.bytes, sha256: resolved.sha256, bounds: resolved.bounds, correctZUp: false))
+    }
+
+    private func load(_ resolved: RuntimeModelAsset) async throws -> LoadedModel {
         if let cached = templates[resolved.key] {
             touch(resolved.key)
             return LoadedModel(entity: cached.entity.clone(recursive: true), orientationNote: cached.orientationNote)
@@ -50,7 +61,7 @@ final class PlantModelLoader {
         return value
     }
 
-    private func importModel(_ resolved: ResolvedPlantAsset) async throws -> LoadedModel {
+    private func importModel(_ resolved: RuntimeModelAsset) async throws -> LoadedModel {
         while activeImports >= 3 {
             try await Task.sleep(nanoseconds: 10_000_000)
         }
@@ -58,8 +69,8 @@ final class PlantModelLoader {
         activeImports += 1
         defer { activeImports -= 1 }
         let url = resolved.modelURL
-        let size = resolved.asset.bytes
-        let checksum = resolved.asset.sha256
+        let size = resolved.bytes
+        let checksum = resolved.sha256
         try await Task.detached(priority: .userInitiated) {
             let data = try Data(contentsOf: url, options: .mappedIfSafe)
             guard data.count == size, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == checksum else {
@@ -74,7 +85,7 @@ final class PlantModelLoader {
             adapter.name = "asset-adapter"
             adapter.addChild(imported)
             let importedSize = imported.visualBounds(relativeTo: adapter).extents
-            let correct = AssetOrientation.needsZUpCorrection(imported: importedSize, authored: resolved.asset.bounds.extents)
+            let correct = resolved.correctZUp && AssetOrientation.needsZUpCorrection(imported: importedSize, authored: resolved.bounds.extents)
             if correct { adapter.orientation = simd_quatf(angle: -.pi / 2, axis: [1, 0, 0]) }
             let note = correct ? "Applied Z-up → Y-up once" : "Importer supplied Y-up"
             templates[resolved.key] = Template(entity: adapter, orientationNote: note)
@@ -84,7 +95,7 @@ final class PlantModelLoader {
             }
             return LoadedModel(entity: adapter.clone(recursive: true), orientationNote: note)
         }
-        throw ForestError.assetLoad("The model loader returned no entity for \(resolved.asset.file).")
+        throw ForestError.assetLoad("The model loader returned no entity for \(resolved.modelURL.lastPathComponent).")
     }
 
     func clear() {

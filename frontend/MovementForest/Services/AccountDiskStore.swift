@@ -59,6 +59,9 @@ struct ConfirmedGardenCache: Codable {
     let garden: APIGarden
     let inventory: [APIOwnedPlant]
     let nextCursor: UUID?
+    var itemInventory: [APIOwnedItem]? = nil
+    var itemCapacity: APIItemCapacity? = nil
+    var itemCursor: UUID? = nil
 }
 
 struct PendingActivityOperation: Codable, Identifiable {

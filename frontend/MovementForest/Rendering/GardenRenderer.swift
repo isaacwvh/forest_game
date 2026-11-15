@@ -103,6 +103,13 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var placements: [UUID: Entity] = [:]
     private var plantPlaybacks: [UUID: [AnimationPlaybackController]] = [:]
     private var renderedPlants: [UUID: GardenPlant] = [:]
+    private var renderedItems: [UUID: GardenItem] = [:]
+    private var itemPreview: ItemRenderPreview?
+    private var itemPreviewAnchor: Entity?
+    private var itemPreviewTask: Task<Void, Never>?
+    private var itemPreviewKey: String?
+    private var itemGuide: Entity?
+    private var itemGuideKey: String?
     private struct PreparedVisual {
         let plant: GardenPlant
         let model: PlantModelLoader.LoadedModel
@@ -187,12 +194,14 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         guard snapshot != garden || needsAssetReload else { return }
         let dimensionsChanged = snapshot?.gardenId != garden.gardenId || snapshot?.width != garden.width ||
             snapshot?.depth != garden.depth || snapshot?.gardenUnitMetres != garden.gardenUnitMetres
-        let requiresLoads = dimensionsChanged || garden.plants.contains { plant in
+        let requiresLoads = dimensionsChanged || (garden.items ?? []).contains { item in
+            renderedItems[item.id]?.assetVersion != item.assetVersion || placements[item.id] == nil
+        } || garden.plants.contains { plant in
             guard let old = renderedPlants[plant.id], placements[plant.id] != nil else { return true }
             return old.speciesId != plant.speciesId || old.variantId != plant.variantId ||
                 old.assetVersion != plant.assetVersion || old.growthStage != plant.growthStage
         }
-        let visualsChanged = dimensionsChanged || snapshot?.plants != garden.plants ||
+        let visualsChanged = dimensionsChanged || snapshot?.plants != garden.plants || snapshot?.items != garden.items ||
             snapshot?.catalogVersion != garden.catalogVersion || needsAssetReload || (loadTask == nil && requiresLoads)
         if visualsChanged {
             if growthEffects?.holdingRecap == true { sharedEffects.cancel() }
@@ -219,13 +228,16 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                 self.plantPlaybacks.removeAll()
                 self.placements.removeAll()
                 self.renderedPlants.removeAll()
+                self.renderedItems.removeAll()
+                self.itemPreviewTask?.cancel(); self.itemPreviewKey = nil
+                self.itemPreviewAnchor = nil; self.itemGuide = nil; self.itemGuideKey = nil
                 self.diagnostics.removeAll()
                 for child in Array(self.root.children) { child.removeFromParent() }
                 self.selectionMarker = nil; self.debugGeometry = nil
                 self.previewAnchor = nil; self.clearanceGuide = nil; self.guideStyle = nil; self.previewKey = nil
                 self.makeBoard(garden)
             }
-            let wanted = Set(garden.plants.map(\.id))
+            let wanted = Set(garden.plants.map(\.id) + (garden.items ?? []).map(\.id))
             for id in Array(self.placements.keys) where !wanted.contains(id) { self.removePlant(id) }
             if dimensionsChanged { self.resetCamera() }
             for plant in garden.plants {
@@ -265,6 +277,41 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                     // Leave renderedPlants unset so a later refresh can retry the asset.
                 }
             }
+            for item in garden.items ?? [] {
+                guard !Task.isCancelled, self.generation == token else { return }
+                if let old = self.renderedItems[item.id], old.assetVersion == item.assetVersion,
+                   old.itemId == item.itemId, let entity = self.placements[item.id] {
+                    self.transformItem(entity, item: item, garden: garden)
+                    self.renderedItems[item.id] = item
+                    continue
+                }
+                do {
+                    let asset = try BundledItemAssets.resolve(item)
+                    let loaded = try await self.loader.load(asset)
+                    guard !Task.isCancelled, self.generation == token else { return }
+                    let anchor = self.placements[item.id] ?? Entity()
+                    for child in Array(anchor.children) { child.removeFromParent() }
+                    anchor.name = item.id.uuidString
+                    anchor.addChild(loaded.entity)
+                    loaded.entity.generateCollisionShapes(recursive: true)
+                    self.transformItem(anchor, item: item, garden: garden)
+                    if anchor.parent == nil { self.root.addChild(anchor) }
+                    self.placements[item.id] = anchor; self.renderedItems[item.id] = item
+                    self.modelLoadCount += 1; self.loadedCount += 1
+                } catch is CancellationError { return }
+                catch {
+                    guard !Task.isCancelled, self.generation == token else { return }
+                    self.errors.append("Item: \(error.localizedDescription)")
+                    if self.placements[item.id] == nil {
+                        let placeholder = ModelEntity(mesh: .generateBox(size: 0.25),
+                            materials: [SimpleMaterial(color: .systemGray, isMetallic: false)])
+                        placeholder.name = item.id.uuidString
+                        placeholder.generateCollisionShapes(recursive: false)
+                        self.transformItem(placeholder, item: item, garden: garden)
+                        self.root.addChild(placeholder); self.placements[item.id] = placeholder
+                    }
+                }
+            }
             guard self.generation == token else { return }
             self.isLoading = false
             self.loadSeconds = Date().timeIntervalSince(start)
@@ -272,6 +319,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
             self.updateSelection()
             self.updateDebugGeometry()
             self.updatePreview(self.preview, catalog: catalog)
+            self.updateItemPreview(self.itemPreview)
             self.loadTask = nil
             self.presentGrowthEffectsIfReady()
         }
@@ -384,6 +432,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         plantPlaybacks.removeValue(forKey: id)?.forEach { $0.stop() }
         placements.removeValue(forKey: id)?.removeFromParent()
         renderedPlants.removeValue(forKey: id)
+        renderedItems.removeValue(forKey: id)
     }
 
     private func playWind(in entity: Entity, plantID: UUID) -> Int {
@@ -456,6 +505,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         playbacks.forEach { $0.stop() }
         plantPlaybacks.removeAll()
         previewTask?.cancel(); previewTask = nil
+        itemPreviewTask?.cancel(); itemPreviewTask = nil; itemPreview = nil; itemPreviewKey = nil
+        itemPreviewAnchor = nil; itemGuide = nil; itemGuideKey = nil; renderedItems.removeAll()
         preview = nil; previewKey = nil
         dragging = false; dragOffset = nil; oneFingerMovesPlant = nil
         onSelect = nil; onGroundDrag = nil
@@ -768,7 +819,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     // Lock ownership at the beginning. Cancelling/invalidating a plant preview
     // during a drag must never turn its remaining events into camera movement.
     func handleSingleFingerPan(state: UIGestureRecognizer.State, translation: CGPoint, location: CGPoint) {
-        if state == .began { oneFingerMovesPlant = preview?.movable == true }
+        if state == .began { oneFingerMovesPlant = preview?.movable == true || itemPreview?.movable == true }
         defer {
             if state == .ended || state == .cancelled || state == .failed {
                 oneFingerMovesPlant = nil; dragging = false; dragOffset = nil
@@ -808,7 +859,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
     @objc private func tapGesture(_ gesture: UITapGestureRecognizer) {
         let point = gesture.location(in: view)
-        if preview?.movable == true {
+        if preview?.movable == true || itemPreview?.movable == true {
             let hit = groundPoint(point)
             onGroundDrag?(hit, .changed)
             onGroundDrag?(hit, .ended)
@@ -842,12 +893,15 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     private func moveGesture(state: UIGestureRecognizer.State, translation: CGPoint, point: CGPoint) {
-        guard let preview = preview else { return }
+        let objectPosition: SIMD2<Double>
+        if let item = itemPreview?.item { objectPosition = SIMD2(item.x, item.y) }
+        else if let plant = preview?.plant { objectPosition = SIMD2(plant.x, plant.y) }
+        else { return }
         switch state {
         case .began:
             dragging = true
             let start = groundPoint(CGPoint(x: point.x - translation.x, y: point.y - translation.y))
-            dragOffset = start.map { SIMD2(preview.plant.x, preview.plant.y) - $0 }
+            dragOffset = start.map { objectPosition - $0 }
             onGroundDrag?(nil, .began)
         case .changed, .ended:
             let hit = groundPoint(point).map { $0 + (dragOffset ?? .zero) }
@@ -933,6 +987,62 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         updateSelection()
     }
 
+    private func transformItem(_ entity: Entity, item: GardenItem, garden: GardenSnapshot) {
+        entity.position = GardenCoordinates.world(x: item.x, y: item.y, unitMetres: garden.gardenUnitMetres)
+        entity.orientation = simd_quatf(angle: Float(item.rotationDegrees) * .pi / 180, axis: [0, 1, 0])
+    }
+
+    func updateItemPreview(_ value: ItemRenderPreview?) {
+        guard !disposed else { return }
+        if let old = itemPreview, old.item.id != value?.item.id || value == nil,
+           let garden = snapshot, let original = (garden.items ?? []).first(where: { $0.id == old.item.id }),
+           let entity = placements[original.id] { transformItem(entity, item: original, garden: garden) }
+        itemPreview = value
+        guard let value = value, let garden = snapshot else {
+            itemPreviewTask?.cancel(); itemPreviewTask = nil
+            itemPreviewAnchor?.removeFromParent(); itemPreviewAnchor = nil; itemPreviewKey = nil
+            itemGuide?.removeFromParent(); itemGuide = nil; itemGuideKey = nil
+            return
+        }
+        if let entity = placements[value.item.id] { transformItem(entity, item: value.item, garden: garden) }
+        let guideKey = "\(value.radius)|\(value.valid)|\(garden.gardenUnitMetres)"
+        if itemGuideKey != guideKey || itemGuide == nil {
+            itemGuide?.removeFromParent()
+            let guide = Entity()
+            let radius = Float(value.radius * garden.gardenUnitMetres)
+            for index in 0..<48 {
+                let angle = Float(index) * 2 * .pi / 48
+                let segment = ModelEntity(mesh: .generateBox(size: [max(radius * 0.13, 0.01), 0.015, 0.025]),
+                    materials: [UnlitMaterial(color: value.valid ? UIColor.systemGreen : UIColor.systemRed)])
+                segment.position = [sin(angle) * radius, 0.025, cos(angle) * radius]
+                segment.orientation = simd_quatf(angle: angle, axis: [0, 1, 0]); guide.addChild(segment)
+            }
+            root.addChild(guide); itemGuide = guide; itemGuideKey = guideKey
+        }
+        itemGuide?.position = GardenCoordinates.world(x: value.item.x, y: value.item.y, unitMetres: garden.gardenUnitMetres)
+        let key = "\(value.item.id)|\(value.item.assetVersion)|\(placements[value.item.id] == nil)"
+        if itemPreviewKey != key {
+            itemPreviewTask?.cancel(); itemPreviewAnchor?.removeFromParent()
+            let anchor = Entity(); root.addChild(anchor); itemPreviewAnchor = anchor; itemPreviewKey = key
+            if placements[value.item.id] == nil {
+                itemPreviewTask = Task { [weak self] in
+                    guard let self = self else { return }
+                    do {
+                        let model = try await self.loader.load(BundledItemAssets.resolve(value.item))
+                        guard !Task.isCancelled, self.itemPreviewKey == key else { return }
+                        self.removeCollisions(model.entity); anchor.addChild(model.entity)
+                    } catch is CancellationError { return }
+                    catch {
+                        guard !Task.isCancelled, self.itemPreviewKey == key else { return }
+                        self.errors.append("Item preview: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+        if let anchor = itemPreviewAnchor { transformItem(anchor, item: value.item, garden: garden) }
+        updateSelection()
+    }
+
     private func removeCollisions(_ entity: Entity) {
         entity.components.remove(CollisionComponent.self)
         for child in entity.children { removeCollisions(child) }
@@ -948,6 +1058,7 @@ struct GardenSceneView: UIViewRepresentable {
     var showBounds = false
     var groundPicking = false
     var editorPreview: EditorRenderPreview? = nil
+    var itemPreview: ItemRenderPreview? = nil
     var growthEffects: GardenEffectsCoordinator? = nil
     var onSelect: ((UUID?) -> Void)? = nil
     var onGroundDrag: ((SIMD2<Double>?, GardenDragPhase) -> Void)? = nil
@@ -970,5 +1081,6 @@ struct GardenSceneView: UIViewRepresentable {
         renderer.onSelect = onSelect
         renderer.onGroundDrag = onGroundDrag
         renderer.updatePreview(editorPreview, catalog: catalog)
+        renderer.updateItemPreview(itemPreview)
     }
 }

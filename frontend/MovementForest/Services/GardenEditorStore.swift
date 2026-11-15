@@ -35,6 +35,10 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     @Published private(set) var confirmed: APIGarden?
     @Published private(set) var rendered: GardenSnapshot?
     @Published private(set) var inventory: [APIOwnedPlant] = []
+    @Published private(set) var itemInventory: [APIOwnedItem] = []
+    @Published private(set) var itemCapacity: APIItemCapacity?
+    @Published private(set) var itemCursor: UUID?
+    @Published private(set) var itemCandidate: ItemCandidate?
     @Published private(set) var capacity: APIInventoryCapacity?
     private var levelPlantLimit: Int?
     func applyLevelPlantLimit(_ limit: Int) {
@@ -135,6 +139,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             let snapshot = try value.garden.rendered(catalogue: value.catalogue, assets: assets)
             catalogue = value.catalogue; confirmed = value.garden; rendered = snapshot
             inventory = filtered(value.inventory, garden: value.garden); nextCursor = value.nextCursor
+            itemInventory = value.itemInventory ?? []; itemCapacity = value.itemCapacity; itemCursor = value.itemCursor
             confirmedAt = value.confirmedAt; showingCached = true
         } catch {
             report("The cached garden could not be read. Reconnect to refresh it.", source: .gardenRead)
@@ -146,7 +151,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         guard let cache = cache, let catalogue = catalogue, let confirmed = confirmed else { return }
         try cache.save(ConfirmedGardenCache(serverID: service.serverID, profile: profile,
                                            confirmedAt: confirmedAt ?? Date(), catalogue: catalogue,
-                                           garden: confirmed, inventory: inventory, nextCursor: nextCursor),
+                                           garden: confirmed, inventory: inventory, nextCursor: nextCursor,
+                                           itemInventory: itemInventory, itemCapacity: itemCapacity, itemCursor: itemCursor),
                        kind: "garden", server: service.serverID, user: profile.userId)
     }
 
@@ -169,8 +175,9 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 plantedLimit: old.plantedLimit, unopenedPacks: old.unopenedPacks, packLimit: old.packLimit)
         }
         inventory = filtered(inventory.filter { old in !updatedPlants.contains(where: { $0.id == old.id }) } + updatedPlants, garden: garden)
+        itemInventory.removeAll { item in (garden.items ?? []).contains { $0.id == item.id } }
         confirmedAt = date; showingCached = false
-        if selectedPlanted == nil && (!editing || candidate == nil) { selectedID = nil }
+        if selectedPlanted == nil && selectedItem == nil && (!editing || candidate == nil) { selectedID = nil }
         try persistConfirmed()
     }
 
@@ -198,7 +205,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         guard isActive, pending == nil, !refreshInFlight, !recoveryLocked else { return }
         refreshInFlight = true
         let previousState = state, previousNeedsRefresh = needsRefresh
-        state = .loading; candidate = nil; needsRefresh = true
+        state = .loading; candidate = nil; itemCandidate = nil; needsRefresh = true
         inventoryGeneration = UUID()
         defer { refreshInFlight = false }
         // A swipe control can cancel its caller while the read is still useful.
@@ -218,6 +225,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 let catalog = try await service.catalogue()
                 let before = try await service.garden()
                 let page = try await service.inventory(after: nil)
+                let itemPage = try await service.items(after: nil)
                 let after = try await service.garden()
                 guard isActive else { return }
                 guard before.stateVersion == after.stateVersion, before.layoutVersion == after.layoutVersion, before.catalogVersion == after.catalogVersion,
@@ -231,13 +239,15 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 _ = try PlacementGeometry.units(after.depth)
                 catalogue = catalog; confirmed = after; rendered = snapshot
                 inventory = filtered(page.plants, garden: after); nextCursor = page.nextCursor
+                itemInventory = itemPage.items.filter { $0.placement == nil }
+                itemCapacity = itemPage.capacity; itemCursor = itemPage.nextCursor
                 acceptCapacity(page.capacity)
                 confirmedAt = Date(); showingCached = false
                 try persistConfirmed()
                 needsRefresh = false; state = .ready
                 if feedback?.id == lastReadIssue { feedback = nil }
                 lastReadIssue = nil
-                if selectedPlanted == nil { selectedID = nil }
+                if selectedPlanted == nil && selectedItem == nil { selectedID = nil }
                 return
             }
             throw ForestError.invalidData("Your garden changed while loading. Refresh to try again.")
@@ -302,6 +312,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     func updatePosition(x: Double, y: Double) {
+        if itemCandidate != nil { updateItemPosition(x: x, y: y); return }
         guard canEdit, var candidate = candidate,
               let canonicalX = PlacementGeometry.canonical(x), let canonicalY = PlacementGeometry.canonical(y) else {
             invalidateCandidate(); return
@@ -310,10 +321,14 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         self.candidate = candidate; validateCandidate()
     }
     func updateRotation(_ angle: Double) {
+        if var value = itemCandidate, canEdit, let rotation = PlacementGeometry.rotation(angle) {
+            value.rotation = rotation; itemCandidate = value; validateItemCandidate(); return
+        }
         guard canEdit, let angle = PlacementGeometry.rotation(angle), var candidate = candidate else { return }
         candidate.rotation = angle; self.candidate = candidate; validateCandidate()
     }
     func invalidateCandidate() {
+        if var value = itemCandidate { value.validity = .outOfBounds; itemCandidate = value; return }
         guard var candidate = candidate else { return }
         candidate.validity = .outOfBounds; self.candidate = candidate
     }
@@ -322,7 +337,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
     func cancelCandidate(invalidateSubmission: Bool = true) {
         if invalidateSubmission { editGeneration = UUID() }
-        candidate = nil; adultPreview = false
+        candidate = nil; itemCandidate = nil; adultPreview = false
     }
     func endEditing() {
         cancelCandidate(); editing = false
@@ -338,6 +353,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 return PlacementCircle(id: plant.id, x: try PlacementGeometry.units(placement.x),
                                        y: try PlacementGeometry.units(placement.y), radius: try catalogue.radius(for: plant))
             }
+            circles += try itemCircles(excluding: nil)
             // Negative candidates are visibly invalid, never clamped to a valid edge.
             guard candidate.x >= 0, candidate.y >= 0 else {
                 candidate.validity = .outOfBounds; self.candidate = candidate; return
@@ -351,6 +367,13 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     func releaseCandidate() async {
+        if let value = itemCandidate {
+            guard value.validity == .valid else { report(value.validity.message); cancelCandidate(); return }
+            await submit(itemAction: ItemEditAction(action: value.action, itemId: value.item.id,
+                x: value.action == "rotate" ? nil : value.x, y: value.action == "rotate" ? nil : value.y,
+                rotationDegrees: value.rotation))
+            return
+        }
         guard let candidate = candidate else { return }
         guard candidate.validity == .valid else { report(candidate.validity.message); cancelCandidate(); return }
         await submit(GardenEditAction(action: candidate.kind, plantId: candidate.plant.id,
@@ -365,12 +388,82 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         await submit(GardenEditAction(action: .store, plantId: plant.id))
     }
 
-    private func submit(_ action: GardenEditAction) async {
+    var selectedItem: APIOwnedItem? {
+        (confirmed?.items ?? []).first { $0.id == selectedID } ?? itemInventory.first { $0.id == selectedID }
+    }
+
+    func beginItem(_ item: APIOwnedItem, action: String) {
+        guard canEdit, let garden = confirmed,
+              let current = ((garden.items ?? []) + itemInventory).first(where: { $0.id == item.id }),
+              ["place", "move", "rotate"].contains(action),
+              (action == "place" ? current.placement == nil : current.placement != nil) else { return }
+        cancelCandidate(); selectedID = current.id; editing = true
+        itemCandidate = ItemCandidate(item: current, action: action,
+            x: current.placement?.x ?? garden.width / 2, y: current.placement?.y ?? garden.depth / 2,
+            rotation: current.placement?.rotationDegrees ?? 0)
+        validateItemCandidate()
+    }
+
+    func storeItem(_ item: APIOwnedItem) async {
+        guard (confirmed?.items ?? []).contains(where: { $0.id == item.id }) else { return }
+        cancelCandidate()
+        await submit(itemAction: ItemEditAction(action: "store", itemId: item.id))
+    }
+
+    private func itemCircles(excluding id: UUID?) throws -> [PlacementCircle] {
+        try (confirmed?.items ?? []).filter { $0.id != id }.map { item in
+            guard let placement = item.placement else { throw ForestError.invalidData("Missing item placement.") }
+            return PlacementCircle(id: item.id, x: try PlacementGeometry.units(placement.x),
+                y: try PlacementGeometry.units(placement.y), radius: try PlacementGeometry.units(item.clearanceRadius))
+        }
+    }
+
+    private func updateItemPosition(x: Double, y: Double) {
+        guard canEdit, var value = itemCandidate,
+              let x = PlacementGeometry.canonical(x), let y = PlacementGeometry.canonical(y) else {
+            invalidateCandidate(); return
+        }
+        value.x = x; value.y = y; itemCandidate = value; validateItemCandidate()
+    }
+
+    private func validateItemCandidate() {
+        guard var value = itemCandidate, let garden = confirmed, let catalogue = catalogue else { return }
+        do {
+            var circles = try itemCircles(excluding: value.item.id)
+            circles += try garden.plants.map { plant in
+                guard let placement = plant.placement else { throw ForestError.invalidData("Missing placement.") }
+                return PlacementCircle(id: plant.id, x: try PlacementGeometry.units(placement.x),
+                    y: try PlacementGeometry.units(placement.y), radius: try catalogue.radius(for: plant))
+            }
+            circles.append(PlacementCircle(id: value.item.id, x: try PlacementGeometry.units(value.x),
+                y: try PlacementGeometry.units(value.y), radius: try PlacementGeometry.units(value.item.clearanceRadius)))
+            value.validity = PlacementGeometry.validate(width: try PlacementGeometry.units(garden.width),
+                depth: try PlacementGeometry.units(garden.depth), circles: circles)
+        } catch { value.validity = .outOfBounds }
+        itemCandidate = value
+    }
+
+    func loadMoreItems() async {
+        guard canReadInventory, !inventoryLoading, let cursor = itemCursor else { return }
+        inventoryLoading = true
+        let generation = inventoryGeneration
+        defer { inventoryLoading = false }
+        do {
+            let page = try await service.items(after: cursor)
+            guard isActive, generation == inventoryGeneration else { return }
+            let known = Set(itemInventory.map(\.id))
+            itemInventory += page.items.filter { $0.placement == nil && !known.contains($0.id) }
+            itemCursor = page.nextCursor == cursor ? nil : page.nextCursor
+            try persistConfirmed()
+        } catch { report("Items couldn’t load. Reconnect and try again.", source: .inventory) }
+    }
+
+    private func submit(_ action: GardenEditAction? = nil, itemAction: ItemEditAction? = nil) async {
         guard canEdit else { return }
         let generation = editGeneration
         preparingMembership = true
         defer { preparingMembership = false }
-        if (action.action == .plant || action.action == .store), let prepare = prepareMembershipChange {
+        if (action?.action == .plant || action?.action == .store), let prepare = prepareMembershipChange {
             guard await prepare() else {
                 report("Activity could not be confirmed before changing planted plants. Retry sync, then try this edit again.")
                 cancelCandidate(); return
@@ -379,13 +472,14 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         guard generation == editGeneration, readyForMutation, !activityBusy, !activityBlocked,
               let garden = confirmed else { return }
         let request = GardenEditRequest(requestId: UUID(), expectedLayoutVersion: garden.layoutVersion,
-                                        catalogVersion: garden.catalogVersion, actions: [action])
+                                        catalogVersion: garden.catalogVersion, actions: action.map { [$0] } ?? [],
+                                        itemActions: itemAction.map { [$0] })
         do {
             let edit = PendingGardenEdit(serverID: service.serverID, userID: profile.userId,
                                          gardenID: garden.gardenId, body: try request.encoded())
             try journal.save(edit) // Must succeed before any network transmission.
             pending = edit
-            DiagnosticHistory.shared.record("Garden edit", "journalled \(action.action.rawValue)",
+            DiagnosticHistory.shared.record("Garden edit", "journalled \(action?.action.rawValue ?? itemAction?.action ?? "edit")",
                 requestID: request.requestId.uuidString, scope: diagnosticScope)
         } catch { report("Your edit could not be saved on this device. Nothing was sent."); cancelCandidate(); return }
         cancelCandidate()

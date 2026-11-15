@@ -66,6 +66,47 @@ def edit_garden(
             return GardenEditResult.model_validate(previous)
         garden = services.lock_garden(session, user.id, write=True)
         catalogue = services.get_catalogue_state(session, settings, lock=True)
+        from forest_api import items
+        from forest_api.item_models import ItemPlacement
+
+        item_rows = items.rows(session, user.id)
+        initial_items = {
+            row[0].id: Transform(row[3].x, row[3].y, row[3].rotation_degrees)
+            for row in item_rows
+            if row[3] is not None
+        }
+        if (initial_items or body.item_actions) and not session.info.get("items_client"):
+            raise ApiError(
+                426, "items_client_update_required", "Update the app to edit garden items"
+            )
+        owned_items = {row[0].id: row for row in item_rows}
+        final_items = initial_items.copy()
+        for action in body.item_actions:
+            if action.item_id not in owned_items:
+                raise ApiError(404, "item_not_found", "Item not found")
+            placed = action.item_id in initial_items
+            if action.action == "place":
+                if placed:
+                    raise ApiError(409, "item_already_placed", "Item is already placed")
+                final_items[action.item_id] = Transform(action.x, action.y, action.rotation_degrees)
+            else:
+                if not placed:
+                    raise ApiError(409, "item_not_placed", "Item is stored, not placed")
+                saved = initial_items[action.item_id]
+                if action.action == "store":
+                    del final_items[action.item_id]
+                elif action.action == "rotate":
+                    final_items[action.item_id] = Transform(
+                        saved.x, saved.y, action.rotation_degrees
+                    )
+                else:
+                    final_items[action.item_id] = Transform(
+                        action.x,
+                        action.y,
+                        saved.rotation_degrees
+                        if action.rotation_degrees is None
+                        else action.rotation_degrees,
+                    )
         if catalogue.version != body.catalog_version:
             raise ApiError(
                 409,
@@ -178,15 +219,38 @@ def edit_garden(
                     else radii[plants[plant_id].species_id],
                 )
                 for plant_id, transform in sorted(final.items())
+            ]
+            + [
+                ClearanceCircle(
+                    str(item_id),
+                    length_units(transform.x),
+                    length_units(transform.y),
+                    length_units(owned_items[item_id][2].clearance_radius),
+                )
+                for item_id, transform in sorted(final_items.items())
             ],
         )
 
         # One post-lock server boundary for settlement and the returned skill summary.
         boundary = clock()
-        if final != initial:
+        if final != initial or final_items != initial_items:
             if max(garden.layout_version, garden.state_version) >= 9223372036854775807:
                 raise ApiError(503, "version_exhausted", "Garden version requires maintenance")
             accounting.before_change(session, garden, boundary)
+            for item_id in initial_items.keys() - final_items.keys():
+                session.delete(owned_items[item_id][3])
+            for item_id, transform in final_items.items():
+                if initial_items.get(item_id) == transform:
+                    continue
+                row = owned_items[item_id][3]
+                if row is None:
+                    row = ItemPlacement(item_id=item_id, owner_id=user.id, garden_id=garden.id)
+                    session.add(row)
+                row.x, row.y, row.rotation_degrees = (
+                    transform.x,
+                    transform.y,
+                    transform.rotation_degrees,
+                )
             for plant_id in initial.keys() - final.keys():
                 session.delete(placements[plant_id])
             for plant_id, transform in final.items():

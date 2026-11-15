@@ -130,6 +130,7 @@ struct APIClient {
         request.setValue("1", forHTTPHeaderField: "X-Forest-Woodland")
         request.setValue("2", forHTTPHeaderField: "X-Forest-Discovery")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Milestones")
+        request.setValue("1", forHTTPHeaderField: "X-Forest-Items")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         if authenticated {
             request.setValue("Bearer \(try await tokens.token())", forHTTPHeaderField: "Authorization")
@@ -198,6 +199,13 @@ protocol GardenServing {
     func garden() async throws -> APIGarden
     func inventory(after: UUID?) async throws -> APIInventory
     func edit(body: Data) async throws -> GardenEditResult
+    func items(after: UUID?) async throws -> APIItemInventory
+}
+
+extension GardenServing {
+    func items(after: UUID?) async throws -> APIItemInventory {
+        APIItemInventory(items: [], nextCursor: nil, capacity: nil)
+    }
 }
 
 struct APIGardenRepository: GardenServing {
@@ -213,5 +221,10 @@ struct APIGardenRepository: GardenServing {
     }
     func edit(body: Data) async throws -> GardenEditResult {
         try await client.request("v1/me/garden/edits", method: "POST", body: body)
+    }
+    func items(after: UUID?) async throws -> APIItemInventory {
+        var query = [URLQueryItem(name: "limit", value: "100")]
+        if let after = after { query.append(URLQueryItem(name: "after", value: after.uuidString)) }
+        return try await client.request("v1/me/items", query: query)
     }
 }

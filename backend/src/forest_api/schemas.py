@@ -227,6 +227,20 @@ class GrowthProgressDTO(DTO):
     maximum_growth_micro_units: str
 
 
+class ItemDTO(DTO):
+    owned_item_id: UUID
+    item_id: str
+    definition_version: int
+    display_name: str
+    description: str
+    rarity: str
+    asset_version: str
+    model_key: str
+    thumbnail_key: str
+    clearance_radius: GroundNumber
+    placement: PlacementDTO | None
+
+
 class PlantDTO(DTO):
     plant_id: UUID
     species_id: str
@@ -264,6 +278,7 @@ class GardenDTO(DTO):
     layout_version: int
     state_version: int
     plants: list[PlantDTO]
+    items: list[ItemDTO] = Field(default_factory=list)
     total_attraction_micro_units: str = "0"
     skill_summary: dict | None = None
 
@@ -388,10 +403,15 @@ class GardenEditRequest(DTO):
     request_id: UUID
     expected_layout_version: Annotated[int, Field(strict=True, ge=0, le=9223372036854775807)]
     catalog_version: str = Field(min_length=1, max_length=100)
-    actions: list[PlacementAction] = Field(min_length=1, max_length=100)
+    actions: list[PlacementAction] = Field(default_factory=list, max_length=100)
+    item_actions: list["ItemAction"] = Field(default_factory=list, max_length=100)
 
     @model_validator(mode="after")
     def unique_plants(self) -> "GardenEditRequest":
+        if not 1 <= len(self.actions) + len(self.item_actions) <= 100:
+            raise ValueError("Provide between 1 and 100 actions")
+        if len({action.item_id for action in self.item_actions}) != len(self.item_actions):
+            raise ValueError("Each item may appear only once per edit")
         if len({action.plant_id for action in self.actions}) != len(self.actions):
             raise ValueError("Each plant may appear only once per edit")
         return self
@@ -401,3 +421,29 @@ class GardenEditResult(DTO):
     request_id: UUID
     garden: GardenDTO
     updated_plants: list[PlantDTO]
+
+
+class ItemAction(DTO):
+    action: Literal["place", "move", "rotate", "store"]
+    item_id: UUID
+    x: Coordinate | None = None
+    y: Coordinate | None = None
+    rotation_degrees: Yaw | None = None
+
+    @model_validator(mode="after")
+    def fields_for_action(self):
+        supplied = self.model_fields_set - {"action", "item_id"}
+        required = {
+            "place": {"x", "y", "rotation_degrees"},
+            "move": {"x", "y"},
+            "rotate": {"rotation_degrees"},
+            "store": set(),
+        }[self.action]
+        allowed = required | ({"rotation_degrees"} if self.action == "move" else set())
+        if (
+            not required <= supplied
+            or not supplied <= allowed
+            or any(getattr(self, k) is None for k in supplied)
+        ):
+            raise ValueError("Invalid fields for item action")
+        return self

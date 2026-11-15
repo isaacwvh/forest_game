@@ -34,6 +34,7 @@ struct GardenSnapshot: Codable, Equatable {
     let layoutVersion: Int
     let stateVersion: Int
     var plants: [GardenPlant]
+    var items: [GardenItem]? = nil
 
     func validated() throws -> Self {
         guard width.isFinite, depth.isFinite, gardenUnitMetres.isFinite,
@@ -47,6 +48,12 @@ struct GardenSnapshot: Codable, Equatable {
                   (0..<360).contains(plant.rotationDegrees) else {
                 throw ForestError.invalidData("A plant has an invalid ground position or rotation.")
             }
+        }
+        let allIDs = plants.map(\.id) + (items ?? []).map(\.id)
+        guard Set(allIDs).count == allIDs.count,
+              (items ?? []).allSatisfy({ $0.x.isFinite && $0.y.isFinite && $0.rotationDegrees.isFinite &&
+                  (0...width).contains($0.x) && (0...depth).contains($0.y) && (0..<360).contains($0.rotationDegrees) }) else {
+            throw ForestError.invalidData("The garden contains invalid item positions or identities.")
         }
         return self
     }

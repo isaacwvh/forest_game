@@ -53,6 +53,7 @@ def generated_files():
     asset_ids = json.loads((ROOT / "MovementForest/Resources/Fixtures/asset-index.json").read_text())
     for name, path in [(name, f"../assets/{name}") for name in asset_ids] + [
                        ("packs", "../assets/packs"), ("butterfly", "../assets/butterfly"),
+                       ("wooden-bench", "../assets/items/wooden-bench"),
                        ("png-128", "../assets/quantity-icons-v1/png-128"),
                        ("journal", "../assets/journal"),
                        ("milestones", "../assets/milestones"),
