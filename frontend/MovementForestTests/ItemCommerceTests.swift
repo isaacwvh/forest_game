@@ -79,6 +79,48 @@ private final class ItemCommerceService: CollectionServing {
 
 @MainActor
 final class ItemCommerceTests: XCTestCase {
+    func testItemPurchaseAcceptsLegacyAndSavedRotationOfferIDs() throws {
+        let valid = ["wooden-bench", "garden/2030-01-07/common_1", "garden/2030-01-07/common_2",
+                     "garden/2030-01-07/common_3", "garden/2030-01-07/rare", "garden/2030-01-07/epic"]
+        let invalid = ["", "garden/2030-01-07/common_4", "garden/2030-01-07/legendary",
+                       "garden/2030-01-07/rare/extra", "garden/2030-01-07/../rare", "wooden-bench\n"]
+        for offerID in valid + invalid {
+            let id = UUID()
+            let body = try ActivityWire.encoder().encode(CollectionExchangeBody(requestId: id,
+                offerId: offerID, offerVersion: 1, quantity: 1))
+            let pending = PendingCollectionOperation(id: id, kind: .itemPurchase, target: nil, body: body)
+            if valid.contains(offerID) { XCTAssertNoThrow(try pending.validate(), offerID) }
+            else { XCTAssertThrowsError(try pending.validate(), offerID) }
+        }
+    }
+
+    func testRotatingPurchaseSendsAndRecoversExactRequestAfterRelaunch() async throws {
+        struct RotatingContract: Decodable { let summary: APICollectionSummary }
+        let url = try XCTUnwrap(Bundle.main.url(forResource: "item-rotations-contract", withExtension: "json", subdirectory: "Fixtures"))
+        let rotation = try ActivityWire.decoder().decode(RotatingContract.self, from: Data(contentsOf: url)).summary
+        let service = ItemCommerceService(try ItemCommerceContract.load())
+        service.summaryOverride = APICollectionSummary(tokenBalance: service.balance, economyVersion: service.version,
+            offers: [], itemOffers: rotation.itemOffers, itemCapacity: service.capacity, shop: rotation.shop)
+        let journal = ItemCommerceJournal(), user = UUID()
+        let first = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await first.refresh()
+        let offer = try XCTUnwrap(first.itemOffers.first { $0.slot == "common_1" })
+        service.loseResponse = true
+        await first.buyItem(offer, quantity: 2)
+        XCTAssertEqual(service.calls.count, 1)
+        let pending = try XCTUnwrap(journal.value.pending)
+        let sent = try ActivityWire.decoder().decode(CollectionExchangeBody.self, from: pending.body)
+        XCTAssertEqual(sent.offerId, offer.offerId)
+        XCTAssertEqual(sent.offerVersion, offer.offerVersion)
+        XCTAssertEqual(sent.quantity, 2)
+        first.deactivate()
+        let restored = CollectionCoordinator(userID: user, service: service, journal: journal)
+        await restored.refresh()
+        XCTAssertNil(journal.value.pending)
+        XCTAssertEqual(service.calls, [pending, pending])
+        XCTAssertEqual(service.receipts.count, 1)
+    }
+
     func testHTTPPricesAndWholeTokenResale() throws {
         let value = try ItemCommerceContract.load()
         XCTAssertEqual(value.summary.itemOffers?.first?.tokenCost, "550")

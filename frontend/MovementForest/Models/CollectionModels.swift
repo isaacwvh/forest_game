@@ -269,7 +269,7 @@ struct PendingCollectionOperation: Codable, Equatable {
             let request = try ActivityWire.decoder().decode(CollectionExchangeBody.self, from: body)
             guard request.requestId == id, target == nil, (1...20).contains(request.quantity),
                   request.offerVersion > 0,
-                  request.offerId.range(of: "^[a-z][a-z0-9_-]{0,99}$", options: .regularExpression) != nil else {
+                  request.offerId.range(of: "\\A(?:[a-z][a-z0-9_-]{0,99}|garden/[0-9]{4}-[0-9]{2}-[0-9]{2}/(?:common_[1-3]|rare|epic))\\z", options: .regularExpression) != nil else {
                 throw ForestError.invalidData("The saved item purchase could not be verified.")
             }
         case .itemSell:
