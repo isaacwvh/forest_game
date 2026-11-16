@@ -47,7 +47,7 @@ def pause(session, garden_id, boundary):
         .where(
             VisitorOpportunity.garden_id == garden_id,
             VisitorOpportunity.status == "issued",
-            VisitorOpportunity.issued_at >= boundary,
+            VisitorOpportunity.issued_at > boundary,
         )
         .order_by(VisitorOpportunity.issued_at)
     ).all()
@@ -112,7 +112,9 @@ def plan(session, garden, state, active, boundary):
         row.next_at = boundary + timedelta(
             microseconds=math.ceil(jitter() / arrival_rate * 1_000_000)
         )
-    lifetime = timedelta(seconds=context.snapshot["rules"]["opportunity_seconds"])
+    from forest_api.visitors import welcome_lifetime
+
+    lifetime = welcome_lifetime(context)
     # Every advertised arrival gets its full welcome window inside the lease.
     horizon = active.lease_expires_at - lifetime
     pending = session.scalars(

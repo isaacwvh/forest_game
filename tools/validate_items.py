@@ -28,18 +28,38 @@ def validate():
                 assert archive.testzip() is None
                 for entry in archive.infolist():
                     assert entry.compress_type == zipfile.ZIP_STORED
-                    assert not entry.filename.startswith("/") and ".." not in Path(entry.filename).parts
-                    header = struct.unpack("<4s5H3I2H", data[entry.header_offset:entry.header_offset + 30])
-                    assert (entry.header_offset + 30 + header[-2] + header[-1]) % 64 == 0
+                    assert (
+                        not entry.filename.startswith("/")
+                        and ".." not in Path(entry.filename).parts
+                    )
+                    header = struct.unpack(
+                        "<4s5H3I2H",
+                        data[entry.header_offset : entry.header_offset + 30],
+                    )
+                    assert (
+                        entry.header_offset + 30 + header[-2] + header[-1]
+                    ) % 64 == 0
         else:
             assert data[:8] == b"\x89PNG\r\n\x1a\n"
             assert struct.unpack(">IIBB", data[16:26]) == (384, 448, 8, 6)
-    fixture = json.loads((ROOT / "frontend/MovementForest/Resources/Fixtures/items-contract.json").read_text())
+    fixture = json.loads(
+        (
+            ROOT / "frontend/MovementForest/Resources/Fixtures/items-contract.json"
+        ).read_text()
+    )
     stored = fixture["storedInventory"]
-    assert stored["capacity"] == {"ownedItems": 2, "placedItems": 0, "storedItems": 2, "itemLimit": 50}
+    assert stored["capacity"] == {
+        "ownedItems": 2,
+        "placedItems": 0,
+        "storedItems": 2,
+        "itemLimit": 50,
+    }
     assert len({v["ownedItemId"] for v in stored["items"]}) == 2
     for item in stored["items"]:
-        assert item["description"] == "a basic bench, allows weary travelers to find rest in your garden"
+        assert (
+            item["description"]
+            == "a basic bench, allows weary travelers to find rest in your garden"
+        )
         for key in ("modelKey", "thumbnailKey"):
             assert (ROOT / item[key]).is_file()
         assert item["clearanceRadius"] == 0.9
@@ -48,19 +68,114 @@ def validate():
     assert placed["items"][0]["placement"]["rotationDegrees"] == 90
     assert placed["totalAttractionMicroUnits"] == "0"
     assert fixture["storeResult"]["garden"]["items"] == []
-    commerce = json.loads((ROOT / "frontend/MovementForest/Resources/Fixtures/item-commerce-contract.json").read_text())
+    commerce = json.loads(
+        (
+            ROOT
+            / "frontend/MovementForest/Resources/Fixtures/item-commerce-contract.json"
+        ).read_text()
+    )
     offer = commerce["summary"]["itemOffers"][0]
     assert offer["tokenCost"] == "550" and offer["itemId"] == "wooden-bench"
     assert all((ROOT / offer[key]).is_file() for key in ("modelKey", "thumbnailKey"))
-    assert commerce["purchase"]["quantity"] == 2 and commerce["purchase"]["tokensSpent"] == "1100"
+    assert (
+        commerce["purchase"]["quantity"] == 2
+        and commerce["purchase"]["tokensSpent"] == "1100"
+    )
     assert len(set(commerce["purchase"]["ownedItemIds"])) == 2
-    assert commerce["quote"]["tokenValue"] == "550" and commerce["quote"]["tokens"] == "137"
+    assert (
+        commerce["quote"]["tokenValue"] == "550"
+        and commerce["quote"]["tokens"] == "137"
+    )
     assert commerce["sale"]["ownedItemId"] in commerce["purchase"]["ownedItemIds"]
-    assert commerce["sale"]["tokenBalance"] == "1037" and commerce["sale"]["itemCapacity"]["ownedItems"] == 1
+    assert (
+        commerce["sale"]["tokenBalance"] == "1037"
+        and commerce["sale"]["itemCapacity"]["ownedItems"] == 1
+    )
     project = (ROOT / "frontend/MovementForest.xcodeproj/project.pbxproj").read_text()
     assert "../assets/items/wooden-bench" in project
     assert "../assets/items/wooden-bench-v1.zip" not in project
-    print("PASS: bench assets, footprint, alpha icon, bundle inclusion, HTTP placement, 550-token purchases and 137-token resale contract.")
+    print(
+        "PASS: bench assets, footprint, alpha icon, bundle inclusion, HTTP placement, 550-token purchases and 137-token resale contract."
+    )
+    validate_catalogue()
+
+
+def validate_catalogue():
+    definitions = json.loads(
+        (ROOT / "backend/src/forest_api/data/garden-items-v1.json").read_text()
+    )
+    index = json.loads(
+        (
+            ROOT / "frontend/MovementForest/Resources/Fixtures/item-asset-index.json"
+        ).read_text()
+    )
+    assert len(definitions) == len(index) == 15
+    assert {
+        r["rarity"]: sum(x["rarity"] == r["rarity"] for x in definitions)
+        for r in definitions
+    } == {"common": 6, "rare": 5, "epic": 4}
+    animated = set()
+    total_bytes = 0
+    for row in definitions:
+        folder = ROOT / "assets/items" / row["id"] / "v1"
+        relative = f"{row['id']}/v1/item-manifest.json"
+        assert relative in index
+        manifest = json.loads((folder / "item-manifest.json").read_text())
+        assert (
+            manifest["itemId"] == row["id"]
+            and manifest["assetVersion"] == row["assetVersion"]
+        )
+        assert manifest["units"] == "metres" and manifest["exportUpAxis"] == "Y"
+        assert float(row["radius"]) > 0 and row["tokenCost"] >= 4
+        assert (
+            f"../assets/items/{row['id']}"
+            in (ROOT / "frontend/MovementForest.xcodeproj/project.pbxproj").read_text()
+        )
+        if manifest["animation"]:
+            animated.add(row["id"])
+            assert (
+                manifest["animation"]["loop"]
+                and not manifest["animation"]["rootMotion"]
+            )
+        for asset in manifest["assets"]:
+            path = (folder / asset["file"]).resolve()
+            assert path.is_relative_to(folder.resolve())
+            data = path.read_bytes()
+            total_bytes += len(data)
+            assert (
+                len(data) == asset["bytes"]
+                and hashlib.sha256(data).hexdigest() == asset["sha256"]
+            )
+            if path.suffix == ".png":
+                assert struct.unpack(">IIBB", data[16:26]) == (384, 448, 8, 6)
+            else:
+                with zipfile.ZipFile(path) as archive:
+                    assert archive.testzip() is None
+                    for entry in archive.infolist():
+                        assert entry.compress_type == zipfile.ZIP_STORED
+                        assert (
+                            not entry.filename.startswith("/")
+                            and ".." not in Path(entry.filename).parts
+                        )
+                        header = struct.unpack(
+                            "<4s5H3I2H",
+                            data[entry.header_offset : entry.header_offset + 30],
+                        )
+                        assert (
+                            entry.header_offset + 30 + header[-2] + header[-1]
+                        ) % 64 == 0
+        assert (folder / f"models/{row['id']}-standard.usdz").is_file()
+        assert (folder / f"ui/{row['id']}-standard.png").is_file()
+    assert animated == {
+        "beekeepers-skep",
+        "foxfire-kiln",
+        "rainharp",
+        "mycelium-exchange",
+        "cloud-shepherds-kite",
+    }
+    print(
+        f"PASS: all 15 item packages, six/five/four rarity pools, five loops, hashes, alpha icons and bundle entries ({total_bytes:,} bytes)."
+    )
 
 
 if __name__ == "__main__":

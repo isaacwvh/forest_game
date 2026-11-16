@@ -4,7 +4,7 @@ import secrets
 from pathlib import PurePosixPath
 from uuid import uuid4
 
-from sqlalchemy import select, tuple_, update
+from sqlalchemy import func, select, tuple_, update
 
 from forest_api import services
 from forest_api.collection_models import (
@@ -231,6 +231,25 @@ def pack_dto(pack):
 
 
 def read(session, settings, identity, *, kind="summary", limit=30, after=None):
+    for attempt in range(2):
+        try:
+            return _read_once(session, settings, identity, kind=kind, limit=limit, after=after)
+        except ApiError as error:
+            # A lock wait can cross Monday after preparation. End the account
+            # transaction before recovering the newly required week.
+            if kind != "summary" or error.code != "shop_preparing" or attempt:
+                raise
+
+
+def _read_once(session, settings, identity, *, kind="summary", limit=30, after=None):
+    from forest_api import shop
+
+    clock = session.info.get("clock") or (lambda: session.scalar(select(func.clock_timestamp())))
+    if kind == "summary":
+        with session.begin():
+            services.get_user(session, identity)
+        if not shop.ensure_current(session, clock):
+            raise ApiError(503, "shop_preparing", "Shop is recovering missed weeks. Please retry")
     with session.begin():
         user = services.get_user(session, identity, lock=True)
         wallet = wallet_for(session, user.id)
@@ -255,11 +274,15 @@ def read(session, settings, identity, *, kind="summary", limit=30, after=None):
                 )
             from forest_api import item_commerce, items, milestones
 
+            now = clock()
+            rotation = shop.current(session, user.id, now)
+
             return {
                 **wallet_dto(wallet),
                 "capacity": capacity(session, user.id, settings),
                 "offers": offers,
-                "itemOffers": item_commerce.offers(session),
+                "itemOffers": item_commerce.offers(session, user.id, now),
+                "shop": rotation,
                 "itemCapacity": items.capacity(session, user.id),
                 "milestones": milestones.summary(
                     session, user.id, services.get_catalogue_state(session, settings), wallet

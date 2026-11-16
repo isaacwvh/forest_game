@@ -51,6 +51,13 @@ struct APIOwnedPlant: Codable, Identifiable, Equatable {
     }
 }
 
+struct APIDailyItemWater: Codable, Equatable, Identifiable {
+    var id: String { gameDate }
+    let gameDate: String
+    let water: String
+    let plantCount: Int
+}
+
 struct APIGarden: Codable, Equatable {
     let gardenId: UUID
     let width: Decimal
@@ -64,6 +71,7 @@ struct APIGarden: Codable, Equatable {
     var totalAttractionMicroUnits: String? = nil
     var skillSummary: APISkillSummary? = nil
     var items: [APIOwnedItem]? = nil
+    var dailyWater: [APIDailyItemWater]? = nil
 
     func rendered(catalogue: APICatalogue, assets: any AssetCatalogProviding) throws -> GardenSnapshot {
         guard coordinateUnit == "garden_unit", catalogue.coordinateUnit == coordinateUnit,
@@ -230,7 +238,10 @@ struct APISkillSummary: Codable, Equatable {
         let operation: String
         let magnitude: String
         let stackingGroup: String
-        let sourcePlantId: UUID
+        var sourcePlantId: UUID? = nil
+        var sourceItemId: UUID? = nil
+        var sourceKind: String? = nil
+        var eligibleSourceItemIds: [UUID]? = nil
         let profileId: String
         let profileVersion: Int
         let eligibleSourcePlantIds: [UUID]
@@ -240,6 +251,7 @@ struct APISkillSummary: Codable, Equatable {
             case skillId = "id"
             case name, description, system, scope, metric, operation, magnitude, stackingGroup
             case sourcePlantId, profileId, profileVersion, eligibleSourcePlantIds, recipientPlantIds
+            case sourceItemId, sourceKind, eligibleSourceItemIds
         }
 
         var bonusText: String {
@@ -250,6 +262,8 @@ struct APISkillSummary: Codable, Equatable {
             case "water": destination = "water"
             case "activity": destination = (metric ?? "activity").replacingOccurrences(of: "_", with: " ")
             case "offline_capacity": destination = "storage"
+            case "welcome_duration": destination = "welcome time"
+            case "daily_water": destination = "daily water per plant"
             default: destination = "attraction"
             }
             return "+\(value) \(destination)"

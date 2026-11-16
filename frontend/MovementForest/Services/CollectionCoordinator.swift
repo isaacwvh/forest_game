@@ -28,6 +28,12 @@ final class CollectionCoordinator: ObservableObject {
     @Published private(set) var offers: [APIExchangeOffer] = []
     @Published private(set) var itemOffers: [APIItemShopOffer] = []
     @Published private(set) var itemCapacity: APIItemCapacity?
+    @Published private(set) var shop: APIShopRotation?
+    @Published private(set) var shopRemaining: TimeInterval?
+    private var shopCountdown: ShopCountdown?
+    private var shopRefreshNeeded = false
+    private var shopRetryAfter: TimeInterval = 0
+    private let uptime: () -> TimeInterval
     @Published private(set) var capacity: APIInventoryCapacity?
     private var levelPlantLimit: Int?
     func applyLevelPlantLimit(_ limit: Int) {
@@ -69,7 +75,9 @@ final class CollectionCoordinator: ObservableObject {
     var onPlantAwarded: (() async -> Void)?
 
     init(userID: UUID, service: any CollectionServing, journal: (any CollectionJournalPersisting)? = nil,
-         discovery: CatalogDiscoveryStore? = nil, initialCatalogue: APICatalogue? = nil) {
+         discovery: CatalogDiscoveryStore? = nil, initialCatalogue: APICatalogue? = nil,
+         uptime: @escaping () -> TimeInterval = { LifecycleClock.elapsed }) {
+        self.uptime = uptime
         self.userID = userID; self.service = service
         self.discovery = discovery ?? CatalogDiscoveryStore(userID: userID,
             service: UnavailableCatalogDiscoveryRepository(serverID: service.serverID))
@@ -206,8 +214,15 @@ final class CollectionCoordinator: ObservableObject {
         }
     }
     private func loadCurrent() async throws {
+        let sent = uptime()
         let summary = try await service.summary()
         guard attached else { return }
+        if let incoming = summary.shop {
+            if let existing = shop, incoming.startsAt < existing.startsAt { return }
+            shop = incoming
+            shopCountdown = ShopCountdown(rotation: incoming, sent: sent, received: uptime())
+            shopRemaining = shopCountdown?.remaining(at: uptime())
+        } else { shop = nil; shopCountdown = nil; shopRemaining = nil }
         applyWallet(summary.tokenBalance, version: summary.economyVersion, gems: summary.gemBalance)
         if summary.economyVersion == economyVersion { acceptCapacity(summary.capacity) }
         offers = summary.offers
@@ -344,10 +359,34 @@ final class CollectionCoordinator: ObservableObject {
     }
 
     func canBuyItem(_ offer: APIItemShopOffer, quantity: Int) -> Bool {
+        guard itemOfferCurrent(offer), quantity <= (offer.remainingAllowance ?? 20) else { return false }
         guard canMutate, (1...20).contains(quantity), quantity <= (itemCapacity?.room ?? 0),
               let cost = ExactAmount.integer(offer.tokenCost), cost > 0,
               let balance = tokenBalance.flatMap(ExactAmount.integer) else { return false }
         return balance >= cost * Decimal(quantity)
+    }
+
+    func itemOfferCurrent(_ offer: APIItemShopOffer) -> Bool {
+        guard attached, !refreshFailed else { return false }
+        if offer.endsAt == nil { return shop == nil }
+        return (shopCountdown?.remaining(at: uptime()) ?? 0) > 0 &&
+            offer.endsAt == shop?.endsAt && itemOffers.contains { $0.id == offer.id }
+    }
+
+    func requestShopRefresh() async {
+        shopRefreshNeeded = true
+        shopRetryAfter = 0
+        await tickShop()
+    }
+
+    func tickShop() async {
+        guard attached else { return }
+        shopRemaining = shopCountdown?.remaining(at: uptime())
+        if shopRemaining == 0 { shopRefreshNeeded = true }
+        guard shopRefreshNeeded, uptime() >= shopRetryAfter, !busy, !recoveryLocked else { return }
+        shopRefreshNeeded = false
+        await refresh()
+        if refreshFailed { shopRefreshNeeded = true; shopRetryAfter = uptime() + 15 }
     }
 
     func buyItem(_ offer: APIItemShopOffer, quantity: Int) async {

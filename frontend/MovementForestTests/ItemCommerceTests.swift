@@ -36,12 +36,18 @@ private final class ItemCommerceService: CollectionServing {
     var version: Int64
     var capacity: APIItemCapacity?
     var quoteOverride: APIItemSaleQuote?
+    var summaryOverride: APICollectionSummary?
+    var failSummary = false
+    var summaryCalls = 0
     init(_ fixture: ItemCommerceContract) {
         self.fixture = fixture; balance = fixture.summary.tokenBalance
         version = fixture.summary.economyVersion; capacity = fixture.summary.itemCapacity
     }
     func summary() async throws -> APICollectionSummary {
-        APICollectionSummary(tokenBalance: balance, economyVersion: version, offers: [],
+        summaryCalls += 1
+        if failSummary { throw URLError(.notConnectedToInternet) }
+        if let summary = summaryOverride { return summary }
+        return APICollectionSummary(tokenBalance: balance, economyVersion: version, offers: [],
             itemOffers: fixture.summary.itemOffers, itemCapacity: capacity)
     }
     func catalogue() async throws -> APICatalogue { fixture.catalogue }
@@ -138,5 +144,41 @@ final class ItemCommerceTests: XCTestCase {
             XCTFail("Rounded-up sale quote must not be accepted")
         } catch { }
         XCTAssertTrue(service.calls.isEmpty)
+    }
+
+    func testRotatingOfferExpiryAllowanceAndOfflineRefresh() async throws {
+        let fixture = try ItemCommerceContract.load(), service = ItemCommerceService(fixture)
+        var elapsed: TimeInterval = 100
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        var offer = try XCTUnwrap(fixture.summary.itemOffers?.first)
+        offer.startsAt = now; offer.endsAt = now.addingTimeInterval(10); offer.remainingAllowance = 1
+        let rotation = APIShopRotation(serverNow: now, shopTimezone: "UTC", rotationId: "first",
+            startsAt: now, endsAt: now.addingTimeInterval(10))
+        service.summaryOverride = APICollectionSummary(tokenBalance: service.balance, economyVersion: service.version,
+            offers: [], itemOffers: [offer], itemCapacity: service.capacity, shop: rotation)
+        let store = CollectionCoordinator(userID: UUID(), service: service, journal: ItemCommerceJournal(), uptime: { elapsed })
+        await store.refresh()
+        XCTAssertTrue(store.canBuyItem(offer, quantity: 1))
+        XCTAssertFalse(store.canBuyItem(offer, quantity: 2))
+        elapsed = 110
+        XCTAssertFalse(store.canBuyItem(offer, quantity: 1))
+        service.failSummary = true
+        await store.tickShop()
+        XCTAssertTrue(store.refreshFailed)
+        XCTAssertEqual(store.shopRemaining, 0)
+        let calls = service.summaryCalls
+        await store.tickShop()
+        XCTAssertEqual(service.summaryCalls, calls, "Offline retries should be bounded")
+        service.failSummary = false
+        var next = offer; next.endsAt = now.addingTimeInterval(20)
+        service.summaryOverride = APICollectionSummary(tokenBalance: service.balance, economyVersion: service.version,
+            offers: [], itemOffers: [next], itemCapacity: service.capacity,
+            shop: APIShopRotation(serverNow: now.addingTimeInterval(10), shopTimezone: "UTC", rotationId: "next",
+                startsAt: now.addingTimeInterval(10), endsAt: now.addingTimeInterval(20)))
+        await store.requestShopRefresh()
+        XCTAssertTrue(store.canBuyItem(next, quantity: 1))
+        XCTAssertFalse(store.canBuyItem(offer, quantity: 1))
+        store.deactivate()
+        XCTAssertFalse(store.canBuyItem(next, quantity: 1))
     }
 }

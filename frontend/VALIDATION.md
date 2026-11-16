@@ -1243,3 +1243,24 @@ Backend validation: 694 passed, three opt-in benchmark skips; final focused
 commerce suite 18 passed (counts are not additive), plus all four HTTP smoke
 walkthroughs. Docker image build remains unavailable because the engine returns
 HTTP 500. No personal game operation, push or remote CI run for this stage.
+
+## Fifteen-item catalogue and rotating shop — 17 November 2026
+
+Portable validation passes for all fifteen versioned item packages: 6 Common,
+5 Rare and 4 Epic; all model/icon bytes and SHA-256 values; transparent 384 x 448
+PNGs; USDZ archive/alignment checks; fifteen bundle entries; and five declared
+skeletal loops. Model/icon payload is 22,149,888 bytes. The generated Xcode project
+is current and all 101 Swift files parse without syntax errors.
+
+New native tests cover real-HTTP item source decoding and daily-water summaries,
+monotonic countdown/latency, expiry and purchase allowances, offline refresh/retry,
+all fifteen model imports and five playable loops. Existing recovery tests remain
+in place. These XCTest cases and Debug/Release/InternalRelease Apple SDK builds
+were not run on Windows. No native screenshots, device acceptance or measured
+frame-rate/memory result is claimed.
+
+The backend final complete suite passes 741 tests with three opt-in benchmark
+skips; the overlapping final feature suite passes 48 tests. All four existing
+real-HTTP smoke walkthroughs pass. See [native walkthrough](ROTATING_SHOP_ACCEPTANCE.md)
+and [backend release/activation](../backend/ITEM_ROTATIONS.md). No personal backend
+activation or remote CI run was performed.

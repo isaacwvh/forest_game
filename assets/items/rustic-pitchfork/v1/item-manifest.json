@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "rustic-pitchfork",
+  "displayName": "Rustic Pitchfork",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; not registered in the app",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "center-tine-contact-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.4
+  },
+  "dimensionsMetres": {
+    "width": 0.28,
+    "depth": 0.34,
+    "height": 1.38
+  },
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.14000000059604645,
+      -7.105427198782324e-17,
+      -0.319999992847443
+    ],
+    "max": [
+      0.14000000059604645,
+      1.3799999952316286,
+      0.019999999552965168
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": null,
+  "ui": {
+    "thumbnail": "ui/rustic-pitchfork-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 3,
+  "triangleCount": 6860,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "smooth honey wood with restrained broad grain, matte worn iron and tan cord grip; no bump"
+  },
+  "assets": [
+    {
+      "file": "models/rustic-pitchfork-standard.usdz",
+      "bytes": 371329,
+      "sha256": "6219d8a2ce7e90f4f35322488122e2c65c2ee99759f9d2654a570392ac6622db",
+      "thumbnail": "ui/rustic-pitchfork-standard.png"
+    },
+    {
+      "file": "ui/rustic-pitchfork-standard.png",
+      "bytes": 21532,
+      "sha256": "7c32beee922d3d22756e7cdb0eee5f8f632ab388d020418c633dcc0b31a7ead9"
+    }
+  ]
+}

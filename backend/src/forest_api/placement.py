@@ -65,6 +65,10 @@ def edit_garden(
         if previous is not None:
             return GardenEditResult.model_validate(previous)
         garden = services.lock_garden(session, user.id, write=True)
+        from forest_api.daily_items import settle_due
+
+        settlement_boundary = clock()
+        settle_due(session, settings, garden, settlement_boundary)
         catalogue = services.get_catalogue_state(session, settings, lock=True)
         from forest_api import items
         from forest_api.item_models import ItemPlacement
@@ -80,6 +84,14 @@ def edit_garden(
                 426, "items_client_update_required", "Update the app to edit garden items"
             )
         owned_items = {row[0].id: row for row in item_rows}
+        if not session.info.get("item_rotations_client") and any(
+            row[2].id != "wooden-bench"
+            for row in item_rows
+            if row[3] is not None or row[0].id in {a.item_id for a in body.item_actions}
+        ):
+            raise ApiError(
+                426, "item_content_update_required", "Update the app for the new garden items"
+            )
         final_items = initial_items.copy()
         for action in body.item_actions:
             if action.item_id not in owned_items:
@@ -232,7 +244,7 @@ def edit_garden(
         )
 
         # One post-lock server boundary for settlement and the returned skill summary.
-        boundary = clock()
+        boundary = max(settlement_boundary, clock())
         if final != initial or final_items != initial_items:
             if max(garden.layout_version, garden.state_version) >= 9223372036854775807:
                 raise ApiError(503, "version_exhausted", "Garden version requires maintenance")

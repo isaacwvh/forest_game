@@ -26,6 +26,17 @@ class PlantFacts:
     behaviour: BehaviourDefinition
 
 
+@dataclass(frozen=True)
+class ItemFacts:
+    id: str
+    item_id: str
+    definition_version: int
+    profile_id: str
+    profile_version: int
+    effects: tuple[SkillEffect, ...]
+    daily_grant: dict | None = None
+
+
 def matches(plant: PlantFacts, selector: PlantSelector | None) -> bool:
     return selector is None or (
         (not selector.species or plant.species in selector.species)
@@ -39,7 +50,7 @@ def matches(plant: PlantFacts, selector: PlantSelector | None) -> bool:
 class Candidate:
     effect: SkillEffect
     value: Fraction
-    source: PlantFacts
+    source: PlantFacts | ItemFacts
 
     @property
     def key(self):
@@ -60,26 +71,30 @@ class SkillSnapshot:
         *,
         flights=0,
         step_band=None,
+        items: tuple[ItemFacts, ...] = (),
     ):
         self.flights, self.step_band = flights, step_band
         self.plants = tuple(sorted(plants, key=lambda plant: plant.id))
+        self.items = tuple(sorted(items, key=lambda item: item.id))
         self.caps, self.policy_version = caps, policy_version
         self._selectors = {}
         self._resolved = {}
         self._band_snapshots = {}
         self.candidates = []
         magnitudes = {}
-        for plant in self.plants:
-            if plant.stage != "adult":
+        for plant in (*self.plants, *self.items):
+            if isinstance(plant, PlantFacts) and plant.stage != "adult":
                 continue
-            for effect in plant.behaviour.garden_effects:
+            for effect in (
+                plant.effects if isinstance(plant, ItemFacts) else plant.behaviour.garden_effects
+            ):
                 if effect.step_band and effect.step_band != step_band:
                     continue
                 if effect.condition and len(self.selected(effect.condition.selector)) < (
                     effect.condition.minimum
                 ):
                     continue
-                key = (plant.profile_id, plant.profile_version, effect.id)
+                key = (type(plant).__name__, plant.profile_id, plant.profile_version, effect.id)
                 if key not in magnitudes:
                     magnitude = effect.magnitude
                     value = exact(magnitude.value)
@@ -153,6 +168,7 @@ class SkillSnapshot:
                         self.policy_version,
                         flights=self.flights,
                         step_band=band,
+                        items=self.items,
                     )
                 snapshot = self._band_snapshots[band]
                 factors.append(snapshot.growth(plant, ["steps"])[0]["steps"])
@@ -197,6 +213,10 @@ class SkillSnapshot:
         )
         return int(min(value, maximum, base * (1 + exact(self.caps.capacity_bonus))))
 
+    def welcome_seconds(self, base):
+        # Version garden-items-v1: shared +25% duration ceiling, exact microseconds.
+        return Fraction(base) * (1 + min(self.total("welcome_duration"), Fraction(1, 4)))
+
     def context(self, plant, metrics):
         activity, water = self.growth(plant, metrics)
         return {
@@ -234,7 +254,11 @@ class SkillSnapshot:
         rows = []
         scopes = [("water", None), *(("activity", metric) for metric in sorted(metrics))]
         if recipient is None:
-            scopes = [("attraction_garden", None), ("offline_capacity", None)]
+            scopes = [
+                ("attraction_garden", None),
+                ("offline_capacity", None),
+                ("welcome_duration", None),
+            ]
         elif not metrics:
             scopes = [("attraction_plant", None), ("water", None)]
         for scope, metric in scopes:
@@ -253,10 +277,32 @@ class SkillSnapshot:
                             "operation": operation,
                             "magnitude": number(winner.value),
                             "stackingGroup": effect.stacking_group,
-                            "sourcePlantId": winner.source.id,
+                            **(
+                                {
+                                    "sourceItemId": winner.source.id,
+                                    "sourceItemDefinition": winner.source.item_id,
+                                    "sourceDefinitionVersion": winner.source.definition_version,
+                                    "eligibleSourceItemIds": sorted(
+                                        {
+                                            row.source.id
+                                            for row in eligible
+                                            if isinstance(row.source, ItemFacts)
+                                        }
+                                    ),
+                                    "sourceKind": "item",
+                                }
+                                if isinstance(winner.source, ItemFacts)
+                                else {"sourcePlantId": winner.source.id}
+                            ),
                             "profileId": winner.source.profile_id,
                             "profileVersion": winner.source.profile_version,
-                            "eligibleSourcePlantIds": sorted({row.source.id for row in eligible}),
+                            "eligibleSourcePlantIds": sorted(
+                                {
+                                    row.source.id
+                                    for row in eligible
+                                    if isinstance(row.source, PlantFacts)
+                                }
+                            ),
                         }
                     )
         return rows
@@ -297,6 +343,7 @@ class SkillSnapshot:
                             self.policy_version,
                             flights=self.flights,
                             step_band=band,
+                            items=self.items,
                         )
                     effects.extend(
                         row
@@ -328,6 +375,30 @@ class SkillSnapshot:
                     row["id"],
                 )
             ] = {**row, "recipientPlantIds": []}
+        daily_sources = [item for item in self.items if item.daily_grant]
+        if daily_sources:
+            source = daily_sources[0]
+            rows[("daily_water", "morning_rain")] = {
+                "id": "morning_rain",
+                "name": "Morning Rain",
+                "description": (
+                    "+2.5 water per eligible planted plant at account-local midnight. "
+                    "Duplicate harps apply once."
+                ),
+                "system": "growth",
+                "scope": "daily_water",
+                "metric": None,
+                "operation": "flat",
+                "magnitude": "2.5",
+                "stackingGroup": "item_morning_rain",
+                "sourceKind": "item",
+                "sourceItemId": source.id,
+                "profileId": source.profile_id,
+                "profileVersion": source.profile_version,
+                "eligibleSourcePlantIds": [],
+                "eligibleSourceItemIds": [s.id for s in daily_sources],
+                "recipientPlantIds": [p.id for p in self.plants],
+            }
         return {
             "policyVersion": self.policy_version,
             "caps": self.caps.model_dump(by_alias=True),

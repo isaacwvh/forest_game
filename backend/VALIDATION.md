@@ -861,3 +861,39 @@ New item sales and valuation records use existing durable-recovery classificatio
 purchase/sale API requests use existing seven-day compaction with permanent
 financial receipt recovery. See [ITEMS.md](ITEMS.md) for explicit publication.
 No Stage 6 scheduling or skills, push or remote CI run.
+
+## Fifteen items, saved rotations and eight skills — 17 November 2026
+
+Source head is `0020_item_rotations`. All database validation used randomly named
+`forest_test_*` databases in a dedicated PostgreSQL 17 cluster on loopback port
+55451. No personal game database, deployment, content publication or account was
+changed. No push or remote CI run was performed.
+
+- Final complete backend run: **741 passed, 3 skipped**, 703.32 seconds. The three
+  skips are the existing opt-in physical-storage workload benchmarks.
+- Final feature run: **48 passed**, 31.65 seconds. This includes two additional
+  UTC-publication/immutable-neutral-item checks added after full-suite collection.
+  The suites overlap; their counts are not additive.
+- Coverage includes seven-day allocation and overlap, distinct Common sampling,
+  small pools, saved publication, concurrent generation/purchases, expiry,
+  permanent allowances after sale/compaction, historical release inputs,
+  unattended preparation, downtime recovery, shared caps, workout/energy routing,
+  species counts, local midnights/DST, duplicate harps, maturity and placement
+  history, database rejection of unsupported profiles, and exact-boundary kite
+  expiry preservation.
+- Existing real-HTTP activity, skills, visitors and launch walkthroughs all pass,
+  including process restart, receipt recovery and accounting. These also use
+  disposable databases and do not export personal data.
+- Ruff lint and formatting, dependency consistency, Compose configuration,
+  generated frontend project, all 101 Swift syntax parses, fifteen-item resource
+  validation and the complete portable frontend validation pass.
+- The first full run exposed a concurrent FastAPI/Pydantic cold dependency-adapter
+  initialization race. App construction now serializes and eagerly materializes
+  adapters; concurrency checks and the final complete run pass without filtering
+  or suppressing warnings.
+
+The synthetic native fixture `item-rotations-contract.json` comes from the real
+HTTP feature test (opt-in export). Xcode builds/XCTest, RealityKit import/playback,
+iPhone appearance and physical-device performance remain unexecuted on Windows.
+See [implementation and explicit activation](ITEM_ROTATIONS.md) and
+[native acceptance](../frontend/ROTATING_SHOP_ACCEPTANCE.md).

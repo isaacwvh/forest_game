@@ -249,6 +249,9 @@ def sync(
         )
         boundary = clock()
         check_observation(body.observed_at, boundary)
+        from forest_api.daily_items import settle_due
+
+        settle_due(session, settings, garden, boundary)
         today = boundary.astimezone(ZoneInfo(user.game_timezone)).date()
         observed_day = body.observed_at.astimezone(ZoneInfo(user.game_timezone)).date()
         if device.baseline_observed_at and body.observed_at < device.baseline_observed_at:

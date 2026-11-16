@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "cloud-shepherds-kite",
+  "displayName": "Cloud Shepherd's Kite",
+  "rarity": "Rare",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; runtime registration and skills not activated",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "center-of-complete-plan-envelope-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.72
+  },
+  "dimensionsMetres": {
+    "width": 1.1,
+    "depth": 0.65,
+    "height": 1.45
+  },
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.550000011920929,
+      -2.6292390487014927e-09,
+      -0.3250000774860382
+    ],
+    "max": [
+      0.550000011920929,
+      1.4500000476837158,
+      0.32499998807907104
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": {
+    "name": "cloud_shepherd_gentle_breeze",
+    "durationSeconds": 6,
+    "fps": 30,
+    "frames": [
+      1,
+      181
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "rootMotion": false,
+    "representation": "skeletal",
+    "endpointPolicy": "Matching endpoint at frame 181 closes 180 frame intervals; repeat without holding the endpoint.",
+    "motion": "Gentle sail/cloud drift and tail flutter; skinned tethers maintain fixed reel and floating cloud links, with no root motion."
+  },
+  "ui": {
+    "thumbnail": "ui/cloud-shepherds-kite-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 6,
+  "triangleCount": 22264,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "Smooth matte surfaces; quiet broad color variation; no noise, bump or displacement."
+  },
+  "plannedSkill": null,
+  "assets": [
+    {
+      "file": "models/cloud-shepherds-kite-standard.usdz",
+      "bytes": 1278311,
+      "sha256": "85deb4249554cf8809ed4faeae22ed22baf9e1387fcb9e61b6767823bebab251",
+      "thumbnail": "ui/cloud-shepherds-kite-standard.png"
+    },
+    {
+      "file": "ui/cloud-shepherds-kite-standard.png",
+      "bytes": 59838,
+      "sha256": "4415f9577e904f25416d450604396a3d211e576dc2f28889a7d187b1fd5faf09"
+    }
+  ]
+}

@@ -64,6 +64,23 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  shop:
+    build: .
+    command: ["forest", "shop-worker"]
+    restart: unless-stopped
+    environment:
+      FOREST_ENVIRONMENT: local
+      FOREST_DATABASE_URL: postgresql+psycopg://forest:forest-local-only@db:5432/forest
+      FOREST_AUTH_MODE: development
+      FOREST_DEV_AUTH_SECRET: shop-worker-local-only-not-used-for-sign-in
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      db:
+        condition: service_healthy
   maintenance:
     build: .
     profiles: ["maintenance"]

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "snail-mailbox",
+  "displayName": "Snail Mailbox",
+  "rarity": "Rare",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; runtime registration and skills not activated",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "center-of-complete-plan-envelope-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.65
+  },
+  "dimensionsMetres": {
+    "width": 0.72,
+    "depth": 0.88,
+    "height": 1.35
+  },
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.36000001430511475,
+      0.0,
+      -0.4399999976158142
+    ],
+    "max": [
+      0.36000001430511475,
+      1.350000023841858,
+      0.4399999976158142
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": null,
+  "ui": {
+    "thumbnail": "ui/snail-mailbox-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 8,
+  "triangleCount": 17660,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "Smooth matte surfaces; quiet broad color variation; no noise, bump or displacement."
+  },
+  "plannedSkill": {
+    "id": "patient_post",
+    "name": "Patient Post",
+    "scope": "offline_capacity",
+    "bonus": 0.05,
+    "group": "item_patient_post",
+    "system": "visitors",
+    "target": "garden",
+    "operation": "percent",
+    "magnitude": "fixed",
+    "activation": "placed only",
+    "stackingRule": "strongest",
+    "status": "user-approved design; runtime integration pending",
+    "sharedDestinationCaps": true
+  },
+  "assets": [
+    {
+      "file": "models/snail-mailbox-standard.usdz",
+      "bytes": 906239,
+      "sha256": "6ec222ac1414456d494a7b49a2baf0fa34d38acfc38ba908f765b17d3d8063c9",
+      "thumbnail": "ui/snail-mailbox-standard.png"
+    },
+    {
+      "file": "ui/snail-mailbox-standard.png",
+      "bytes": 74986,
+      "sha256": "c266fc1518013d38e9d8336b51ae58675054cfd9426835ee97a9b6954a684803"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "beekeepers-skep",
+  "displayName": "Beekeeper's Skep",
+  "rarity": "Rare",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; runtime registration and skills not activated",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "center-of-complete-plan-envelope-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.65
+  },
+  "dimensionsMetres": {
+    "width": 0.9,
+    "depth": 0.8,
+    "height": 1.05
+  },
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.44999998807907104,
+      -1.9278548535339723e-08,
+      -0.40000003576278687
+    ],
+    "max": [
+      0.44999998807907104,
+      1.0499999523162842,
+      0.3999999761581421
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": {
+    "name": "honey_drip",
+    "durationSeconds": 4,
+    "fps": 30,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "rootMotion": false,
+    "representation": "skeletal",
+    "endpointPolicy": "Matching endpoint at frame 121 closes 120 frame intervals; repeat without holding the endpoint.",
+    "motion": "Two honey drops grow, stretch, fall and disappear into a small puddle."
+  },
+  "ui": {
+    "thumbnail": "ui/beekeepers-skep-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 8,
+  "triangleCount": 21162,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "Smooth matte surfaces; quiet broad color variation; no noise, bump or displacement."
+  },
+  "plannedSkill": {
+    "id": "pollinators_welcome",
+    "name": "Pollinator's Welcome",
+    "scope": "attraction_garden",
+    "bonus": 0.03,
+    "group": "item_pollinators_welcome",
+    "system": "visitors",
+    "target": "garden",
+    "operation": "percent",
+    "magnitude": "fixed",
+    "activation": "placed only",
+    "stackingRule": "strongest",
+    "status": "user-approved design; runtime integration pending",
+    "sharedDestinationCaps": true
+  },
+  "assets": [
+    {
+      "file": "models/beekeepers-skep-standard.usdz",
+      "bytes": 1092439,
+      "sha256": "bc0b8d42bc3f919ae020096aec5cc2663d1d8d374ad6ae53f39eba2e6fc612ee",
+      "thumbnail": "ui/beekeepers-skep-standard.png"
+    },
+    {
+      "file": "ui/beekeepers-skep-standard.png",
+      "bytes": 83129,
+      "sha256": "9c92bca63932b7ffb974c52fbd4ff2e696be997384a281a75365982d00ab6540"
+    }
+  ]
+}

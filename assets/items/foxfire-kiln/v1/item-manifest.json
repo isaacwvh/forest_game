@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "foxfire-kiln",
+  "displayName": "Foxfire Kiln",
+  "rarity": "Rare",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; runtime registration and skills not activated",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "center-of-complete-plan-envelope-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.75
+  },
+  "dimensionsMetres": {
+    "width": 1.08,
+    "depth": 0.88,
+    "height": 0.92
+  },
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.5400000214576721,
+      -2.568807744296464e-08,
+      -0.4399999976158142
+    ],
+    "max": [
+      0.5400000214576721,
+      0.9200000166893005,
+      0.4399999976158142
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": {
+    "name": "foxfire_flicker",
+    "durationSeconds": 4,
+    "fps": 30,
+    "frames": [
+      1,
+      121
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "rootMotion": false,
+    "representation": "skeletal",
+    "endpointPolicy": "Matching endpoint at frame 121 closes 120 frame intervals; repeat without holding the endpoint.",
+    "motion": "Three softly emissive green flame lobes pulse and shift; no animated material or embedded light is required."
+  },
+  "ui": {
+    "thumbnail": "ui/foxfire-kiln-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 5,
+  "triangleCount": 26004,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "Smooth matte surfaces; quiet broad color variation; no noise, bump or displacement."
+  },
+  "plannedSkill": null,
+  "assets": [
+    {
+      "file": "models/foxfire-kiln-standard.usdz",
+      "bytes": 1298719,
+      "sha256": "9533ff40f6a3ecc72866c7f7832bdd6810d250f697460f74ec8bef2ca9d04c3f",
+      "thumbnail": "ui/foxfire-kiln-standard.png"
+    },
+    {
+      "file": "ui/foxfire-kiln-standard.png",
+      "bytes": 71432,
+      "sha256": "d93b7df4d715edef18ab07ee399a7c87eae234ebb51fb52d8cfa6396bf987dac"
+    }
+  ]
+}

@@ -51,9 +51,9 @@ def generated_files():
     ui_sources = files("MovementForestUITests")
     resource_refs = []
     asset_ids = json.loads((ROOT / "MovementForest/Resources/Fixtures/asset-index.json").read_text())
-    for name, path in [(name, f"../assets/{name}") for name in asset_ids] + [
+    item_ids = sorted({p.split("/")[0] for p in json.loads((ROOT / "MovementForest/Resources/Fixtures/item-asset-index.json").read_text())})
+    for name, path in [(name, f"../assets/{name}") for name in asset_ids] + [(name, f"../assets/items/{name}") for name in item_ids] + [
                        ("packs", "../assets/packs"), ("butterfly", "../assets/butterfly"),
-                       ("wooden-bench", "../assets/items/wooden-bench"),
                        ("png-128", "../assets/quantity-icons-v1/png-128"),
                        ("journal", "../assets/journal"),
                        ("milestones", "../assets/milestones"),

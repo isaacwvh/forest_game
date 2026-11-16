@@ -1,9 +1,9 @@
-"""Token-only permanent item shop and copy resale. No scheduling or random stock."""
+"""Token-only saved offers, atomic allowances, copy valuations and durable resale."""
 
 from uuid import UUID, uuid4
 
 from pydantic import Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from forest_api import collection, items, services
 from forest_api.collection_models import CollectionEvent
@@ -17,6 +17,8 @@ from forest_api.item_models import (
     ItemValuation,
     ItemValueDefinition,
     OwnedItem,
+    ShopAllowance,
+    ShopOfferWindow,
 )
 from forest_api.schemas import DTO
 
@@ -37,9 +39,13 @@ class SellItem(DTO):
     expected_tokens: str = Field(pattern=r"^[0-9]{1,19}$")
 
 
-def offers(session):
+def offers(session, owner=None, now=None):
+    from forest_api import shop
+
+    now = now or session.scalar(select(func.clock_timestamp()))
+    rotating = shop.active_release(session, now) is not None
     result = []
-    for offer, definition in session.execute(
+    query = (
         select(ItemShopOffer, ItemDefinition)
         .join(
             ItemDefinition,
@@ -48,7 +54,25 @@ def offers(session):
         )
         .where(ItemShopOffer.active)
         .order_by(ItemShopOffer.id, ItemShopOffer.version)
-    ):
+    ).outerjoin(
+        ShopOfferWindow,
+        (ShopOfferWindow.offer_id == ItemShopOffer.id)
+        & (ShopOfferWindow.offer_version == ItemShopOffer.version),
+    )
+    query = (
+        query.where(ShopOfferWindow.starts_at <= now, ShopOfferWindow.ends_at > now)
+        if rotating
+        else query.where(ShopOfferWindow.offer_id.is_(None))
+    )
+    for offer, definition in session.execute(query):
+        window = session.get(ShopOfferWindow, (offer.id, offer.version))
+        usage = (
+            session.get(ShopAllowance, (owner, offer.id, offer.version))
+            if owner and window and window.purchase_limit
+            else None
+        )
+        from forest_api.item_skills import descriptions
+
         result.append(
             {
                 "offerId": offer.id,
@@ -62,6 +86,21 @@ def offers(session):
                 "assetVersion": definition.asset_version,
                 "modelKey": definition.model_key,
                 "thumbnailKey": definition.thumbnail_key,
+                "gardenSkills": descriptions(session, definition),
+                **(
+                    {
+                        "startsAt": window.starts_at.isoformat(),
+                        "endsAt": window.ends_at.isoformat(),
+                        "slot": window.slot,
+                        "remainingAllowance": max(
+                            0, window.purchase_limit - (usage.purchased if usage else 0)
+                        )
+                        if window.purchase_limit
+                        else None,
+                    }
+                    if window
+                    else {}
+                ),
             }
         )
     return result
@@ -117,6 +156,10 @@ def purchase(session, settings, identity, body, clock):
         offer = session.get(ItemShopOffer, (body.offer_id, body.offer_version))
         if offer is None or not offer.active:
             raise ApiError(409, "stale_offer", "Refresh Shop to see the current offer")
+        from forest_api import shop
+
+        boundary = clock()
+        window = shop.validate_purchase(session, user.id, offer, body.quantity, boundary)
         room = items.capacity(session, user.id)
         if room["ownedItems"] + body.quantity > room["itemLimit"]:
             raise ApiError(
@@ -126,7 +169,6 @@ def purchase(session, settings, identity, body, clock):
         wallet = collection.wallet_for(session, user.id)
         if wallet.tokens < cost:
             raise ApiError(409, "insufficient_tokens", "You need more tokens for this item")
-        boundary = clock()
         from forest_api.visitors import throttle
 
         throttle(session, user.id, boundary)
@@ -142,6 +184,7 @@ def purchase(session, settings, identity, body, clock):
             token_value=offer.token_cost,
         )
         wallet.tokens -= cost
+        shop.consume(session, user.id, window, body.quantity)
         wallet.economy_version = collection.checked(wallet.economy_version + 1)
         receipt = {
             "requestId": str(body.request_id),
@@ -152,6 +195,7 @@ def purchase(session, settings, identity, body, clock):
             "tokensSpent": str(cost),
             "ownedItemIds": [str(v) for v in ids],
             "itemCapacity": items.capacity(session, user.id),
+            "acceptedAt": boundary.isoformat(),
             **collection.wallet_dto(wallet),
         }
         session.add(

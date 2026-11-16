@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "mycelium-exchange",
+  "displayName": "Mycelium Exchange",
+  "rarity": "Epic",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; runtime registration and skills not activated",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "center-of-complete-plan-envelope-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.75
+  },
+  "dimensionsMetres": {
+    "width": 1.12,
+    "depth": 0.72,
+    "height": 1.2
+  },
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.5600000023841858,
+      -1.9034217757507577e-08,
+      -0.36000001430511475
+    ],
+    "max": [
+      0.5600000023841858,
+      1.2000000476837158,
+      0.35999998450279236
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": {
+    "name": "mycelium_signal_pulses",
+    "durationSeconds": 6,
+    "fps": 30,
+    "frames": [
+      1,
+      181
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "rootMotion": false,
+    "representation": "skeletal",
+    "endpointPolicy": "Matching endpoint at frame 181 closes 180 frame intervals; repeat without holding the endpoint.",
+    "motion": "Seeded irregular emissive pulse triplets travel along six mycelial threads with quiet gaps; the six-second sequence repeats."
+  },
+  "ui": {
+    "thumbnail": "ui/mycelium-exchange-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 9,
+  "triangleCount": 37990,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "Smooth matte surfaces; quiet broad color variation; no noise, bump or displacement."
+  },
+  "plannedSkill": null,
+  "assets": [
+    {
+      "file": "models/mycelium-exchange-standard.usdz",
+      "bytes": 1956040,
+      "sha256": "1e3f571399c8263ffd2f6cfa38d20fc37f756edb796066dacd7b48e8802ec7c2",
+      "thumbnail": "ui/mycelium-exchange-standard.png"
+    },
+    {
+      "file": "ui/mycelium-exchange-standard.png",
+      "bytes": 114526,
+      "sha256": "1053641ac079e60d07e6a72e35223d89722a40399052054b8a475170a6c4038c"
+    }
+  ]
+}

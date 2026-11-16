@@ -1,0 +1,1916 @@
+{
+  "summary": {
+    "tokenBalance": "100000",
+    "gemBalance": "0",
+    "economyVersion": 0,
+    "capacity": {
+      "ownedPlants": 1,
+      "plantedPlants": 0,
+      "storedPlants": 1,
+      "plantLimit": 50,
+      "plantedLimit": 50,
+      "unopenedPacks": 0,
+      "packLimit": 50
+    },
+    "offers": [],
+    "itemOffers": [
+      {
+        "offerId": "garden/2030-01-07/common_1",
+        "offerVersion": 1,
+        "tokenCost": "550",
+        "itemId": "stone-birdbath",
+        "definitionVersion": 1,
+        "displayName": "Stone Birdbath",
+        "description": "A smooth warm-grey stone birdbath with still jade water and one carved woodland bird. Static and cosmetic; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/stone-birdbath/v1/models/stone-birdbath-standard.usdz",
+        "thumbnailKey": "assets/items/stone-birdbath/v1/ui/stone-birdbath-standard.png",
+        "gardenSkills": [],
+        "startsAt": "2030-01-07T08:00:00+08:00",
+        "endsAt": "2030-01-08T08:00:00+08:00",
+        "slot": "common_1",
+        "remainingAllowance": null
+      },
+      {
+        "offerId": "garden/2030-01-07/common_2",
+        "offerVersion": 1,
+        "tokenCost": "550",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+        "gardenSkills": [],
+        "startsAt": "2030-01-07T08:00:00+08:00",
+        "endsAt": "2030-01-08T08:00:00+08:00",
+        "slot": "common_2",
+        "remainingAllowance": null
+      },
+      {
+        "offerId": "garden/2030-01-07/common_3",
+        "offerVersion": 1,
+        "tokenCost": "650",
+        "itemId": "iron-lamppost",
+        "definitionVersion": 1,
+        "displayName": "Iron Lamppost",
+        "description": "A curved charcoal-iron lamppost with softly glowing amber panes. Static, cosmetic decoration; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/iron-lamppost/v1/models/iron-lamppost-standard.usdz",
+        "thumbnailKey": "assets/items/iron-lamppost/v1/ui/iron-lamppost-standard.png",
+        "gardenSkills": [],
+        "startsAt": "2030-01-07T08:00:00+08:00",
+        "endsAt": "2030-01-08T08:00:00+08:00",
+        "slot": "common_3",
+        "remainingAllowance": null
+      },
+      {
+        "offerId": "garden/2030-01-07/rare",
+        "offerVersion": 1,
+        "tokenCost": "1150",
+        "itemId": "patchwork-picnic",
+        "definitionVersion": 1,
+        "displayName": "Patchwork Picnic",
+        "description": "A faded blanket, a well-loved basket, and two mugs waiting for their owners. A little rest leaves room for another adventure.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/patchwork-picnic/v1/models/patchwork-picnic-standard.usdz",
+        "thumbnailKey": "assets/items/patchwork-picnic/v1/ui/patchwork-picnic-standard.png",
+        "gardenSkills": [
+          {
+            "id": "second_wind",
+            "name": "Second Wind",
+            "description": "+5% water from active energy while placed."
+          }
+        ],
+        "startsAt": "2030-01-07T08:00:00+08:00",
+        "endsAt": "2030-01-08T08:00:00+08:00",
+        "slot": "rare",
+        "remainingAllowance": 1
+      }
+    ],
+    "shop": {
+      "serverNow": "2030-01-07T12:00:00+00:00",
+      "shopTimezone": "UTC",
+      "rotationId": "2030-01-07",
+      "startsAt": "2030-01-07T08:00:00+08:00",
+      "endsAt": "2030-01-08T08:00:00+08:00"
+    },
+    "itemCapacity": {
+      "ownedItems": 0,
+      "placedItems": 0,
+      "storedItems": 0,
+      "itemLimit": 50
+    },
+    "milestones": []
+  },
+  "inventory": {
+    "items": [
+      {
+        "ownedItemId": "0a18ff8d-ad81-4166-9293-f1c0c9d1e1db",
+        "itemId": "crooked-trail-sign",
+        "definitionVersion": 1,
+        "displayName": "Crooked Trail Sign",
+        "description": "A crooked wooden sign with Home, Somewhere and a scratched-out third direction. Static cosmetic item. No skill.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/crooked-trail-sign/v1/models/crooked-trail-sign-standard.usdz",
+        "thumbnailKey": "assets/items/crooked-trail-sign/v1/ui/crooked-trail-sign-standard.png",
+        "clearanceRadius": 0.55,
+        "placement": null,
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "4ba9103c-5623-476f-89c7-86c844c6f59e",
+        "itemId": "celestial-gnome",
+        "definitionVersion": 1,
+        "displayName": "Celestial Gnome",
+        "description": "A midnight-blue garden gnome etched with stars and nebulae. Celestial Welcome gives +4.5% garden attraction while placed.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/celestial-gnome/v1/models/celestial-gnome-standard.usdz",
+        "thumbnailKey": "assets/items/celestial-gnome/v1/ui/celestial-gnome-standard.png",
+        "clearanceRadius": 0.37,
+        "placement": null,
+        "gardenSkills": [
+          {
+            "id": "celestial_welcome",
+            "name": "Celestial Welcome",
+            "description": "+4.5% garden attraction while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "5516dab0-e389-40a8-bb0d-27a52c105cfc",
+        "itemId": "snail-mailbox",
+        "definitionVersion": 1,
+        "displayName": "Snail Mailbox",
+        "description": "A shell-roof woodland mailbox with leaf letters and a waiting parcel. +5% offline visitor storage capacity while placed.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/snail-mailbox/v1/models/snail-mailbox-standard.usdz",
+        "thumbnailKey": "assets/items/snail-mailbox/v1/ui/snail-mailbox-standard.png",
+        "clearanceRadius": 0.65,
+        "placement": null,
+        "gardenSkills": [
+          {
+            "id": "patient_post",
+            "name": "Patient Post",
+            "description": "+5% offline visitor storage capacity while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "5b9f72a8-d9c6-453b-a043-685e77e48ac8",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+        "clearanceRadius": 0.9,
+        "placement": null,
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "730bcba6-451d-48e3-bec9-939fc7e45577",
+        "itemId": "iron-lamppost",
+        "definitionVersion": 1,
+        "displayName": "Iron Lamppost",
+        "description": "A curved charcoal-iron lamppost with softly glowing amber panes. Static, cosmetic decoration; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/iron-lamppost/v1/models/iron-lamppost-standard.usdz",
+        "thumbnailKey": "assets/items/iron-lamppost/v1/ui/iron-lamppost-standard.png",
+        "clearanceRadius": 0.8,
+        "placement": null,
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "7ab484c8-9077-43f4-9a5a-18c293dd2e87",
+        "itemId": "patchwork-picnic",
+        "definitionVersion": 1,
+        "displayName": "Patchwork Picnic",
+        "description": "A faded blanket, a well-loved basket, and two mugs waiting for their owners. A little rest leaves room for another adventure.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/patchwork-picnic/v1/models/patchwork-picnic-standard.usdz",
+        "thumbnailKey": "assets/items/patchwork-picnic/v1/ui/patchwork-picnic-standard.png",
+        "clearanceRadius": 1.02,
+        "placement": null,
+        "gardenSkills": [
+          {
+            "id": "second_wind",
+            "name": "Second Wind",
+            "description": "+5% water from active energy while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "8e297bc6-b8d9-47dc-ba19-8a216aabaaba",
+        "itemId": "cloud-shepherds-kite",
+        "definitionVersion": 1,
+        "displayName": "Cloud Shepherd's Kite",
+        "description": "A reel-tethered kite holds a tiny floating cloud. Gentle six-second wind loop. Gentle Hold extends butterfly welcome time by 20% while placed.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/cloud-shepherds-kite/v1/models/cloud-shepherds-kite-standard.usdz",
+        "thumbnailKey": "assets/items/cloud-shepherds-kite/v1/ui/cloud-shepherds-kite-standard.png",
+        "clearanceRadius": 0.72,
+        "placement": null,
+        "gardenSkills": [
+          {
+            "id": "gentle_hold",
+            "name": "Gentle Hold",
+            "description": "+20% butterfly welcome time while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "96c3ee31-9b70-4c12-a36c-8d38ec339ab2",
+        "itemId": "sleepy-scarecrow",
+        "definitionVersion": 1,
+        "displayName": "Sleepy Scarecrow",
+        "description": "A slumped scarecrow beneath an oversized straw hat, with one bird nesting in its pocket. Static cosmetic item. No skill.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/sleepy-scarecrow/v1/models/sleepy-scarecrow-standard.usdz",
+        "thumbnailKey": "assets/items/sleepy-scarecrow/v1/ui/sleepy-scarecrow-standard.png",
+        "clearanceRadius": 0.55,
+        "placement": null,
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "993cef6c-3fb7-47b6-82c3-ff6acb869e11",
+        "itemId": "stone-birdbath",
+        "definitionVersion": 1,
+        "displayName": "Stone Birdbath",
+        "description": "A smooth warm-grey stone birdbath with still jade water and one carved woodland bird. Static and cosmetic; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/stone-birdbath/v1/models/stone-birdbath-standard.usdz",
+        "thumbnailKey": "assets/items/stone-birdbath/v1/ui/stone-birdbath-standard.png",
+        "clearanceRadius": 0.5,
+        "placement": null,
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "b3a32e06-bbd9-4c15-b1dd-1fd66532e1e4",
+        "itemId": "rainharp",
+        "definitionVersion": 1,
+        "displayName": "Rainharp",
+        "description": "A curved wooden harp with seven sky-reflecting droplets. Morning Rain gives each planted plant +2.5 water at the start of each game day.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/rainharp/v1/models/rainharp-standard.usdz",
+        "thumbnailKey": "assets/items/rainharp/v1/ui/rainharp-standard.png",
+        "clearanceRadius": 0.57,
+        "placement": null,
+        "gardenSkills": [
+          {
+            "id": "morning_rain",
+            "name": "Morning Rain",
+            "description": "+2.5 water per planted plant at account-local midnight. Rainharp and plant must be placed at reset. Duplicate harps apply once."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+        "itemId": "mycelium-exchange",
+        "definitionVersion": 1,
+        "displayName": "Mycelium Exchange",
+        "description": "A fungal switchboard with seed-husk receivers and traveling light pulses. Sporeline Surge gives all planted plants +4% water from workouts while placed.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/mycelium-exchange/v1/models/mycelium-exchange-standard.usdz",
+        "thumbnailKey": "assets/items/mycelium-exchange/v1/ui/mycelium-exchange-standard.png",
+        "clearanceRadius": 0.75,
+        "placement": null,
+        "gardenSkills": [
+          {
+            "id": "sporeline_surge",
+            "name": "Sporeline Surge",
+            "description": "+4% water from supported workouts while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "df33bf2a-911c-415d-b7aa-916d058eaef7",
+        "itemId": "beekeepers-skep",
+        "definitionVersion": 1,
+        "displayName": "Beekeeper's Skep",
+        "description": "A rounded straw hive on a wooden stand, with a honey pot and drinking saucer. +3% garden attraction while placed. Gentle honey drip.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/beekeepers-skep/v1/models/beekeepers-skep-standard.usdz",
+        "thumbnailKey": "assets/items/beekeepers-skep/v1/ui/beekeepers-skep-standard.png",
+        "clearanceRadius": 0.65,
+        "placement": null,
+        "gardenSkills": [
+          {
+            "id": "pollinators_welcome",
+            "name": "Pollinator's Welcome",
+            "description": "+3% garden attraction while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "eea2e652-cb2d-45d5-88eb-d5bf01beeb5e",
+        "itemId": "rustic-pitchfork",
+        "definitionVersion": 1,
+        "displayName": "Rustic Pitchfork",
+        "description": "A three-tined iron pitchfork with a honey-wood handle and tan wrapped grip. Static and cosmetic; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/rustic-pitchfork/v1/models/rustic-pitchfork-standard.usdz",
+        "thumbnailKey": "assets/items/rustic-pitchfork/v1/ui/rustic-pitchfork-standard.png",
+        "clearanceRadius": 0.4,
+        "placement": null,
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "f262a3c7-2e56-49fc-bfdd-89f2bd1948b9",
+        "itemId": "foxfire-kiln",
+        "definitionVersion": 1,
+        "displayName": "Foxfire Kiln",
+        "description": "A warm clay kiln with flickering green foxfire and three unfinished acorn cups on its drying shelf. Cosmetic; no gameplay skill.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/foxfire-kiln/v1/models/foxfire-kiln-standard.usdz",
+        "thumbnailKey": "assets/items/foxfire-kiln/v1/ui/foxfire-kiln-standard.png",
+        "clearanceRadius": 0.75,
+        "placement": null,
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "f3607c8b-5b83-4691-8b95-dea28fc7f5ef",
+        "itemId": "hollow-log-library",
+        "definitionVersion": 1,
+        "displayName": "Hollow-Log Library",
+        "description": "A hollow-log lending library with bark-bound books and a full-moon return sign. Borrowed Wisdom gives +1% activity water per distinct planted species, capped at +5%.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/hollow-log-library/v1/models/hollow-log-library-standard.usdz",
+        "thumbnailKey": "assets/items/hollow-log-library/v1/ui/hollow-log-library-standard.png",
+        "clearanceRadius": 0.95,
+        "placement": null,
+        "gardenSkills": [
+          {
+            "id": "borrowed_wisdom",
+            "name": "Borrowed Wisdom",
+            "description": "+1% activity water per distinct planted species, up to +5%."
+          }
+        ]
+      }
+    ],
+    "capacity": {
+      "ownedItems": 15,
+      "placedItems": 0,
+      "storedItems": 15,
+      "itemLimit": 50
+    },
+    "nextCursor": null
+  },
+  "garden": {
+    "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+    "width": 10.0,
+    "depth": 10.0,
+    "visibility": "friends",
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "catalogVersion": "development-oak-v1",
+    "layoutVersion": 1,
+    "stateVersion": 16,
+    "plants": [
+      {
+        "plantId": "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590",
+        "speciesId": "oak",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "0",
+        "growthStage": "sprout",
+        "baseAttractionMicroUnits": "2000000",
+        "clearanceRadius": 0.9,
+        "contributesAttraction": true,
+        "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+        "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 8.8,
+          "y": 8.8,
+          "rotationDegrees": 0.0
+        },
+        "growthProgress": {
+          "stageStartMicroUnits": "0",
+          "nextStageMicroUnits": "100000000",
+          "maximumGrowthMicroUnits": "1000000000"
+        },
+        "gardenSkills": [],
+        "metricMultipliers": {
+          "steps": 1.0
+        },
+        "gameplayTags": [
+          "tree",
+          "woodland"
+        ]
+      }
+    ],
+    "items": [
+      {
+        "ownedItemId": "0a18ff8d-ad81-4166-9293-f1c0c9d1e1db",
+        "itemId": "crooked-trail-sign",
+        "definitionVersion": 1,
+        "displayName": "Crooked Trail Sign",
+        "description": "A crooked wooden sign with Home, Somewhere and a scratched-out third direction. Static cosmetic item. No skill.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/crooked-trail-sign/v1/models/crooked-trail-sign-standard.usdz",
+        "thumbnailKey": "assets/items/crooked-trail-sign/v1/ui/crooked-trail-sign-standard.png",
+        "clearanceRadius": 0.55,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 5.5,
+          "y": 5.5,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "4ba9103c-5623-476f-89c7-86c844c6f59e",
+        "itemId": "celestial-gnome",
+        "definitionVersion": 1,
+        "displayName": "Celestial Gnome",
+        "description": "A midnight-blue garden gnome etched with stars and nebulae. Celestial Welcome gives +4.5% garden attraction while placed.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/celestial-gnome/v1/models/celestial-gnome-standard.usdz",
+        "thumbnailKey": "assets/items/celestial-gnome/v1/ui/celestial-gnome-standard.png",
+        "clearanceRadius": 0.37,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 1.1,
+          "y": 5.5,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "celestial_welcome",
+            "name": "Celestial Welcome",
+            "description": "+4.5% garden attraction while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "5516dab0-e389-40a8-bb0d-27a52c105cfc",
+        "itemId": "snail-mailbox",
+        "definitionVersion": 1,
+        "displayName": "Snail Mailbox",
+        "description": "A shell-roof woodland mailbox with leaf letters and a waiting parcel. +5% offline visitor storage capacity while placed.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/snail-mailbox/v1/models/snail-mailbox-standard.usdz",
+        "thumbnailKey": "assets/items/snail-mailbox/v1/ui/snail-mailbox-standard.png",
+        "clearanceRadius": 0.65,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 1.1,
+          "y": 3.3,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "patient_post",
+            "name": "Patient Post",
+            "description": "+5% offline visitor storage capacity while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "5b9f72a8-d9c6-453b-a043-685e77e48ac8",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+        "clearanceRadius": 0.9,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 1.1,
+          "y": 1.1,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "730bcba6-451d-48e3-bec9-939fc7e45577",
+        "itemId": "iron-lamppost",
+        "definitionVersion": 1,
+        "displayName": "Iron Lamppost",
+        "description": "A curved charcoal-iron lamppost with softly glowing amber panes. Static, cosmetic decoration; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/iron-lamppost/v1/models/iron-lamppost-standard.usdz",
+        "thumbnailKey": "assets/items/iron-lamppost/v1/ui/iron-lamppost-standard.png",
+        "clearanceRadius": 0.8,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 3.3,
+          "y": 1.1,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "7ab484c8-9077-43f4-9a5a-18c293dd2e87",
+        "itemId": "patchwork-picnic",
+        "definitionVersion": 1,
+        "displayName": "Patchwork Picnic",
+        "description": "A faded blanket, a well-loved basket, and two mugs waiting for their owners. A little rest leaves room for another adventure.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/patchwork-picnic/v1/models/patchwork-picnic-standard.usdz",
+        "thumbnailKey": "assets/items/patchwork-picnic/v1/ui/patchwork-picnic-standard.png",
+        "clearanceRadius": 1.02,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 5.5,
+          "y": 7.7,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "second_wind",
+            "name": "Second Wind",
+            "description": "+5% water from active energy while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "8e297bc6-b8d9-47dc-ba19-8a216aabaaba",
+        "itemId": "cloud-shepherds-kite",
+        "definitionVersion": 1,
+        "displayName": "Cloud Shepherd's Kite",
+        "description": "A reel-tethered kite holds a tiny floating cloud. Gentle six-second wind loop. Gentle Hold extends butterfly welcome time by 20% while placed.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/cloud-shepherds-kite/v1/models/cloud-shepherds-kite-standard.usdz",
+        "thumbnailKey": "assets/items/cloud-shepherds-kite/v1/ui/cloud-shepherds-kite-standard.png",
+        "clearanceRadius": 0.72,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 1.1,
+          "y": 7.7,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "gentle_hold",
+            "name": "Gentle Hold",
+            "description": "+20% butterfly welcome time while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "96c3ee31-9b70-4c12-a36c-8d38ec339ab2",
+        "itemId": "sleepy-scarecrow",
+        "definitionVersion": 1,
+        "displayName": "Sleepy Scarecrow",
+        "description": "A slumped scarecrow beneath an oversized straw hat, with one bird nesting in its pocket. Static cosmetic item. No skill.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/sleepy-scarecrow/v1/models/sleepy-scarecrow-standard.usdz",
+        "thumbnailKey": "assets/items/sleepy-scarecrow/v1/ui/sleepy-scarecrow-standard.png",
+        "clearanceRadius": 0.55,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 7.7,
+          "y": 5.5,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "993cef6c-3fb7-47b6-82c3-ff6acb869e11",
+        "itemId": "stone-birdbath",
+        "definitionVersion": 1,
+        "displayName": "Stone Birdbath",
+        "description": "A smooth warm-grey stone birdbath with still jade water and one carved woodland bird. Static and cosmetic; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/stone-birdbath/v1/models/stone-birdbath-standard.usdz",
+        "thumbnailKey": "assets/items/stone-birdbath/v1/ui/stone-birdbath-standard.png",
+        "clearanceRadius": 0.5,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 5.5,
+          "y": 1.1,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "b3a32e06-bbd9-4c15-b1dd-1fd66532e1e4",
+        "itemId": "rainharp",
+        "definitionVersion": 1,
+        "displayName": "Rainharp",
+        "description": "A curved wooden harp with seven sky-reflecting droplets. Morning Rain gives each planted plant +2.5 water at the start of each game day.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/rainharp/v1/models/rainharp-standard.usdz",
+        "thumbnailKey": "assets/items/rainharp/v1/ui/rainharp-standard.png",
+        "clearanceRadius": 0.57,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 7.7,
+          "y": 3.3,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "morning_rain",
+            "name": "Morning Rain",
+            "description": "+2.5 water per planted plant at account-local midnight. Rainharp and plant must be placed at reset. Duplicate harps apply once."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+        "itemId": "mycelium-exchange",
+        "definitionVersion": 1,
+        "displayName": "Mycelium Exchange",
+        "description": "A fungal switchboard with seed-husk receivers and traveling light pulses. Sporeline Surge gives all planted plants +4% water from workouts while placed.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/mycelium-exchange/v1/models/mycelium-exchange-standard.usdz",
+        "thumbnailKey": "assets/items/mycelium-exchange/v1/ui/mycelium-exchange-standard.png",
+        "clearanceRadius": 0.75,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 3.3,
+          "y": 5.5,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "sporeline_surge",
+            "name": "Sporeline Surge",
+            "description": "+4% water from supported workouts while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "df33bf2a-911c-415d-b7aa-916d058eaef7",
+        "itemId": "beekeepers-skep",
+        "definitionVersion": 1,
+        "displayName": "Beekeeper's Skep",
+        "description": "A rounded straw hive on a wooden stand, with a honey pot and drinking saucer. +3% garden attraction while placed. Gentle honey drip.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/beekeepers-skep/v1/models/beekeepers-skep-standard.usdz",
+        "thumbnailKey": "assets/items/beekeepers-skep/v1/ui/beekeepers-skep-standard.png",
+        "clearanceRadius": 0.65,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 3.3,
+          "y": 3.3,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "pollinators_welcome",
+            "name": "Pollinator's Welcome",
+            "description": "+3% garden attraction while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "eea2e652-cb2d-45d5-88eb-d5bf01beeb5e",
+        "itemId": "rustic-pitchfork",
+        "definitionVersion": 1,
+        "displayName": "Rustic Pitchfork",
+        "description": "A three-tined iron pitchfork with a honey-wood handle and tan wrapped grip. Static and cosmetic; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/rustic-pitchfork/v1/models/rustic-pitchfork-standard.usdz",
+        "thumbnailKey": "assets/items/rustic-pitchfork/v1/ui/rustic-pitchfork-standard.png",
+        "clearanceRadius": 0.4,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 7.7,
+          "y": 1.1,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "f262a3c7-2e56-49fc-bfdd-89f2bd1948b9",
+        "itemId": "foxfire-kiln",
+        "definitionVersion": 1,
+        "displayName": "Foxfire Kiln",
+        "description": "A warm clay kiln with flickering green foxfire and three unfinished acorn cups on its drying shelf. Cosmetic; no gameplay skill.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/foxfire-kiln/v1/models/foxfire-kiln-standard.usdz",
+        "thumbnailKey": "assets/items/foxfire-kiln/v1/ui/foxfire-kiln-standard.png",
+        "clearanceRadius": 0.75,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 5.5,
+          "y": 3.3,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "f3607c8b-5b83-4691-8b95-dea28fc7f5ef",
+        "itemId": "hollow-log-library",
+        "definitionVersion": 1,
+        "displayName": "Hollow-Log Library",
+        "description": "A hollow-log lending library with bark-bound books and a full-moon return sign. Borrowed Wisdom gives +1% activity water per distinct planted species, capped at +5%.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/hollow-log-library/v1/models/hollow-log-library-standard.usdz",
+        "thumbnailKey": "assets/items/hollow-log-library/v1/ui/hollow-log-library-standard.png",
+        "clearanceRadius": 0.95,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 3.3,
+          "y": 7.7,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "borrowed_wisdom",
+            "name": "Borrowed Wisdom",
+            "description": "+1% activity water per distinct planted species, up to +5%."
+          }
+        ]
+      }
+    ],
+    "totalAttractionMicroUnits": "2150000",
+    "skillSummary": {
+      "policyVersion": "b8-caps-v1",
+      "caps": {
+        "schemaVersion": 1,
+        "activityBonus": "1.5",
+        "waterBonus": "1.5",
+        "plantAttractionBonus": "0.5",
+        "gardenAttractionBonus": "0.5",
+        "totalAttractionBonus": "1",
+        "flatAttractionPoints": "10",
+        "flatAttractionBaseFraction": "0.25",
+        "capacityBonus": "2",
+        "flatCapacity": 10
+      },
+      "activeSkills": [
+        {
+          "id": "borrowed_wisdom",
+          "name": "Borrowed Wisdom",
+          "description": "+1% activity water per distinct planted species, up to +5%.",
+          "system": "growth",
+          "scope": "water",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.01",
+          "stackingGroup": "item_borrowed_wisdom",
+          "sourceItemId": "f3607c8b-5b83-4691-8b95-dea28fc7f5ef",
+          "sourceItemDefinition": "hollow-log-library",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "f3607c8b-5b83-4691-8b95-dea28fc7f5ef"
+          ],
+          "sourceKind": "item",
+          "profileId": "borrowed_wisdom",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "celestial_welcome",
+          "name": "Celestial Welcome",
+          "description": "+4.5% garden attraction while placed.",
+          "system": "visitors",
+          "scope": "attraction_garden",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.045",
+          "stackingGroup": "item_celestial_welcome",
+          "sourceItemId": "4ba9103c-5623-476f-89c7-86c844c6f59e",
+          "sourceItemDefinition": "celestial-gnome",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "4ba9103c-5623-476f-89c7-86c844c6f59e"
+          ],
+          "sourceKind": "item",
+          "profileId": "celestial_welcome",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": []
+        },
+        {
+          "id": "gentle_hold",
+          "name": "Gentle Hold",
+          "description": "+20% butterfly welcome time while placed.",
+          "system": "visitors",
+          "scope": "welcome_duration",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.2",
+          "stackingGroup": "butterfly_welcome_window",
+          "sourceItemId": "8e297bc6-b8d9-47dc-ba19-8a216aabaaba",
+          "sourceItemDefinition": "cloud-shepherds-kite",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "8e297bc6-b8d9-47dc-ba19-8a216aabaaba"
+          ],
+          "sourceKind": "item",
+          "profileId": "gentle_hold",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": []
+        },
+        {
+          "id": "morning_rain",
+          "name": "Morning Rain",
+          "description": "+2.5 water per eligible planted plant at account-local midnight. Duplicate harps apply once.",
+          "system": "growth",
+          "scope": "daily_water",
+          "metric": null,
+          "operation": "flat",
+          "magnitude": "2.5",
+          "stackingGroup": "item_morning_rain",
+          "sourceKind": "item",
+          "sourceItemId": "b3a32e06-bbd9-4c15-b1dd-1fd66532e1e4",
+          "profileId": "morning_rain",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "eligibleSourceItemIds": [
+            "b3a32e06-bbd9-4c15-b1dd-1fd66532e1e4"
+          ],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "patient_post",
+          "name": "Patient Post",
+          "description": "+5% offline visitor storage capacity while placed.",
+          "system": "visitors",
+          "scope": "offline_capacity",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.05",
+          "stackingGroup": "item_patient_post",
+          "sourceItemId": "5516dab0-e389-40a8-bb0d-27a52c105cfc",
+          "sourceItemDefinition": "snail-mailbox",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "5516dab0-e389-40a8-bb0d-27a52c105cfc"
+          ],
+          "sourceKind": "item",
+          "profileId": "patient_post",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": []
+        },
+        {
+          "id": "pollinators_welcome",
+          "name": "Pollinator's Welcome",
+          "description": "+3% garden attraction while placed.",
+          "system": "visitors",
+          "scope": "attraction_garden",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.03",
+          "stackingGroup": "item_pollinators_welcome",
+          "sourceItemId": "df33bf2a-911c-415d-b7aa-916d058eaef7",
+          "sourceItemDefinition": "beekeepers-skep",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "df33bf2a-911c-415d-b7aa-916d058eaef7"
+          ],
+          "sourceKind": "item",
+          "profileId": "pollinators_welcome",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": []
+        },
+        {
+          "id": "second_wind",
+          "name": "Second Wind",
+          "description": "+5% water from active energy while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "active_energy_kcal",
+          "operation": "percent",
+          "magnitude": "0.05",
+          "stackingGroup": "item_second_wind",
+          "sourceItemId": "7ab484c8-9077-43f4-9a5a-18c293dd2e87",
+          "sourceItemDefinition": "patchwork-picnic",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "7ab484c8-9077-43f4-9a5a-18c293dd2e87"
+          ],
+          "sourceKind": "item",
+          "profileId": "second_wind",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.cycling",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.hiking",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.running",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.strength_training",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.swimming",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.walking",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.yoga",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        }
+      ],
+      "growthFactors": [
+        {
+          "plantId": "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590",
+          "waterFactor": "1.01",
+          "waterCapReached": false,
+          "activityCapReached": {
+            "active_energy_kcal": false,
+            "workout_minutes.cycling": false,
+            "workout_minutes.hiking": false,
+            "workout_minutes.running": false,
+            "workout_minutes.strength_training": false,
+            "workout_minutes.swimming": false,
+            "workout_minutes.walking": false,
+            "workout_minutes.yoga": false
+          },
+          "activityFactors": {
+            "active_energy_kcal": "1.05",
+            "workout_minutes.cycling": "1.04",
+            "workout_minutes.hiking": "1.04",
+            "workout_minutes.running": "1.04",
+            "workout_minutes.strength_training": "1.04",
+            "workout_minutes.swimming": "1.04",
+            "workout_minutes.walking": "1.04",
+            "workout_minutes.yoga": "1.04"
+          }
+        }
+      ]
+    },
+    "dailyWater": []
+  },
+  "afterDailyWater": {
+    "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+    "width": 10.0,
+    "depth": 10.0,
+    "visibility": "friends",
+    "coordinateUnit": "garden_unit",
+    "gardenUnitMetres": 1.0,
+    "catalogVersion": "development-oak-v1",
+    "layoutVersion": 1,
+    "stateVersion": 17,
+    "plants": [
+      {
+        "plantId": "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590",
+        "speciesId": "oak",
+        "variantId": "standard",
+        "pinnedProfiles": {
+          "growth": {
+            "id": "dev_oak_growth",
+            "version": 1
+          },
+          "behaviour": {
+            "id": "dev_oak_behaviour",
+            "version": 1
+          },
+          "attraction": {
+            "id": "dev_oak_attraction",
+            "version": 1
+          }
+        },
+        "growthMicroUnits": "2500000",
+        "growthStage": "sprout",
+        "baseAttractionMicroUnits": "2000000",
+        "clearanceRadius": 0.9,
+        "contributesAttraction": true,
+        "modelKey": "assets/oak/v1/models/oak-sprout-standard.usdz",
+        "thumbnailKey": "assets/oak/v1/ui/oak-sprout-standard.png",
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 8.8,
+          "y": 8.8,
+          "rotationDegrees": 0.0
+        },
+        "growthProgress": {
+          "stageStartMicroUnits": "0",
+          "nextStageMicroUnits": "100000000",
+          "maximumGrowthMicroUnits": "1000000000"
+        },
+        "gardenSkills": [],
+        "metricMultipliers": {
+          "steps": 1.0
+        },
+        "gameplayTags": [
+          "tree",
+          "woodland"
+        ]
+      }
+    ],
+    "items": [
+      {
+        "ownedItemId": "0a18ff8d-ad81-4166-9293-f1c0c9d1e1db",
+        "itemId": "crooked-trail-sign",
+        "definitionVersion": 1,
+        "displayName": "Crooked Trail Sign",
+        "description": "A crooked wooden sign with Home, Somewhere and a scratched-out third direction. Static cosmetic item. No skill.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/crooked-trail-sign/v1/models/crooked-trail-sign-standard.usdz",
+        "thumbnailKey": "assets/items/crooked-trail-sign/v1/ui/crooked-trail-sign-standard.png",
+        "clearanceRadius": 0.55,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 5.5,
+          "y": 5.5,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "4ba9103c-5623-476f-89c7-86c844c6f59e",
+        "itemId": "celestial-gnome",
+        "definitionVersion": 1,
+        "displayName": "Celestial Gnome",
+        "description": "A midnight-blue garden gnome etched with stars and nebulae. Celestial Welcome gives +4.5% garden attraction while placed.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/celestial-gnome/v1/models/celestial-gnome-standard.usdz",
+        "thumbnailKey": "assets/items/celestial-gnome/v1/ui/celestial-gnome-standard.png",
+        "clearanceRadius": 0.37,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 1.1,
+          "y": 5.5,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "celestial_welcome",
+            "name": "Celestial Welcome",
+            "description": "+4.5% garden attraction while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "5516dab0-e389-40a8-bb0d-27a52c105cfc",
+        "itemId": "snail-mailbox",
+        "definitionVersion": 1,
+        "displayName": "Snail Mailbox",
+        "description": "A shell-roof woodland mailbox with leaf letters and a waiting parcel. +5% offline visitor storage capacity while placed.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/snail-mailbox/v1/models/snail-mailbox-standard.usdz",
+        "thumbnailKey": "assets/items/snail-mailbox/v1/ui/snail-mailbox-standard.png",
+        "clearanceRadius": 0.65,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 1.1,
+          "y": 3.3,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "patient_post",
+            "name": "Patient Post",
+            "description": "+5% offline visitor storage capacity while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "5b9f72a8-d9c6-453b-a043-685e77e48ac8",
+        "itemId": "wooden-bench",
+        "definitionVersion": 1,
+        "displayName": "Wooden Bench",
+        "description": "a basic bench, allows weary travelers to find rest in your garden",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/wooden-bench/v1/models/wooden-bench-standard.usdz",
+        "thumbnailKey": "assets/items/wooden-bench/v1/ui/wooden-bench-standard.png",
+        "clearanceRadius": 0.9,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 1.1,
+          "y": 1.1,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "730bcba6-451d-48e3-bec9-939fc7e45577",
+        "itemId": "iron-lamppost",
+        "definitionVersion": 1,
+        "displayName": "Iron Lamppost",
+        "description": "A curved charcoal-iron lamppost with softly glowing amber panes. Static, cosmetic decoration; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/iron-lamppost/v1/models/iron-lamppost-standard.usdz",
+        "thumbnailKey": "assets/items/iron-lamppost/v1/ui/iron-lamppost-standard.png",
+        "clearanceRadius": 0.8,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 3.3,
+          "y": 1.1,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "7ab484c8-9077-43f4-9a5a-18c293dd2e87",
+        "itemId": "patchwork-picnic",
+        "definitionVersion": 1,
+        "displayName": "Patchwork Picnic",
+        "description": "A faded blanket, a well-loved basket, and two mugs waiting for their owners. A little rest leaves room for another adventure.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/patchwork-picnic/v1/models/patchwork-picnic-standard.usdz",
+        "thumbnailKey": "assets/items/patchwork-picnic/v1/ui/patchwork-picnic-standard.png",
+        "clearanceRadius": 1.02,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 5.5,
+          "y": 7.7,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "second_wind",
+            "name": "Second Wind",
+            "description": "+5% water from active energy while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "8e297bc6-b8d9-47dc-ba19-8a216aabaaba",
+        "itemId": "cloud-shepherds-kite",
+        "definitionVersion": 1,
+        "displayName": "Cloud Shepherd's Kite",
+        "description": "A reel-tethered kite holds a tiny floating cloud. Gentle six-second wind loop. Gentle Hold extends butterfly welcome time by 20% while placed.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/cloud-shepherds-kite/v1/models/cloud-shepherds-kite-standard.usdz",
+        "thumbnailKey": "assets/items/cloud-shepherds-kite/v1/ui/cloud-shepherds-kite-standard.png",
+        "clearanceRadius": 0.72,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 1.1,
+          "y": 7.7,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "gentle_hold",
+            "name": "Gentle Hold",
+            "description": "+20% butterfly welcome time while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "96c3ee31-9b70-4c12-a36c-8d38ec339ab2",
+        "itemId": "sleepy-scarecrow",
+        "definitionVersion": 1,
+        "displayName": "Sleepy Scarecrow",
+        "description": "A slumped scarecrow beneath an oversized straw hat, with one bird nesting in its pocket. Static cosmetic item. No skill.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/sleepy-scarecrow/v1/models/sleepy-scarecrow-standard.usdz",
+        "thumbnailKey": "assets/items/sleepy-scarecrow/v1/ui/sleepy-scarecrow-standard.png",
+        "clearanceRadius": 0.55,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 7.7,
+          "y": 5.5,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "993cef6c-3fb7-47b6-82c3-ff6acb869e11",
+        "itemId": "stone-birdbath",
+        "definitionVersion": 1,
+        "displayName": "Stone Birdbath",
+        "description": "A smooth warm-grey stone birdbath with still jade water and one carved woodland bird. Static and cosmetic; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/stone-birdbath/v1/models/stone-birdbath-standard.usdz",
+        "thumbnailKey": "assets/items/stone-birdbath/v1/ui/stone-birdbath-standard.png",
+        "clearanceRadius": 0.5,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 5.5,
+          "y": 1.1,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "b3a32e06-bbd9-4c15-b1dd-1fd66532e1e4",
+        "itemId": "rainharp",
+        "definitionVersion": 1,
+        "displayName": "Rainharp",
+        "description": "A curved wooden harp with seven sky-reflecting droplets. Morning Rain gives each planted plant +2.5 water at the start of each game day.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/rainharp/v1/models/rainharp-standard.usdz",
+        "thumbnailKey": "assets/items/rainharp/v1/ui/rainharp-standard.png",
+        "clearanceRadius": 0.57,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 7.7,
+          "y": 3.3,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "morning_rain",
+            "name": "Morning Rain",
+            "description": "+2.5 water per planted plant at account-local midnight. Rainharp and plant must be placed at reset. Duplicate harps apply once."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+        "itemId": "mycelium-exchange",
+        "definitionVersion": 1,
+        "displayName": "Mycelium Exchange",
+        "description": "A fungal switchboard with seed-husk receivers and traveling light pulses. Sporeline Surge gives all planted plants +4% water from workouts while placed.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/mycelium-exchange/v1/models/mycelium-exchange-standard.usdz",
+        "thumbnailKey": "assets/items/mycelium-exchange/v1/ui/mycelium-exchange-standard.png",
+        "clearanceRadius": 0.75,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 3.3,
+          "y": 5.5,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "sporeline_surge",
+            "name": "Sporeline Surge",
+            "description": "+4% water from supported workouts while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "df33bf2a-911c-415d-b7aa-916d058eaef7",
+        "itemId": "beekeepers-skep",
+        "definitionVersion": 1,
+        "displayName": "Beekeeper's Skep",
+        "description": "A rounded straw hive on a wooden stand, with a honey pot and drinking saucer. +3% garden attraction while placed. Gentle honey drip.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/beekeepers-skep/v1/models/beekeepers-skep-standard.usdz",
+        "thumbnailKey": "assets/items/beekeepers-skep/v1/ui/beekeepers-skep-standard.png",
+        "clearanceRadius": 0.65,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 3.3,
+          "y": 3.3,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "pollinators_welcome",
+            "name": "Pollinator's Welcome",
+            "description": "+3% garden attraction while placed."
+          }
+        ]
+      },
+      {
+        "ownedItemId": "eea2e652-cb2d-45d5-88eb-d5bf01beeb5e",
+        "itemId": "rustic-pitchfork",
+        "definitionVersion": 1,
+        "displayName": "Rustic Pitchfork",
+        "description": "A three-tined iron pitchfork with a honey-wood handle and tan wrapped grip. Static and cosmetic; no gameplay skill or base attraction.",
+        "rarity": "common",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/rustic-pitchfork/v1/models/rustic-pitchfork-standard.usdz",
+        "thumbnailKey": "assets/items/rustic-pitchfork/v1/ui/rustic-pitchfork-standard.png",
+        "clearanceRadius": 0.4,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 7.7,
+          "y": 1.1,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "f262a3c7-2e56-49fc-bfdd-89f2bd1948b9",
+        "itemId": "foxfire-kiln",
+        "definitionVersion": 1,
+        "displayName": "Foxfire Kiln",
+        "description": "A warm clay kiln with flickering green foxfire and three unfinished acorn cups on its drying shelf. Cosmetic; no gameplay skill.",
+        "rarity": "rare",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/foxfire-kiln/v1/models/foxfire-kiln-standard.usdz",
+        "thumbnailKey": "assets/items/foxfire-kiln/v1/ui/foxfire-kiln-standard.png",
+        "clearanceRadius": 0.75,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 5.5,
+          "y": 3.3,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": []
+      },
+      {
+        "ownedItemId": "f3607c8b-5b83-4691-8b95-dea28fc7f5ef",
+        "itemId": "hollow-log-library",
+        "definitionVersion": 1,
+        "displayName": "Hollow-Log Library",
+        "description": "A hollow-log lending library with bark-bound books and a full-moon return sign. Borrowed Wisdom gives +1% activity water per distinct planted species, capped at +5%.",
+        "rarity": "epic",
+        "assetVersion": "1.0.0",
+        "modelKey": "assets/items/hollow-log-library/v1/models/hollow-log-library-standard.usdz",
+        "thumbnailKey": "assets/items/hollow-log-library/v1/ui/hollow-log-library-standard.png",
+        "clearanceRadius": 0.95,
+        "placement": {
+          "gardenId": "f0117652-e05c-447b-9fab-2e632e5e17db",
+          "x": 3.3,
+          "y": 7.7,
+          "rotationDegrees": 0.0
+        },
+        "gardenSkills": [
+          {
+            "id": "borrowed_wisdom",
+            "name": "Borrowed Wisdom",
+            "description": "+1% activity water per distinct planted species, up to +5%."
+          }
+        ]
+      }
+    ],
+    "totalAttractionMicroUnits": "2150000",
+    "skillSummary": {
+      "policyVersion": "b8-caps-v1",
+      "caps": {
+        "schemaVersion": 1,
+        "activityBonus": "1.5",
+        "waterBonus": "1.5",
+        "plantAttractionBonus": "0.5",
+        "gardenAttractionBonus": "0.5",
+        "totalAttractionBonus": "1",
+        "flatAttractionPoints": "10",
+        "flatAttractionBaseFraction": "0.25",
+        "capacityBonus": "2",
+        "flatCapacity": 10
+      },
+      "activeSkills": [
+        {
+          "id": "borrowed_wisdom",
+          "name": "Borrowed Wisdom",
+          "description": "+1% activity water per distinct planted species, up to +5%.",
+          "system": "growth",
+          "scope": "water",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.01",
+          "stackingGroup": "item_borrowed_wisdom",
+          "sourceItemId": "f3607c8b-5b83-4691-8b95-dea28fc7f5ef",
+          "sourceItemDefinition": "hollow-log-library",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "f3607c8b-5b83-4691-8b95-dea28fc7f5ef"
+          ],
+          "sourceKind": "item",
+          "profileId": "borrowed_wisdom",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "celestial_welcome",
+          "name": "Celestial Welcome",
+          "description": "+4.5% garden attraction while placed.",
+          "system": "visitors",
+          "scope": "attraction_garden",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.045",
+          "stackingGroup": "item_celestial_welcome",
+          "sourceItemId": "4ba9103c-5623-476f-89c7-86c844c6f59e",
+          "sourceItemDefinition": "celestial-gnome",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "4ba9103c-5623-476f-89c7-86c844c6f59e"
+          ],
+          "sourceKind": "item",
+          "profileId": "celestial_welcome",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": []
+        },
+        {
+          "id": "gentle_hold",
+          "name": "Gentle Hold",
+          "description": "+20% butterfly welcome time while placed.",
+          "system": "visitors",
+          "scope": "welcome_duration",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.2",
+          "stackingGroup": "butterfly_welcome_window",
+          "sourceItemId": "8e297bc6-b8d9-47dc-ba19-8a216aabaaba",
+          "sourceItemDefinition": "cloud-shepherds-kite",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "8e297bc6-b8d9-47dc-ba19-8a216aabaaba"
+          ],
+          "sourceKind": "item",
+          "profileId": "gentle_hold",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": []
+        },
+        {
+          "id": "morning_rain",
+          "name": "Morning Rain",
+          "description": "+2.5 water per eligible planted plant at account-local midnight. Duplicate harps apply once.",
+          "system": "growth",
+          "scope": "daily_water",
+          "metric": null,
+          "operation": "flat",
+          "magnitude": "2.5",
+          "stackingGroup": "item_morning_rain",
+          "sourceKind": "item",
+          "sourceItemId": "b3a32e06-bbd9-4c15-b1dd-1fd66532e1e4",
+          "profileId": "morning_rain",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "eligibleSourceItemIds": [
+            "b3a32e06-bbd9-4c15-b1dd-1fd66532e1e4"
+          ],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "patient_post",
+          "name": "Patient Post",
+          "description": "+5% offline visitor storage capacity while placed.",
+          "system": "visitors",
+          "scope": "offline_capacity",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.05",
+          "stackingGroup": "item_patient_post",
+          "sourceItemId": "5516dab0-e389-40a8-bb0d-27a52c105cfc",
+          "sourceItemDefinition": "snail-mailbox",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "5516dab0-e389-40a8-bb0d-27a52c105cfc"
+          ],
+          "sourceKind": "item",
+          "profileId": "patient_post",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": []
+        },
+        {
+          "id": "pollinators_welcome",
+          "name": "Pollinator's Welcome",
+          "description": "+3% garden attraction while placed.",
+          "system": "visitors",
+          "scope": "attraction_garden",
+          "metric": null,
+          "operation": "percent",
+          "magnitude": "0.03",
+          "stackingGroup": "item_pollinators_welcome",
+          "sourceItemId": "df33bf2a-911c-415d-b7aa-916d058eaef7",
+          "sourceItemDefinition": "beekeepers-skep",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "df33bf2a-911c-415d-b7aa-916d058eaef7"
+          ],
+          "sourceKind": "item",
+          "profileId": "pollinators_welcome",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": []
+        },
+        {
+          "id": "second_wind",
+          "name": "Second Wind",
+          "description": "+5% water from active energy while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "active_energy_kcal",
+          "operation": "percent",
+          "magnitude": "0.05",
+          "stackingGroup": "item_second_wind",
+          "sourceItemId": "7ab484c8-9077-43f4-9a5a-18c293dd2e87",
+          "sourceItemDefinition": "patchwork-picnic",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "7ab484c8-9077-43f4-9a5a-18c293dd2e87"
+          ],
+          "sourceKind": "item",
+          "profileId": "second_wind",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.cycling",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.hiking",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.running",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.strength_training",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.swimming",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.walking",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        },
+        {
+          "id": "sporeline_surge",
+          "name": "Sporeline Surge",
+          "description": "+4% water from supported workouts while placed.",
+          "system": "growth",
+          "scope": "activity",
+          "metric": "workout_minutes.yoga",
+          "operation": "percent",
+          "magnitude": "0.04",
+          "stackingGroup": "item_sporeline_surge",
+          "sourceItemId": "d217d664-ae89-4ddd-89e2-7d025d949de1",
+          "sourceItemDefinition": "mycelium-exchange",
+          "sourceDefinitionVersion": 1,
+          "eligibleSourceItemIds": [
+            "d217d664-ae89-4ddd-89e2-7d025d949de1"
+          ],
+          "sourceKind": "item",
+          "profileId": "sporeline_surge",
+          "profileVersion": 1,
+          "eligibleSourcePlantIds": [],
+          "recipientPlantIds": [
+            "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590"
+          ]
+        }
+      ],
+      "growthFactors": [
+        {
+          "plantId": "1fefee0f-d92e-4d3c-a152-8f1bd3ee0590",
+          "waterFactor": "1.01",
+          "waterCapReached": false,
+          "activityCapReached": {
+            "active_energy_kcal": false,
+            "workout_minutes.cycling": false,
+            "workout_minutes.hiking": false,
+            "workout_minutes.running": false,
+            "workout_minutes.strength_training": false,
+            "workout_minutes.swimming": false,
+            "workout_minutes.walking": false,
+            "workout_minutes.yoga": false
+          },
+          "activityFactors": {
+            "active_energy_kcal": "1.05",
+            "workout_minutes.cycling": "1.04",
+            "workout_minutes.hiking": "1.04",
+            "workout_minutes.running": "1.04",
+            "workout_minutes.strength_training": "1.04",
+            "workout_minutes.swimming": "1.04",
+            "workout_minutes.walking": "1.04",
+            "workout_minutes.yoga": "1.04"
+          }
+        }
+      ]
+    },
+    "dailyWater": [
+      {
+        "gameDate": "2030-01-08",
+        "water": "2.5",
+        "plantCount": 1
+      }
+    ]
+  }
+}

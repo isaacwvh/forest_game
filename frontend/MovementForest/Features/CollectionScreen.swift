@@ -80,6 +80,15 @@ struct CollectionScreen: View {
         }
         .onChange(of: scenePhase) { phase in
             if phase == .active && destination == .catalog { Task { await store.discovery.refresh() } }
+            if phase == .active && destination == .exchange { Task { await store.requestShopRefresh() } }
+        }
+        .task(id: destination) {
+            guard destination == .exchange else { return }
+            await store.requestShopRefresh()
+            while !Task.isCancelled {
+                do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
+                if scenePhase == .active { await store.tickShop() }
+            }
         }
         .alert("Open pack?", isPresented: Binding(get: { confirmingPack != nil }, set: { if !$0 { confirmingPack = nil } }), presenting: confirmingPack) { pack in
             Button("Cancel", role: .cancel) { confirmingPack = nil }
@@ -183,6 +192,10 @@ struct CollectionScreen: View {
                 Text(message).font(.callout).accessibilityIdentifier("collection.exchangeFeedback")
             }
             JournalSectionHeading(title: "Decorations")
+            if let remaining = store.shopRemaining {
+                Text(remaining > 0 ? "Resets in \(Int(remaining) / 3600)h \((Int(remaining) / 60) % 60)m · 00:00 UTC" : "Refreshing today's decorations…")
+                    .font(.caption).monospacedDigit()
+            }
             if store.itemCapacity?.full == true {
                 Text("Item inventory full. Sell a stored item to make room.").font(.callout)
             }
@@ -190,8 +203,16 @@ struct CollectionScreen: View {
                 Text("No decorations available.").foregroundStyle(JournalTheme.secondary)
             }
             JournalGrid(minimumWidth: 142) {
-                ForEach(store.itemOffers) { offer in
+                ForEach(store.itemOffers.filter { $0.rarity == "common" }) { offer in
                     ItemShopCard(store: store, offer: offer, purchase: { purchasingItem = offer })
+                }
+            }
+            if store.itemOffers.contains(where: { $0.rarity != "common" }) {
+                JournalSectionHeading(title: "Featured today")
+                JournalGrid(minimumWidth: 142) {
+                    ForEach(store.itemOffers.filter { $0.rarity != "common" }) { offer in
+                        ItemShopCard(store: store, offer: offer, purchase: { purchasingItem = offer })
+                    }
                 }
             }
             if store.state.result?.purchaseId != nil { Text("Item saved to Storage.").font(.callout) }

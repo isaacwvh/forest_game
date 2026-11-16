@@ -290,9 +290,13 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                     let loaded = try await self.loader.load(asset)
                     guard !Task.isCancelled, self.generation == token else { return }
                     let anchor = self.placements[item.id] ?? Entity()
+                    self.plantPlaybacks.removeValue(forKey: item.id)?.forEach { $0.stop() }
                     for child in Array(anchor.children) { child.removeFromParent() }
                     anchor.name = item.id.uuidString
                     anchor.addChild(loaded.entity)
+                    if asset.animated && self.playWind(in: loaded.entity, plantID: item.id) == 0 {
+                        self.errors.append("Item: no playable animation for \(item.itemId).")
+                    }
                     loaded.entity.generateCollisionShapes(recursive: true)
                     self.transformItem(anchor, item: item, garden: garden)
                     if anchor.parent == nil { self.root.addChild(anchor) }
@@ -993,6 +997,10 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     func updateItemPreview(_ value: ItemRenderPreview?) {
+        if let old = itemPreview, old.item.id != value?.item.id,
+           placements[old.item.id] == nil {
+            plantPlaybacks.removeValue(forKey: old.item.id)?.forEach { $0.stop() }
+        }
         guard !disposed else { return }
         if let old = itemPreview, old.item.id != value?.item.id || value == nil,
            let garden = snapshot, let original = (garden.items ?? []).first(where: { $0.id == old.item.id }),
@@ -1028,9 +1036,11 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                 itemPreviewTask = Task { [weak self] in
                     guard let self = self else { return }
                     do {
-                        let model = try await self.loader.load(BundledItemAssets.resolve(value.item))
+                        let asset = try BundledItemAssets.resolve(value.item)
+                        let model = try await self.loader.load(asset)
                         guard !Task.isCancelled, self.itemPreviewKey == key else { return }
                         self.removeCollisions(model.entity); anchor.addChild(model.entity)
+                        if asset.animated { _ = self.playWind(in: model.entity, plantID: value.item.id) }
                     } catch is CancellationError { return }
                     catch {
                         guard !Task.isCancelled, self.itemPreviewKey == key else { return }

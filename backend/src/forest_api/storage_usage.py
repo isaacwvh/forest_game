@@ -6,6 +6,7 @@ from forest_api.models import Base
 
 GROUPS = {
     "current_state": {
+        "daily_item_state",
         "owned_items",
         "item_placements",
         "daily_skill_activity",
@@ -25,6 +26,8 @@ GROUPS = {
         "visitor_controls",
     },
     "durable_recovery": {
+        "shop_allowances",
+        "daily_item_grants",
         "item_valuations",
         "item_sales",
         "item_identities",
@@ -66,6 +69,12 @@ GROUPS = {
         "visitor_opportunities",
     },
     "shared_configuration": {
+        "item_skill_profiles",
+        "item_skill_bindings",
+        "shop_releases",
+        "shop_weeks",
+        "shop_days",
+        "shop_offer_windows",
         "item_value_definitions",
         "item_shop_offers",
         "item_definitions",

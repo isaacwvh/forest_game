@@ -73,7 +73,14 @@ class SkillEffect(Component):
     name: str = Field(min_length=1, max_length=80)
     description: str = Field(min_length=1, max_length=500)
     system: Literal["growth", "visitors"]
-    scope: Literal["activity", "water", "attraction_plant", "attraction_garden", "offline_capacity"]
+    scope: Literal[
+        "activity",
+        "water",
+        "attraction_plant",
+        "attraction_garden",
+        "offline_capacity",
+        "welcome_duration",
+    ]
     metric: str | None = None
     target: Literal["all_planted_plants", "selected_plants", "garden"]
     recipients: PlantSelector | None = None

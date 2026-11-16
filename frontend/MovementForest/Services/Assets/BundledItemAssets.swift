@@ -3,6 +3,7 @@ import Foundation
 struct ItemAssetManifest: Decodable {
     struct File: Decodable { let file: String; let bytes: Int; let sha256: String }
     struct UI: Decodable { let thumbnail: String }
+    struct Animation: Decodable { let name: String; let durationSeconds: Double; let loop: Bool; let rootMotion: Bool }
     let schemaVersion: Int
     let assetKind: String
     let itemId: String
@@ -13,6 +14,7 @@ struct ItemAssetManifest: Decodable {
     let bounds: AssetBounds
     let ui: UI
     let assets: [File]
+    let animation: Animation?
 }
 
 struct ResolvedItemAsset {
@@ -22,6 +24,7 @@ struct ResolvedItemAsset {
     let bytes: Int
     let sha256: String
     let bounds: AssetBounds
+    var animated: Bool = false
 }
 
 enum BundledItemAssets {
@@ -59,7 +62,7 @@ enum BundledItemAssets {
             }
             return ResolvedItemAsset(key: "item/\(item.itemId)/\(item.assetVersion)",
                 modelURL: try safe(model.file, root: folder), thumbnailURL: try safe(manifest.ui.thumbnail, root: folder),
-                bytes: model.bytes, sha256: model.sha256, bounds: manifest.bounds)
+                bytes: model.bytes, sha256: model.sha256, bounds: manifest.bounds, animated: manifest.animation != nil)
         }
         throw ForestError.missingResource("item \(item.itemId) version \(item.assetVersion)")
     }

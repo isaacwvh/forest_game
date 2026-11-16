@@ -117,6 +117,7 @@ struct APICollectionSummary: Codable {
     var capacity: APIInventoryCapacity? = nil
     var itemOffers: [APIItemShopOffer]? = nil
     var itemCapacity: APIItemCapacity? = nil
+    var shop: APIShopRotation? = nil
 }
 
 struct APIIntroMilestone: Codable, Identifiable {

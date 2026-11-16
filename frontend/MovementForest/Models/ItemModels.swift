@@ -1,5 +1,29 @@
 import Foundation
 
+struct APIItemSkill: Codable, Equatable, Identifiable {
+    let id: String
+    let name: String
+    let description: String
+}
+
+struct APIShopRotation: Codable {
+    let serverNow: Date
+    let shopTimezone: String
+    let rotationId: String
+    let startsAt: Date
+    let endsAt: Date
+}
+
+struct ShopCountdown {
+    let anchor: TimeInterval
+    let duration: TimeInterval
+    init(rotation: APIShopRotation, sent: TimeInterval, received: TimeInterval) {
+        anchor = received
+        duration = max(0, rotation.endsAt.timeIntervalSince(rotation.serverNow) - max(0, received - sent))
+    }
+    func remaining(at uptime: TimeInterval) -> TimeInterval { max(0, duration - max(0, uptime - anchor)) }
+}
+
 struct APIOwnedItem: Codable, Identifiable, Equatable {
     var id: UUID { ownedItemId }
     let ownedItemId: UUID
@@ -13,6 +37,7 @@ struct APIOwnedItem: Codable, Identifiable, Equatable {
     let thumbnailKey: String
     let clearanceRadius: Decimal
     let placement: APIPlacement?
+    var gardenSkills: [APIItemSkill]? = nil
 
     func rendered() -> GardenItem {
         GardenItem(id: id, itemId: itemId, assetVersion: assetVersion,
@@ -50,6 +75,11 @@ struct APIItemShopOffer: Codable, Identifiable {
     let assetVersion: String
     let modelKey: String
     let thumbnailKey: String
+    var gardenSkills: [APIItemSkill]? = nil
+    var startsAt: Date? = nil
+    var endsAt: Date? = nil
+    var slot: String? = nil
+    var remainingAllowance: Int? = nil
     var id: String { "\(offerId)/\(offerVersion)" }
     var appearance: GardenItem {
         GardenItem(id: UUID(), itemId: itemId, assetVersion: assetVersion,

@@ -549,11 +549,17 @@ def present_garden(
     presenter = presenter or PlantPresenter(session)
     skills = skill_snapshot(session, garden, presenter=presenter, rows=rows, boundary=boundary)
     presented = [presenter.plant(plant, placement) for plant, placement in rows]
-    from forest_api import items
+    from forest_api import daily_items, items
 
     placed_items = [
         items.present(row) for row in items.rows(session, garden.owner_id, placed_only=True)
     ]
+    if any(item.item_id != "wooden-bench" for item in placed_items) and not session.info.get(
+        "item_rotations_client"
+    ):
+        raise ApiError(
+            426, "item_content_update_required", "Update the app for the new garden items"
+        )
     return GardenDTO(
         garden_id=garden.id,
         width=garden.width,
@@ -567,6 +573,9 @@ def present_garden(
         items=placed_items,
         total_attraction_micro_units=str(skills.attraction()),
         skill_summary=skills.summary(),
+        daily_water=daily_items.recent(
+            session, garden.owner_id, boundary or session.scalar(select(func.clock_timestamp()))
+        ),
     )
 
 
@@ -649,7 +658,11 @@ def skill_snapshot(session, garden, *, presenter=None, rows=None, boundary=None)
             day = (boundary or datetime.now(UTC)).astimezone(ZoneInfo(owner.game_timezone)).date()
             daily = session.get(DailySkillActivity, (garden.owner_id, day))
             flights = daily.flights if daily else 0
-        return SkillSnapshot(tuple(facts), caps, version, flights=flights)
+        from forest_api import item_skills
+
+        return SkillSnapshot(
+            tuple(facts), caps, version, flights=flights, items=item_skills.facts(session, garden)
+        )
     except ValueError as exc:
         raise ApiError(
             503, "invalid_skill_configuration", "Skill rules require maintenance"
@@ -658,10 +671,18 @@ def skill_snapshot(session, garden, *, presenter=None, rows=None, boundary=None)
 
 def read_garden(session: Session, settings: Settings, identity: Identity) -> GardenDTO:
     with session.begin():
-        user = get_user(session, identity)
-        garden = lock_garden(session, user.id)
+        user = get_user(session, identity, lock=True)
+        garden = lock_garden(session, user.id, write=True)
+        from forest_api.daily_items import settle_due
+
+        boundary = (
+            session.info["clock"]()
+            if "clock" in session.info
+            else session.scalar(select(func.clock_timestamp()))
+        )
+        settle_due(session, settings, garden, boundary)
         catalogue = get_catalogue_state(session, settings, lock=True)
-        return present_garden(session, garden, catalogue)
+        return present_garden(session, garden, catalogue, boundary=boundary)
 
 
 def read_plant(session: Session, identity: Identity, plant_id: UUID) -> PlantDTO:

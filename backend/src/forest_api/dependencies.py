@@ -19,6 +19,12 @@ def get_session(request: Request) -> Iterator[Session]:
         session.info["milestones_client"] = request.headers.get("X-Forest-Milestones")
         session.info["items_client"] = request.headers.get("X-Forest-Items") == "1"
         session.info["item_commerce_client"] = request.headers.get("X-Forest-Item-Commerce") == "1"
+        session.info["item_rotations_client"] = (
+            request.headers.get("X-Forest-Item-Rotations") == "1"
+        )
+        from forest_api.server_clock import request_clock
+
+        session.info["clock"] = request_clock(request, session)
         if request.app.state.clock:
             session.info["milestone_boundary"] = request.app.state.clock()
         yield session

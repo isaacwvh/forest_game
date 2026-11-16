@@ -1,6 +1,6 @@
 import argparse
 import json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 from forest_api.auth import issue_development_token
@@ -104,6 +104,15 @@ def main() -> None:
         "publish-item-shop", help="Preview the permanent bench shop and resale values"
     )
     item_shop.add_argument("--apply", action="store_true")
+    release = commands.add_parser("publish-item-catalogue", help="Preview the fifteen-item release")
+    release.add_argument("--apply", action="store_true")
+    release.add_argument("--effective-week", type=date.fromisoformat)
+    release.add_argument("--release-version", default="garden-items-v1")
+    commands.add_parser("shop-worker", help="Automatically prepare current and upcoming shop weeks")
+    preparation = commands.add_parser("prepare-shop", help="Prepare saved rotations idempotently")
+    preparation.add_argument("--apply", action="store_true")
+    preview = commands.add_parser("preview-shop", help="Read a persisted seven-day shop plan")
+    preview.add_argument("week", type=date.fromisoformat)
     args = parser.parse_args()
     settings = Settings()
     if args.command == "dev-token":
@@ -111,13 +120,52 @@ def main() -> None:
         return
     database = Database(settings)
     try:
+        if args.command == "shop-worker":
+            from forest_api.shop_worker import run
+
+            run(database)
+            return
         if args.command == "history-worker":
             from forest_api.history_worker import run
 
             run(database, settings)
             return
         with database.sessions() as session:
-            if args.command == "publish-item-shop":
+            if args.command == "publish-item-catalogue":
+                from forest_api.item_catalogue import publish
+
+                print(
+                    json.dumps(
+                        publish(
+                            session,
+                            apply=args.apply,
+                            effective_week=args.effective_week,
+                            version=args.release_version,
+                        )
+                    )
+                )
+            elif args.command == "prepare-shop":
+                from forest_api.shop import ensure_current
+
+                if args.apply:
+                    print(json.dumps({"ready": ensure_current(session, upcoming=True)}))
+                else:
+                    print(
+                        json.dumps(
+                            {
+                                "applied": False,
+                                "action": (
+                                    "Use --apply to prepare saved weeks; "
+                                    "preparation grants and spends nothing"
+                                ),
+                            }
+                        )
+                    )
+            elif args.command == "preview-shop":
+                from forest_api.shop import preview
+
+                print(json.dumps(preview(session, args.week)))
+            elif args.command == "publish-item-shop":
                 from forest_api.item_commerce import publish
 
                 print(json.dumps(publish(session, apply=args.apply)))

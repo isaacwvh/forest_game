@@ -103,6 +103,9 @@ struct ItemShopCard: View {
                     .padding(.horizontal, 6)
                 QuantityLabel(metric: "tokens", text: offer.tokenCost).font(.callout).monospacedDigit()
                     .accessibilityLabel("\(offer.tokenCost) tokens")
+                if let remaining = offer.remainingAllowance {
+                    Text(remaining == 0 ? "Purchased today" : "One available today").font(.caption)
+                }
                 Button("Purchase", action: purchase).buttonStyle(.journalPrimary)
                     .frame(minHeight: 44).disabled(!store.canBuyItem(offer, quantity: 1))
                     .accessibilityIdentifier("shop.item.\(offer.offerId)")
@@ -132,15 +135,19 @@ struct PurchaseItemScreen: View {
                 .font(.system(.title3, design: .serif).weight(.semibold))
                 .multilineTextAlignment(.center)
             Text(offer.description).frame(maxWidth: .infinity, alignment: .leading)
+            ForEach(offer.gardenSkills ?? []) { skill in
+                Text("\(skill.name): \(skill.description)").font(.callout)
+            }
             VStack(alignment: .leading, spacing: 16) {
                 QuantityLabel(metric: "tokens", text: "\(offer.tokenCost) per item").monospacedDigit()
-                Stepper("Quantity: \(quantity)", value: $quantity, in: 1...max(1, min(20, store.itemCapacity?.room ?? 0)))
+                Stepper("Quantity: \(quantity)", value: $quantity, in: 1...max(1, min(offer.remainingAllowance ?? 20, store.itemCapacity?.room ?? 0)))
                     .disabled(submitted || !store.canMutate).accessibilityIdentifier("itemPurchase.quantity")
                     .frame(minHeight: 44)
                 QuantityLabel(metric: "tokens", text: "Total: \(total)").monospacedDigit()
                     .font(.headline).accessibilityLabel("Total: \(total) tokens")
                 if let balance = store.tokenBalance { LabeledContent("Available tokens", value: balance).monospacedDigit() }
                 if store.itemCapacity?.full == true { Text("Item inventory full. Sell a stored item to make room.") }
+                else if offer.remainingAllowance == 0 { Text("This featured item has been purchased today.") }
                 else if !store.canBuyItem(offer, quantity: quantity) { Text("Not enough tokens or item space.") }
                 if let message = store.message, store.refreshFailed { Text(message).font(.callout) }
             }.frame(maxWidth: .infinity, alignment: .leading)
@@ -162,6 +169,9 @@ struct PurchaseItemScreen: View {
                     .disabled(submitted || !store.canBuyItem(offer, quantity: quantity))
                     .accessibilityIdentifier("itemPurchase.confirm")
             }.padding(16).background(JournalTheme.sage.opacity(0.65))
+        }
+        .onReceive(store.$shopRemaining) { _ in
+            if offer.endsAt != nil && !store.itemOfferCurrent(offer) { dismiss() }
         }
     }
 }

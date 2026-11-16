@@ -289,13 +289,17 @@ struct ConnectedGardenScreen: View {
                     ForEach(summary.activeSkills.uniqueSkills) { skill in
                         DisclosureGroup {
                             Text(skill.description).foregroundStyle(JournalTheme.secondary)
-                            if let source = store.ownedCopy(skill.sourcePlantId) {
+                            if let sourceID = skill.sourcePlantId, let source = store.ownedCopy(sourceID) {
                                 PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []),
                                     rarity: store.catalogue?.rarity(for: source.speciesId), suffix: " · Fully grown source")
                                     .font(.caption).foregroundStyle(JournalTheme.secondary)
                             }
-                            if skill.eligibleSourcePlantIds.count > 1 {
-                                Text("\(skill.eligibleSourcePlantIds.count) sources share this bonus.").font(.caption)
+                            if let sourceID = skill.sourceItemId,
+                               let source = store.confirmed?.items?.first(where: { $0.id == sourceID }) {
+                                Text("\(source.displayName) · Placed source").font(.caption)
+                            }
+                            if skill.eligibleSourcePlantIds.count + (skill.eligibleSourceItemIds?.count ?? 0) > 1 {
+                                Text("\(skill.eligibleSourcePlantIds.count + (skill.eligibleSourceItemIds?.count ?? 0)) sources share this bonus.").font(.caption)
                             }
                         } label: {
                             SkillSummaryLabel(skill: skill)
@@ -306,6 +310,12 @@ struct ConnectedGardenScreen: View {
                         DisclosureGroup("Boost cap reached") { Text(summary.caps.description).font(.footnote) }
                     }
                 } else { Text("Skill information is unavailable. Refresh your garden to try again.") }
+                if let grants = store.confirmed?.dailyWater, !grants.isEmpty {
+                    JournalSectionHeading(title: "Recent Morning Rain")
+                    ForEach(grants) { grant in
+                        Text("\(grant.gameDate): +\(grant.water) water across \(grant.plantCount) plants").font(.callout)
+                    }
+                }
                 if store.showingCached { Text("Last confirmed skills").font(.caption).foregroundStyle(JournalTheme.secondary) }
             }.padding(20)
         }.navigationTitle("Garden information")

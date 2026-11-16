@@ -1,10 +1,19 @@
 # Garden items, inventory and rotating shop — proposal
 
-Date: 15 November 2026
+**Source update, 17 November 2026:** the user authorized implementation of the
+consolidated release. Fifteen selected items (6 Common / 5 Rare / 4 Epic), workbook
+prices, saved weekly rotations and all eight skills are source-implemented. See
+[runtime rules and activation](backend/ITEM_ROTATIONS.md). The ten-item suggestions
+and undecided-price passages below are historical. This update does not establish
+personal-game activation or native/device acceptance.
+
+Date: 15 November 2026; weekly-shop planning updated 16 November 2026.
 
 Status: Saved for future consideration. Not an implementation instruction or approved release commitment.
 
 This document preserves the user's garden-item concept and the codebase assessment discussed in this chat. It records recommended defaults and open decisions; saving the plan does not implement or activate items, shop rotations, rewards, skills or asset delivery. Recheck source and deployment state before implementation. Source implementation, live activation and native/device acceptance are separate facts.
+
+The current Stage 6 design is recorded in [Saved weekly shop plans and daily rotations](weekly_shop_plan.md). The user approved three distinct Commons sampled daily without replacement, three randomly selected Rare days and two independently selected Epic days per week, with overlap allowed. There are no fixed permanent items or always-available Rare. Recommend ten launch items: five Common, three Rare and two Epic. The three Rare identities are selected in section 3; remaining launch identities and prices remain undecided. Catalogue expansion adds eligible entries to the appropriate rarity pools for future, ungenerated weeks without rerolling saved stock. This supersedes the earlier fixed permanent collection, two-rare-days and everyday Rare / 70–30 / Epic Saturday suggestions. Source stages 1–5 now exist; see [current item implementation](backend/ITEMS.md). The foundation/gap assessment below is historical, from before those increments.
 
 ## 1. User's concept
 
@@ -76,33 +85,51 @@ Use **Decorations** for the shop category and **Items** in inventory. Reuse Comm
 | Special lantern or ornament | Additional rare rotating purchase; possible skill |
 | Event-themed decoration | Additional quest/event reward when that event is ready |
 
-Recommendation: begin with five standard items, a small additional featured pool and at most one modest skill item. With only five total items, daily rotation offers limited variety; do not manufacture additional rotation complexity before enough content exists.
+Updated layout: three distinct Commons sampled daily without replacement from the Common pool, plus one Rare feature on three randomly selected days and one Epic feature on two independently selected days each week. Dates may overlap, giving three, four or five total decoration offers on a day. There are no fixed permanent identities or always-available Rare. Keep the three rarity pools separate, pin one definition/rarity per identity, and forbid same-day duplicate identities across versions. Commons may appear again on later days.
+
+Recommend ten launch items: five Common, three Rare and two Epic. The technical minimum is three Commons, one Rare and one Epic, but then the same Commons appear daily. Five Commons support varied trios; three Rares and two Epics allow distinct featured items within a week. Prefer a different complete Common trio from yesterday when possible, while allowing individual repeats. Prefer not to repeat featured identities within a week; relax repeat preferences when pools are small. Exact appearances and prices remain undecided. Future eligible additions simply expand their rarity pool for future, ungenerated weeks; never reroll or reprice a saved week. See [the Stage 6 plan](weekly_shop_plan.md).
 
 Items do not grow, receive activity water, mature or count as plant species/copies. A rare item need not have a skill. Treat a reward as a grant of an owned copy initially; unlocking permission to purchase additional copies is a separate mechanic requiring explicit configuration.
+
+### Selected Rare items — 16 November 2026
+
+The user selected **Snail Mailbox, Beekeeper's Skep and Foxfire Kiln** as the three Rare items. This supersedes the undecided Rare identities above; Common and Epic identities, prices, publication and live activation remain separate decisions.
+
+| Item | Description | Width x depth x height (m) | Proposed radius | Approved skill while placed |
+| --- | --- | --- | --- | --- |
+| Snail Mailbox | Sage woodland mailbox with a terracotta spiral-shell roof, two leaf letters and one small parcel. | 0.72 x 0.88 x 1.35 | 0.65 | Patient Post: +5% offline visitor storage capacity. No earning-rate or inventory-capacity increase. |
+| Beekeeper's Skep | Seven broad straw coils on a honey-wood stand, with a honey pot, water saucer and a gentle honey-drip loop. | 0.90 x 0.80 x 1.05 | 0.65 | Pollinator's Welcome: +3% garden attraction, applied in the existing garden-attraction layer. |
+| Foxfire Kiln | Smooth terracotta kiln with an open firing chamber, short chimney, three acorn cups and softly flickering green foxfire. | 1.08 x 0.88 x 0.92 | 0.75 | None. Cosmetic. |
+
+Both skills have fixed, unconditional magnitudes and activate only while placed. Proposed profile IDs are `patient_post` and `pollinators_welcome`, with stacking groups `item_patient_post` and `item_pollinators_welcome`. Duplicate copies apply strongest once within a group; retain existing destination caps shared with plant/item effects. Skills remain selected for future runtime integration, not active merely because art or planning records exist.
+
+The Rare art follows the existing Abyssrium-inspired miniature-world treatment: smooth matte surfaces, small soft bevels, restrained broad tonal variation and clean silhouettes. The previously closed wax pot becomes an open honey pot to support the requested drip animation. The skep and kiln use four-second skeletal loops; foxfire uses pulsing emissive geometry rather than relying on animated shader intensity or embedded Blender lights. Keep root placement fixed throughout each loop.
+
+The production source and validation record is [Rare item production](art/rare-garden-items-production/SOURCE.md). Asset packages live under `assets/items/<item-id>/v1`; each contains its USDZ, matching transparent 384 x 448 PNG and item manifest. Proposed clearances enclose all fixed accessories at any yaw. Verify native iPhone appearance, playback and performance before release. The item planning workbook records the selected definitions and skills; prices, resale values and runtime definition versions remain unassigned.
 
 ## 4. Shop structure and weekly distribution
 
 | Section | Recommended behaviour |
 | --- | --- |
 | Packs | Existing pack purchases at the top; always available unless explicitly retired |
-| Standard decorations | Four or five permanent token offers |
-| Featured decorations | Small daily selection, shown below standard stock |
+| Daily Common decorations | Three distinct token offers sampled from the Common pool without replacement each day |
+| Featured decorations | Three Rare days and two independently selected Epic days per week, from their respective rarity pools; overlap allowed |
 | Event offers | Explicitly scheduled and governed by their own eligibility rules |
 
-For a small initial catalogue, a provisional distribution is **two rare-feature days per week**, with their weekdays sampled without replacement. On other days, feature another eligible item if the catalogue supports it, or omit the featured section. Epic appearances can be introduced later under a separately defined weekly allowance/chance. Legendary shop availability is not assumed.
+Choose three distinct shop dates uniformly without replacement for Rare features, then independently choose two distinct dates uniformly without replacement for Epic features. Each selected date has one guaranteed offer of the corresponding rarity, provided an eligible candidate exists. Generate and save all seven days together, including the three Commons for every day. An overlap day has both features; an unselected day has only its three sampled Commons. There is no fixed Epic weekday or daily 70/30 roll. Legendary shop availability is not assumed.
 
-This is a proposed distribution, not final balance. Weekly allocation can provide a known amount of rare availability while still randomising the days and selected items. Independent daily rarity rolls are simpler, but can create long periods without a rare appearance; choose deliberately between guaranteed weekly allocations and probabilistic frequency.
+This produces twenty-one Common slots plus exactly three Rare and two Epic featured appearances per week when pools suffice. Zero to two dates may overlap, so three to five days have featured stock and two to four days have only sampled Commons. Randomness chooses dates and item identities, not whether an allocated feature appears. No overlap count is forced. Start with equal item weights within each rarity; later versioned weights may govern item selection, not the weekly date allocation.
 
 When the pool grows, the generator should:
 
-1. Allocate rarity slots for the week using the published distribution.
-2. Assign slots to days.
+1. Allocate three Rare and two Epic feature slots using the versioned policy.
+2. Sample the two rarity date sets independently without replacement, allowing overlap.
 3. Filter candidates by release status, availability window, acquisition channel and required client capabilities.
 4. Select items within each slot using configured weights.
-5. Avoid duplicate items within a day and discourage recent repeats where feasible.
+5. Sample three Common identities without replacement each day; enforce whole-day uniqueness across definition versions and apply soft Common-trio / same-week featured repeat preferences.
 6. Persist the exact selected offers.
 
-Validate that candidate pools can satisfy the rules before publication. Define a fallback for empty/small pools, such as omitting a slot or using an explicitly authorised lower-tier substitute. Do not silently alter the distribution or include event-exclusive rewards in the ordinary shop.
+Validate candidate pools before publication. Prefer a different whole Common trio from yesterday, allowing shared members; three from five cannot avoid every yesterday item. For features, relax yesterday's repeat preference, then same-week uniqueness if needed. Keep same-day uniqueness, required rarity and eligibility as hard rules. With fewer than three Commons, show each eligible identity at most once and explicitly omit unfillable slots; never fill them with duplicates. Missing Rare/Epic pools similarly omit their scheduled slots without moving dates. Never reroll rarity, substitute another tier or borrow event-exclusive rewards. [The Stage 6 plan](weekly_shop_plan.md) defines the ordered rules and all small-pool cases.
 
 Keep prices stable within each published offer. Item weights govern appearance in the shop, not a random outcome at purchase: players see the exact item they are buying.
 
@@ -115,6 +142,7 @@ Keep prices stable within each published offer. Item weights govern appearance i
 - Use a clearly defined weekly boundary, provisionally Monday at the same reset time.
 - All players see the same global daily rotation initially. Personalised shops are outside this first scope.
 - The server clock determines availability; device clock/timezone changes cannot reroll stock.
+- Shop time is independent of activity time. Step days, caps and HealthKit buckets remain midnight-to-midnight in the account's saved IANA `game_timezone`; a Singapore account's step day resets at 00:00 local time, while the proposed shop resets at 08:00 local time. Device timezone changes do not change that saved account setting. Travel-based timezone migration is separate work.
 
 ### Generation and activation
 
@@ -135,9 +163,15 @@ Persist selected results, not only a random seed. Record the generation policy/v
 
 Start with per-account allowances rather than globally limited stock. Global sellouts add contention and competition and are unnecessary for this first release. Standard duplicate limits and featured purchase allowances remain product decisions.
 
+The Stage 6 recommendation is one copy per featured Rare/Epic offer per account/rotation. Daily Common offers retain capacity/funds/request-quantity limits and no purchase quota, but expire with their daily interval too. Selling does not restore featured allowance. Effective historical policy/catalogue releases must be retained so missed preparation uses the intended inputs, even after defaults change. Pool additions become eligible only for future, ungenerated weeks; all saved selections and prices remain unchanged.
+
+After the initial implementation, deployment and catalogue/policy configuration, weekly preparation, date/item selection, saved publication and interval activation must run automatically. Deploy and enable a preparation runner with restart/retry handling; no owner-issued weekly command, manual seed, code injection or per-week approval is required. A missed job is recovered automatically by request-time fallback. Preview/preparation commands remain optional inspection/troubleshooting tools, not routine weekly work. The catalogue can be decided later; content authoring is separate from rolling each week's schedule.
+
 ### Client refresh
 
 The shop response should include `serverNow`, the active rotation identity and `endsAt`/next reset. Refresh when entering Shop, returning to the foreground and crossing the boundary while open. Use server time for the countdown and revalidate before purchase. Cached stock may remain visible with a stale/offline indication, but purchases require server confirmation.
+
+Anchor countdowns to server time plus monotonic elapsed time, independently of device wall time and activity uploads. At expiry, disable fresh purchases and refresh, including open confirmation sheets. **“App closed between visits” is a recovery test, not a restart requirement:** stock changes automatically while Shop is open, and launch/foreground fetches the current interval after an absence. See [Stage 6 acceptance](weekly_shop_plan.md#9-completion-gate-and-reviewable-demonstration).
 
 Do not depend on iOS waking the app at an exact hour. Apple controls background execution timing, and background launches can be delayed by hours. [Apple background-task documentation](https://developer.apple.com/documentation/backgroundtasks/starting-and-terminating-tasks-during-development)
 
@@ -285,8 +319,8 @@ The expedition proposal initially suggested simpler fixed cosmetics because arbi
 
 ## 12. Suggested implementation sequence
 
-1. **Standard item foundation:** settle the definition/manifest contracts; produce five bundled standard items; implement ownership, transactional token purchases, mixed placement, rotation/storage and Inventory/Edit presentation.
-2. **Rotating shop:** add versioned weekly policy, saved daily offers, pre-generation/fallback, per-account limits, countdown/refresh and expiry-aware recovery. Add enough extra appearances to make rotation useful.
+1. **Item foundation and launch content:** settle the definition/manifest contracts; target ten bundled items (five Common, three Rare, two Epic); implement ownership, transactional token purchases, mixed placement, rotation/storage and Inventory/Edit presentation. Stages 1–5 already supply the bench foundation; see current source status above. Actual catalogue identities/prices remain undecided.
+2. **Rotating shop:** add versioned weekly policy (three distinct sampled Commons daily, three Rare dates, two independent Epic dates, overlap allowed), saved daily offers, an enabled automatic preparation runner/fallback, per-account limits, countdown/refresh and expiry-aware recovery. Each rarity uses its own pinned pool; additions affect future, ungenerated weeks only. Replace the legacy permanent item-offer path without changing completed receipts or owned-copy valuations. Use placeholder content until the actual catalogue is ready; do not require a manual weekly roll.
 3. **Skills and reward integration:** add one modest skill item and one item reward through the shared acquisition service; cover visitor boundaries, growth snapshots and permanent entitlement recovery.
 4. **Remote event assets:** implement hybrid resolution/download/cache/publication when fresh content without app releases becomes a requirement. Bring this phase forward if that requirement applies to the first launch.
 
@@ -295,6 +329,9 @@ Each increment needs explicit migration/publication and native acceptance where 
 ## 13. Validation and acceptance
 
 - Stable weekly results across retries, catalogue edits, restarts and multiple API instances.
+- Three distinct Common identities sampled without replacement each day, plus exactly three Rare and two Epic dates weekly when pools suffice; test zero/one/two overlap cases and allowed later-day Common repeats.
+- Expanding Common/Rare/Epic pools affects the next eligible ungenerated week, never any saved selections or prices; no extra legacy permanent offer remains active.
+- Unattended preparation with no app visits or manual commands; automatic runner recovery/retry and request-time recovery after a missed job.
 - Exact reset boundaries, global timezone handling, foreground refresh and device-clock changes.
 - Empty candidate pools, repeat constraints, missed generation jobs and defined fallbacks.
 - Expired offers, insufficient funds, full item capacity, purchase limits, concurrent devices and atomic rollback.
@@ -310,15 +347,15 @@ Each increment needs explicit migration/publication and native acceptance where 
 
 ## 14. Decisions to settle before implementation
 
-1. Exact first five standard appearances and size/footprint targets.
-2. Initial additional rare/event pool and whether any Epic is available in the shop.
-3. Final weekly distribution, repeat policy, global reset time and small-pool fallback.
+1. Remaining Common/Epic launch appearances and size/footprint targets; the three Rare identities and proposed dimensions are selected in section 3. Recommended ten-item split is five Common, three Rare and two Epic.
+2. Final pool sizes and eligibility: at least three Commons, one Rare and one Epic fill the schedule with repeats across days. Full catalogue remains undecided; future additions expand the appropriate pool for ungenerated weeks only.
+3. Confirm proposed global reset, soft Common-trio / featured-repeat preferences and slot-omission fallback from the Stage 6 plan. Three Common slots daily without replacement and the featured rarity distribution are specified above.
 4. Token prices, purchase allowances, duplicate-copy limits and any future resale policy.
 5. Item inventory and placed-item limits, independent of plant capacity.
 6. One shared Inventory destination versus retaining two linked entry points.
-7. First skill's effect, magnitude, stacking group and nonexclusive route to equivalent power if needed.
+7. Runtime integration/release order for the approved +5% offline-capacity Mailbox and +3% garden-attraction Skep skills, and a nonexclusive route to equivalent power if needed.
 8. First reward source and treatment of prior milestone earners.
 9. Whether fresh event artwork must ship without an app update from the first release.
 10. Asset compatibility, publication and recovery contracts before live activation.
 
-Recommended starting scope: **five bundled standard decorations, a small additional featured pool, one shared Inventory, mixed plant/item editing, server-controlled saved daily rotations, and one modest skill item after the basic loop works.** These are planning recommendations, not activated game rules.
+Recommended starting scope: **ten items (five Common, three Rare, two Epic), three distinct Commons sampled daily without replacement, three random Rare days and two independent random Epic days per week with overlap allowed, expandable versioned rarity pools, one shared Inventory, mixed plant/item editing, automatic server-controlled saved weekly/daily rotations, and one modest skill item after the basic loop works.** No item is permanently in stock. Catalogue identities and prices remain open. These are planning recommendations, not activated game rules. [The Stage 6 plan](weekly_shop_plan.md) supplies the implementation sequence and completion gate.

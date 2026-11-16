@@ -152,6 +152,10 @@ def rows(session, owner, *, placed_only=False):
 
 def present(row):
     owned, identity, definition, placement = row
+    from sqlalchemy.orm import object_session
+
+    from forest_api.item_skills import descriptions
+
     return ItemDTO(
         owned_item_id=owned.id,
         item_id=definition.id,
@@ -163,6 +167,7 @@ def present(row):
         model_key=definition.model_key,
         thumbnail_key=definition.thumbnail_key,
         clearance_radius=definition.clearance_radius,
+        garden_skills=descriptions(object_session(definition), definition),
         placement=PlacementDTO(
             garden_id=placement.garden_id,
             x=placement.x,
@@ -179,6 +184,12 @@ def read(session, identity, limit, after):
         user = services.get_user(session, identity, lock=True)
         services.lock_garden(session, user.id)
         values = rows(session, user.id)
+        if any(row[2].id != "wooden-bench" for row in values) and not session.info.get(
+            "item_rotations_client"
+        ):
+            raise ApiError(
+                426, "item_content_update_required", "Update the app for the new garden items"
+            )
         if after is not None:
             if after not in {r[0].id for r in values}:
                 raise ApiError(400, "invalid_cursor", "Refresh the item inventory")

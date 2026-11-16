@@ -239,6 +239,7 @@ class ItemDTO(DTO):
     thumbnail_key: str
     clearance_radius: GroundNumber
     placement: PlacementDTO | None
+    garden_skills: list[dict] = Field(default_factory=list)
 
 
 class PlantDTO(DTO):
@@ -281,6 +282,7 @@ class GardenDTO(DTO):
     items: list[ItemDTO] = Field(default_factory=list)
     total_attraction_micro_units: str = "0"
     skill_summary: dict | None = None
+    daily_water: list[dict] = Field(default_factory=list)
 
 
 class StageAssetDTO(DTO):

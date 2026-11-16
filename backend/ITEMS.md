@@ -1,5 +1,10 @@
 # Garden items — permanent shop, resale and mixed editing
 
+**17 November 2026:** the fifteen-item catalogue, saved rotations and all eight
+item skills are now source-implemented. See [rotations, skills and activation](ITEM_ROTATIONS.md).
+The Stage 1–5 record below is historical; native/device acceptance and personal
+database activation remain separate.
+
 Source implementation: 15 November 2026, through stage 5. Native Xcode/device
 acceptance and personal-game activation remain separate. The shop is permanent:
 no daily rotation, scheduling, item skills or event item-claim UI is introduced.

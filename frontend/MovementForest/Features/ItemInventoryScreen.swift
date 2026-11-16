@@ -94,6 +94,13 @@ struct ItemDetailScreen: View {
                 ItemIcon(item: item).frame(height: 150).frame(maxWidth: .infinity)
                 Text(item.rarity.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
                 Text(item.description).frame(maxWidth: .infinity, alignment: .leading)
+                ForEach(item.gardenSkills ?? []) { skill in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(skill.name).font(.headline)
+                        Text(skill.description).font(.callout)
+                        Text(item.placement == nil ? "Place this item to enable its skill." : "Placed in your garden.").font(.caption)
+                    }
+                }
             } else {
                 Text("This copy is no longer available. Refresh your inventory.")
             }

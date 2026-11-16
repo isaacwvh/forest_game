@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from threading import RLock
 
 from fastapi import FastAPI
 
@@ -18,8 +19,18 @@ from forest_api.routes import router
 from forest_api.visitor_routes import router as visitor_router
 from forest_api.visitors import VisitorAccounting
 
+_APP_BUILD_LOCK = RLock()
+
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    # Pydantic/FastAPI lazily build shared annotated dependency adapters. App
+    # factories used concurrently by workers/tests must not compile them at once.
+    # This lock covers construction only; request execution is unaffected.
+    with _APP_BUILD_LOCK:
+        return _create_app(settings)
+
+
+def _create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     database = Database(settings)
 
@@ -51,4 +62,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router)
     app.include_router(visitor_router)
     app.include_router(collection_router)
+    # Eagerly materialize lazy route/dependency adapters while construction is
+    # serialized, instead of racing Pydantic annotation caches on first requests.
+    app.openapi()
     return app

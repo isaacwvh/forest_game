@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "hollow-log-library",
+  "displayName": "Hollow-Log Library",
+  "rarity": "Epic",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; runtime registration and skills not activated",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "center-of-complete-plan-envelope-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.95
+  },
+  "dimensionsMetres": {
+    "width": 1.6,
+    "depth": 0.82,
+    "height": 0.88
+  },
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.800000011920929,
+      0.0,
+      -0.4099999964237213
+    ],
+    "max": [
+      0.800000011920929,
+      0.8799999952316284,
+      0.4099999964237213
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": null,
+  "ui": {
+    "thumbnail": "ui/hollow-log-library-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 10,
+  "triangleCount": 41834,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      2048,
+      2048
+    ],
+    "count": 1,
+    "treatment": "Smooth matte surfaces; quiet broad color variation; no noise, bump or displacement."
+  },
+  "plannedSkill": null,
+  "assets": [
+    {
+      "file": "models/hollow-log-library-standard.usdz",
+      "bytes": 2238238,
+      "sha256": "b0a31e02a5d496eadb10ada8c45528f938e89c26fabadc4828aa651feb6e1b0d",
+      "thumbnail": "ui/hollow-log-library-standard.png"
+    },
+    {
+      "file": "ui/hollow-log-library-standard.png",
+      "bytes": 72273,
+      "sha256": "04138d64c5d7cb0cd2d80877820dd5719a3b26e102499100a9de406593a76daa"
+    }
+  ]
+}

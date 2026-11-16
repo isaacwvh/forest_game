@@ -60,6 +60,15 @@ def fraction_read(value: dict) -> Fraction:
     return Fraction(int(value["numerator"]), int(value["denominator"]))
 
 
+def welcome_lifetime(context):
+    return timedelta(
+        microseconds=context.snapshot.get(
+            "welcomeDurationMicroseconds",
+            context.snapshot["rules"]["opportunity_seconds"] * 1_000_000,
+        )
+    )
+
+
 def rule_at(session, settings, boundary):
     rule = session.scalar(
         select(VisitorRules)
@@ -119,6 +128,16 @@ def create_context(session, settings, garden, boundary):
         3 * base if level is not None else definition.curve.maximum_capacity,
         flat_multiplier=definition.capacity_flat_multiplier,
     )
+    welcome_microseconds = math.ceil(
+        skills.welcome_seconds(definition.opportunity_seconds) * 1_000_000
+    )
+    if (
+        welcome_microseconds + definition.heartbeat_seconds * 1_000_000
+        > definition.lease_seconds * 1_000_000
+    ):
+        raise ApiError(
+            503, "invalid_visitor_rules", "Lease must cover the effective welcome duration"
+        )
     expiry = {}
     if skills.flights and any(
         e.magnitude.type == "daily_flights"
@@ -147,6 +166,8 @@ def create_context(session, settings, garden, boundary):
             "activeRate": fraction_json(parameters["active_rate"]),
             "offlineRate": fraction_json(parameters["offline_rate"]),
             "capacity": parameters["capacity"],
+            "welcomeDurationMicroseconds": welcome_microseconds,
+            "itemDurationPolicy": "garden-items-v1:+25%",
             **(
                 {
                     "levelBenefits": {
@@ -284,12 +305,10 @@ def active_interval(session, state, context, active, start, end, boundary, can_i
                 probability, state.gap_slots, rule["gap_slots"], draw
             ):
                 issued = EPOCH + timedelta(seconds=eligible_slot * SLOT_SECONDS)
-                expires = min(
-                    issued + timedelta(seconds=rule["opportunity_seconds"]), active.lease_expires_at
-                )
+                expires = min(issued + welcome_lifetime(context), active.lease_expires_at)
                 # Give a fair full presentation window. Late polls miss this slot.
-                if expires - boundary >= timedelta(
-                    seconds=rule["opportunity_seconds"] - rule["heartbeat_seconds"]
+                if expires - boundary >= welcome_lifetime(context) - timedelta(
+                    seconds=rule["heartbeat_seconds"]
                 ):
                     opportunity = VisitorOpportunity(
                         id=uuid4(),
@@ -323,6 +342,9 @@ def slot_succeeds(probability, gap_slots, maximum_gap, draw):
 
 
 def settle(session, settings, garden, boundary, *, can_issue=False, draw=random_draw):
+    from forest_api.daily_items import settle_due
+
+    settle_due(session, settings, garden, boundary)
     services.get_catalogue_state(session, settings, lock=True)
     state = state_for(session, settings, garden, boundary)
     boundary = max(boundary, state.settled_at).astimezone(UTC)

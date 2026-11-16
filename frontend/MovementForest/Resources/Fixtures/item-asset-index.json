@@ -1,3 +1,17 @@
 [
-  "wooden-bench/v1/item-manifest.json"
+  "wooden-bench/v1/item-manifest.json",
+  "iron-lamppost/v1/item-manifest.json",
+  "stone-birdbath/v1/item-manifest.json",
+  "rustic-pitchfork/v1/item-manifest.json",
+  "crooked-trail-sign/v1/item-manifest.json",
+  "sleepy-scarecrow/v1/item-manifest.json",
+  "snail-mailbox/v1/item-manifest.json",
+  "beekeepers-skep/v1/item-manifest.json",
+  "foxfire-kiln/v1/item-manifest.json",
+  "cloud-shepherds-kite/v1/item-manifest.json",
+  "patchwork-picnic/v1/item-manifest.json",
+  "rainharp/v1/item-manifest.json",
+  "celestial-gnome/v1/item-manifest.json",
+  "mycelium-exchange/v1/item-manifest.json",
+  "hollow-log-library/v1/item-manifest.json"
 ]

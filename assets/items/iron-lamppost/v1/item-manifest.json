@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "iron-lamppost",
+  "displayName": "Iron Lamppost",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; not registered in the app",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "pole-center-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.8
+  },
+  "dimensionsMetres": {
+    "width": 0.9,
+    "depth": 0.36,
+    "height": 2.4
+  },
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.18000000715255737,
+      -3.996803047469241e-17,
+      -0.18000000715255793
+    ],
+    "max": [
+      0.7200000286102295,
+      2.400000095367432,
+      0.1800000071525574
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": null,
+  "ui": {
+    "thumbnail": "ui/iron-lamppost-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 2,
+  "triangleCount": 11504,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "smooth charcoal iron, softly beveled frame, static opal amber emissive glass; no bump"
+  },
+  "assets": [
+    {
+      "file": "models/iron-lamppost-standard.usdz",
+      "bytes": 621195,
+      "sha256": "ca8acc966d474982ca30c1258a65d2e6c57c15959d080ac6f8dd35998bb7b053",
+      "thumbnail": "ui/iron-lamppost-standard.png"
+    },
+    {
+      "file": "ui/iron-lamppost-standard.png",
+      "bytes": 26391,
+      "sha256": "093ad538a9e5987f10b142c227b725e20c903065f2564ba0279ac094b4903bef"
+    }
+  ],
+  "effects": {
+    "kind": "static-emissive-material",
+    "realLights": 0,
+    "animation": false
+  }
+}
