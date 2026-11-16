@@ -289,20 +289,28 @@ struct ConnectedGardenScreen: View {
                     ForEach(summary.activeSkills.uniqueSkills) { skill in
                         DisclosureGroup {
                             Text(skill.description).foregroundStyle(JournalTheme.secondary)
-                            if let sourceID = skill.sourcePlantId, let source = store.ownedCopy(sourceID) {
-                                PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []),
-                                    rarity: store.catalogue?.rarity(for: source.speciesId), suffix: " · Fully grown source")
-                                    .font(.caption).foregroundStyle(JournalTheme.secondary)
-                            }
-                            if let sourceID = skill.sourceItemId,
-                               let source = store.confirmed?.items?.first(where: { $0.id == sourceID }) {
-                                Text("\(source.displayName) · Placed source").font(.caption)
-                            }
                             if skill.eligibleSourcePlantIds.count + (skill.eligibleSourceItemIds?.count ?? 0) > 1 {
                                 Text("\(skill.eligibleSourcePlantIds.count + (skill.eligibleSourceItemIds?.count ?? 0)) sources share this bonus.").font(.caption)
                             }
                         } label: {
-                            SkillSummaryLabel(skill: skill)
+                            VStack(alignment: .leading, spacing: 4) {
+                                if let sourceID = skill.sourceItemId,
+                                   let source = store.confirmed?.items?.first(where: { $0.id == sourceID }) {
+                                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                        Text("(Item)").fixedSize()
+                                        PlantNameText(source.displayName, rarity: source.rarity, suffix: " · \(skill.name)")
+                                    }.font(.headline)
+                                } else if let sourceID = skill.sourcePlantId, let source = store.ownedCopy(sourceID) {
+                                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                        Text("(Plant)").fixedSize()
+                                        PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []),
+                                            rarity: store.catalogue?.rarity(for: source.speciesId), suffix: " · \(skill.name)")
+                                    }.font(.headline)
+                                } else {
+                                    Text(skill.name).font(.headline)
+                                }
+                                Text(skill.bonusText).font(.subheadline).foregroundStyle(.secondary)
+                            }
                         }.padding(12).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
                             .accessibilityIdentifier("garden.skill.\(skill.skillId)")
                     }
