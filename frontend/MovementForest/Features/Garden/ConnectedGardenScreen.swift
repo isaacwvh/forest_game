@@ -298,19 +298,21 @@ struct ConnectedGardenScreen: View {
                                    let source = store.confirmed?.items?.first(where: { $0.id == sourceID }) {
                                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                                         Text("(Item)").fixedSize()
-                                        PlantNameText(source.displayName, rarity: source.rarity, suffix: " · \(skill.name)")
+                                        PlantNameText(source.displayName, rarity: source.rarity, suffix: " \(skill.name)")
                                     }.font(.headline)
                                 } else if let sourceID = skill.sourcePlantId, let source = store.ownedCopy(sourceID) {
                                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                                         Text("(Plant)").fixedSize()
-                                        PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []),
-                                            rarity: store.catalogue?.rarity(for: source.speciesId), suffix: " · \(skill.name)")
+                                        PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []).replacingOccurrences(of: " · ", with: " "),
+                                            rarity: store.catalogue?.rarity(for: source.speciesId), suffix: " \(skill.name)")
                                     }.font(.headline)
                                 } else {
                                     Text(skill.name).font(.headline)
                                 }
                                 Text(skill.bonusText).font(.subheadline).foregroundStyle(.secondary)
                             }
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                         }.padding(12).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
                             .accessibilityIdentifier("garden.skill.\(skill.skillId)")
                     }
