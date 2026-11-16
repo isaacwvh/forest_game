@@ -93,7 +93,7 @@ struct ItemDetailScreen: View {
             if let item = item {
                 ItemIcon(item: item).frame(height: 150).frame(maxWidth: .infinity)
                 Text(item.rarity.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
-                Text(item.description).frame(maxWidth: .infinity, alignment: .leading)
+                Text(item.flavorDescription).frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(item.gardenSkills ?? []) { skill in
                     VStack(alignment: .leading, spacing: 4) {
                         Text(skill.name).font(.headline)

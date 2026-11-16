@@ -1,5 +1,27 @@
 import Foundation
 
+enum ItemDescriptionCopy {
+    // Trim notes from the released copy without rewriting immutable definitions.
+    // Exact suffixes preserve new/unknown descriptions and additional flavor text.
+    static func concise(_ description: String) -> String {
+        let notes = [
+            " Static, cosmetic decoration; no gameplay skill or base attraction.",
+            " Static and cosmetic; no gameplay skill or base attraction.",
+            " Static cosmetic item. No skill.",
+            " Cosmetic; no gameplay skill.",
+            " +5% offline visitor storage capacity while placed.",
+            " +3% garden attraction while placed. Gentle honey drip.",
+            " Morning Rain gives each planted plant +2.5 water at the start of each game day.",
+            " Celestial Welcome gives +4.5% garden attraction while placed.",
+            " Sporeline Surge gives all planted plants +4% water from workouts while placed.",
+            " Gentle six-second wind loop. Gentle Hold extends butterfly welcome time by 20% while placed.",
+            " Borrowed Wisdom gives +1% activity water per distinct planted species, capped at +5%."
+        ]
+        guard let note = notes.first(where: { description.hasSuffix($0) }) else { return description }
+        return String(description.dropLast(note.count))
+    }
+}
+
 struct APIItemSkill: Codable, Equatable, Identifiable {
     let id: String
     let name: String
@@ -31,6 +53,7 @@ struct APIOwnedItem: Codable, Identifiable, Equatable {
     let definitionVersion: Int
     let displayName: String
     let description: String
+    var flavorDescription: String { ItemDescriptionCopy.concise(description) }
     let rarity: String
     let assetVersion: String
     let modelKey: String
@@ -71,6 +94,7 @@ struct APIItemShopOffer: Codable, Identifiable {
     let definitionVersion: Int
     let displayName: String
     let description: String
+    var flavorDescription: String { ItemDescriptionCopy.concise(description) }
     let rarity: String
     let assetVersion: String
     let modelKey: String

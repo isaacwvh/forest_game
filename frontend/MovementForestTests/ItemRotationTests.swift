@@ -16,6 +16,34 @@ private struct ItemRotationContract: Decodable {
 
 @MainActor
 final class ItemRotationTests: XCTestCase {
+    func testItemDescriptionsKeepFlavorAndSeparateSkillCopy() throws {
+        let value = try ItemRotationContract.load()
+        for item in value.inventory.items {
+            let flavor = item.flavorDescription
+            XCTAssertFalse(flavor.isEmpty, item.itemId)
+            XCTAssertTrue(item.description.hasPrefix(flavor), item.itemId)
+            for note in ["cosmetic", "no skill", "no gameplay skill", "base attraction", "six-second", "while placed"] {
+                XCTAssertFalse(flavor.localizedCaseInsensitiveContains(note), item.itemId)
+            }
+            if item.itemId != "wooden-bench" && item.itemId != "patchwork-picnic" {
+                XCTAssertLessThan(flavor.count, item.description.count, item.itemId)
+            }
+            let offer = APIItemShopOffer(offerId: "test", offerVersion: 1, tokenCost: "550",
+                itemId: item.itemId, definitionVersion: item.definitionVersion, displayName: item.displayName,
+                description: item.description, rarity: item.rarity, assetVersion: item.assetVersion,
+                modelKey: item.modelKey, thumbnailKey: item.thumbnailKey, gardenSkills: item.gardenSkills)
+            XCTAssertEqual(offer.flavorDescription, flavor)
+        }
+        let kite = try XCTUnwrap(value.inventory.items.first { $0.itemId == "cloud-shepherds-kite" })
+        XCTAssertEqual(kite.flavorDescription, "A reel-tethered kite holds a tiny floating cloud.")
+        XCTAssertEqual(kite.gardenSkills?.first?.name, "Gentle Hold")
+        let library = try XCTUnwrap(value.inventory.items.first { $0.itemId == "hollow-log-library" })
+        XCTAssertEqual(library.flavorDescription, "A hollow-log lending library with bark-bound books and a full-moon return sign.")
+        XCTAssertEqual(library.gardenSkills?.first?.name, "Borrowed Wisdom")
+        let unknown = "A tiny pond. A quiet place to think."
+        XCTAssertEqual(ItemDescriptionCopy.concise(unknown), unknown)
+    }
+
     func testCountdownUsesMonotonicElapsedAndConservativeLatency() {
         let start = Date(timeIntervalSince1970: 1_000_000)
         let rotation = APIShopRotation(serverNow: start, shopTimezone: "UTC", rotationId: "test",

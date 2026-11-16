@@ -134,7 +134,7 @@ struct PurchaseItemScreen: View {
             PlantNameText(offer.displayName, rarity: offer.rarity)
                 .font(.system(.title3, design: .serif).weight(.semibold))
                 .multilineTextAlignment(.center)
-            Text(offer.description).frame(maxWidth: .infinity, alignment: .leading)
+            Text(offer.flavorDescription).frame(maxWidth: .infinity, alignment: .leading)
             ForEach(offer.gardenSkills ?? []) { skill in
                 Text("\(skill.name): \(skill.description)").font(.callout)
             }
