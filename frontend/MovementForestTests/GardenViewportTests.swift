@@ -164,7 +164,7 @@ final class GardenViewportTests: XCTestCase {
         }
     }
 
-    func testEditorDockKeepsSaveAndToolsOutsideLongPopup() async throws {
+    func testEditorDockKeepsToolsOutsideLongPopupWithoutSaveFooter() async throws {
         for size in [CGSize(width: 320, height: 568), CGSize(width: 844, height: 390)] {
             var frames: [String: CGRect] = [:]
             func bounds(_ name: String) -> some View {
@@ -184,8 +184,6 @@ final class GardenViewportTests: XCTestCase {
                     }
                 } tools: {
                     Text("Storage and camera controls").frame(height: 44).frame(maxWidth: .infinity).background(bounds("tools"))
-                } save: {
-                    Button("Save garden") {}.frame(maxWidth: .infinity, minHeight: 44).padding(8).background(bounds("save"))
                 }.background(bounds("dock"))
             }
             .frame(width: size.width, height: size.height)
@@ -196,14 +194,13 @@ final class GardenViewportTests: XCTestCase {
             window.rootViewController = UIHostingController(rootView: content)
             window.makeKeyAndVisible()
             for _ in 0..<100 {
-                if frames["save"] != nil { break }
+                if frames["tools"] != nil { break }
                 try await Task.sleep(nanoseconds: 10_000_000)
             }
-            let save = try XCTUnwrap(frames["save"]), tools = try XCTUnwrap(frames["tools"]), dock = try XCTUnwrap(frames["dock"])
-            XCTAssertGreaterThanOrEqual(save.height, 44)
-            XCTAssertLessThanOrEqual(tools.maxY, save.minY + 1)
-            XCTAssertLessThanOrEqual(save.maxY, dock.maxY + 1)
-            XCTAssertGreaterThanOrEqual(save.minY, dock.minY - 1)
+            let tools = try XCTUnwrap(frames["tools"]), dock = try XCTUnwrap(frames["dock"])
+            XCTAssertGreaterThanOrEqual(tools.height, 44)
+            XCTAssertEqual(tools.maxY, dock.maxY, accuracy: 1, "No Save footer space should remain below the tools")
+            XCTAssertGreaterThanOrEqual(tools.minY, dock.minY - 1)
             window.isHidden = true; window.rootViewController = nil
         }
     }

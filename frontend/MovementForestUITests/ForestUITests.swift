@@ -432,6 +432,7 @@ final class ForestUITests: XCTestCase {
         app.buttons["garden.skills.close"].tap()
         XCTAssertTrue(app.buttons["editor.saveGarden"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["editor.saveGarden"].isHittable)
+        XCTAssertFalse(app.buttons["editor.saveGarden"].isEnabled)
         XCTAssertTrue(app.buttons["editor.done"].exists)
     }
 
@@ -518,10 +519,14 @@ final class ForestUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Last qualifying source removed"].exists)
         let saveGarden = app.buttons["editor.saveGarden"]
         XCTAssertTrue(saveGarden.isEnabled)
-        XCTAssertTrue(saveGarden.isHittable, "Save must stay outside the scrolling skills and narrow navigation toolbar")
+        XCTAssertTrue(saveGarden.isHittable, "The Save tick must remain reachable in the navigation toolbar")
         XCTAssertGreaterThanOrEqual(saveGarden.frame.height, 44)
-        XCTAssertGreaterThan(saveGarden.frame.width, 200)
-        XCTAssertLessThanOrEqual(popup.frame.maxY, saveGarden.frame.minY)
+        XCTAssertGreaterThanOrEqual(saveGarden.frame.width, 44)
+        XCTAssertLessThanOrEqual(saveGarden.frame.width, 64)
+        let close = app.buttons["editor.done"]
+        XCTAssertLessThanOrEqual(saveGarden.frame.maxX, close.frame.minX + 1)
+        XCTAssertEqual(saveGarden.frame.midY, close.frame.midY, accuracy: 1)
+        XCTAssertLessThanOrEqual(saveGarden.frame.maxY, popup.frame.minY)
         app.buttons["editor.done"].tap()
         XCTAssertTrue(app.alerts["Save garden changes?"].waitForExistence(timeout: 5))
         app.alerts["Save garden changes?"].buttons["Keep editing"].tap()

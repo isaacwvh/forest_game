@@ -139,7 +139,13 @@ struct ConnectedGardenScreen: View {
                     }.buttonStyle(.journalIcon)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 0) {
+                        Button { Task { await store.saveDraft() } } label: {
+                            Image(systemName: "checkmark").font(.body.weight(.semibold))
+                                .foregroundStyle(store.canSaveDraft ? JournalTheme.action : Color.gray)
+                                .frame(width: 44, height: 44)
+                        }.buttonStyle(.journalIcon).disabled(!store.canSaveDraft)
+                            .accessibilityLabel("Save garden").accessibilityIdentifier("editor.saveGarden")
                         Button {
                             if store.pending != nil { sheet = nil; store.endEditing() }
                             else if store.hasDraftChanges { exitPrompt = true }
@@ -336,14 +342,6 @@ struct ConnectedGardenScreen: View {
             contextualControls
         } tools: {
             editingToolbar
-        } save: {
-            Button { Task { await store.saveDraft() } } label: {
-                Text("Save garden").frame(maxWidth: .infinity, minHeight: 44)
-                    .fixedSize(horizontal: false, vertical: true)
-            }.buttonStyle(.journalPrimary).disabled(!store.canSaveDraft)
-                .accessibilityIdentifier("editor.saveGarden")
-                .padding(.horizontal, 16).padding(.vertical, 8)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

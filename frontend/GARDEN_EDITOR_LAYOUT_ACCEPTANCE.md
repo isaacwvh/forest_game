@@ -4,6 +4,15 @@ Implemented locally on 17 November 2026. This supersedes the expanded editor
 skills panel, inactive-skill disclosure and independent Save footer described in
 GARDEN_STRATEGY_ACCEPTANCE.md. Gameplay rules and backend contracts are unchanged.
 
+## Save tick — 18 November 2026
+
+Save garden is now a green checkmark immediately to the left of X in the editing
+navigation bar, with a 44-point target and Save garden accessibility label. It is
+grey and disabled whenever the existing canSaveDraft guard is false. The bottom
+Save footer and its reserved height are removed. Close confirmation and atomic
+save/recovery behavior are unchanged. Native regressions check the disabled/ready
+states, tick placement beside X and absence of reserved footer space.
+
 ## Skill disclosure text — 18 November 2026
 
 Expanded skills consistently show description, Conditions, then Sources, all

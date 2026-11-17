@@ -1,20 +1,18 @@
 import SwiftUI
 
-/// One bounded editing surface keeps Save and tools outside contextual scrolling.
-struct GardenEditorDock<Content: View, Tools: View, Save: View>: View {
+/// One bounded editing surface keeps tools outside contextual scrolling.
+struct GardenEditorDock<Content: View, Tools: View>: View {
     @ViewBuilder let content: () -> Content
     @ViewBuilder let tools: () -> Tools
-    @ViewBuilder let save: () -> Save
     @State private var heights: [String: CGFloat] = [:]
     var body: some View {
         GeometryReader { geometry in
-            let available = max(0, geometry.size.height - (heights["tools"] ?? 0) - (heights["save"] ?? 0))
+            let available = max(0, geometry.size.height - (heights["tools"] ?? 0))
             VStack(spacing: 0) {
                 ScrollView {
                     content().frame(maxWidth: .infinity).background(measure("content"))
                 }.frame(height: min(heights["content"] ?? 0, available))
                 tools().fixedSize(horizontal: false, vertical: true).background(measure("tools"))
-                save().fixedSize(horizontal: false, vertical: true).background(measure("save"))
             }.foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
                 .frame(maxHeight: .infinity, alignment: .bottom)
         }.onPreferenceChange(GardenDockHeights.self) { heights = $0 }
