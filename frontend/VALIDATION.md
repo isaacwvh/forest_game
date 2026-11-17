@@ -1,7 +1,9 @@
 ## Purchase feedback and quiet updates — 17 November 2026
 
 Shop now shows a dismissible journal overlay for newly confirmed pack/item
-purchases. Loaded pages omit routine progress/pending rows, retain empty content
+purchases using Saved to Inventory copy. It fades out after three seconds; Close
+still dismisses it immediately, and each new purchase restarts the timer.
+Loaded pages omit routine progress/pending rows, retain empty content
 during reads and avoid saved-data flashes. Packs has a compact last-opening row.
 Receipt persistence, mutation/recovery guards, backend, APIs, assets and the pack
 opening ceremony are unchanged.

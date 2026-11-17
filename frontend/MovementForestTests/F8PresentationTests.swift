@@ -10,15 +10,15 @@ final class F8PresentationTests: XCTestCase {
             exchangeId: UUID(), quantity: 2)
         let packNotice = try XCTUnwrap(ShopPurchaseNotice(receipt: receipt))
         XCTAssertEqual(packNotice.id, receipt.requestId)
-        XCTAssertEqual(packNotice.message, "Packs saved to Storage.")
+        XCTAssertEqual(packNotice.message, "Packs saved to Inventory.")
         receipt.quantity = 1
-        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Pack saved to Storage.")
+        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Pack saved to Inventory.")
         receipt.exchangeId = nil; receipt.purchaseId = UUID()
-        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Item saved to Storage.")
+        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Item saved to Inventory.")
         receipt.quantity = 2
-        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Items saved to Storage.")
+        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Items saved to Inventory.")
         receipt.quantity = nil; receipt.ownedItemIds = [UUID(), UUID()]
-        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Items saved to Storage.")
+        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Items saved to Inventory.")
         receipt.purchaseId = nil; receipt.milestoneId = "first_visit"
         XCTAssertNil(ShopPurchaseNotice(receipt: receipt))
         receipt.milestoneId = nil; receipt.openingId = UUID()

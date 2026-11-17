@@ -798,7 +798,7 @@ final class ForestUITests: XCTestCase {
         XCTAssertEqual(packs.value as? String, "3")
         let closeNotice = app.buttons["shop.purchaseNotice.close"]
         XCTAssertTrue(closeNotice.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Packs saved to Storage."].exists)
+        XCTAssertTrue(app.staticTexts["Packs saved to Inventory."].exists)
         XCTAssertEqual(purchase.frame.minY, purchaseTop, accuracy: 1, "Purchase feedback must not move the Shop content")
         XCTAssertGreaterThanOrEqual(closeNotice.frame.height, 44)
         closeNotice.tap()
@@ -824,6 +824,25 @@ final class ForestUITests: XCTestCase {
         app.segmentedControls.buttons["Exchange"].tap()
         XCTAssertTrue(purchase.waitForExistence(timeout: 5))
         XCTAssertFalse(closeNotice.exists, "Returning to Shop must not replay a saved receipt")
+    }
+
+    func testShopPurchaseNotificationDismissesAutomaticallyWithoutAnotherRequest() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-collection"]; app.launch()
+        let purchase = app.buttons["collection.exchange.woodland"]
+        XCTAssertTrue(purchase.waitForExistence(timeout: 15))
+        let purchaseTop = purchase.frame.minY
+        purchase.tap()
+        let confirm = app.buttons["purchase.confirm"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.tap()
+        let closeNotice = app.buttons["shop.purchaseNotice.close"]
+        XCTAssertTrue(closeNotice.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Pack saved to Inventory."].exists)
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: closeNotice)
+        waitForExpectations(timeout: 7)
+        XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "1")
+        XCTAssertEqual(purchase.frame.minY, purchaseTop, accuracy: 1)
     }
 
     func testPackContentsListsVariantOddsWithoutArtworkOrExpansionAndNeverPurchases() {

@@ -4,8 +4,9 @@
 
 Shop purchase confirmations use a small parchment overlay with a forest-green
 check and a 44-point Close target. New confirmed pack/item receipts show singular
-or plural Saved to Storage copy once during the current Shop visit. The overlay
-stays until closed or the page is left; a later purchase replaces it. Closing it
+or plural Saved to Inventory copy once during the current Shop visit. The overlay
+fades out over 0.25 seconds after three seconds; Close still dismisses it immediately.
+A later purchase replaces it and restarts the timer. Closing it
 does not clear a durable receipt, and restored results do not replay on entry.
 Confirmation remains visible if a later inventory refresh fails.
 

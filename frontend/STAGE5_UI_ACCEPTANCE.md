@@ -7,10 +7,11 @@ Implemented on 5 November 2026. Native validation and device acceptance remain p
 Source implemented; the checks below still require Mac/iPhone execution.
 
 1. Buy one and multiple packs/items, including featured decorations. One small
-   journal popup shows the correct singular/plural Saved to Storage copy. Its
+   journal popup shows the correct singular/plural Saved to Inventory copy. Its
    Close target is at least 44 points; closing it changes no wallet/inventory
    values and makes no request. There is no purchase-success footer.
-2. Leave a popup open and purchase again: the new confirmation replaces it. Close,
+2. Leave a popup open: it fades out after three seconds. Purchase again while a
+   popup is visible: the new confirmation replaces it and gets a fresh timer. Close,
    refresh, switch pages, return, and relaunch: old success does not replay. Repeat
    with account switches and a pending purchase recovered on the current visit.
 3. Hold responses while buying/claiming and refreshing Shop, Packs, Milestones,

@@ -12,7 +12,7 @@ struct ShopPurchaseNotice: Identifiable, Equatable {
             noun = (receipt.quantity ?? receipt.packs?.count ?? 1) == 1 ? "Pack" : "Packs"
         } else { return nil }
         id = receipt.requestId
-        message = "\(noun) saved to Storage."
+        message = "\(noun) saved to Inventory."
     }
 }
 

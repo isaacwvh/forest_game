@@ -73,6 +73,12 @@ struct CollectionScreen: View {
             if destination == .exchange, let notice = purchaseNotice {
                 ShopPurchasePopup(notice: notice, close: { purchaseNotice = nil })
                     .padding(.horizontal, 16).padding(.top, 8)
+                    .transition(.opacity)
+                    .task(id: notice.id) {
+                        do { try await Task.sleep(nanoseconds: 3_000_000_000) } catch { return }
+                        guard !Task.isCancelled, purchaseNotice?.id == notice.id else { return }
+                        withAnimation(.easeOut(duration: 0.25)) { purchaseNotice = nil }
+                    }
             }
         }
         .onAppear { shopVisible = destination == .exchange }
