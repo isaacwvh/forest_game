@@ -1,3 +1,18 @@
+## Garden editor readability — 17 November 2026
+
+Moved Save garden to a full-width safe-area footer and changed the exit choices
+to a native alert. Attraction/offline capacity use quantity icons with pinned
+totals/deltas; next-action metric notices stay outside the independently scrolling
+skills area. Inactive skills are grouped in a collapsed disclosure. The viewport
+retains the mounted scene; default browsing/sample layout is unchanged.
+
+Portable resource/project/contract validation, all 105 Swift syntax parses and
+whitespace checks pass. All 87 backend/native comparison cases pass in both input
+orders, plus draft round-trip and inactive/adult grouping checks. The design detector reports no findings. Added native
+checks for immature/duplicate inactive grouping and a hittable 44-point full-width
+Save/Keep editing flow. Apple SDK/XCTest and physical layout acceptance still
+require the Mac/iPhone; no hosted execution is claimed here.
+
 ## Garden strategy editor — 17 November 2026
 
 Implemented local mixed drafts, immediate attraction/skill predictions, contextual

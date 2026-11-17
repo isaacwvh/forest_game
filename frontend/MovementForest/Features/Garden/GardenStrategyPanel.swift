@@ -45,23 +45,48 @@ enum GardenStrategyCopy {
     }
 }
 
+struct GardenInactiveSkillGroup: Identifiable {
+    let name: String
+    let rule: APIGardenSkillDefinition
+    let sourceIsAdult: Bool
+    var id: String { name }
+    static func groups(plants: [APIOwnedPlant], items: [APIOwnedItem], summary: APISkillSummary) -> [Self] {
+        let activeNames = Set(summary.activeSkills.map(\.name))
+        let plantRules = plants.flatMap { plant in
+            (plant.gardenSkills ?? []).map { Self(name: $0.name, rule: $0, sourceIsAdult: plant.growthStage == .adult) }
+        }
+        let itemRules = items.flatMap { item in
+            (item.strategyRules?.effects ?? []).map { Self(name: $0.name, rule: $0, sourceIsAdult: true) }
+        }
+        return Dictionary(grouping: (plantRules + itemRules).filter { !activeNames.contains($0.name) }, by: \.name)
+            .compactMap { _, sources in sources.first(where: { $0.sourceIsAdult }) ?? sources.first }
+            .sorted { $0.name < $1.name }
+    }
+}
+
 struct GardenActionImpact: View {
     let title: String
     let before: GardenStrategyEvaluation?
     let after: GardenStrategyEvaluation?
+    var showsSkillChanges = true
     var body: some View {
-        if let before = before, let after = after {
+        if let before = before, let after = after,
+           showsSkillChanges || before.totalAttractionMicroUnits != after.totalAttractionMicroUnits || before.offlineCapacity != after.offlineCapacity {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.subheadline.weight(.semibold))
                 if before.totalAttractionMicroUnits != after.totalAttractionMicroUnits {
-                    Text("Attraction \(GardenStrategyCopy.delta(before.totalAttractionMicroUnits, after.totalAttractionMicroUnits))").font(.callout).monospacedDigit()
+                    QuantityLabel(metric: "attraction", text: "Attraction \(GardenStrategyCopy.delta(before.totalAttractionMicroUnits, after.totalAttractionMicroUnits))")
+                        .font(.callout).monospacedDigit()
                 }
                 if before.offlineCapacity != after.offlineCapacity {
-                    Text("Visitor storage \(before.offlineCapacity) → \(after.offlineCapacity)").font(.callout).monospacedDigit()
+                    QuantityLabel(metric: "offline_capacity", text: "Offline capacity \(before.offlineCapacity.formatted()) → \(after.offlineCapacity.formatted())")
+                        .font(.callout).monospacedDigit()
                 }
-                let changes = GardenStrategyCopy.changes(from: before, to: after)
-                ForEach(changes, id: \.self) { Text($0).font(.callout) }
-                if changes.isEmpty { Text("Skills unchanged").font(.caption).foregroundStyle(JournalTheme.secondary) }
+                if showsSkillChanges {
+                    let changes = GardenStrategyCopy.changes(from: before, to: after)
+                    ForEach(changes, id: \.self) { Text($0).font(.callout) }
+                    if changes.isEmpty { Text("Skills unchanged").font(.caption).foregroundStyle(JournalTheme.secondary) }
+                }
             }.frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine).accessibilityIdentifier("editor.actionImpact")
         }
@@ -71,84 +96,113 @@ struct GardenActionImpact: View {
 @MainActor
 struct GardenStrategyPanel: View {
     @ObservedObject var store: GardenEditorStore
-    @State private var expanded = false
+    @State private var expanded = true
     @State private var now = Date()
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var textSize
     private var value: GardenStrategyEvaluation? { store.strategyPreview }
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             if let value = value {
-                HStack(alignment: .firstTextBaseline) {
-                    Label("Attraction", systemImage: "sparkles")
-                    Text(JournalAmount.water(value.totalAttractionMicroUnits)).fontWeight(.semibold).monospacedDigit()
-                    Spacer(minLength: 4)
-                    if let saved = store.savedStrategy {
-                        Text(GardenStrategyCopy.delta(saved.totalAttractionMicroUnits, value.totalAttractionMicroUnits)).font(.caption).monospacedDigit()
-                    }
-                }.font(.subheadline).accessibilityElement(children: .combine).accessibilityIdentifier("editor.attraction")
-                DisclosureGroup(isExpanded: $expanded) { skillList(value) } label: {
+                metrics(value).fixedSize(horizontal: false, vertical: true).layoutPriority(1)
+                if store.editCandidateID != nil {
+                    GardenActionImpact(title: "If applied", before: store.draftStrategy, after: value, showsSkillChanges: false)
+                        .fixedSize(horizontal: false, vertical: true).layoutPriority(1)
+                } else if let id = store.selectedID {
+                    GardenActionImpact(title: "If stored", before: store.draftStrategy, after: store.strategyIfStored(id), showsSkillChanges: false)
+                        .fixedSize(horizontal: false, vertical: true).layoutPriority(1)
+                }
+                if store.showingCached || !value.context.fresh(at: now) {
+                    Text("Saved context. Refresh for current effects.").font(.caption)
+                    refreshButton
+                }
+                Button { expanded.toggle() } label: {
                     HStack {
                         Text("Garden skills")
                         Text(String(GardenSkillGroup.groups(value.skillSummary).count)).monospacedDigit()
                         Spacer()
-                        Text(store.editCandidateID == nil ? (store.hasDraftChanges ? "Draft" : "Saved") : "Preview")
+                        Text(store.editCandidateID != nil ? "Preview" : store.hasDraftChanges ? "Draft" : "Saved")
                             .font(.caption).foregroundStyle(JournalTheme.secondary)
-                    }.font(.subheadline)
-                }.accessibilityIdentifier("editor.skills")
-                if store.showingCached || !value.context.fresh(at: now) {
-                    Text("Saved context. Connect to refresh effects.").font(.caption)
-                    refreshButton
-                } else if !expanded, let change = GardenStrategyCopy.changes(from: store.savedStrategy, to: value).first {
-                    Text(change).font(.caption).fixedSize(horizontal: false, vertical: true)
+                        Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption)
+                    }.font(.subheadline.weight(.semibold)).frame(minHeight: 44)
+                }.buttonStyle(.plain).accessibilityIdentifier("editor.skills")
+                    .accessibilityValue(expanded ? "Expanded" : "Collapsed")
+                    .fixedSize(horizontal: false, vertical: true)
+                if expanded {
+                    ScrollView {
+                        skillList(value).frame(maxWidth: .infinity, alignment: .leading).padding(.trailing, 8)
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .layoutPriority(-1).accessibilityIdentifier("editor.skillsScroll")
                 }
             } else {
                 Label("Garden effects unavailable", systemImage: "info.circle").font(.subheadline)
                 refreshButton
             }
-        }.tint(JournalTheme.action)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: value?.signature)
+        }.frame(maxWidth: .infinity, alignment: .topLeading).tint(JournalTheme.action)
             .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { now = $0 }
+    }
+    private func metrics(_ value: GardenStrategyEvaluation) -> some View {
+        let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 16))
+        return layout {
+            metric("Attraction", icon: "attraction", value: JournalAmount.water(value.totalAttractionMicroUnits),
+                change: store.savedStrategy.flatMap { saved in
+                    saved.totalAttractionMicroUnits == value.totalAttractionMicroUnits ? nil : GardenStrategyCopy.delta(saved.totalAttractionMicroUnits, value.totalAttractionMicroUnits)
+                }, identifier: "editor.attraction")
+            metric("Offline capacity", icon: "offline_capacity", value: value.offlineCapacity.formatted(),
+                change: store.savedStrategy.flatMap { saved in
+                    let difference = value.offlineCapacity - saved.offlineCapacity
+                    return difference == 0 ? nil : (difference > 0 ? "+" : "") + difference.formatted()
+                }, identifier: "editor.offlineCapacity")
+        }.accessibilityIdentifier("editor.strategyMetrics")
+    }
+    private func metric(_ title: String, icon: String, value: String, change: String?, identifier: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            QuantityIcon(metric: icon)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.caption).foregroundStyle(JournalTheme.secondary)
+                Text(value).font(.headline).monospacedDigit().fixedSize(horizontal: false, vertical: true)
+                if let change = change { Text("\(change) from saved").font(.caption).monospacedDigit() }
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine).accessibilityIdentifier(identifier)
     }
     private var refreshButton: some View {
         Button("Refresh effects") { Task { await store.refresh() } }.buttonStyle(.journalQuiet)
             .disabled(store.connectionBusy || store.pending != nil)
     }
     private func skillList(_ value: GardenStrategyEvaluation) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             let groups = GardenSkillGroup.groups(value.skillSummary)
             if groups.isEmpty { Text("No active skills").font(.callout) }
             ForEach(groups) { GardenSkillDisclosure(group: $0, store: store, evaluation: value) }
-            let removed = GardenSkillGroup.groups(store.savedStrategy?.skillSummary).filter { old in !groups.contains { $0.id == old.id } }
-            ForEach(removed) { Label("\($0.name) removed", systemImage: "minus.circle").font(.callout) }
-            inactiveSkills(value)
+            let changes = GardenStrategyCopy.changes(from: store.savedStrategy, to: value)
+            if !changes.isEmpty {
+                Divider()
+                ForEach(changes, id: \.self) { Text($0).font(.caption) }
+            }
+            let inactive = GardenInactiveSkillGroup.groups(plants: store.strategyPlants, items: store.strategyItems, summary: value.skillSummary)
+            if !inactive.isEmpty {
+                Divider()
+                DisclosureGroup("Inactive skills (\(inactive.count))") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(inactive) { skill in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(skill.name).font(.callout.weight(.semibold))
+                                if !skill.sourceIsAdult {
+                                    Text("Requires a fully grown source").font(.caption)
+                                } else if let condition = skill.rule.condition {
+                                    Text("Companions \(store.strategyPlants.filter { condition.selector.matches($0) }.count) / \(condition.minimum)").font(.caption)
+                                } else if skill.rule.magnitude?.type == "daily_flights" {
+                                    Text("Requires flights synced today").font(.caption)
+                                } else { Text("Requirements not met").font(.caption) }
+                                Text(skill.rule.description).font(.caption).foregroundStyle(JournalTheme.secondary)
+                            }
+                        }
+                    }.padding(.top, 8)
+                }.font(.subheadline).accessibilityIdentifier("editor.inactiveSkills")
+            }
             if let water = value.skillSummary.waterHeadline { Text(water).font(.callout).monospacedDigit() }
             ForEach(value.limitNotices ?? [], id: \.self) { Text($0).font(.caption) }
             if value.skillSummary.capReached { Text(value.skillSummary.caps.description).font(.caption) }
-            if value.context.baseCapacity > 0 {
-                LabeledContent("Visitor storage", value: String(value.offlineCapacity)).font(.callout)
-                Text("Earned visits are kept when capacity falls.").font(.caption).foregroundStyle(JournalTheme.secondary)
-            }
-        }.padding(.top, 8)
-    }
-    @ViewBuilder private func inactiveSkills(_ value: GardenStrategyEvaluation) -> some View {
-        let names = Set(value.skillSummary.activeSkills.map(\.name))
-        let plants = store.strategyPlants
-        let rules = plants.flatMap { plant in (plant.gardenSkills ?? []).map { (plant, $0) } }
-        let inactive = Dictionary(grouping: rules.filter { !names.contains($0.1.name) }, by: { $0.1.name })
-        ForEach(inactive.keys.sorted(), id: \.self) { name in
-            if let (source, rule) = inactive[name]?.first {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(name).font(.callout.weight(.semibold))
-                    if source.growthStage != .adult {
-                        Text("Requires a fully grown source").font(.caption)
-                    } else if let condition = rule.condition {
-                        Text("Companions \(plants.filter { condition.selector.matches($0) }.count) / \(condition.minimum)").font(.caption)
-                    } else if rule.magnitude?.type == "daily_flights" {
-                        Text("Requires flights synced today").font(.caption)
-                    } else { Text("Requirements not met").font(.caption) }
-                    Text(rule.description).font(.caption).foregroundStyle(JournalTheme.secondary)
-                }
-            }
         }
     }
 }

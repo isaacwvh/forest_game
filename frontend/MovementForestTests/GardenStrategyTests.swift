@@ -50,4 +50,25 @@ final class GardenStrategyTests: XCTestCase {
         XCTAssertTrue(group.effects.contains { $0.scope == "activity" })
         XCTAssertTrue(group.effects.contains { $0.scope == "offline_capacity" })
     }
+    func testImmatureSkillsHaveOneInactiveGroupAndNoActiveRow() throws {
+        let example = try XCTUnwrap(GardenStrategyContract.load().cases.first { $0.name == "adult_moonwillow" })
+        let adult = try XCTUnwrap(example.plants.first)
+        func young(_ id: UUID) -> APIOwnedPlant {
+            APIOwnedPlant(plantId: id, speciesId: adult.speciesId, variantId: adult.variantId,
+                growthMicroUnits: "1", growthStage: .young, modelKey: adult.modelKey, thumbnailKey: adult.thumbnailKey,
+                placement: nil, pinnedProfiles: adult.pinnedProfiles, baseAttractionMicroUnits: "1",
+                gardenSkills: adult.gardenSkills, gameplayTags: adult.gameplayTags)
+        }
+        let plants = [young(UUID()), young(UUID())]
+        let inactiveValue = try GardenStrategyEvaluator.evaluate(plants: plants, items: [], context: example.context)
+        XCTAssertTrue(GardenSkillGroup.groups(inactiveValue.skillSummary).isEmpty)
+        let inactive = GardenInactiveSkillGroup.groups(plants: plants, items: [], summary: inactiveValue.skillSummary)
+        XCTAssertEqual(inactive.map(\.name), ["Sleeping Dew"])
+        XCTAssertFalse(try XCTUnwrap(inactive.first).sourceIsAdult)
+        let withAdult = plants + [adult]
+        let activeValue = try GardenStrategyEvaluator.evaluate(plants: withAdult, items: [], context: example.context)
+        XCTAssertEqual(GardenSkillGroup.groups(activeValue.skillSummary).map(\.name), ["Sleeping Dew"])
+        XCTAssertTrue(GardenInactiveSkillGroup.groups(plants: withAdult, items: [], summary: activeValue.skillSummary).isEmpty)
+    }
+
 }

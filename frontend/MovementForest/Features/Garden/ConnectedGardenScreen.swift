@@ -63,7 +63,7 @@ struct ConnectedGardenScreen: View {
     var body: some View {
         Group {
             if let garden = store.editorRendered {
-                GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing) {
+                GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing, statusScrollsInternally: true) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
                                     motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil && itemInspection == nil,
                                     editorPreview: preview, itemPreview: itemPreview, growthEffects: store.effects, onSelect: { [weak store = store] id in
@@ -131,9 +131,6 @@ struct ConnectedGardenScreen: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: 6) {
-                        Button("Save garden") { Task { await store.saveDraft() } }
-                            .buttonStyle(.journalPrimary).disabled(!store.canSaveDraft)
-                            .accessibilityIdentifier("editor.saveGarden")
                         Button {
                             if store.pending != nil { sheet = nil; store.endEditing() }
                             else if store.hasDraftChanges { exitPrompt = true }
@@ -145,7 +142,18 @@ struct ConnectedGardenScreen: View {
                 }
             }
         }
-        .confirmationDialog("Save garden changes?", isPresented: $exitPrompt, titleVisibility: .visible) {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if store.editing {
+                Button { Task { await store.saveDraft() } } label: {
+                    Text("Save garden").frame(maxWidth: .infinity, minHeight: 44)
+                        .fixedSize(horizontal: false, vertical: true)
+                }.buttonStyle(.journalPrimary).disabled(!store.canSaveDraft)
+                    .accessibilityIdentifier("editor.saveGarden")
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+                    .background(JournalTheme.paper)
+            }
+        }
+        .alert("Save garden changes?", isPresented: $exitPrompt) {
             Button("Save garden") { Task { await store.saveDraft() } }.disabled(!store.canSaveDraft)
             Button("Discard changes", role: .destructive) { sheet = nil; store.discardDraft(); store.endEditing() }
             Button("Keep editing", role: .cancel) { }
@@ -287,11 +295,6 @@ struct ConnectedGardenScreen: View {
             }
             if let issue = store.draftPersistenceIssue { Text(issue).font(.caption) }
             if let issue = store.draftCapacityIssue { Text(issue).font(.callout) }
-            if store.editCandidateID != nil {
-                GardenActionImpact(title: "If applied", before: store.draftStrategy, after: store.strategyPreview)
-            } else if let id = store.selectedID {
-                GardenActionImpact(title: "If stored", before: store.draftStrategy, after: store.strategyIfStored(id))
-            }
             if let message = store.gardenMessage { Text(message).font(.callout).accessibilityIdentifier("editor.status") }
             if store.showingCached { Label("Saved garden. Connect to refresh", systemImage: "wifi.slash").font(.caption) }
             if let candidate = store.candidate {

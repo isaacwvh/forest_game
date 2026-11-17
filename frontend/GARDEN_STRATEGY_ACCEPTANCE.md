@@ -1,3 +1,14 @@
+## Editor readability follow-up — 17 November 2026
+
+Save garden is now a full-width footer outside the navigation toolbar and all
+scrolling panels. Close uses a native alert for Save, Discard and Keep editing.
+Attraction/offline capacity use the existing quantity icons and pinned totals,
+with deltas from saved state and next-action notices above the skills list.
+Only the skill list scrolls; inactive skills are grouped in one initially
+collapsed disclosure. Check the footer on small iPhones and scroll/expand skills
+without moving the totals or losing access to Save. Hosted UI checks additionally
+assert a hittable 44-point Save button and the native Keep editing flow.
+
 # Garden strategy editor acceptance
 
 Source implementation: 17 November 2026. Run `scripts/test-mac.sh` on Mac for

@@ -48,3 +48,17 @@ precondition(!draft.changed && draft.request().actions.isEmpty)
 let roundtrip = try JSONDecoder().decode(GardenDraftSession.self, from: JSONEncoder().encode(draft))
 precondition(roundtrip == draft)
 print("PASS: draft normalization, net-zero edits and persisted round-trip.")
+
+let moonCase = contract.cases.first { $0.name == "adult_moonwillow" }!
+let moon = moonCase.plants[0]
+let immature = APIOwnedPlant(plantId: moon.id, speciesId: moon.speciesId, variantId: moon.variantId,
+    growthMicroUnits: "1", growthStage: .young, modelKey: moon.modelKey, thumbnailKey: moon.thumbnailKey,
+    placement: nil, pinnedProfiles: moon.pinnedProfiles, baseAttractionMicroUnits: "1",
+    gardenSkills: moon.gardenSkills, gameplayTags: moon.gameplayTags)
+let immatureValue = try GardenStrategyEvaluator.evaluate(plants: [immature], items: [], context: moonCase.context)
+precondition(GardenSkillGroup.groups(immatureValue.skillSummary).isEmpty)
+let inactive = GardenInactiveSkillGroup.groups(plants: [immature, immature], items: [], summary: immatureValue.skillSummary)
+precondition(inactive.count == 1 && inactive[0].name == "Sleeping Dew" && !inactive[0].sourceIsAdult)
+let activeValue = try GardenStrategyEvaluator.evaluate(plants: [moon], items: [], context: moonCase.context)
+precondition(GardenInactiveSkillGroup.groups(plants: [moon], items: [], summary: activeValue.skillSummary).isEmpty)
+print("PASS: immature skills are grouped only under inactive skills; adult activation removes the inactive group.")
