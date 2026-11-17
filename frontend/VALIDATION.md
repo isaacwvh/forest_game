@@ -1,3 +1,29 @@
+## Garden strategy editor — 17 November 2026
+
+Implemented local mixed drafts, immediate attraction/skill predictions, contextual
+action impacts, source/count/cap detail, Undo/Redo, replacements, explicit Save,
+local unfinished-draft recovery and proof-bound server verification. Edit details
+keep Place available while excluding sale controls. New editor copy avoids dot
+separators. See [native test flows](GARDEN_STRATEGY_ACCEPTANCE.md).
+
+- Portable resource/project/contract validation passes.
+- All **105 Swift files** pass syntax parsing; the generated project is current.
+- The real Foundation evaluator matches **87** deterministic backend resolver
+  cases in both input orders. Pure draft normalization, no-op compilation and
+  persistence round-trip checks pass with an official Swift 6.0.3 Linux toolchain.
+- The real editor store passes portable Swift typechecking with interface-only
+  observation/rendering/persistence stubs. This is not Combine/SwiftUI execution.
+- The design detector reports no findings for the changed SwiftUI files.
+- Backend validation: **750 passed, 3 existing opt-in benchmarks skipped**, followed
+  by **144 passing** focused current-code checks.
+
+Added hosted XCTest coverage for the reference cases, draft lifecycle,
+normalization, persistence and external layout conflicts; updated existing editor,
+item recovery and UI tests for explicit Save. These hosted tests, Apple SDK
+Debug/Release/InternalRelease builds, simulator appearance, real disk protection,
+VoiceOver/Dynamic Type/Reduce Motion and device performance still require Mac/
+iPhone execution. No push or remote CI was run.
+
 ## Purchase feedback and quiet updates — 17 November 2026
 
 Shop now shows a dismissible journal overlay for newly confirmed pack/item

@@ -142,21 +142,21 @@ private final class EditorTestService: GardenServing {
         guard request.expectedLayoutVersion == current.layoutVersion else {
             throw APIError(status: 409, code: "stale_layout", message: "Refresh the garden before editing")
         }
-        let action = try XCTUnwrap(request.actions.first)
-        let plant = try XCTUnwrap((current.plants + fixture.inventory.plants + extraInventory).first { $0.id == action.plantId })
-        let placement: APIPlacement? = action.action == .store ? nil : APIPlacement(
-            gardenId: current.gardenId, x: action.x ?? plant.placement?.x ?? 0,
-            y: action.y ?? plant.placement?.y ?? 0, rotationDegrees: action.rotationDegrees ?? plant.placement?.rotationDegrees ?? 0)
-        let updated = APIOwnedPlant(plantId: plant.id, speciesId: plant.speciesId, variantId: plant.variantId,
-                                    growthMicroUnits: plant.growthMicroUnits, growthStage: plant.growthStage,
-                                    modelKey: plant.modelKey, thumbnailKey: plant.thumbnailKey, placement: placement)
-        var plants = current.plants.filter { $0.id != plant.id }
-        if placement != nil { plants.append(updated) }
+        var plants = current.plants
+        var updatedPlants: [APIOwnedPlant] = []
+        for action in request.actions {
+            var plant = try XCTUnwrap((plants + fixture.inventory.plants + extraInventory).first { $0.id == action.plantId })
+            plant.placement = action.action == .store ? nil : APIPlacement(
+                gardenId: current.gardenId, x: action.x ?? plant.placement?.x ?? 0,
+                y: action.y ?? plant.placement?.y ?? 0, rotationDegrees: action.rotationDegrees ?? plant.placement?.rotationDegrees ?? 0)
+            updatedPlants.append(plant); plants.removeAll { $0.id == plant.id }
+            if plant.placement != nil { plants.append(plant) }
+        }
         current = APIGarden(gardenId: current.gardenId, width: current.width, depth: current.depth,
                             coordinateUnit: current.coordinateUnit, gardenUnitMetres: current.gardenUnitMetres,
                             catalogVersion: current.catalogVersion, layoutVersion: current.layoutVersion + 1,
                             stateVersion: current.stateVersion + 1, plants: plants)
-        let result = GardenEditResult(requestId: request.requestId, garden: current, updatedPlants: [updated])
+        let result = GardenEditResult(requestId: request.requestId, garden: current, updatedPlants: updatedPlants)
         receipts[request.requestId] = result
         if loseNextResponse { loseNextResponse = false; throw URLError(.networkConnectionLost) }
         return result
@@ -294,6 +294,8 @@ final class GardenEditorTests: XCTestCase {
         XCTAssertTrue(service.bodies.isEmpty)
         store.begin(plant, kind: .rotate); store.updateRotation(359.99)
         await store.releaseCandidate()
+        XCTAssertTrue(service.bodies.isEmpty)
+        await store.saveDraft()
         let request = try JSONDecoder().decode(GardenEditRequest.self, from: XCTUnwrap(service.bodies.first))
         let action = try XCTUnwrap(request.actions.first)
         XCTAssertEqual(service.bodies.count, 1)
@@ -511,11 +513,16 @@ final class GardenEditorTests: XCTestCase {
         store.updatePosition(x: 2, y: 2)
         XCTAssertEqual(store.capacity, before, "A preview must not change confirmed capacity")
         await store.releaseCandidate()
+        XCTAssertEqual(store.capacity, before)
+        XCTAssertEqual(store.editorGarden?.plants.count, before.plantedPlants + 1)
+        XCTAssertTrue(service.bodies.isEmpty)
+        await store.saveDraft()
         XCTAssertEqual(store.capacity?.ownedPlants, before.ownedPlants)
         XCTAssertEqual(store.capacity?.plantedPlants, before.plantedPlants + 1)
         XCTAssertEqual(store.capacity?.storedPlants, before.storedPlants - 1)
-        store.selectedID = copy.id
+        store.editing = true; store.selectedID = copy.id
         await store.storeSelected()
+        await store.saveDraft()
         XCTAssertEqual(store.capacity, before)
         XCTAssertEqual(store.capacity?.plantLimit, 50)
         XCTAssertEqual(store.capacity?.plantedLimit, 20)
@@ -743,7 +750,8 @@ final class GardenEditorTests: XCTestCase {
         var gate: CheckedContinuation<Bool, Never>?
         store.prepareMembershipChange = { await withCheckedContinuation { gate = $0 } }
         store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
-        let save = Task { await store.releaseCandidate() }
+        await store.releaseCandidate()
+        let save = Task { await store.saveDraft() }
         for _ in 0..<1000 where gate == nil { try await Task.sleep(nanoseconds: 1_000_000) }
         let continuation = try XCTUnwrap(gate)
         store.endEditing(); continuation.resume(returning: true); await save.value
@@ -767,6 +775,7 @@ final class GardenEditorTests: XCTestCase {
         let store = try makeStore(service, journal: journal)
         await store.start(); store.editing = true; service.loseNextResponse = true
         store.begin(try XCTUnwrap(store.inventory.first), kind: .plant); await store.releaseCandidate()
+        await store.saveDraft()
         let saved = try XCTUnwrap(store.pending)
         store.endEditing()
         XCTAssertEqual(store.pending?.body, saved.body); XCTAssertFalse(store.editing)
@@ -918,5 +927,75 @@ final class PlacementGeometryTests: XCTestCase {
         XCTAssertThrowsError(try PlacementGeometry.units(Decimal(string: "3.2011")!))
         let large = PlacementCircle(id: UUID(), x: 500_000_000, y: 500_000_000, radius: 999_999_999)
         XCTAssertEqual(PlacementGeometry.validate(width: 999_999_999, depth: 999_999_999, circles: [large]), .outOfBounds)
+    }
+}
+
+
+extension GardenEditorTests {
+    func testDraftApplyUndoRedoAndNetZeroNeverSendRequests() async throws {
+        let service = EditorTestService(try EditorContract.load()), store = try makeStore(service)
+        await store.start(); store.editing = true
+        let plant = try XCTUnwrap(store.inventory.first)
+        store.begin(plant, kind: .plant); store.updatePosition(x: 2, y: 2)
+        await store.releaseCandidate()
+        XCTAssertTrue(service.bodies.isEmpty); XCTAssertTrue(store.hasDraftChanges)
+        XCTAssertTrue(store.confirmed?.plants.isEmpty == true)
+        XCTAssertEqual(store.editorGarden?.plants.map(\.id), [plant.id])
+        XCTAssertTrue(store.storedPlants.isEmpty)
+        store.undoDraft()
+        XCTAssertFalse(store.hasDraftChanges); XCTAssertEqual(store.storedPlants.map(\.id), [plant.id])
+        store.redoDraft()
+        XCTAssertTrue(store.hasDraftChanges)
+        store.selectedID = plant.id; await store.storeSelected()
+        XCTAssertFalse(store.hasDraftChanges); XCTAssertTrue(service.bodies.isEmpty)
+        XCTAssertFalse(store.canSaveDraft)
+    }
+    func testDraftNormalizesRepeatedChangesAndSavesOneBatch() async throws {
+        let service = EditorTestService(try EditorContract.load()), store = try makeStore(service)
+        await store.start(); store.editing = true
+        let plant = try XCTUnwrap(store.inventory.first)
+        store.begin(plant, kind: .plant); store.updatePosition(x: 2, y: 2); await store.releaseCandidate()
+        store.begin(try XCTUnwrap(store.ownedCopy(plant.id)), kind: .move)
+        store.updatePosition(x: 4.321, y: 5.678); await store.releaseCandidate()
+        store.begin(try XCTUnwrap(store.ownedCopy(plant.id)), kind: .rotate)
+        store.updateRotation(45.67); await store.releaseCandidate()
+        XCTAssertTrue(service.bodies.isEmpty)
+        await store.saveDraft()
+        let request = try JSONDecoder().decode(GardenEditRequest.self, from: XCTUnwrap(service.bodies.first))
+        XCTAssertEqual(request.actions.count, 1); XCTAssertEqual(request.actions[0].action, .plant)
+        XCTAssertEqual(request.actions[0].x, Decimal(string: "4.321"))
+        XCTAssertEqual(request.actions[0].rotationDegrees, Decimal(string: "45.67"))
+        XCTAssertFalse(store.editing); XCTAssertNil(store.draft); XCTAssertNil(store.pending)
+    }
+    func testDraftSurvivesBackgroundAndRejectsAnExternalLayoutChange() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service)
+        await store.start(); store.editing = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        store.updatePosition(x: 2, y: 2); await store.releaseCandidate()
+        store.endEditing(); XCTAssertTrue(store.hasDraftChanges)
+        store.editing = true; XCTAssertEqual(store.editorGarden?.plants.count, 1)
+        service.current = fixture.plantResult.garden
+        await store.refresh()
+        XCTAssertTrue(store.draftConflict); XCTAssertFalse(store.canSaveDraft)
+        await store.saveDraft(); XCTAssertTrue(service.bodies.isEmpty)
+        store.resetDraft(); XCTAssertFalse(store.draftConflict); XCTAssertFalse(store.hasDraftChanges)
+    }
+    func testDraftPersistsSeparatelyFromConfirmedCacheAndPendingRequests() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let disk = AccountDiskStore(directory: directory), journal = MemoryEditJournal()
+        let store = GardenEditorStore(profile: fixture.profile, service: service, assets: try BundleAssetCatalog(), journal: journal, cache: disk)
+        await store.start(); store.editing = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        store.updatePosition(x: 2, y: 2); await store.releaseCandidate(); store.endEditing()
+        let restored = GardenEditorStore(profile: fixture.profile, service: service, assets: try BundleAssetCatalog(), journal: journal, cache: disk)
+        await restored.start()
+        XCTAssertTrue(restored.hasDraftChanges); XCTAssertFalse(restored.editing)
+        XCTAssertTrue(restored.confirmed?.plants.isEmpty == true); XCTAssertNil(restored.pending)
+        restored.editing = true; XCTAssertEqual(restored.editorGarden?.plants.count, 1)
+        restored.discardDraft()
+        XCTAssertNil(try disk.load(GardenDraftSession.self, kind: "garden-draft", server: service.serverID, user: fixture.profile.userId))
     }
 }

@@ -164,6 +164,20 @@ def owned_items(
     return read(session, identity, limit, after)
 
 
+@placement_router.post("/v1/me/garden/preview", tags=["garden"])
+def garden_preview(
+    body: GardenEditRequest,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> dict:
+    from forest_api.garden_strategy import preview_garden
+
+    return preview_garden(
+        session, request.app.state.settings, identity, body, request_clock(request, session)
+    )
+
+
 @placement_router.post("/v1/me/garden/edits", response_model=GardenEditResult, tags=["garden"])
 def garden_edits(
     body: GardenEditRequest,

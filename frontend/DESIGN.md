@@ -1,3 +1,17 @@
+## Garden strategy editing — 17 November 2026
+
+Operate within the existing parchment/sage world. Keep the mounted garden/camera
+stable and add compact Attraction and Garden skills rows to the bounded edit
+panel. Expanded skills retain all components and disclose source/recipient/count
+and cap detail. If planted/If placed/If stored explains the next action; Preview,
+Draft and Saved labels distinguish states. Use words, spacing and arrows without
+dot separators in new editor copy. Undo/Redo and Save garden are explicit.
+
+Applied edits are local draft actions until one atomic save. Close offers Save,
+Discard and Keep editing. Applied draft work survives backgrounding; incomplete
+gestures cancel. Historical notes below about per-action save/Done cancellation
+are superseded. See [acceptance](GARDEN_STRATEGY_ACCEPTANCE.md).
+
 # Native baseline conventions
 
 ## Purchase feedback and quiet updates — 17 November 2026

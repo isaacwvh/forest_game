@@ -1,3 +1,8 @@
+**Current editor contract, 17 November 2026:** live draft previews use complete
+pinned plant/item rules and server verification. See [garden strategy](GARDEN_STRATEGY.md).
+The initial B8 record below is historical; current Woodland Sleeping Dew is 8%,
+with older pinned profiles preserved as described in [Woodland](WOODLAND_RELEASE.md).
+
 # Garden skills and caps — B8 first increment
 
 Sleeping Dew is Moonwillow's first assigned skill: an adult placed Standard or

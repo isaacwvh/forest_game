@@ -154,7 +154,7 @@ def present(row):
     owned, identity, definition, placement = row
     from sqlalchemy.orm import object_session
 
-    from forest_api.item_skills import descriptions
+    from forest_api.item_skills import descriptions, rules_for_definition
 
     return ItemDTO(
         owned_item_id=owned.id,
@@ -168,6 +168,7 @@ def present(row):
         thumbnail_key=definition.thumbnail_key,
         clearance_radius=definition.clearance_radius,
         garden_skills=descriptions(object_session(definition), definition),
+        strategy_rules=rules_for_definition(object_session(definition), definition),
         placement=PlacementDTO(
             garden_id=placement.garden_id,
             x=placement.x,

@@ -1,3 +1,25 @@
+## Garden strategy editor — 17 November 2026
+
+Implemented read-only mixed-layout previews, full pinned prediction data, proof-
+bound atomic saves and a 200-action batch bound without a schema migration or
+preview history records. See [contract](GARDEN_STRATEGY.md).
+
+Validation ran against random disposable `forest_test_*` databases on a separate
+PostgreSQL 17 cluster at loopback port 55452, with normal durability settings:
+
+- Full regression: **750 passed, 3 skipped** in 1028.35 seconds. The skips are the
+  existing opt-in physical storage benchmarks.
+- Final current-code preview/placement/skills/item regression: **144 passed** in
+  135.85 seconds, including the fixture-current check and post-lock save boundary.
+- Ruff source/tests/scripts checks and formatting, dependency consistency and
+  diff whitespace checks pass. Portable frontend resource/project checks pass.
+- An initial sandboxed run could not access loopback. An initial full run was
+  restarted after Windows terminated a PostgreSQL process with memory-allocation
+  exception 0xC000012D. The successful full run above completed without failures.
+
+No personal database migration, content publication, push or remote CI occurred.
+Apple SDK builds, hosted XCTest and iPhone acceptance remain separate.
+
 ## Milestone tracks — 13 November 2026
 
 Implemented `0017_milestone_tracks`, the finite 62-quest policy, catalogue-scaled

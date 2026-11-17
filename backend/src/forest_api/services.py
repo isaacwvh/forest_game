@@ -184,6 +184,8 @@ def owned_plant(
 def request_hash(operation: str, body: DTO) -> str:
     payload = body.model_dump(mode="json", by_alias=True, exclude={"request_id"})
     # Keep historical plant-only edit hashes byte-for-byte compatible.
+    if operation == "garden_edits" and payload.get("expectedStrategyFingerprint") is None:
+        payload.pop("expectedStrategyFingerprint", None)
     if operation == "garden_edits" and not payload.get("itemActions"):
         payload.pop("itemActions", None)
     if operation.startswith("visitor_") and payload.get("arrivalProtocol") == 1:
@@ -560,6 +562,8 @@ def present_garden(
         raise ApiError(
             426, "item_content_update_required", "Update the app for the new garden items"
         )
+    from forest_api.garden_strategy import strategy_context
+
     return GardenDTO(
         garden_id=garden.id,
         width=garden.width,
@@ -573,6 +577,9 @@ def present_garden(
         items=placed_items,
         total_attraction_micro_units=str(skills.attraction()),
         skill_summary=skills.summary(),
+        strategy_context=strategy_context(
+            session, session.info["settings"], garden, boundary=boundary
+        ),
         daily_water=daily_items.recent(
             session, garden.owner_id, boundary or session.scalar(select(func.clock_timestamp()))
         ),

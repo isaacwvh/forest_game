@@ -1,3 +1,8 @@
+**Garden strategy previews, 17 November 2026:** owner DTO prediction context,
+read-only `/v1/me/garden/preview`, and optional proof-bound atomic saves are
+source-implemented. This increment adds no schema migration, retained preview
+records or content publication. See [API contract](GARDEN_STRATEGY.md).
+
 **Milestone tracks, 13 November 2026:** migration head is `0017_milestone_tracks`. The revised five-track system, pinned unopened-pack bundles, source-aware bonus gems, permanent quest progress and explicit legacy backfill are source-implemented. Use [milestone publication and validation](MILESTONES.md); migration alone does not activate rewards or schedule an event.
 
 **Woodland release and catalog follow-up, 13 November 2026:** thirty species, three packs, gem spending, extended skills and earned sprout discovery are source-implemented. Use the [preview/apply upgrade and device walkthrough](WOODLAND_RELEASE.md); migrations alone do not activate the Woodland release. Earlier delivery records below remain historical.

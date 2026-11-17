@@ -408,7 +408,9 @@ struct OwnedPlantDetailScreen: View {
                 PlantDetailScreen(plant: rendered, catalog: catalog, isSample: false, owned: copy,
                     catalogue: store.catalogue, onPlace: placementAction,
                     placementDisabled: !store.editing || !store.canEdit || copy.placement != nil,
-                    collection: collection, saleEnabled: store.canReadInventory && !store.showingCached &&
+                    collection: collection, strategyBefore: store.editing ? store.draftStrategy : nil,
+                    strategyAfter: context == .storagePlacement ? store.ownedCopy(copyID).flatMap { store.strategyIfPlanted($0) } : nil,
+                    saleEnabled: !store.editing && store.canReadInventory && !store.showingCached &&
                         !store.connectionBusy && (!store.editing || store.canEdit) && store.candidate == nil)
             } else if collection?.state.result?.saleId != nil && collection?.state.result?.plantId == copyID {
                 Color.clear.onAppear { dismiss() }
@@ -425,7 +427,8 @@ struct OwnedPlantDetailScreen: View {
     }
     private func place() {
         guard store.editing, store.canEdit, let current = store.ownedCopy(copyID), current.placement == nil else { return }
-        store.begin(current, kind: .plant)
+        if store.replacementID != nil { store.replaceWith(current) }
+        else { store.begin(current, kind: .plant) }
         if store.candidate != nil { placed?() }
     }
 }

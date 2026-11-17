@@ -65,7 +65,13 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     @Published private(set) var inventoryLoading = false
     @Published private(set) var recoveryLocked = false
     @Published var selectedID: UUID?
-    @Published var editing = false
+    @Published var editing = false {
+        didSet { if editing && !oldValue { beginDraft() } }
+    }
+    @Published private(set) var draft: GardenDraftSession?
+    @Published private(set) var draftConflict = false
+    @Published private(set) var replacementID: UUID?
+    @Published private(set) var draftPersistenceIssue: String?
     @Published var adultPreview = false
     private var needsRefresh = true
     private var refreshInFlight = false
@@ -73,6 +79,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private var started = false
     private var lastReadIssue: UUID?
     private var editGeneration = UUID()
+    private var strategyCache: [String: GardenStrategyEvaluation] = [:]
+    private var unavailableStrategies = Set<String>()
     var diagnosticScope: String { DiagnosticHistory.scope(server: service.serverID, user: profile.userId) }
     var canReadInventory: Bool {
         isActive && confirmed != nil && catalogue != nil && !refreshInFlight && pending == nil && !needsRefresh
@@ -94,7 +102,15 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         effects = GardenEffectsCoordinator(server: service.serverID, user: profile.userId, disk: effectHistory)
     }
 
-    var canEdit: Bool { readyForMutation && !activityBusy && !preparingMembership && !activityBlocked }
+    var canStartEditing: Bool {
+        isActive && confirmed != nil && catalogue != nil && !state.busy && pending == nil &&
+        !recoveryLocked && state != .authenticationRequired
+    }
+    var canEdit: Bool {
+        let cachedExperiment = editing && draft != nil && confirmed != nil && catalogue != nil &&
+            !refreshInFlight && pending == nil && !recoveryLocked && !state.busy && state != .authenticationRequired
+        return (readyForMutation || cachedExperiment) && !activityBusy && !preparingMembership && !activityBlocked && !draftConflict
+    }
     var canPresentVisitors: Bool {
         isActive && !editing && !showingCached && !recoveryLocked && pending == nil && confirmed != nil &&
             (state == .ready || state == .loading)
@@ -103,8 +119,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         isActive && state == .ready && pending == nil && !needsRefresh && !recoveryLocked && confirmed != nil && catalogue != nil
     }
     var connectionBusy: Bool { state.busy || activityBusy || preparingMembership }
-    var selectedPlanted: APIOwnedPlant? { confirmed?.plants.first { $0.id == selectedID } }
-    var selected: APIOwnedPlant? { confirmed?.plants.first { $0.id == selectedID } ?? inventory.first { $0.id == selectedID } }
+    var selectedPlanted: APIOwnedPlant? { editorGarden?.plants.first { $0.id == selectedID } }
+    var selected: APIOwnedPlant? { selectedID.flatMap { ownedCopy($0) } }
     var pendingRequestID: String? {
         guard let pending = pending else { return nil }
         return (try? pending.request)?.requestId.uuidString
@@ -116,6 +132,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     func start(refreshRemote: Bool = true) async {
         started = true
         restoreCached()
+        restoreDraft()
         do {
             pending = try journal.load(server: service.serverID, user: profile.userId)
         } catch {
@@ -169,6 +186,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         let snapshot = try garden.rendered(catalogue: catalogue, assets: assets)
         if let requestID = activityRequestID { effects.recordActivity(requestID: requestID, before: confirmed, after: garden) }
         confirmed = garden; rendered = snapshot
+        updateDraftFacts(garden, plants: updatedPlants)
         if let old = capacity {
             capacity = APIInventoryCapacity(ownedPlants: old.ownedPlants, plantedPlants: garden.plants.count,
                 storedPlants: max(0, old.ownedPlants - garden.plants.count), plantLimit: old.plantLimit,
@@ -242,6 +260,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 itemInventory = itemPage.items.filter { $0.placement == nil }
                 itemCapacity = itemPage.capacity; itemCursor = itemPage.nextCursor
                 acceptCapacity(page.capacity)
+                if draft == nil { restoreDraft() }
+                updateDraftFacts(after, plants: page.plants, items: itemPage.items)
                 confirmedAt = Date(); showingCached = false
                 try persistConfirmed()
                 needsRefresh = false; state = .ready
@@ -281,6 +301,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             let page = try await service.inventory(after: cursor)
             guard isActive, generation == inventoryGeneration, let garden = confirmed else { return }
             inventory = filtered(inventory + page.plants, garden: garden)
+            updateDraftFacts(garden, plants: page.plants)
             nextCursor = page.nextCursor == cursor ? nil : page.nextCursor
             try persistConfirmed()
         } catch {
@@ -293,7 +314,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     func begin(_ plant: APIOwnedPlant, kind: GardenEditKind) {
         guard canEdit, let current = ownedCopy(plant.id),
               (kind == .plant ? current.placement == nil : current.placement != nil),
-              let garden = confirmed, let catalogue = catalogue else { return }
+              let garden = editorGarden, let catalogue = catalogue else { return }
         let plant = current
         cancelCandidate()
         selectedID = plant.id; feedback = nil; adultPreview = false
@@ -333,11 +354,14 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         candidate.validity = .outOfBounds; self.candidate = candidate
     }
     func ownedCopy(_ id: UUID) -> APIOwnedPlant? {
-        confirmed?.plants.first { $0.id == id } ?? inventory.first { $0.id == id }
+        if editing, let draft = draft, var plant = draft.plants.first(where: { $0.id == id }) {
+            plant.placement = draft.layout.plants[id]; return plant
+        }
+        return confirmed?.plants.first { $0.id == id } ?? inventory.first { $0.id == id }
     }
     func cancelCandidate(invalidateSubmission: Bool = true) {
         if invalidateSubmission { editGeneration = UUID() }
-        candidate = nil; itemCandidate = nil; adultPreview = false
+        candidate = nil; itemCandidate = nil; adultPreview = false; replacementID = nil
     }
     func endEditing() {
         cancelCandidate(); editing = false
@@ -345,10 +369,10 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     private func validateCandidate() {
-        guard var candidate = candidate, let garden = confirmed, let catalogue = catalogue else { return }
+        guard var candidate = candidate, let garden = editorGarden, let catalogue = catalogue else { return }
         if candidate.kind == .rotate { candidate.validity = .valid; self.candidate = candidate; return }
         do {
-            var circles = try garden.plants.filter { $0.id != candidate.plant.id }.map { plant -> PlacementCircle in
+            var circles = try garden.plants.filter { $0.id != candidate.plant.id && $0.id != replacementID }.map { plant -> PlacementCircle in
                 guard let placement = plant.placement else { throw ForestError.invalidData("Missing placement.") }
                 return PlacementCircle(id: plant.id, x: try PlacementGeometry.units(placement.x),
                                        y: try PlacementGeometry.units(placement.y), radius: try catalogue.radius(for: plant))
@@ -367,6 +391,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     func releaseCandidate() async {
+        if editing, draft != nil { applyCandidateToDraft(); return }
         if let value = itemCandidate {
             guard value.validity == .valid else { report(value.validity.message); cancelCandidate(); return }
             await submit(itemAction: ItemEditAction(action: value.action, itemId: value.item.id,
@@ -383,13 +408,19 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     func storeSelected() async {
+        if editing, let plant = selected, var next = draft?.layout {
+            next.plants.removeValue(forKey: plant.id); applyDraftLayout(next); selectedID = nil; return
+        }
         guard let plant = selected, plant.placement != nil else { return }
         cancelCandidate()
         await submit(GardenEditAction(action: .store, plantId: plant.id))
     }
 
     var selectedItem: APIOwnedItem? {
-        (confirmed?.items ?? []).first { $0.id == selectedID } ?? itemInventory.first { $0.id == selectedID }
+        if editing, let draft = draft, var item = draft.items.first(where: { $0.id == selectedID }) {
+            item.placement = draft.layout.items[item.id]; return item
+        }
+        return (confirmed?.items ?? []).first { $0.id == selectedID } ?? itemInventory.first { $0.id == selectedID }
     }
 
     var editCandidateID: UUID? { candidate?.plant.id ?? itemCandidate?.item.id }
@@ -402,14 +433,14 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         if let item = itemCandidate?.item { return item.displayName }
         if let plant = candidate?.plant {
             let name = catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId
-            return "\(name) · \(plant.variantId.capitalized)"
+            return "\(name), \(plant.variantId.capitalized)"
         }
         return ""
     }
 
     func beginItem(_ item: APIOwnedItem, action: String) {
-        guard canEdit, let garden = confirmed,
-              let current = ((garden.items ?? []) + itemInventory).first(where: { $0.id == item.id }),
+        guard canEdit, let garden = editorGarden,
+              let current = ((garden.items ?? []) + storedItems).first(where: { $0.id == item.id }),
               ["place", "move", "rotate"].contains(action),
               (action == "place" ? current.placement == nil : current.placement != nil) else { return }
         cancelCandidate(); selectedID = current.id; editing = true
@@ -420,13 +451,16 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     func storeItem(_ item: APIOwnedItem) async {
+        if editing, var next = draft?.layout {
+            next.items.removeValue(forKey: item.id); applyDraftLayout(next); selectedID = nil; return
+        }
         guard (confirmed?.items ?? []).contains(where: { $0.id == item.id }) else { return }
         cancelCandidate()
         await submit(itemAction: ItemEditAction(action: "store", itemId: item.id))
     }
 
     private func itemCircles(excluding id: UUID?) throws -> [PlacementCircle] {
-        try (confirmed?.items ?? []).filter { $0.id != id }.map { item in
+        try (editorGarden?.items ?? []).filter { $0.id != id && $0.id != replacementID }.map { item in
             guard let placement = item.placement else { throw ForestError.invalidData("Missing item placement.") }
             return PlacementCircle(id: item.id, x: try PlacementGeometry.units(placement.x),
                 y: try PlacementGeometry.units(placement.y), radius: try PlacementGeometry.units(item.clearanceRadius))
@@ -442,10 +476,10 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     }
 
     private func validateItemCandidate() {
-        guard var value = itemCandidate, let garden = confirmed, let catalogue = catalogue else { return }
+        guard var value = itemCandidate, let garden = editorGarden, let catalogue = catalogue else { return }
         do {
             var circles = try itemCircles(excluding: value.item.id)
-            circles += try garden.plants.map { plant in
+            circles += try garden.plants.filter { $0.id != replacementID }.map { plant in
                 guard let placement = plant.placement else { throw ForestError.invalidData("Missing placement.") }
                 return PlacementCircle(id: plant.id, x: try PlacementGeometry.units(placement.x),
                     y: try PlacementGeometry.units(placement.y), radius: try catalogue.radius(for: plant))
@@ -469,6 +503,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             let known = Set(itemInventory.map(\.id))
             itemInventory += page.items.filter { $0.placement == nil && !known.contains($0.id) }
             itemCursor = page.nextCursor == cursor ? nil : page.nextCursor
+            if let garden = confirmed { updateDraftFacts(garden, items: page.items) }
             try persistConfirmed()
         } catch { report("Items couldn’t load. Reconnect and try again.", source: .inventory) }
     }
@@ -519,6 +554,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                confirmed == nil || result.garden.stateVersion >= (confirmed?.stateVersion ?? 0) {
                 try applyConfirmed(result.garden, updatedPlants: result.updatedPlants)
             }
+            discardDraft()
             try journal.remove(server: edit.serverID, user: edit.userID)
             pending = nil; needsRefresh = true; state = .ready
             report("Saved.", kind: .success)
@@ -529,6 +565,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 try recovery.validate(id: edit.request.requestId, operation: "garden_edits")
                 guard isActive else { return }
                 guard recovery.outcome.gardenId == edit.gardenID else { throw ForestError.invalidData("Unexpected recovered garden.") }
+                discardDraft()
                 try journal.remove(server: edit.serverID, user: edit.userID)
                 pending = nil; needsRefresh = true; state = .ready
                 await refresh()
@@ -556,6 +593,291 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             PlayerMessage.recordFailure("Garden edit", error, requestID: pendingRequestID, scope: diagnosticScope)
             DiagnosticHistory.shared.record("Garden edit", "confirmation unknown", requestID: pendingRequestID, scope: diagnosticScope)
             report("Save not confirmed. The server may have saved it. Retry this edit before making another change.", kind: .uncertain)
+        }
+    }
+}
+
+
+extension GardenEditorStore {
+    var editorGarden: APIGarden? {
+        guard editing, let draft = draft else { return confirmed }
+        var garden = draft.baseline
+        garden.plants = draft.placedPlants; garden.items = draft.placedItems
+        return garden
+    }
+    var editorRendered: GardenSnapshot? {
+        guard editing, let garden = editorGarden, let catalogue = catalogue else { return rendered }
+        return (try? garden.rendered(catalogue: catalogue, assets: assets)) ?? rendered
+    }
+    var storedPlants: [APIOwnedPlant] {
+        guard editing, let draft = draft else { return inventory }
+        return draft.plants.filter { draft.layout.plants[$0.id] == nil }.map { plant in
+            var plant = plant; plant.placement = nil; return plant
+        }
+    }
+    var storedItems: [APIOwnedItem] {
+        guard editing, let draft = draft else { return itemInventory }
+        return draft.items.filter { draft.layout.items[$0.id] == nil }.map { item in
+            var item = item; item.placement = nil; return item
+        }
+    }
+    var editorCapacity: APIInventoryCapacity? {
+        guard let capacity = capacity, editing, let draft = draft else { return capacity }
+        return APIInventoryCapacity(ownedPlants: capacity.ownedPlants, plantedPlants: draft.layout.plants.count,
+            storedPlants: max(0, capacity.ownedPlants - draft.layout.plants.count), plantLimit: capacity.plantLimit,
+            plantedLimit: capacity.plantedLimit, unopenedPacks: capacity.unopenedPacks, packLimit: capacity.packLimit)
+    }
+    var draftCapacityIssue: String? {
+        guard let draft = draft, let capacity = capacity else { return nil }
+        return draft.layout.plants.count > max(capacity.plantLimit, draft.baseline.plants.count) ?
+            "Too many planted plants. Store a plant before saving." : nil
+    }
+    var hasDraftChanges: Bool { draft?.changed == true }
+    var canUndoDraft: Bool { canEdit && draft?.undo.isEmpty == false }
+    var canRedoDraft: Bool { canEdit && draft?.redo.isEmpty == false }
+    var canSaveDraft: Bool {
+        readyForMutation && !activityBusy && !preparingMembership && !activityBlocked && !draftConflict &&
+        hasDraftChanges && editCandidateID == nil && draftValidity == .valid && draftCapacityIssue == nil
+    }
+    var draftValidity: PlacementValidity {
+        guard let draft = draft, let catalogue = catalogue else { return .unavailable }
+        do {
+            var circles = try draft.placedPlants.map { plant -> PlacementCircle in
+                guard let placement = plant.placement else { throw ForestError.invalidData("Missing placement.") }
+                return PlacementCircle(id: plant.id, x: try PlacementGeometry.units(placement.x),
+                    y: try PlacementGeometry.units(placement.y), radius: try catalogue.radius(for: plant))
+            }
+            circles += try draft.placedItems.map { item -> PlacementCircle in
+                guard let placement = item.placement else { throw ForestError.invalidData("Missing placement.") }
+                return PlacementCircle(id: item.id, x: try PlacementGeometry.units(placement.x),
+                    y: try PlacementGeometry.units(placement.y), radius: try PlacementGeometry.units(item.clearanceRadius))
+            }
+            return PlacementGeometry.validate(width: try PlacementGeometry.units(draft.baseline.width),
+                depth: try PlacementGeometry.units(draft.baseline.depth), circles: circles)
+        } catch { return .unavailable }
+    }
+    var strategyPlants: [APIOwnedPlant] {
+        guard var value = draft else { return editorGarden?.plants ?? [] }
+        if let layout = candidateLayout { value.layout = layout }
+        return value.placedPlants
+    }
+    var strategyItems: [APIOwnedItem] {
+        guard var value = draft else { return editorGarden?.items ?? [] }
+        if let layout = candidateLayout { value.layout = layout }
+        return value.placedItems
+    }
+    var strategyPreview: GardenStrategyEvaluation? {
+        guard let draft = draft else { return nil }
+        return strategy(for: candidateLayout ?? draft.layout)
+    }
+    var draftStrategy: GardenStrategyEvaluation? { draft.flatMap { strategy(for: $0.layout) } }
+    var savedStrategy: GardenStrategyEvaluation? {
+        guard let garden = confirmed else { return nil }
+        return strategy(for: GardenDraftLayout(garden))
+    }
+    private var candidateLayout: GardenDraftLayout? {
+        guard var next = draft?.layout, let garden = editorGarden else { return nil }
+        if let candidate = candidate {
+            if let id = replacementID { next.plants.removeValue(forKey: id); next.items.removeValue(forKey: id) }
+            next.plants[candidate.plant.id] = APIPlacement(gardenId: garden.gardenId, x: candidate.x, y: candidate.y, rotationDegrees: candidate.rotation)
+        } else if let candidate = itemCandidate {
+            if let id = replacementID { next.plants.removeValue(forKey: id); next.items.removeValue(forKey: id) }
+            next.items[candidate.item.id] = APIPlacement(gardenId: garden.gardenId, x: candidate.x, y: candidate.y, rotationDegrees: candidate.rotation)
+        } else { return nil }
+        return next
+    }
+    private func strategy(for layout: GardenDraftLayout) -> GardenStrategyEvaluation? {
+        guard let draft = draft, let context = confirmed?.strategyContext else { return nil }
+        // Skills currently depend on membership, stages and context, never yaw or
+        // coordinates. Reuse predictions while dragging instead of resolving at 60 Hz.
+        let key = layout.plants.keys.map { $0.uuidString }.sorted().joined(separator: ",") + "/" +
+            layout.items.keys.map { $0.uuidString }.sorted().joined(separator: ",")
+        if let result = strategyCache[key] { return result }
+        if unavailableStrategies.contains(key) { return nil }
+        if strategyCache.count + unavailableStrategies.count >= 64 { strategyCache = [:]; unavailableStrategies = [] }
+        do {
+            let result = try GardenStrategyEvaluator.evaluate(
+                plants: draft.plants.filter { layout.plants[$0.id] != nil },
+                items: draft.items.filter { layout.items[$0.id] != nil }, context: context)
+            strategyCache[key] = result; return result
+        } catch { unavailableStrategies.insert(key); return nil }
+    }
+    func strategyIfStored(_ id: UUID) -> GardenStrategyEvaluation? {
+        guard var layout = draft?.layout else { return nil }
+        layout.plants.removeValue(forKey: id); layout.items.removeValue(forKey: id)
+        return strategy(for: layout)
+    }
+    func strategyIfPlanted(_ plant: APIOwnedPlant) -> GardenStrategyEvaluation? {
+        guard var layout = draft?.layout, let garden = confirmed else { return nil }
+        layout.plants[plant.id] = APIPlacement(gardenId: garden.gardenId, x: 0, y: 0, rotationDegrees: 0)
+        return strategy(for: layout)
+    }
+    func strategyIfPlaced(_ item: APIOwnedItem) -> GardenStrategyEvaluation? {
+        guard var layout = draft?.layout, let garden = confirmed else { return nil }
+        layout.items[item.id] = APIPlacement(gardenId: garden.gardenId, x: 0, y: 0, rotationDegrees: 0)
+        return strategy(for: layout)
+    }
+    private func beginDraft() {
+        guard let garden = confirmed else { return }
+        if draft == nil {
+            draft = GardenDraftSession(garden: garden, plants: garden.plants + inventory,
+                items: (garden.items ?? []) + itemInventory)
+        }
+        updateDraftFacts(garden, plants: inventory, items: itemInventory)
+        persistDraft()
+    }
+    private func updateDraftFacts(_ garden: APIGarden, plants: [APIOwnedPlant] = [], items: [APIOwnedItem] = []) {
+        strategyCache = [:]; unavailableStrategies = []
+        guard var value = draft else { return }
+        draftConflict = value.baseline.layoutVersion != garden.layoutVersion || value.baseline.catalogVersion != garden.catalogVersion
+        if !draftConflict { value.baseline = garden }
+        func merge<T: Identifiable>(_ old: [T], _ new: [T]) -> [T] where T.ID == UUID {
+            var rows = Dictionary(uniqueKeysWithValues: old.map { ($0.id, $0) })
+            for row in new { rows[row.id] = row }
+            return rows.values.sorted { $0.id.uuidString < $1.id.uuidString }
+        }
+        value.plants = merge(value.plants, plants + garden.plants)
+        value.items = merge(value.items, items + (garden.items ?? []))
+        draft = value
+        persistDraft()
+    }
+    private func applyDraftLayout(_ next: GardenDraftLayout) {
+        guard canEdit, var value = draft else { return }
+        value.apply(next); draft = value; cancelCandidate(); persistDraft()
+    }
+    private func applyCandidateToDraft() {
+        guard canEdit, editCandidateValidity == .valid, let layout = candidateLayout else { return }
+        applyDraftLayout(layout)
+    }
+    func undoDraft() {
+        guard canUndoDraft, var value = draft, let previous = value.undo.popLast() else { return }
+        value.redo.append(value.layout); value.layout = previous; draft = value
+        cancelCandidate(); selectedID = nil; persistDraft()
+    }
+    func redoDraft() {
+        guard canRedoDraft, var value = draft, let next = value.redo.popLast() else { return }
+        value.undo.append(value.layout); value.layout = next; draft = value
+        cancelCandidate(); selectedID = nil; persistDraft()
+    }
+    func resetDraft() {
+        guard pending == nil, !connectionBusy, let garden = confirmed else { return }
+        let plants = draft?.plants ?? inventory, items = draft?.items ?? itemInventory
+        draft = GardenDraftSession(garden: garden, plants: plants, items: items)
+        updateDraftFacts(garden, plants: inventory, items: itemInventory)
+        cancelCandidate(); selectedID = nil; draftConflict = false; persistDraft()
+    }
+    func discardDraft() {
+        draft = nil; draftConflict = false; strategyCache = [:]; unavailableStrategies = []
+        cancelCandidate(); selectedID = nil
+        do { try cache?.remove(kind: "garden-draft", server: service.serverID, user: profile.userId); draftPersistenceIssue = nil }
+        catch { draftPersistenceIssue = "The draft could not be cleared on this device." }
+    }
+    private func persistDraft() {
+        guard let cache = cache, let draft = draft else { return }
+        do {
+            try cache.save(draft, kind: "garden-draft", server: service.serverID, user: profile.userId)
+            draftPersistenceIssue = nil
+        } catch { draftPersistenceIssue = "Draft recovery is unavailable. Keep this screen open until you save." }
+    }
+    private func restoreDraft() {
+        do {
+            if let value = try cache?.load(GardenDraftSession.self, kind: "garden-draft", server: service.serverID, user: profile.userId) {
+                guard confirmed?.gardenId == value.baseline.gardenId else { return }
+                draft = value
+                if let garden = confirmed { updateDraftFacts(garden) }
+            }
+        } catch { draftPersistenceIssue = "Your unfinished draft could not be restored." }
+    }
+    func cancelReplacement() { if editCandidateID == nil { replacementID = nil } }
+    func beginReplacement() {
+        guard canEdit, let id = selectedID, editorGarden?.plants.contains(where: { $0.id == id }) == true ||
+              editorGarden?.items?.contains(where: { $0.id == id }) == true else { return }
+        cancelCandidate(); replacementID = id
+    }
+    func replaceWith(_ plant: APIOwnedPlant) {
+        let target = replacementID
+        let anchor = target.flatMap { draft?.layout.plants[$0] ?? draft?.layout.items[$0] }
+        begin(plant, kind: .plant)
+        replacementID = target
+        if var value = candidate, let anchor = anchor {
+            value.x = anchor.x; value.y = anchor.y; value.rotation = anchor.rotationDegrees; candidate = value
+        }
+        validateCandidate()
+    }
+    func replaceWith(_ item: APIOwnedItem) {
+        let target = replacementID
+        let anchor = target.flatMap { draft?.layout.plants[$0] ?? draft?.layout.items[$0] }
+        beginItem(item, action: "place")
+        replacementID = target
+        if var value = itemCandidate, let anchor = anchor {
+            value.x = anchor.x; value.y = anchor.y; value.rotation = anchor.rotationDegrees; itemCandidate = value
+        }
+        validateItemCandidate()
+    }
+    func saveDraft() async {
+        guard canSaveDraft, let initial = draft else { return }
+        let before = draftStrategy?.signature
+        let generation = editGeneration
+        preparingMembership = true
+        defer { preparingMembership = false }
+        let actions = initial.request()
+        let membership = actions.actions.contains { $0.action == .plant || $0.action == .store } ||
+            (actions.itemActions ?? []).contains { $0.action == "place" || $0.action == "store" }
+        if membership, let prepare = prepareMembershipChange, !(await prepare()) {
+            report("Activity could not sync. Your draft is kept."); return
+        }
+        guard isActive, editing, generation == editGeneration else { return }
+        await refresh()
+        // Refresh every owned copy before reviewing a draft, including copies on
+        // later inventory pages. A stored copy may have changed on another device.
+        for _ in 0..<64 {
+            guard isActive, editing, generation == editGeneration, readyForMutation else { return }
+            if nextCursor == nil && itemCursor == nil { break }
+            let plantCursor = nextCursor, savedItemCursor = itemCursor
+            if nextCursor != nil { await loadMore() }
+            if itemCursor != nil { await loadMoreItems() }
+            if plantCursor == nextCursor && savedItemCursor == itemCursor {
+                report("Storage could not refresh. Your draft is kept."); return
+            }
+        }
+        guard nextCursor == nil && itemCursor == nil else {
+            report("Storage needs another refresh. Your draft is kept."); return
+        }
+        if var refreshed = draft, let garden = confirmed {
+            let plants = garden.plants + inventory, items = (garden.items ?? []) + itemInventory
+            guard Set(refreshed.layout.plants.keys).isSubset(of: Set(plants.map(\.id))),
+                  Set(refreshed.layout.items.keys).isSubset(of: Set(items.map(\.id))) else {
+                draftConflict = true; report("Some objects are no longer owned. Reset this draft to continue."); return
+            }
+            refreshed.plants = plants; refreshed.items = items; draft = refreshed
+            strategyCache = [:]; unavailableStrategies = []; persistDraft()
+        }
+        guard isActive, editing, generation == editGeneration, readyForMutation,
+              !activityBusy, !activityBlocked, !draftConflict, let value = draft else { return }
+        if let before = before, before != draftStrategy?.signature {
+            report("Garden effects updated. Review, then save.", kind: .pending); return
+        }
+        var request = value.request()
+        guard !request.actions.isEmpty || request.itemActions?.isEmpty == false else { return }
+        do {
+            if confirmed?.strategyContext != nil {
+                guard let local = draftStrategy else { report("Garden effects are unavailable. Refresh to try again."); return }
+                let preview = try await service.preview(body: request.encoded())
+                guard isActive, editing, generation == editGeneration else { return }
+                guard preview.signature == local.signature, let proof = preview.fingerprint else {
+                    report("Garden effects need a refresh. Your draft is kept."); return
+                }
+                request.expectedStrategyFingerprint = proof
+            }
+            guard generation == editGeneration, readyForMutation, editing, !draftConflict else { return }
+            let edit = PendingGardenEdit(serverID: service.serverID, userID: profile.userId,
+                gardenID: value.baseline.gardenId, body: try request.encoded())
+            try journal.save(edit)
+            pending = edit; cancelCandidate()
+            await retryPending()
+            if pending == nil && draft == nil { endEditing() }
+        } catch {
+            report(PlayerMessage.failure(error, fallback: "The garden could not save. Your draft is kept."))
         }
     }
 }

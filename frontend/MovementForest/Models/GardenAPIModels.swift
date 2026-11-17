@@ -23,7 +23,7 @@ struct APIOwnedPlant: Codable, Identifiable, Equatable {
     let growthStage: GrowthStage
     let modelKey: String
     let thumbnailKey: String
-    let placement: APIPlacement?
+    var placement: APIPlacement?
     var clearanceRadius: Decimal? = nil
     var pinnedProfiles: APIPinnedProfiles? = nil
     var growthProgress: APIGrowthProgress? = nil
@@ -67,9 +67,10 @@ struct APIGarden: Codable, Equatable {
     let catalogVersion: String
     let layoutVersion: Int64
     let stateVersion: Int64
-    let plants: [APIOwnedPlant]
+    var plants: [APIOwnedPlant]
     var totalAttractionMicroUnits: String? = nil
     var skillSummary: APISkillSummary? = nil
+    var strategyContext: APIStrategyContext? = nil
     var items: [APIOwnedItem]? = nil
     var dailyWater: [APIDailyItemWater]? = nil
 
@@ -206,6 +207,18 @@ struct APIGardenSkillDefinition: Codable, Equatable, Identifiable {
     let name: String
     let description: String
     let minimumStage: String
+    var componentVersion: Int? = nil
+    var stepBand: String? = nil
+    var system: String? = nil
+    var scope: String? = nil
+    var metric: String? = nil
+    var target: String? = nil
+    var recipients: APIStrategySelector? = nil
+    var condition: APIStrategyCondition? = nil
+    var operation: String? = nil
+    var magnitude: APIStrategyMagnitude? = nil
+    var stackingGroup: String? = nil
+    var stackingRule: String? = nil
 }
 
 struct APISkillSummary: Codable, Equatable {
@@ -217,13 +230,20 @@ struct APISkillSummary: Codable, Equatable {
     struct Caps: Codable, Equatable {
         let activityBonus: String
         let waterBonus: String
+        var plantAttractionBonus: String? = nil
+        var gardenAttractionBonus: String? = nil
+        var totalAttractionBonus: String? = nil
+        var flatAttractionPoints: String? = nil
+        var flatAttractionBaseFraction: String? = nil
+        var capacityBonus: String? = nil
+        var flatCapacity: Int? = nil
 
         var description: String {
             func percent(_ value: String) -> String {
                 guard let amount = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")) else { return "Unavailable" }
                 return (amount * 100).formatted(.number.precision(.fractionLength(0...2))) + "%"
             }
-            return "Boost cap reached · Activity +\(percent(activityBonus)) · Water +\(percent(waterBonus)) maximum"
+            return "Maximum activity bonus +\(percent(activityBonus)). Maximum water bonus +\(percent(waterBonus))."
         }
     }
 
@@ -238,6 +258,7 @@ struct APISkillSummary: Codable, Equatable {
         let operation: String
         let magnitude: String
         let stackingGroup: String
+        var stepBand: String? = nil
         var sourcePlantId: UUID? = nil
         var sourceItemId: UUID? = nil
         var sourceKind: String? = nil
@@ -251,7 +272,7 @@ struct APISkillSummary: Codable, Equatable {
             case skillId = "id"
             case name, description, system, scope, metric, operation, magnitude, stackingGroup
             case sourcePlantId, profileId, profileVersion, eligibleSourcePlantIds, recipientPlantIds
-            case sourceItemId, sourceKind, eligibleSourceItemIds
+            case sourceItemId, sourceKind, eligibleSourceItemIds, stepBand
         }
 
         var bonusText: String {
@@ -260,7 +281,19 @@ struct APISkillSummary: Codable, Equatable {
             let destination: String
             switch scope {
             case "water": destination = "water"
-            case "activity": destination = (metric ?? "activity").replacingOccurrences(of: "_", with: " ")
+            case "activity":
+                switch metric {
+                case "steps":
+                    destination = stepBand == "first_2000" ? "water from the first 2,000 steps" :
+                        stepBand == "after_2000" ? "water from steps after 2,000" : "water from steps"
+                case "walking_running_distance_km": destination = "water from walking and running"
+                case "active_energy_kcal": destination = "water from active energy"
+                case "flights_climbed": destination = "water from flights climbed"
+                default:
+                    if let metric = metric, metric.hasPrefix("workout_minutes.") {
+                        destination = "water from " + metric.replacingOccurrences(of: "workout_minutes.", with: "").replacingOccurrences(of: "_", with: " ") + " workouts"
+                    } else { destination = "activity water" }
+                }
             case "offline_capacity": destination = "storage"
             case "welcome_duration": destination = "welcome time"
             case "daily_water": destination = "daily water per plant"
@@ -306,6 +339,7 @@ struct GardenEditRequest: Codable, Equatable {
     let catalogVersion: String
     let actions: [GardenEditAction]
     var itemActions: [ItemEditAction]? = nil
+    var expectedStrategyFingerprint: String? = nil
 
     func encoded() throws -> Data {
         let encoder = JSONEncoder()

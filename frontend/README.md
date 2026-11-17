@@ -1,3 +1,8 @@
+**Garden strategy editor, 17 November 2026:** local drafts, live attraction/skill
+previews, Undo/Redo, replacements and one Save garden are source-implemented.
+Update the backend first; this increment needs no schema migration/publication.
+See [native acceptance and test flows](GARDEN_STRATEGY_ACCEPTANCE.md).
+
 **Milestone tracks, 13 November 2026:** five artwork selectors, Steps/Butterfly timelines, independent Growth/Special/Event quests, reward bundles, source-aware gem validation, workout distance and account-scoped cache/recovery are source-implemented. See [native acceptance](MILESTONES_ACCEPTANCE.md) and [explicit backend activation](../backend/MILESTONES.md). Native Xcode/device acceptance remains pending.
 
 **Woodland release, 13 November 2026:** the app bundles all 30 species and supports Standard/Enchanted/Premium artwork and token/gem purchasing. Build this client before backend publication. See [upgrade, storage measurements and device flow](../backend/WOODLAND_RELEASE.md). Native Xcode/device acceptance remains separate from portable checks.

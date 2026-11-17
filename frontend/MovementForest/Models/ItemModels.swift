@@ -59,8 +59,9 @@ struct APIOwnedItem: Codable, Identifiable, Equatable {
     let modelKey: String
     let thumbnailKey: String
     let clearanceRadius: Decimal
-    let placement: APIPlacement?
+    var placement: APIPlacement?
     var gardenSkills: [APIItemSkill]? = nil
+    var strategyRules: APIItemStrategyRules? = nil
 
     func rendered() -> GardenItem {
         GardenItem(id: id, itemId: itemId, assetVersion: assetVersion,

@@ -27,6 +27,8 @@ struct ConnectedGardenScreen: View {
     @State private var storageItems = false
     @State private var itemInspection: ItemInspection?
     @State private var visible = false
+    @State private var exitPrompt = false
+    @State private var resetPrompt = false
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -60,7 +62,7 @@ struct ConnectedGardenScreen: View {
 
     var body: some View {
         Group {
-            if let garden = store.rendered {
+            if let garden = store.editorRendered {
                 GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
                                     motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil && itemInspection == nil,
@@ -115,16 +117,42 @@ struct ConnectedGardenScreen: View {
                 }
             }
         }
-        .navigationTitle("Your forest").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(store.editing ? "Edit garden" : "Your forest").navigationBarTitleDisplayMode(.inline)
         .preference(key: EntryPresentationBlocker.self, value: sheet != nil || itemInspection != nil || (active && store.editing))
         .toolbar {
             if store.editing {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 0) {
+                        Button { store.undoDraft() } label: { Image(systemName: "arrow.uturn.backward").frame(width: 44, height: 44) }
+                            .disabled(!store.canUndoDraft).accessibilityLabel("Undo").accessibilityIdentifier("editor.undo")
+                        Button { store.redoDraft() } label: { Image(systemName: "arrow.uturn.forward").frame(width: 44, height: 44) }
+                            .disabled(!store.canRedoDraft).accessibilityLabel("Redo").accessibilityIdentifier("editor.redo")
+                    }.buttonStyle(.journalIcon)
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { sheet = nil; store.endEditing() } label: {
-                        Label("Done", systemImage: "checkmark").frame(minHeight: 44)
-                    }.buttonStyle(.journalIcon).accessibilityLabel("Done editing").accessibilityIdentifier("editor.done")
+                    HStack(spacing: 6) {
+                        Button("Save garden") { Task { await store.saveDraft() } }
+                            .buttonStyle(.journalPrimary).disabled(!store.canSaveDraft)
+                            .accessibilityIdentifier("editor.saveGarden")
+                        Button {
+                            if store.pending != nil { sheet = nil; store.endEditing() }
+                            else if store.hasDraftChanges { exitPrompt = true }
+                            else { sheet = nil; store.discardDraft(); store.endEditing() }
+                        } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                            .buttonStyle(.journalIcon).disabled(store.connectionBusy)
+                            .accessibilityLabel("Done editing").accessibilityIdentifier("editor.done")
+                    }
                 }
             }
+        }
+        .confirmationDialog("Save garden changes?", isPresented: $exitPrompt, titleVisibility: .visible) {
+            Button("Save garden") { Task { await store.saveDraft() } }.disabled(!store.canSaveDraft)
+            Button("Discard changes", role: .destructive) { sheet = nil; store.discardDraft(); store.endEditing() }
+            Button("Keep editing", role: .cancel) { }
+        }
+        .confirmationDialog("Reset your draft?", isPresented: $resetPrompt, titleVisibility: .visible) {
+            Button("Reset changes", role: .destructive) { store.resetDraft() }
+            Button("Cancel", role: .cancel) { }
         }
         .sheet(item: secondarySheet) { item in
             NavigationStack {
@@ -157,6 +185,7 @@ struct ConnectedGardenScreen: View {
             ItemDetailScreen(store: store, copyID: selection.id, close: { itemInspection = nil }, collection: collection)
                 .journalModalBackground()
         }
+        .onChange(of: sheet) { if $0 == nil { store.cancelReplacement() } }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
         .task(id: collection?.id) { await collection?.refresh() }
         .onChange(of: store.editCandidateID) { if $0 == nil { positionControlsPresented = false } }
@@ -182,6 +211,15 @@ struct ConnectedGardenScreen: View {
 
     private var browsingStatus: some View {
         VStack(spacing: 8) {
+            if let issue = store.draftPersistenceIssue { Text(issue).font(.caption).padding(10).background(JournalTheme.paper) }
+            if store.hasDraftChanges && store.pending == nil {
+                HStack {
+                    Text("Unfinished garden draft").font(.callout)
+                    Spacer()
+                    Button("Resume draft") { store.editing = true }.buttonStyle(.journalSecondary)
+                        .disabled(store.connectionBusy).accessibilityIdentifier("editor.resumeDraft")
+                }.padding(10).background(JournalTheme.paper).gardenOverlayTarget()
+            }
             if let accountSummary = accountSummary {
                 HomeAccountHeader(store: accountSummary, visitors: visitors,
                     attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
@@ -195,7 +233,7 @@ struct ConnectedGardenScreen: View {
                 !renderer.errors.isEmpty || renderer.isLoading || renderer.visitorAssetIssue != nil {
                 VStack(alignment: .leading, spacing: 6) {
                     if store.showingCached {
-                        Label("Saved garden · Values last confirmed", systemImage: "wifi.slash").font(.caption)
+                        Label("Saved garden, Values last confirmed", systemImage: "wifi.slash").font(.caption)
                     }
                     if let message = store.gardenMessage {
                         Text(message).font(.callout).accessibilityIdentifier("editor.status")
@@ -242,20 +280,27 @@ struct ConnectedGardenScreen: View {
 
     private var statusPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Editing garden", systemImage: "pencil").font(.headline)
-            if let capacity = store.capacity {
-                PlantCapacitySummary(capacity: capacity, cached: store.showingCached, compact: true)
+            GardenStrategyPanel(store: store)
+            if store.draftConflict {
+                Text("Your saved garden changed. Reset this draft to continue.").font(.callout)
+                Button("Review saved garden") { resetPrompt = true }.buttonStyle(.journalSecondary)
             }
-            if store.showingCached { Label("Saved garden · Connect to refresh", systemImage: "wifi.slash").font(.caption) }
+            if let issue = store.draftPersistenceIssue { Text(issue).font(.caption) }
+            if let issue = store.draftCapacityIssue { Text(issue).font(.callout) }
+            if store.editCandidateID != nil {
+                GardenActionImpact(title: "If applied", before: store.draftStrategy, after: store.strategyPreview)
+            } else if let id = store.selectedID {
+                GardenActionImpact(title: "If stored", before: store.draftStrategy, after: store.strategyIfStored(id))
+            }
+            if let message = store.gardenMessage { Text(message).font(.callout).accessibilityIdentifier("editor.status") }
+            if store.showingCached { Label("Saved garden. Connect to refresh", systemImage: "wifi.slash").font(.caption) }
             if let candidate = store.candidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
                     .font(.callout).accessibilityIdentifier("editor.validity")
-                if candidate.kind == .plant && store.adultPreview { Text("Adult preview · Clearance stays the same").font(.caption) }
+                if candidate.kind == .plant && store.adultPreview { Text("Adult appearance only. Skills use the current stage.").font(.caption) }
             } else if let candidate = store.itemCandidate {
                 Label(candidate.validity.message, systemImage: candidate.validity == .valid ? "checkmark.circle" : "exclamationmark.triangle")
                     .font(.callout).accessibilityIdentifier("editor.item.validity")
-            } else if let message = store.gardenMessage {
-                Text(message).font(.callout).accessibilityIdentifier("editor.status")
             }
             if store.state == .unknown {
                 Button("Retry saved edit") { Task { await store.retryPending() } }
@@ -364,7 +409,12 @@ struct ConnectedGardenScreen: View {
                     GardenActionButton(title: "Storage", symbol: "tray", identifier: "editor.storage") { sheet = .storage }
                     GardenActionButton(title: "Zoom out", symbol: "minus.magnifyingglass", identifier: "editor.zoomOut") { renderer.zoom(by: 1.2) }
                     GardenActionButton(title: "Zoom in", symbol: "plus.magnifyingglass", identifier: "editor.zoomIn") { renderer.zoom(by: 0.8) }
-                    GardenActionButton(title: "Reset garden view", symbol: "arrow.counterclockwise", identifier: "editor.resetView") { renderer.resetCamera() }
+                    Menu {
+                        Button("Reset garden view") { renderer.resetCamera() }
+                        Button("Reset changes", role: .destructive) { resetPrompt = true }
+                            .disabled(!store.hasDraftChanges || store.connectionBusy || store.pending != nil)
+                    } label: { Image(systemName: "ellipsis").frame(minWidth: 44, minHeight: 44).frame(maxWidth: .infinity) }
+                        .buttonStyle(.journalTool).accessibilityLabel("More editing options")
                 }
                 .padding(.horizontal, 12).background(JournalTheme.sage.opacity(0.5))
             }
@@ -383,7 +433,8 @@ struct ConnectedGardenScreen: View {
             move: store.editing ? { store.beginItem(item, action: "move") } : nil,
             rotate: store.editing ? { store.beginItem(item, action: "rotate") } : nil,
             store: store.editing ? { Task { await store.storeItem(item) } } : nil,
-            editingDisabled: !store.canEdit || renderer.isLoading)
+            editingDisabled: !store.canEdit || renderer.isLoading,
+            replace: { store.beginReplacement(); sheet = .storage })
     }
 
     @ViewBuilder private func selectionPopup(_ selected: APIOwnedPlant) -> some View {
@@ -400,7 +451,8 @@ struct ConnectedGardenScreen: View {
                         guard store.editing, store.selectedID == id else { return }
                         await store.storeSelected()
                     }
-                }, editingDisabled: !store.canEdit || renderer.isLoading)
+                }, editingDisabled: !store.canEdit || renderer.isLoading,
+                replace: { store.beginReplacement(); sheet = .storage })
         } else {
             GardenSelectionPopup(name: name(of: selected), variant: selected.variantId.capitalized,
                 rarity: store.catalogue?.rarity(for: selected.speciesId), stage: selected.growthStage.title,
@@ -416,9 +468,9 @@ struct ConnectedGardenScreen: View {
     private var plantsList: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if store.confirmed?.plants.isEmpty != false { Text("No planted copies. Use Edit → Storage to place a plant.") }
+                if store.editorGarden?.plants.isEmpty != false { Text("No planted copies. Use Edit → Storage to place a plant.") }
                 JournalGrid {
-                    ForEach(store.confirmed?.plants ?? []) { plant in
+                    ForEach(store.editorGarden?.plants ?? []) { plant in
                         OwnedPlantTile(plant: plant, store: store, catalog: catalog,
                             identifier: (store.editing ? "editor.plant." : "garden.plant.") + plant.id.uuidString) {
                             if store.editing {
@@ -428,7 +480,7 @@ struct ConnectedGardenScreen: View {
                             }
                         }
                     }
-                    ForEach(store.confirmed?.items ?? []) { item in
+                    ForEach(store.editorGarden?.items ?? []) { item in
                         OwnedItemTile(item: item, identifier: "garden.item.\(item.id)") {
                             if store.editing {
                                 store.cancelCandidate(); store.selectedID = item.id; sheet = nil
@@ -475,19 +527,20 @@ struct ConnectedGardenScreen: View {
             }.pickerStyle(.segmented).padding(16)
             if storageItems {
                 ItemInventoryPanel(store: store, storageOnly: true, onPlace: { item in
-                    store.beginItem(item, action: "place"); sheet = nil
+                    if store.replacementID != nil { store.replaceWith(item) }
+                    else { store.beginItem(item, action: "place") }; sheet = nil
                 }, collection: collection)
             } else {
               ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if let capacity = store.capacity {
+                if let capacity = store.editorCapacity {
                     PlantCapacitySummary(capacity: capacity, cached: store.showingCached)
                 }
-                if store.showingCached { Label("Saved plants · Connect to refresh", systemImage: "wifi.slash").font(.callout) }
+                if store.showingCached { Label("Saved plants. Connect to refresh", systemImage: "wifi.slash").font(.callout) }
                 if let message = store.gardenMessage { Text(message).font(.callout) }
-                if store.inventory.isEmpty { Text("No stored copies in the saved inventory.") }
+                if store.storedPlants.isEmpty { Text("No stored plants.") }
                 JournalGrid {
-                    ForEach(store.inventory) { plant in
+                    ForEach(store.storedPlants) { plant in
                         OwnedPlantTile(plant: plant, store: store, catalog: catalog,
                             identifier: "storage.copy." + plant.id.uuidString) {
                             storageInspection = PlantInspection(id: plant.id)
@@ -603,7 +656,7 @@ private struct CandidateControlsScreen: View {
                 Button("Cancel") { focusedField = nil; store.cancelCandidate(); close() }
                     .frame(minHeight: 44).accessibilityIdentifier("editor.cancel")
                 Spacer(minLength: 8)
-                Button("Apply and save") {
+                Button("Apply to draft") {
                     focusedField = nil; applying = true
                     Task { await store.releaseCandidate(); close() }
                 }.buttonStyle(.journalPrimary).frame(minHeight: 44).disabled(applying || store.editCandidateValidity != .valid || !store.canEdit)

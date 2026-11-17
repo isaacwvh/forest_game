@@ -1,3 +1,13 @@
+## Garden strategy editor — 17 November 2026
+
+The source now supports a local mixed garden draft with immediate attraction/skill
+predictions, contextual action impacts, Undo/Redo, replacements, local recovery
+and one explicit Save garden transaction. This supersedes the historical F4/F8
+per-action-save and Done/background cancellation clauses for applied draft work.
+The existing confirmed-state/reward/pending-request boundaries remain in force.
+See [editor acceptance](frontend/GARDEN_STRATEGY_ACCEPTANCE.md) and
+[preview API](backend/GARDEN_STRATEGY.md). Native acceptance remains separate.
+
 **First Woodland release — 13 November 2026:** source implementation and validation are covered in [WOODLAND_RELEASE.md](backend/WOODLAND_RELEASE.md). This supplies the expanded catalog and Standard/Enchanted/Premium packs; the separate milestone redesign remains deferred. Personal-database activation and native acceptance are explicit.
 
 # Movement Forest implementation plan

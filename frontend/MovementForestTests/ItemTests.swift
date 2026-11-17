@@ -85,6 +85,8 @@ final class ItemTests: XCTestCase {
         store.updatePosition(x: 2, y: 2); store.updateRotation(90)
         XCTAssertEqual(store.itemCandidate?.validity, .valid)
         await store.releaseCandidate()
+        XCTAssertTrue(service.bodies.isEmpty)
+        await store.saveDraft()
         XCTAssertNotNil(store.pending); XCTAssertEqual(store.state, .unknown)
         let savedBody = try XCTUnwrap(journal.value?.body)
         store.deactivate()

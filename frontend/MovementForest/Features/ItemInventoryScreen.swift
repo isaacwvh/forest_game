@@ -20,7 +20,7 @@ struct ItemInventoryPanel: View {
     var collection: CollectionCoordinator? = nil
     @State private var inspection: ItemInspection?
     @State private var placing: APIOwnedItem?
-    private var placed: [APIOwnedItem] { store.confirmed?.items ?? [] }
+    private var placed: [APIOwnedItem] { store.editorGarden?.items ?? [] }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -32,14 +32,14 @@ struct ItemInventoryPanel: View {
                             .font(.callout).foregroundStyle(JournalTheme.secondary)
                     }
                 }
-                if store.showingCached { Label("Saved items · Connect to refresh", systemImage: "wifi.slash").font(.callout) }
+                if store.showingCached { Label("Saved items, Connect to refresh", systemImage: "wifi.slash").font(.callout) }
                 if let message = store.gardenMessage { Text(message).font(.callout) }
                 if !storageOnly {
                     PlantInventoryHeading(title: "In garden", symbol: "tree", count: placed.count)
                     itemGrid(placed)
                 }
-                PlantInventoryHeading(title: "Stored", symbol: "tray", count: store.itemCapacity?.storedItems)
-                itemGrid(store.itemInventory)
+                PlantInventoryHeading(title: "Stored", symbol: "tray", count: store.editing ? store.storedItems.count : store.itemCapacity?.storedItems)
+                itemGrid(store.storedItems)
                 if store.itemCursor != nil {
                     Button("Load more items") { Task { await store.loadMoreItems() } }
                         .buttonStyle(.journalSecondary).frame(minHeight: 44)
@@ -84,7 +84,7 @@ struct ItemDetailScreen: View {
     var collection: CollectionCoordinator? = nil
     @Environment(\.dynamicTypeSize) private var textSize
     private var item: APIOwnedItem? {
-        ((store.confirmed?.items ?? []) + store.itemInventory).first { $0.id == copyID }
+        ((store.editorGarden?.items ?? []) + store.storedItems).first { $0.id == copyID }
     }
     var body: some View {
         JournalInspector(title: item?.displayName ?? "Item", close: close,
@@ -101,11 +101,14 @@ struct ItemDetailScreen: View {
                         Text(item.placement == nil ? "Place this item to enable its skill." : "Placed in your garden.").font(.caption)
                     }
                 }
+                if store.editing, item.placement == nil {
+                    GardenActionImpact(title: "If placed", before: store.draftStrategy, after: store.strategyIfPlaced(item))
+                }
             } else {
                 Text("This copy is no longer available. Refresh your inventory.")
             }
         } footer: {
-            if let item = item, let collection = collection {
+            if let item = item, !store.editing, let collection = collection {
                 ItemSaleControls(store: collection, item: item, editingEnabled: store.canEdit,
                                  place: place, close: close).padding(16).background(JournalTheme.sage.opacity(0.65))
             } else if let item = item, item.placement == nil, let place = place {

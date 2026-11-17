@@ -201,10 +201,14 @@ protocol GardenServing {
     func garden() async throws -> APIGarden
     func inventory(after: UUID?) async throws -> APIInventory
     func edit(body: Data) async throws -> GardenEditResult
+    func preview(body: Data) async throws -> GardenStrategyEvaluation
     func items(after: UUID?) async throws -> APIItemInventory
 }
 
 extension GardenServing {
+    func preview(body: Data) async throws -> GardenStrategyEvaluation {
+        throw ForestError.invalidData("Garden preview is unavailable. Update the server.")
+    }
     func items(after: UUID?) async throws -> APIItemInventory {
         APIItemInventory(items: [], nextCursor: nil, capacity: nil)
     }
@@ -223,6 +227,9 @@ struct APIGardenRepository: GardenServing {
     }
     func edit(body: Data) async throws -> GardenEditResult {
         try await client.request("v1/me/garden/edits", method: "POST", body: body)
+    }
+    func preview(body: Data) async throws -> GardenStrategyEvaluation {
+        try await client.request("v1/me/garden/preview", method: "POST", body: body)
     }
     func items(after: UUID?) async throws -> APIItemInventory {
         var query = [URLQueryItem(name: "limit", value: "100")]

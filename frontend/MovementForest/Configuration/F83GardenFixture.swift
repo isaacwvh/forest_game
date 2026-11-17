@@ -111,24 +111,21 @@ final class PresentationGardenService: GardenServing {
     func edit(body: Data) async throws -> GardenEditResult {
         let request = try ActivityWire.decoder().decode(GardenEditRequest.self, from: body)
         if let receipt = receipts[request.requestId] { return receipt }
-        guard request.expectedLayoutVersion == current.layoutVersion, let action = request.actions.first,
-              let index = copies.firstIndex(where: { $0.id == action.plantId }) else { throw ForestError.invalidData("Invalid fixture edit.") }
-        let copy = copies[index]
-        let placement: APIPlacement? = action.action == .store ? nil : APIPlacement(gardenId: current.gardenId,
-            x: action.x ?? copy.placement?.x ?? 0, y: action.y ?? copy.placement?.y ?? 0,
-            rotationDegrees: action.rotationDegrees ?? copy.placement?.rotationDegrees ?? 0)
-        let updated = APIOwnedPlant(plantId: copy.id, speciesId: copy.speciesId, variantId: copy.variantId,
-            growthMicroUnits: copy.growthMicroUnits, growthStage: copy.growthStage, modelKey: copy.modelKey,
-            thumbnailKey: copy.thumbnailKey, placement: placement, pinnedProfiles: copy.pinnedProfiles,
-            growthProgress: copy.growthProgress, baseAttractionMicroUnits: copy.baseAttractionMicroUnits,
-            contributesAttraction: copy.contributesAttraction, gardenSkills: copy.gardenSkills,
-            metricMultipliers: copy.metricMultipliers, gameplayTags: copy.gameplayTags)
-        copies[index] = updated
+        guard request.expectedLayoutVersion == current.layoutVersion else { throw ForestError.invalidData("Invalid fixture edit.") }
+        var updated: [APIOwnedPlant] = []
+        for action in request.actions {
+            guard let index = copies.firstIndex(where: { $0.id == action.plantId }) else { throw ForestError.invalidData("Invalid fixture copy.") }
+            var copy = copies[index]
+            copy.placement = action.action == .store ? nil : APIPlacement(gardenId: current.gardenId,
+                x: action.x ?? copy.placement?.x ?? 0, y: action.y ?? copy.placement?.y ?? 0,
+                rotationDegrees: action.rotationDegrees ?? copy.placement?.rotationDegrees ?? 0)
+            copies[index] = copy; updated.append(copy)
+        }
         current = APIGarden(gardenId: current.gardenId, width: current.width, depth: current.depth,
             coordinateUnit: current.coordinateUnit, gardenUnitMetres: current.gardenUnitMetres,
             catalogVersion: current.catalogVersion, layoutVersion: current.layoutVersion + 1,
             stateVersion: current.stateVersion + 1, plants: copies.filter { $0.placement != nil })
-        let receipt = GardenEditResult(requestId: request.requestId, garden: current, updatedPlants: [updated])
+        let receipt = GardenEditResult(requestId: request.requestId, garden: current, updatedPlants: updated)
         receipts[request.requestId] = receipt; return receipt
     }
 }

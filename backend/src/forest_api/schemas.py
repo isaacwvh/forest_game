@@ -240,6 +240,7 @@ class ItemDTO(DTO):
     clearance_radius: GroundNumber
     placement: PlacementDTO | None
     garden_skills: list[dict] = Field(default_factory=list)
+    strategy_rules: dict | None = None
 
 
 class PlantDTO(DTO):
@@ -282,6 +283,7 @@ class GardenDTO(DTO):
     items: list[ItemDTO] = Field(default_factory=list)
     total_attraction_micro_units: str = "0"
     skill_summary: dict | None = None
+    strategy_context: dict | None = None
     daily_water: list[dict] = Field(default_factory=list)
 
 
@@ -402,16 +404,17 @@ PlacementAction = Annotated[
 
 
 class GardenEditRequest(DTO):
+    expected_strategy_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     request_id: UUID
     expected_layout_version: Annotated[int, Field(strict=True, ge=0, le=9223372036854775807)]
     catalog_version: str = Field(min_length=1, max_length=100)
-    actions: list[PlacementAction] = Field(default_factory=list, max_length=100)
-    item_actions: list["ItemAction"] = Field(default_factory=list, max_length=100)
+    actions: list[PlacementAction] = Field(default_factory=list, max_length=200)
+    item_actions: list["ItemAction"] = Field(default_factory=list, max_length=200)
 
     @model_validator(mode="after")
     def unique_plants(self) -> "GardenEditRequest":
-        if not 1 <= len(self.actions) + len(self.item_actions) <= 100:
-            raise ValueError("Provide between 1 and 100 actions")
+        if not 1 <= len(self.actions) + len(self.item_actions) <= 200:
+            raise ValueError("Provide between 1 and 200 actions")
         if len({action.item_id for action in self.item_actions}) != len(self.item_actions):
             raise ValueError("Each item may appear only once per edit")
         if len({action.plant_id for action in self.actions}) != len(self.actions):

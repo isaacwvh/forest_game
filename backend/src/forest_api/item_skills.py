@@ -75,3 +75,35 @@ def descriptions(session, definition):
         {"id": e["id"], "name": e["name"], "description": e["description"]}
         for e in profile.rules["effects"]
     ]
+
+
+def rules_for_definition(session, definition):
+    """Complete pinned rules for prediction; no attachment to current catalogue defaults."""
+    binding = session.get(ItemSkillBinding, (definition.id, definition.version))
+    if binding is None:
+        return {
+            "profileId": definition.id,
+            "profileVersion": definition.version,
+            "effects": [],
+            "dailyGrant": None,
+        }
+    profile = session.get(ItemSkillProfile, (binding.profile_id, binding.profile_version))
+    from forest_api.activity_inputs import WORKOUT_TYPES
+
+    effects = []
+    for raw in profile.rules["effects"]:
+        metrics = (
+            ["workout_minutes." + kind for kind in sorted(set(WORKOUT_TYPES.values()))]
+            if raw.get("metric") == "workouts"
+            else [raw.get("metric")]
+        )
+        effects.extend(
+            SkillEffect.model_validate({**raw, "metric": metric}).model_dump(by_alias=True)
+            for metric in metrics
+        )
+    return {
+        "profileId": profile.id,
+        "profileVersion": profile.version,
+        "effects": effects,
+        "dailyGrant": profile.rules.get("dailyGrant"),
+    }

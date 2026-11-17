@@ -1,3 +1,12 @@
+**Garden strategy editor, 17 November 2026:** Edit now holds a local draft.
+Plant/store/replace/move/rotate update projected attraction and skill information
+without changing gameplay until Save garden. Undo/Redo, explicit discard and
+account-scoped draft recovery support experimentation. A pure local evaluator
+uses pinned rules; read-only server verification and a proof-bound atomic batch
+preserve authoritative settlement and reward rules. Earlier per-action save and
+Done/background behavior is historical. See [contract](backend/GARDEN_STRATEGY.md)
+and [native acceptance](frontend/GARDEN_STRATEGY_ACCEPTANCE.md).
+
 **First Woodland release — source implemented, 13 November 2026:** 30 species, 47 variants, bundled assets, 21 skills, 8% Sleeping Dew, three versioned token/gem packs, copy-pinned radii and conversion compatibility. Migration/publication and native acceptance remain explicit. See [Woodland release](backend/WOODLAND_RELEASE.md).
 
 # Movement Forest: V1 Working Specification

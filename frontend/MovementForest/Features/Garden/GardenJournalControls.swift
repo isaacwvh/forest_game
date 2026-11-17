@@ -34,6 +34,7 @@ struct GardenSelectionPopup: View {
     var rotate: (() -> Void)? = nil
     var store: (() -> Void)? = nil
     var editingDisabled = false
+    var replace: (() -> Void)? = nil
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         JournalPlantFrame(rarity: rarity) {
@@ -54,7 +55,10 @@ struct GardenSelectionPopup: View {
                             .font(.system(.headline, design: .serif))
                             .lineLimit(textSize.isAccessibilitySize ? nil : 1)
                             .minimumScaleFactor(textSize.isAccessibilitySize ? 1 : 0.75)
-                        Text(item.map { $0.rarity.capitalized } ?? "\(variant) · \(stage)").font(.caption).foregroundStyle(JournalTheme.secondary)
+                        HStack(spacing: 12) {
+                            if let item = item { Text(item.rarity.capitalized) }
+                            else { Text(variant); Text(stage) }
+                        }.font(.caption).foregroundStyle(JournalTheme.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         if let owned = owned {
                             let summary = JournalGrowthSummary(plant: owned)
@@ -81,6 +85,10 @@ struct GardenSelectionPopup: View {
                     if let rotate = rotate {
                         GardenActionButton(title: "Rotate", symbol: "arrow.clockwise",
                             identifier: "editor.rotate", action: rotate).disabled(editingDisabled)
+                    }
+                    if let replace = replace {
+                        GardenActionButton(title: "Replace", symbol: "arrow.triangle.2.circlepath",
+                            identifier: "editor.replace", action: replace).disabled(editingDisabled)
                     }
                     if let store = store {
                         GardenActionButton(title: "Store", symbol: "tray.and.arrow.down",

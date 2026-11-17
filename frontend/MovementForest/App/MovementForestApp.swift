@@ -309,7 +309,7 @@ struct RootView: View {
 
     private func navigate(to destination: ForestDestination) {
         if destination == .edit {
-            guard let editor = connection.editor, editor.canEdit else { return }
+            guard let editor = connection.editor, editor.canStartEditing else { return }
             collectionDestination = nil; selectedTab = .garden; menuPresented = false
             editor.editing = true
         } else {
@@ -329,7 +329,7 @@ struct RootView: View {
                 }
                 .buttonStyle(.journalNavigation(selectedTab == destination && collectionDestination == nil))
                 .foregroundStyle(selectedTab == destination && collectionDestination == nil ? JournalTheme.action : JournalTheme.secondary)
-                .disabled(destination == .edit && connection.editor?.canEdit != true)
+                .disabled(destination == .edit && connection.editor?.canStartEditing != true)
                 .accessibilityIdentifier("navigation." + destination.id)
                 .accessibilityLabel(destination.rawValue)
                 .accessibilityAddTraits(selectedTab == destination && collectionDestination == nil ? .isSelected : [])
