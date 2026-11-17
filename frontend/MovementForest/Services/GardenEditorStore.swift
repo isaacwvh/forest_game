@@ -687,7 +687,7 @@ extension GardenEditorStore {
         return next
     }
     private func strategy(for layout: GardenDraftLayout) -> GardenStrategyEvaluation? {
-        guard let draft = draft, let context = confirmed?.strategyContext else { return nil }
+        guard let context = confirmed?.strategyContext else { return nil }
         // Skills currently depend on membership, stages and context, never yaw or
         // coordinates. Reuse predictions while dragging instead of resolving at 60 Hz.
         let key = layout.plants.keys.map { $0.uuidString }.sorted().joined(separator: ",") + "/" +
@@ -697,8 +697,8 @@ extension GardenEditorStore {
         if strategyCache.count + unavailableStrategies.count >= 64 { strategyCache = [:]; unavailableStrategies = [] }
         do {
             let result = try GardenStrategyEvaluator.evaluate(
-                plants: draft.plants.filter { layout.plants[$0.id] != nil },
-                items: draft.items.filter { layout.items[$0.id] != nil }, context: context)
+                plants: (draft?.plants ?? confirmed?.plants ?? []).filter { layout.plants[$0.id] != nil },
+                items: (draft?.items ?? confirmed?.items ?? []).filter { layout.items[$0.id] != nil }, context: context)
             strategyCache[key] = result; return result
         } catch { unavailableStrategies.insert(key); return nil }
     }
@@ -709,11 +709,13 @@ extension GardenEditorStore {
     }
     func strategyIfPlanted(_ plant: APIOwnedPlant) -> GardenStrategyEvaluation? {
         guard var layout = draft?.layout, let garden = confirmed else { return nil }
+        if let id = replacementID { layout.plants.removeValue(forKey: id); layout.items.removeValue(forKey: id) }
         layout.plants[plant.id] = APIPlacement(gardenId: garden.gardenId, x: 0, y: 0, rotationDegrees: 0)
         return strategy(for: layout)
     }
     func strategyIfPlaced(_ item: APIOwnedItem) -> GardenStrategyEvaluation? {
         guard var layout = draft?.layout, let garden = confirmed else { return nil }
+        if let id = replacementID { layout.plants.removeValue(forKey: id); layout.items.removeValue(forKey: id) }
         layout.items[item.id] = APIPlacement(gardenId: garden.gardenId, x: 0, y: 0, rotationDegrees: 0)
         return strategy(for: layout)
     }

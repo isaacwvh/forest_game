@@ -1,3 +1,30 @@
+## Compact garden editor and shared skills — 17 November 2026
+
+The user-approved sketch governs Edit: native Undo/Redo, Edit garden, bold red
+Unsaved changes and Close; a minimal Attraction / Visitor storage / Skills row;
+and the original mounted garden. The unsaved marker stays in the navigation
+header. Skills starts closed and opens the same shared Garden skills page used
+from Home, with an X. Saved, draft and placement-preview data are identified.
+Mature-source skills remain active even when waiting on conditions or recipients;
+immature-only skills stay absent. Every component and its recipient scope remains
+available, including explicit water to ferns and fungi.
+
+If planted / If placed / If stored lives in a separate sage box immediately above
+its action, with exact attraction, first/last skill sources, and changed bonuses
+on surviving recipients. Gains use green and +; losses use red and minus. Use
+brackets, for example −2% water (Golden Swirl), without dot separators. Receiving
+an existing bonus alone changes only the net attraction value. Duplicates do not
+add a skill. Count and companion changes, strongest-source fallback and shared
+caps are included for plants and items. Show three compact rows initially and
+put extra changes and explanations behind Details. Replacement previews include
+the removed object. Moves/rotations do not need an impact box.
+
+One measured bottom dock keeps tools and Save outside contextual scrolling;
+selection, rotation and placement details scroll within the available height.
+Impact details are independently bounded in inspectors, preserving Place.
+Existing safe areas, journal palette, atomic saves, durable recovery and stable
+camera/renderer remain authoritative. See GARDEN_EDITOR_LAYOUT_ACCEPTANCE.md.
+
 ## Garden strategy editing — 17 November 2026
 
 Operate within the existing parchment/sage world. Keep the mounted garden/camera

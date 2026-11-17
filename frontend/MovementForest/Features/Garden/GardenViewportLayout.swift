@@ -6,7 +6,6 @@ import SwiftUI
 struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
     let compact: Bool
     var editing = false
-    var statusScrollsInternally = false
     @Environment(\.gardenBottomNavigationTop) private var navigationTop
     @ViewBuilder let scene: () -> Scene
     @ViewBuilder let status: () -> Status
@@ -14,10 +13,10 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let top = editing && !compact ? (statusScrollsInternally ? min(400, geometry.size.height * 0.52) : min(260, geometry.size.height * 0.32)) : 0
+            let top = editing && !compact ? min(190, geometry.size.height * 0.3) : 0
             // Bound editing overlays without subtracting space from the scene.
-            let bottom = editing && !compact ? min(180, max(160, geometry.size.height * 0.24)) : 0
-            let side = editing && compact ? min(340, geometry.size.width * 0.42) : 0
+            let bottom = editing && !compact ? max(0, geometry.size.height - top - 44) : 0
+            let side = editing && compact ? min(380, geometry.size.width * 0.48) : 0
             let browsingHeight = editing ? geometry.size.height : min(geometry.size.height,
                 max(0, (navigationTop ?? geometry.frame(in: .global).maxY) - geometry.frame(in: .global).minY))
             scene()
@@ -33,14 +32,10 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                                 frames = frames.map { $0.intersection(visible) }.filter { !$0.isNull && !$0.isEmpty }
                             }
                     } else if !compact {
-                        if statusScrollsInternally {
-                            status().frame(height: top, alignment: .top).clipped()
-                        } else {
-                            ViewThatFits(in: .vertical) {
-                                status()
-                                ScrollView { status() }
-                            }.frame(maxHeight: top, alignment: .top).clipped()
-                        }
+                        ViewThatFits(in: .vertical) {
+                            status()
+                            ScrollView { status() }
+                        }.frame(maxHeight: top, alignment: .top).clipped()
                     }
                 }
                 .overlay(alignment: .bottom) {
@@ -56,28 +51,19 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                             }
                             .padding(.bottom, geometry.size.height - browsingHeight)
                     } else if !compact {
-                        ViewThatFits(in: .vertical) {
-                            controls()
-                            ScrollView { controls() }
-                        }.frame(maxHeight: bottom, alignment: .bottom).clipped()
+                        controls().frame(maxHeight: bottom, alignment: .bottom).clipped()
                     }
                 }
                 .overlay(alignment: .trailing) {
                     if editing && compact {
-                        if statusScrollsInternally {
-                            VStack(spacing: 0) {
-                                status().frame(maxHeight: .infinity, alignment: .top)
-                                ViewThatFits(in: .vertical) {
-                                    controls()
-                                    ScrollView { controls() }
-                                }.frame(maxHeight: geometry.size.height * 0.4, alignment: .bottom).clipped()
-                            }.frame(width: side, height: geometry.size.height, alignment: .top).clipped()
-                        } else {
+                        VStack(spacing: 0) {
                             ViewThatFits(in: .vertical) {
-                                VStack(spacing: 0) { status(); controls() }
-                                ScrollView { status(); controls() }
-                            }.frame(width: side).frame(maxHeight: geometry.size.height, alignment: .bottom).clipped()
-                        }
+                                status()
+                                ScrollView { status() }
+                            }.frame(maxHeight: geometry.size.height * 0.35, alignment: .top).clipped()
+                            Spacer(minLength: 0)
+                            controls().frame(maxHeight: geometry.size.height * 0.65, alignment: .bottom).clipped()
+                        }.frame(width: side, height: geometry.size.height, alignment: .top).clipped()
                     }
                 }
         }.coordinateSpace(name: "garden.viewport")

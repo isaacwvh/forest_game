@@ -1,3 +1,10 @@
+**Compact garden editor, 17 November 2026:** a three-metric header, pinned unsaved
+marker, shared Garden skills page and separate plant/item action-impact boxes are
+implemented locally. Recipient-only gains stay in attraction; skill source/count
+changes, scoped bonuses and caps are explained beside Place/Store. Save and tools
+stay outside popup scrolling. This follow-up uses the existing strategy backend
+and needs no new schema or rules publication. See [test flow and native acceptance](GARDEN_EDITOR_LAYOUT_ACCEPTANCE.md).
+
 **Garden strategy editor, 17 November 2026:** local drafts, live attraction/skill
 previews, Undo/Redo, replacements and one Save garden are source-implemented.
 Update the backend first; this increment needs no schema migration/publication.

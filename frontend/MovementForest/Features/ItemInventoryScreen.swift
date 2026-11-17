@@ -101,9 +101,6 @@ struct ItemDetailScreen: View {
                         Text(item.placement == nil ? "Place this item to enable its skill." : "Placed in your garden.").font(.caption)
                     }
                 }
-                if store.editing, item.placement == nil {
-                    GardenActionImpact(title: "If placed", before: store.draftStrategy, after: store.strategyIfPlaced(item))
-                }
             } else {
                 Text("This copy is no longer available. Refresh your inventory.")
             }
@@ -112,9 +109,14 @@ struct ItemDetailScreen: View {
                 ItemSaleControls(store: collection, item: item, editingEnabled: store.canEdit,
                                  place: place, close: close).padding(16).background(JournalTheme.sage.opacity(0.65))
             } else if let item = item, item.placement == nil, let place = place {
-                Button("Place") { place(item) }.buttonStyle(.journalPrimary)
-                    .frame(minHeight: 44).frame(maxWidth: .infinity).padding(16)
-                    .disabled(!store.canEdit).accessibilityIdentifier("itemDetails.place")
+                VStack(spacing: 12) {
+                    if store.editing {
+                        GardenActionImpact(title: store.replacementID == nil ? "If placed" : "If replaced",
+                            before: store.draftStrategy, after: store.strategyIfPlaced(item))
+                    }
+                    Button { place(item) } label: { Text("Place").frame(maxWidth: .infinity, minHeight: 44) }
+                        .buttonStyle(.journalPrimary).disabled(!store.canEdit).accessibilityIdentifier("itemDetails.place")
+                }.padding(16).background(JournalTheme.paper)
             }
         }
     }

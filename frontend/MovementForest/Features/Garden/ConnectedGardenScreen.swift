@@ -63,7 +63,7 @@ struct ConnectedGardenScreen: View {
     var body: some View {
         Group {
             if let garden = store.editorRendered {
-                GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing, statusScrollsInternally: true) {
+                GardenViewportLayout(compact: verticalSizeClass == .compact, editing: store.editing) {
                     GardenSceneView(renderer: renderer, garden: garden, catalog: catalog,
                                     motionEnabled: !reduceMotion, active: active && visible && phase == .active && sheet == nil && itemInspection == nil,
                                     editorPreview: preview, itemPreview: itemPreview, growthEffects: store.effects, onSelect: { [weak store = store] id in
@@ -121,6 +121,15 @@ struct ConnectedGardenScreen: View {
         .preference(key: EntryPresentationBlocker.self, value: sheet != nil || itemInspection != nil || (active && store.editing))
         .toolbar {
             if store.editing {
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 0) {
+                        Text("Edit garden").font(.headline)
+                        if store.hasDraftChanges {
+                            Text("Unsaved changes").font(.caption2.weight(.bold)).foregroundStyle(JournalTheme.danger)
+                                .accessibilityIdentifier("editor.unsavedChanges")
+                        }
+                    }.fixedSize(horizontal: false, vertical: true)
+                }
                 ToolbarItem(placement: .navigationBarLeading) {
                     HStack(spacing: 0) {
                         Button { store.undoDraft() } label: { Image(systemName: "arrow.uturn.backward").frame(width: 44, height: 44) }
@@ -140,17 +149,6 @@ struct ConnectedGardenScreen: View {
                             .accessibilityLabel("Done editing").accessibilityIdentifier("editor.done")
                     }
                 }
-            }
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if store.editing {
-                Button { Task { await store.saveDraft() } } label: {
-                    Text("Save garden").frame(maxWidth: .infinity, minHeight: 44)
-                        .fixedSize(horizontal: false, vertical: true)
-                }.buttonStyle(.journalPrimary).disabled(!store.canSaveDraft)
-                    .accessibilityIdentifier("editor.saveGarden")
-                    .padding(.horizontal, 16).padding(.vertical, 8)
-                    .background(JournalTheme.paper)
             }
         }
         .alert("Save garden changes?", isPresented: $exitPrompt) {
@@ -288,7 +286,7 @@ struct ConnectedGardenScreen: View {
 
     private var statusPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            GardenStrategyPanel(store: store)
+            GardenStrategyPanel(store: store, openSkills: { sheet = .information })
             if store.draftConflict {
                 Text("Your saved garden changed. Reset this draft to continue.").font(.callout)
                 Button("Review saved garden") { resetPrompt = true }.buttonStyle(.journalSecondary)
@@ -327,61 +325,32 @@ struct ConnectedGardenScreen: View {
     }
 
     private var gardenInformation: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                JournalSectionHeading(title: "Active skills")
-                if let summary = store.confirmed?.skillSummary {
-                    if summary.activeSkills.isEmpty { Text("No active skills").foregroundStyle(JournalTheme.secondary) }
-                    ForEach(summary.activeSkills.uniqueSkills) { skill in
-                        DisclosureGroup {
-                            Text(skill.description).foregroundStyle(JournalTheme.secondary)
-                            if skill.eligibleSourcePlantIds.count + (skill.eligibleSourceItemIds?.count ?? 0) > 1 {
-                                Text("\(skill.eligibleSourcePlantIds.count + (skill.eligibleSourceItemIds?.count ?? 0)) sources share this bonus.").font(.caption)
-                            }
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                if let sourceID = skill.sourceItemId,
-                                   let source = store.confirmed?.items?.first(where: { $0.id == sourceID }) {
-                                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                        Text("(Item)").fixedSize()
-                                        PlantNameText(source.displayName, rarity: source.rarity, suffix: " \(skill.name)")
-                                    }.font(.headline)
-                                } else if let sourceID = skill.sourcePlantId, let source = store.ownedCopy(sourceID) {
-                                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                        Text("(Plant)").fixedSize()
-                                        PlantNameText(OwnedCopyLabel.title(source.id, in: store.confirmed?.plants ?? []).replacingOccurrences(of: " · ", with: " "),
-                                            rarity: store.catalogue?.rarity(for: source.speciesId), suffix: " \(skill.name)")
-                                    }.font(.headline)
-                                } else {
-                                    Text(skill.name).font(.headline)
-                                }
-                                Text(skill.bonusText).font(.subheadline).foregroundStyle(.secondary)
-                            }
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
-                        }.padding(12).background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
-                            .accessibilityIdentifier("garden.skill.\(skill.skillId)")
-                    }
-                    if summary.capReached {
-                        DisclosureGroup("Boost cap reached") { Text(summary.caps.description).font(.footnote) }
-                    }
-                } else { Text("Skill information is unavailable. Refresh your garden to try again.") }
-                if let grants = store.confirmed?.dailyWater, !grants.isEmpty {
-                    JournalSectionHeading(title: "Recent Morning Rain")
-                    ForEach(grants) { grant in
-                        Text("\(grant.gameDate): +\(grant.water) water across \(grant.plantCount) plants").font(.callout)
-                    }
-                }
-                if store.showingCached { Text("Last confirmed skills").font(.caption).foregroundStyle(JournalTheme.secondary) }
-            }.padding(20)
-        }.navigationTitle("Garden information")
-            .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { sheet = nil }.buttonStyle(.journalQuiet) } }
+        GardenSkillsPage(store: store, close: { sheet = nil })
     }
 
     private var controls: some View {
+        GardenEditorDock {
+            contextualControls
+        } tools: {
+            editingToolbar
+        } save: {
+            Button { Task { await store.saveDraft() } } label: {
+                Text("Save garden").frame(maxWidth: .infinity, minHeight: 44)
+                    .fixedSize(horizontal: false, vertical: true)
+            }.buttonStyle(.journalPrimary).disabled(!store.canSaveDraft)
+                .accessibilityIdentifier("editor.saveGarden")
+                .padding(.horizontal, 16).padding(.vertical, 8)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var contextualControls: some View {
         VStack(spacing: 4) {
             if store.editCandidateID != nil {
+                if store.replacementID != nil || store.candidate?.kind == .plant || store.itemCandidate?.action == "place" {
+                    GardenActionImpact(title: candidateImpactTitle, before: store.draftStrategy, after: store.strategyPreview)
+                        .padding(.horizontal, 12).padding(.top, 8)
+                }
                 if positionControlsPresented {
                     CandidateControlsScreen(store: store, close: { positionControlsPresented = false })
                 } else if store.editCandidateIsRotation {
@@ -406,23 +375,31 @@ struct ConnectedGardenScreen: View {
             } else if let selected = store.selected {
                 selectionPopup(selected)
             }
-            if !positionControlsPresented {
-                HStack(spacing: 4) {
-                    GardenActionButton(title: "Select object", symbol: "leaf", identifier: "garden.plants") { sheet = .plants }
-                    GardenActionButton(title: "Storage", symbol: "tray", identifier: "editor.storage") { sheet = .storage }
-                    GardenActionButton(title: "Zoom out", symbol: "minus.magnifyingglass", identifier: "editor.zoomOut") { renderer.zoom(by: 1.2) }
-                    GardenActionButton(title: "Zoom in", symbol: "plus.magnifyingglass", identifier: "editor.zoomIn") { renderer.zoom(by: 0.8) }
-                    Menu {
-                        Button("Reset garden view") { renderer.resetCamera() }
-                        Button("Reset changes", role: .destructive) { resetPrompt = true }
-                            .disabled(!store.hasDraftChanges || store.connectionBusy || store.pending != nil)
-                    } label: { Image(systemName: "ellipsis").frame(minWidth: 44, minHeight: 44).frame(maxWidth: .infinity) }
-                        .buttonStyle(.journalTool).accessibilityLabel("More editing options")
-                }
-                .padding(.horizontal, 12).background(JournalTheme.sage.opacity(0.5))
-            }
         }.padding(.bottom, 4)
-            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
+    }
+
+    private var candidateImpactTitle: String {
+        if store.replacementID != nil { return "If replaced" }
+        if store.candidate?.kind == .plant { return "If planted" }
+        if store.itemCandidate?.action == "place" { return "If placed" }
+        return "If applied"
+    }
+
+    @ViewBuilder private var editingToolbar: some View {
+        if !positionControlsPresented {
+            HStack(spacing: 4) {
+                GardenActionButton(title: "Select object", symbol: "leaf", identifier: "garden.plants") { sheet = .plants }
+                GardenActionButton(title: "Storage", symbol: "tray", identifier: "editor.storage") { sheet = .storage }
+                GardenActionButton(title: "Zoom out", symbol: "minus.magnifyingglass", identifier: "editor.zoomOut") { renderer.zoom(by: 1.2) }
+                GardenActionButton(title: "Zoom in", symbol: "plus.magnifyingglass", identifier: "editor.zoomIn") { renderer.zoom(by: 0.8) }
+                Menu {
+                    Button("Reset garden view") { renderer.resetCamera() }
+                    Button("Reset changes", role: .destructive) { resetPrompt = true }
+                        .disabled(!store.hasDraftChanges || store.connectionBusy || store.pending != nil)
+                } label: { Image(systemName: "ellipsis").frame(minWidth: 44, minHeight: 44).frame(maxWidth: .infinity) }
+                    .buttonStyle(.journalTool).accessibilityLabel("More editing options")
+            }.padding(.horizontal, 12).background(JournalTheme.sage.opacity(0.5))
+        }
     }
 
     private func name(of plant: APIOwnedPlant) -> String {
@@ -437,7 +414,8 @@ struct ConnectedGardenScreen: View {
             rotate: store.editing ? { store.beginItem(item, action: "rotate") } : nil,
             store: store.editing ? { Task { await store.storeItem(item) } } : nil,
             editingDisabled: !store.canEdit || renderer.isLoading,
-            replace: { store.beginReplacement(); sheet = .storage })
+            replace: { store.beginReplacement(); sheet = .storage },
+            impactBefore: store.draftStrategy, impactAfter: store.strategyIfStored(item.id))
     }
 
     @ViewBuilder private func selectionPopup(_ selected: APIOwnedPlant) -> some View {
@@ -455,7 +433,8 @@ struct ConnectedGardenScreen: View {
                         await store.storeSelected()
                     }
                 }, editingDisabled: !store.canEdit || renderer.isLoading,
-                replace: { store.beginReplacement(); sheet = .storage })
+                replace: { store.beginReplacement(); sheet = .storage },
+                impactBefore: store.draftStrategy, impactAfter: store.strategyIfStored(selected.id))
         } else {
             GardenSelectionPopup(name: name(of: selected), variant: selected.variantId.capitalized,
                 rarity: store.catalogue?.rarity(for: selected.speciesId), stage: selected.growthStage.title,

@@ -12,6 +12,7 @@ struct StrategyValidationContract: Decodable {
 let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
 let contract = try JSONDecoder().decode(StrategyValidationContract.self, from: Data(contentsOf: fixtures))
 var failed = 0
+if !CommandLine.arguments.contains("--impacts-only") {
 for example in contract.cases {
     do {
         let actual = try GardenStrategyEvaluator.evaluate(plants: example.plants, items: example.items, context: example.context)
@@ -28,6 +29,7 @@ for example in contract.cases {
 }
 precondition(failed == 0, "\(failed) native calculation cases failed")
 print("PASS: \(contract.cases.count) backend/native calculation cases, including reversed input order.")
+}
 
 struct StrategyEditorFixture: Decodable { let emptyGarden: APIGarden; let inventory: APIInventory }
 let editorURL = fixtures.deletingLastPathComponent().appendingPathComponent("editor-contract.json")
@@ -57,8 +59,10 @@ let immature = APIOwnedPlant(plantId: moon.id, speciesId: moon.speciesId, varian
     gardenSkills: moon.gardenSkills, gameplayTags: moon.gameplayTags)
 let immatureValue = try GardenStrategyEvaluator.evaluate(plants: [immature], items: [], context: moonCase.context)
 precondition(GardenSkillGroup.groups(immatureValue.skillSummary).isEmpty)
-let inactive = GardenInactiveSkillGroup.groups(plants: [immature, immature], items: [], summary: immatureValue.skillSummary)
-precondition(inactive.count == 1 && inactive[0].name == "Sleeping Dew" && !inactive[0].sourceIsAdult)
+precondition(GardenSkillGroup.groups(in: immatureValue).isEmpty)
 let activeValue = try GardenStrategyEvaluator.evaluate(plants: [moon], items: [], context: moonCase.context)
-precondition(GardenInactiveSkillGroup.groups(plants: [moon], items: [], summary: activeValue.skillSummary).isEmpty)
-print("PASS: immature skills are grouped only under inactive skills; adult activation removes the inactive group.")
+precondition(GardenSkillGroup.groups(in: activeValue).map(\.name) == ["Sleeping Dew"])
+let regressions = try GardenImpactChecks.run(contract.cases.map { ($0.name, $0.plants, $0.items, $0.context) })
+for failure in regressions { FileHandle.standardError.write(Data(("FAIL: " + failure + "\n").utf8)) }
+precondition(regressions.isEmpty, "Action impact regressions failed")
+print("PASS: action impacts for first/last/duplicate plant and item sources, counts, conditions, subsets, caps and exact precision.")

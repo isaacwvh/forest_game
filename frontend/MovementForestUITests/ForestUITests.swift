@@ -416,6 +416,25 @@ final class ForestUITests: XCTestCase {
         checkDetails()
     }
 
+    func testEditorSkillsStartsClosedAndClosesWithoutLeavingEdit() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()
+        let edit = app.buttons["navigation.Edit"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 15))
+        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: edit); waitForExpectations(timeout: 10)
+        edit.tap()
+        let skills = app.buttons["editor.skills"]
+        XCTAssertTrue(skills.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["garden.skills.close"].exists)
+        skills.tap()
+        XCTAssertTrue(app.buttons["garden.skills.close"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Inactive skills"].exists)
+        app.buttons["garden.skills.close"].tap()
+        XCTAssertTrue(app.buttons["editor.saveGarden"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["editor.saveGarden"].isHittable)
+        XCTAssertTrue(app.buttons["editor.done"].exists)
+    }
+
     func testOwnedBrowsingIsReadOnlyAndStorageOpensDetailsBeforePlace() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()
@@ -491,11 +510,15 @@ final class ForestUITests: XCTestCase {
         app.buttons["editor.apply"].tap()
         XCTAssertTrue(rotate.waitForExistence(timeout: 10))
         expectation(for: ready, evaluatedWith: rotate); waitForExpectations(timeout: 10)
+        XCTAssertTrue(app.staticTexts["editor.unsavedChanges"].exists)
+        let impact = app.descendants(matching: .any).matching(identifier: "editor.actionImpact").firstMatch
+        XCTAssertTrue(impact.exists)
         let saveGarden = app.buttons["editor.saveGarden"]
         XCTAssertTrue(saveGarden.isEnabled)
         XCTAssertTrue(saveGarden.isHittable, "Save must stay outside the scrolling skills and narrow navigation toolbar")
         XCTAssertGreaterThanOrEqual(saveGarden.frame.height, 44)
         XCTAssertGreaterThan(saveGarden.frame.width, 200)
+        XCTAssertLessThanOrEqual(popup.frame.maxY, saveGarden.frame.minY)
         app.buttons["editor.done"].tap()
         XCTAssertTrue(app.alerts["Save garden changes?"].waitForExistence(timeout: 5))
         app.alerts["Save garden changes?"].buttons["Keep editing"].tap()

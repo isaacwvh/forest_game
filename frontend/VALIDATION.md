@@ -1,3 +1,35 @@
+## Compact garden editor and shared Skills — 17 November 2026
+
+Implemented the compact three-metric header and pinned red unsaved marker, shared
+X-dismissed Garden skills page, mature-source eligibility independent of current
+conditions, recipient-specific bonus labels, and separate placement/storage impact
+boxes for plants and items. The measured dock pins tools and Save outside popup
+scrolling. Placement inspectors bound impact details above Place; replacements
+preview the removed object as well as the incoming one. Gameplay/signatures and
+atomic save/recovery remain unchanged.
+
+Passed locally:
+
+- Full backend suite: **751 passed, 3 existing opt-in storage benchmarks skipped**,
+  against a separate local PostgreSQL test cluster, shut down after the run.
+- Portable project/resource/contract/contrast validation and all **105 Swift**
+  syntax parses; whitespace validation passes.
+- Real Foundation evaluator: all **87 backend reference cases**, including reversed
+  input order, plus draft normalization, net-zero edits and persistence round-trip.
+- **37 shared behavioral assertions** for plant/item first/last/duplicate sources,
+  immature sources, mature conditions, subsets, precise attraction, count changes,
+  stronger-source fallback, partial/shared caps, daily water, capacity and welcome
+  items. These same checks are included in GardenStrategyTests.
+- Real editor store and presentation models typecheck with portable interfaces.
+- Design detector: no findings on changed UI files.
+
+Added native regressions for the shared Skills open/close flow, unsaved marker,
+popup/Save separation and long-content dock bounds in narrow/compact geometry.
+These hosted SwiftUI/XCTest checks were syntax-parsed, not executed on Windows.
+Apple SDK builds, native appearance, Dynamic Type/VoiceOver and device acceptance
+remain Mac/iPhone checks. The app remains portrait-only. No push or remote CI ran.
+See [device flow](GARDEN_EDITOR_LAYOUT_ACCEPTANCE.md).
+
 ## Garden editor readability — 17 November 2026
 
 Moved Save garden to a full-width safe-area footer and changed the exit choices

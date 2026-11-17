@@ -150,6 +150,50 @@ final class GardenViewportTests: XCTestCase {
                        "Token feedback must not vertically offset the token icon inside the shared row")
     }
 
+    func testEditorDockKeepsSaveAndToolsOutsideLongPopup() async throws {
+        for size in [CGSize(width: 320, height: 568), CGSize(width: 844, height: 390)] {
+            var frames: [String: CGRect] = [:]
+            func bounds(_ name: String) -> some View {
+                GeometryReader { geometry in
+                    Color.clear.preference(key: PopupTestBounds.self, value: [name: geometry.frame(in: .global)])
+                }
+            }
+            let content = GardenViewportLayout(compact: size.width > size.height, editing: true) {
+                Color.clear
+            } status: {
+                Text("Attraction   Visitor storage   Skills").frame(height: 60)
+            } controls: {
+                GardenEditorDock {
+                    VStack {
+                        ForEach(0..<30) { _ in Text("Additional plant and item impact information").fixedSize(horizontal: false, vertical: true) }
+                        Button("Store") {}.frame(height: 44)
+                    }
+                } tools: {
+                    Text("Storage and camera controls").frame(height: 44).frame(maxWidth: .infinity).background(bounds("tools"))
+                } save: {
+                    Button("Save garden") {}.frame(maxWidth: .infinity, minHeight: 44).padding(8).background(bounds("save"))
+                }.background(bounds("dock"))
+            }
+            .frame(width: size.width, height: size.height)
+            .environment(\.dynamicTypeSize, .accessibility3)
+            .onPreferenceChange(PopupTestBounds.self) { frames = $0 }
+            let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+            let window = UIWindow(windowScene: scene)
+            window.rootViewController = UIHostingController(rootView: content)
+            window.makeKeyAndVisible()
+            for _ in 0..<100 {
+                if frames["save"] != nil { break }
+                try await Task.sleep(nanoseconds: 10_000_000)
+            }
+            let save = try XCTUnwrap(frames["save"]), tools = try XCTUnwrap(frames["tools"]), dock = try XCTUnwrap(frames["dock"])
+            XCTAssertGreaterThanOrEqual(save.height, 44)
+            XCTAssertLessThanOrEqual(tools.maxY, save.minY + 1)
+            XCTAssertLessThanOrEqual(save.maxY, dock.maxY + 1)
+            XCTAssertGreaterThanOrEqual(save.minY, dock.minY - 1)
+            window.isHidden = true; window.rootViewController = nil
+        }
+    }
+
     func testPortraitViewportDoesNotResizeForStatusOrInvalidPlacement() async throws {
         try await verifyStableViewport(compact: false)
     }

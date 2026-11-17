@@ -98,6 +98,7 @@ struct PlantDetailScreen: View {
     var collection: CollectionCoordinator? = nil
     var strategyBefore: GardenStrategyEvaluation? = nil
     var strategyAfter: GardenStrategyEvaluation? = nil
+    var strategyTitle = "If planted"
     var saleEnabled = true
     @Environment(\.dismiss) private var dismiss
     private var rarity: String? { isSample ? SamplePlantPresentation.rarities[plant.speciesId] : catalogue?.rarity(for: plant.speciesId) }
@@ -169,7 +170,6 @@ struct PlantDetailScreen: View {
                     }
                 }
             }
-            GardenActionImpact(title: "If planted", before: strategyBefore, after: strategyAfter)
             if isSample { Text("Sample plant").font(.caption).foregroundStyle(JournalTheme.secondary) }
             if onPlace == nil, saleEnabled, let collection = collection, let owned = owned {
                 PlantSaleControls(store: collection, plant: owned, enabled: saleEnabled)
@@ -178,6 +178,8 @@ struct PlantDetailScreen: View {
             if let onPlace = onPlace {
                 VStack(spacing: 0) {
                     Divider()
+                    GardenActionImpact(title: strategyTitle, before: strategyBefore, after: strategyAfter)
+                        .padding(.horizontal, 14).padding(.top, 12)
                     if saleEnabled, let collection = collection, let owned = owned {
                         PlantSaleControls(store: collection, plant: owned, enabled: saleEnabled,
                             onPlace: onPlace, placementDisabled: placementDisabled).padding(14)

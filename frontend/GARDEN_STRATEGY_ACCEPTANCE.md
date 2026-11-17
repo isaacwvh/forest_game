@@ -1,3 +1,10 @@
+## Superseded editor presentation — 17 November 2026
+
+The latest compact header, separate action-impact boxes, shared Skills page and
+coordinated bottom dock are described in [GARDEN_EDITOR_LAYOUT_ACCEPTANCE.md](GARDEN_EDITOR_LAYOUT_ACCEPTANCE.md).
+That document supersedes the expanded/inline and inactive-skill UI below. The
+atomic draft/save, geometry, lifecycle and recovery contracts remain unchanged.
+
 ## Editor readability follow-up — 17 November 2026
 
 Save garden is now a full-width footer outside the navigation toolbar and all

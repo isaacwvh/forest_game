@@ -58,6 +58,9 @@ struct GardenStrategyEvaluation: Codable, Equatable {
     let context: APIStrategyContext
     var fingerprint: String? = nil
     var limitNotices: [String]? = nil
+    // Presentation eligibility is independent of whether a condition currently
+    // produces a winning effect. It never changes the server proof/signature.
+    var availableSkills: [GardenAvailableSkill]? = nil
     // Compare effective results, not emitter tie identities or wire ordering.
     var signature: String {
         let effects = skillSummary.activeSkills.map { effect in
@@ -73,6 +76,53 @@ struct GardenStrategyEvaluation: Codable, Equatable {
     }
     private static func normal(_ text: String) -> String {
         Decimal(string: text, locale: Locale(identifier: "en_US_POSIX")).map { NSDecimalNumber(decimal: $0).stringValue } ?? text
+    }
+}
+
+struct GardenAvailableSkill: Codable, Equatable, Identifiable {
+    let name: String
+    let rules: [APIGardenSkillDefinition]
+    let sourcePlantIds: [UUID]
+    let sourceItemIds: [UUID]
+    var qualifyingCounts: [String: Int] = [:]
+    var id: String { name }
+
+    static func collect(plants: [APIOwnedPlant], items: [APIOwnedItem]) -> [Self] {
+        var definitions: [String: [APIGardenSkillDefinition]] = [:]
+        var plantSources: [String: Set<UUID>] = [:], itemSources: [String: Set<UUID>] = [:]
+        for plant in plants where plant.growthStage == .adult {
+            for rule in plant.gardenSkills ?? [] {
+                definitions[rule.name, default: []].append(rule)
+                plantSources[rule.name, default: []].insert(plant.id)
+            }
+        }
+        for item in items {
+            for rule in item.strategyRules?.effects ?? [] {
+                definitions[rule.name, default: []].append(rule)
+                itemSources[rule.name, default: []].insert(item.id)
+            }
+            if item.strategyRules?.dailyGrant != nil {
+                definitions["Morning Rain", default: []] += []
+                itemSources["Morning Rain", default: []].insert(item.id)
+            }
+        }
+        return definitions.keys.sorted().map { name in
+            var seen = Set<String>()
+            let rules = definitions[name, default: []].filter { seen.insert($0.id).inserted }.sorted { $0.id < $1.id }
+            var counts: [String: Int] = [:]
+            for rule in rules {
+                if let magnitude = rule.magnitude, ["per_copy", "per_species"].contains(magnitude.type) {
+                    let selected = plants.filter { magnitude.selector?.matches($0) ?? true }
+                    counts[rule.id] = magnitude.type == "per_species" ? Set(selected.map(\.speciesId)).count : selected.count
+                }
+                if let condition = rule.condition {
+                    counts["condition:" + rule.id] = plants.filter { condition.selector.matches($0) }.count
+                }
+            }
+            return Self(name: name, rules: rules,
+                sourcePlantIds: (plantSources[name] ?? []).sorted { $0.uuidString < $1.uuidString },
+                sourceItemIds: (itemSources[name] ?? []).sorted { $0.uuidString < $1.uuidString }, qualifyingCounts: counts)
+        }
     }
 }
 
@@ -231,7 +281,8 @@ enum GardenStrategyEvaluator {
         let summary = APISkillSummary(policyVersion: context.policyVersion, caps: caps,
             activeSkills: rows.values.sorted { $0.id < $1.id }, growthFactors: factors)
         return GardenStrategyEvaluation(totalAttractionMicroUnits: string(floor(attraction)), skillSummary: summary,
-            offlineCapacity: NSDecimalNumber(decimal: floor(capacity)).intValue, context: context, limitNotices: limits)
+            offlineCapacity: NSDecimalNumber(decimal: floor(capacity)).intValue, context: context, limitNotices: limits,
+            availableSkills: GardenAvailableSkill.collect(plants: plants, items: items))
     }
     private static var unavailable: ForestError { .invalidData("Garden effects are unavailable. Refresh your garden.") }
     private static func amount(_ value: String?) throws -> Decimal {

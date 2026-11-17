@@ -3,64 +3,188 @@ import SwiftUI
 struct GardenSkillGroup: Identifiable {
     let name: String
     let effects: [APISkillSummary.Effect]
+    var availability: GardenAvailableSkill? = nil
     var id: String { name }
-    var bonuses: [String] {
-        let workouts = effects.filter { $0.scope == "activity" && ($0.metric?.hasPrefix("workout_minutes.") ?? false) }
-        if workouts.count > 1, Set(workouts.map(\.magnitude)).count == 1, let first = workouts.first,
-           let amount = Decimal(string: first.magnitude) {
-            let value = (amount * 100).formatted(.number.precision(.fractionLength(0...2)))
-            return Array(Set(effects.filter { !($0.metric?.hasPrefix("workout_minutes.") ?? false) }.map(\.bonusText) +
-                ["+\(value)% water from workouts"])).sorted()
-        }
-        return Array(Set(effects.map(\.bonusText))).sorted()
+    var sources: Set<UUID> {
+        if let availability = availability { return Set(availability.sourcePlantIds + availability.sourceItemIds) }
+        return Set(effects.flatMap { $0.eligibleSourcePlantIds + ($0.eligibleSourceItemIds ?? []) })
     }
-    var sources: Set<UUID> { Set(effects.flatMap { $0.eligibleSourcePlantIds + ($0.eligibleSourceItemIds ?? []) }) }
-    var valueSignature: String {
-        Array(Set(effects.map { [$0.scope, $0.metric ?? "", $0.stepBand ?? "", $0.magnitude].joined(separator: "/") })).sorted().joined(separator: ",")
+    var bonuses: [String] {
+        let labels = effects.map { $0.bonusText + GardenStrategyCopy.recipientSuffix(rule(for: $0)) }
+        return Array(Set(labels.isEmpty ? availability?.rules.map(\.description) ?? [] : labels)).sorted()
+    }
+    func rule(for effect: APISkillSummary.Effect) -> APIGardenSkillDefinition? {
+        availability?.rules.first { $0.id == effect.skillId }
     }
     static func groups(_ summary: APISkillSummary?) -> [Self] {
         Dictionary(grouping: summary?.activeSkills ?? [], by: \.name)
             .map { Self(name: $0.key, effects: $0.value) }.sorted { $0.name < $1.name }
     }
+    static func groups(in evaluation: GardenStrategyEvaluation) -> [Self] {
+        guard let available = evaluation.availableSkills else { return groups(evaluation.skillSummary) }
+        return available.map { skill in
+            Self(name: skill.name, effects: evaluation.skillSummary.activeSkills.filter { $0.name == skill.name }, availability: skill)
+        }
+    }
+}
+
+struct GardenImpactRow: Identifiable, Equatable {
+    let id: String
+    let text: String
+    let detail: String
+    let direction: Int
 }
 
 enum GardenStrategyCopy {
+    static func number(_ value: Decimal) -> String {
+        value.formatted(.number.precision(.fractionLength(0...6)))
+    }
+    static func signed(_ value: Decimal) -> String {
+        (value < 0 ? "−" : value > 0 ? "+" : "") + number(abs(value))
+    }
     static func delta(_ before: String, _ after: String) -> String {
-        guard let before = Decimal(string: before), let after = Decimal(string: after) else { return "" }
-        let change = (after - before) / 1_000_000
-        return change == 0 ? "No change" : (change > 0 ? "+" : "") + change.formatted(.number.precision(.fractionLength(0...2)))
+        guard let before = Decimal(string: before), let after = Decimal(string: after) else { return "Unavailable" }
+        return signed((after - before) / 1_000_000)
+    }
+    static func recipientSuffix(_ rule: APIGardenSkillDefinition?) -> String {
+        guard let selector = rule?.recipients else { return "" }
+        if selector.tags.contains("understory") { return " to ferns and fungi" }
+        var labels = selector.species.map { $0.replacingOccurrences(of: "-", with: " ").capitalized }
+        labels += selector.tags.map { $0.replacingOccurrences(of: "_", with: " ") + " plants" }
+        labels += selector.variants.map { $0.capitalized + " variants" }
+        labels += selector.stages.map { $0 + " plants" }
+        return labels.isEmpty ? "" : " to " + labels.joined(separator: ", ")
+    }
+    // Only surviving recipients can have a changed bonus. Recipient membership
+    // alone must never announce an existing skill as added/removed/strengthened.
+    static func impact(from before: GardenStrategyEvaluation, to after: GardenStrategyEvaluation) -> [GardenImpactRow] {
+        var result: [GardenImpactRow] = []
+        let a = (Decimal(string: before.totalAttractionMicroUnits) ?? 0) / 1_000_000
+        let b = (Decimal(string: after.totalAttractionMicroUnits) ?? 0) / 1_000_000
+        let attraction = b - a
+        result.append(GardenImpactRow(id: "attraction", text: attraction == 0 ? "No attraction change" : "\(signed(attraction)) attraction",
+            detail: "Attraction \(number(a)) → \(number(b))", direction: attraction < 0 ? -1 : attraction > 0 ? 1 : 0))
+        let capacity = after.offlineCapacity - before.offlineCapacity
+        if capacity != 0 {
+            result.append(GardenImpactRow(id: "capacity", text: "\(signed(Decimal(capacity))) visitor storage",
+                detail: "Visitor storage \(before.offlineCapacity) → \(after.offlineCapacity)", direction: capacity < 0 ? -1 : 1))
+        }
+        let old = Dictionary(uniqueKeysWithValues: GardenSkillGroup.groups(in: before).map { ($0.name, $0) })
+        let new = Dictionary(uniqueKeysWithValues: GardenSkillGroup.groups(in: after).map { ($0.name, $0) })
+        for name in Set(old.keys).symmetricDifference(Set(new.keys)).sorted() {
+            let adding = new[name] != nil
+            result.append(GardenImpactRow(id: "source/" + name, text: "\(adding ? "+" : "−") \(name)",
+                detail: adding ? "First qualifying source added" : "Last qualifying source removed", direction: adding ? 1 : -1))
+        }
+        let common = Set(before.skillSummary.growthFactors.map(\.plantId)).intersection(after.skillSummary.growthFactors.map(\.plantId))
+        for name in Set(old.keys).intersection(new.keys).sorted() {
+            let previous = old[name]!, next = new[name]!
+            let slots = Dictionary(grouping: previous.effects + next.effects, by: slot)
+            for key in slots.keys.sorted() {
+                let sample = slots[key]![0]
+                if sample.scope == "offline_capacity" { continue } // exact capped integer delta above
+                let plantScope = ["water", "activity", "attraction_plant"].contains(sample.scope)
+                let recipients: [UUID?] = plantScope ? common.sorted { $0.uuidString < $1.uuidString }.map { Optional($0) } : [nil]
+                var seen = Set<String>()
+                for recipient in recipients {
+                    let oldAmount = magnitude(previous.effects, key: key, recipient: recipient)
+                    let newAmount = magnitude(next.effects, key: key, recipient: recipient)
+                    guard oldAmount != newAmount else { continue }
+                    var change = newAmount - oldAmount
+                    if sample.operation == "percent", let cap = cap(for: sample.scope, context: after.context) {
+                        change = cappedChange(name: name, key: key, recipient: recipient,
+                            before: before.skillSummary.activeSkills, after: after.skillSummary.activeSkills, cap: cap)
+                    }
+                    guard change != 0 else { continue }
+                    let rule = next.rule(for: sample) ?? previous.rule(for: sample)
+                    let unit = sample.operation == "percent" ? "%" : ""
+                    let scale: Decimal = sample.operation == "percent" ? 100 : 1
+                    let text = "\(signed(change * scale))\(unit) \(destination(sample))\(recipientSuffix(rule)) (\(name))"
+                    guard seen.insert(text).inserted else { continue }
+                    var detail = "\(name): \(number(oldAmount * scale))\(unit) → \(number(newAmount * scale))\(unit)"
+                    for countRule in next.availability?.rules ?? [] {
+                        if let countA = previous.availability?.qualifyingCounts[countRule.id],
+                           let countB = next.availability?.qualifyingCounts[countRule.id], countA != countB {
+                            let label = countRule.magnitude?.type == "per_species" ? "Distinct species" : "Qualifying plants"
+                            detail += "; \(label) \(countA) → \(countB)"
+                        }
+                        let conditionKey = "condition:" + countRule.id
+                        if let countA = previous.availability?.qualifyingCounts[conditionKey],
+                           let countB = next.availability?.qualifyingCounts[conditionKey], countA != countB {
+                            detail += "; Companions \(countA) → \(countB)"
+                        }
+                    }
+                    result.append(GardenImpactRow(id: name + "/" + key + "/" + text, text: text, detail: detail, direction: change < 0 ? -1 : 1))
+                }
+            }
+        }
+        return result
     }
     static func changes(from before: GardenStrategyEvaluation?, to after: GardenStrategyEvaluation?) -> [String] {
         guard let before = before, let after = after else { return [] }
-        let old = Dictionary(uniqueKeysWithValues: GardenSkillGroup.groups(before.skillSummary).map { ($0.id, $0) })
-        let new = Dictionary(uniqueKeysWithValues: GardenSkillGroup.groups(after.skillSummary).map { ($0.id, $0) })
-        return Set(old.keys).union(new.keys).sorted().compactMap { name in
-            guard let next = new[name] else { return "Removes \(name)" }
-            guard let previous = old[name] else { return "Activates \(name)" }
-            if next.valueSignature != previous.valueSignature {
-                return "\(name): \(previous.bonuses.joined(separator: ", ")) → \(next.bonuses.joined(separator: ", "))"
-            }
-            return nil
-        }
+        return impact(from: before, to: after).filter { $0.id != "attraction" }.map(\.text)
     }
-}
-
-struct GardenInactiveSkillGroup: Identifiable {
-    let name: String
-    let rule: APIGardenSkillDefinition
-    let sourceIsAdult: Bool
-    var id: String { name }
-    static func groups(plants: [APIOwnedPlant], items: [APIOwnedItem], summary: APISkillSummary) -> [Self] {
-        let activeNames = Set(summary.activeSkills.map(\.name))
-        let plantRules = plants.flatMap { plant in
-            (plant.gardenSkills ?? []).map { Self(name: $0.name, rule: $0, sourceIsAdult: plant.growthStage == .adult) }
+    private static func slot(_ effect: APISkillSummary.Effect) -> String {
+        [effect.scope, effect.metric ?? "", effect.stepBand ?? "", effect.operation].joined(separator: "/")
+    }
+    private static func magnitude(_ effects: [APISkillSummary.Effect], key: String, recipient: UUID?) -> Decimal {
+        effects.filter { effect in slot(effect) == key && (recipient == nil || effect.recipientPlantIds.contains(recipient!)) }
+            .reduce(0) { $0 + (Decimal(string: $1.magnitude) ?? 0) }
+    }
+    private static func cappedChange(name: String, key: String, recipient: UUID?,
+                                     before: [APISkillSummary.Effect], after: [APISkillSummary.Effect], cap: Decimal) -> Decimal {
+        let names = Set((before + after).filter { slot($0) == key }.map(\.name))
+        var changes: [(name: String, amount: Decimal)] = []
+        for skill in names {
+            let a = magnitude(before.filter { $0.name == skill }, key: key, recipient: recipient)
+            let b = magnitude(after.filter { $0.name == skill }, key: key, recipient: recipient)
+            if a != b { changes.append((skill, b - a)) }
         }
-        let itemRules = items.flatMap { item in
-            (item.strategyRules?.effects ?? []).map { Self(name: $0.name, rule: $0, sourceIsAdult: true) }
+        // Apply losses before gains, then names in stable order. Every increment
+        // is measured through the shared cap, so simultaneous changes cannot
+        // double-count or lose the remaining available bonus.
+        changes.sort { ($0.amount < 0) != ($1.amount < 0) ? $0.amount < 0 : $0.name < $1.name }
+        var total = magnitude(before, key: key, recipient: recipient)
+        for change in changes {
+            let effective = min(cap, total + change.amount) - min(cap, total)
+            total += change.amount
+            if change.name == name { return effective }
         }
-        return Dictionary(grouping: (plantRules + itemRules).filter { !activeNames.contains($0.name) }, by: \.name)
-            .compactMap { _, sources in sources.first(where: { $0.sourceIsAdult }) ?? sources.first }
-            .sorted { $0.name < $1.name }
+        return 0
+    }
+    private static func cap(for scope: String, context: APIStrategyContext) -> Decimal? {
+        let value: String?
+        switch scope {
+        case "water": value = context.caps.waterBonus
+        case "activity": value = context.caps.activityBonus
+        case "attraction_plant": value = context.caps.plantAttractionBonus
+        case "attraction_garden": value = context.caps.gardenAttractionBonus
+        case "welcome_duration": value = "0.25"
+        default: value = nil
+        }
+        return value.flatMap { Decimal(string: $0) }
+    }
+    private static func destination(_ effect: APISkillSummary.Effect) -> String {
+        switch effect.scope {
+        case "water": return "water"
+        case "activity":
+            if effect.metric == "steps" {
+                return effect.stepBand == "after_2000" ? "water from steps after 2,000" :
+                    effect.stepBand == "first_2000" ? "water from the first 2,000 steps" : "water from steps"
+            }
+            if let metric = effect.metric, metric.hasPrefix("workout_minutes.") {
+                return "water from " + metric.replacingOccurrences(of: "workout_minutes.", with: "").replacingOccurrences(of: "_", with: " ") + " workouts"
+            }
+            switch effect.metric {
+            case "walking_running_distance_km": return "water from walking and running"
+            case "active_energy_kcal": return "water from active energy"
+            case "flights_climbed": return "water from flights climbed"
+            default: return "activity water"
+            }
+        case "welcome_duration": return "welcome time"
+        case "daily_water": return "daily water per plant"
+        default: return "attraction"
+        }
     }
 }
 
@@ -68,203 +192,189 @@ struct GardenActionImpact: View {
     let title: String
     let before: GardenStrategyEvaluation?
     let after: GardenStrategyEvaluation?
-    var showsSkillChanges = true
+    @State private var expanded = false
+    @Environment(\.dynamicTypeSize) private var textSize
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    private var rows: [GardenImpactRow] {
+        guard let before = before, let after = after else { return [] }
+        return GardenStrategyCopy.impact(from: before, to: after)
+    }
     var body: some View {
-        if let before = before, let after = after,
-           showsSkillChanges || before.totalAttractionMicroUnits != after.totalAttractionMicroUnits || before.offlineCapacity != after.offlineCapacity {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.subheadline.weight(.semibold))
-                if before.totalAttractionMicroUnits != after.totalAttractionMicroUnits {
-                    QuantityLabel(metric: "attraction", text: "Attraction \(GardenStrategyCopy.delta(before.totalAttractionMicroUnits, after.totalAttractionMicroUnits))")
-                        .font(.callout).monospacedDigit()
-                }
-                if before.offlineCapacity != after.offlineCapacity {
-                    QuantityLabel(metric: "offline_capacity", text: "Offline capacity \(before.offlineCapacity.formatted()) → \(after.offlineCapacity.formatted())")
-                        .font(.callout).monospacedDigit()
-                }
-                if showsSkillChanges {
-                    let changes = GardenStrategyCopy.changes(from: before, to: after)
-                    ForEach(changes, id: \.self) { Text($0).font(.callout) }
-                    if changes.isEmpty { Text("Skills unchanged").font(.caption).foregroundStyle(JournalTheme.secondary) }
-                }
-            }.frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityElement(children: .combine).accessibilityIdentifier("editor.actionImpact")
-        }
+        let values = rows
+        let identity = title + (before?.signature ?? "") + (after?.signature ?? "") + values.map(\.id).joined()
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.caption.weight(.semibold)).foregroundStyle(JournalTheme.secondary)
+            if values.isEmpty {
+                Text("Effects unavailable. Refresh your garden.").font(.caption).foregroundStyle(JournalTheme.secondary)
+            } else {
+                ViewThatFits(in: .vertical) {
+                    impactRows(values)
+                    ScrollView { impactRows(values) }
+                }.frame(maxHeight: verticalSizeClass == .compact ? 44 : expanded || textSize.isAccessibilitySize ? 180 : 110, alignment: .top)
+                Button { expanded.toggle() } label: {
+                    HStack(spacing: 4) {
+                        Text(expanded ? "Less detail" : values.count > 3 ? "\(values.count - 3) more changes" : "Details")
+                        Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                    }.font(.caption).frame(minHeight: 44)
+                }.buttonStyle(.journalQuiet).accessibilityIdentifier("editor.impactDetails")
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 12).padding(.top, 10).padding(.bottom, expanded ? 10 : 0)
+            .background(JournalTheme.sage.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+            .accessibilityElement(children: .contain).accessibilityIdentifier("editor.actionImpact")
+            .onChange(of: identity) { _ in expanded = false }
+    }
+    private func impactRows(_ values: [GardenImpactRow]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(expanded ? values : Array(values.prefix(3))) { row in
+                Text(row.text).font(.callout).monospacedDigit()
+                    .foregroundStyle(row.direction < 0 ? JournalTheme.danger : row.direction > 0 ? JournalTheme.action : JournalTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if expanded {
+                ForEach(values) { row in Text(row.detail).font(.caption).foregroundStyle(JournalTheme.secondary) }
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 @MainActor
 struct GardenStrategyPanel: View {
     @ObservedObject var store: GardenEditorStore
-    @State private var expanded = true
+    let openSkills: () -> Void
     @State private var now = Date()
     @Environment(\.dynamicTypeSize) private var textSize
-    private var value: GardenStrategyEvaluation? { store.strategyPreview }
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let value = value {
-                metrics(value).fixedSize(horizontal: false, vertical: true).layoutPriority(1)
-                if store.editCandidateID != nil {
-                    GardenActionImpact(title: "If applied", before: store.draftStrategy, after: value, showsSkillChanges: false)
-                        .fixedSize(horizontal: false, vertical: true).layoutPriority(1)
-                } else if let id = store.selectedID {
-                    GardenActionImpact(title: "If stored", before: store.draftStrategy, after: store.strategyIfStored(id), showsSkillChanges: false)
-                        .fixedSize(horizontal: false, vertical: true).layoutPriority(1)
-                }
+        VStack(alignment: .leading, spacing: 4) {
+            if let value = store.strategyPreview {
+                let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+                layout {
+                    metric("Attraction", icon: "attraction", value: GardenStrategyCopy.number((Decimal(string: value.totalAttractionMicroUnits) ?? 0) / 1_000_000), id: "editor.attraction")
+                    metric("Visitor storage", icon: "offline_capacity", value: value.offlineCapacity.formatted(), id: "editor.offlineCapacity")
+                    Button(action: openSkills) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Skills").font(.caption).foregroundStyle(JournalTheme.secondary)
+                            HStack(spacing: 5) {
+                                Text(String(GardenSkillGroup.groups(in: value).count)).font(.headline).monospacedDigit()
+                                Image(systemName: "chevron.right").font(.caption)
+                            }
+                        }.frame(maxWidth: .infinity, minHeight: 44, alignment: .topLeading)
+                    }.buttonStyle(.plain).accessibilityLabel("Garden skills")
+                        .accessibilityIdentifier("editor.skills").accessibilityValue("Closed")
+                }.accessibilityIdentifier("editor.strategyMetrics")
                 if store.showingCached || !value.context.fresh(at: now) {
                     Text("Saved context. Refresh for current effects.").font(.caption)
                     refreshButton
                 }
-                Button { expanded.toggle() } label: {
-                    HStack {
-                        Text("Garden skills")
-                        Text(String(GardenSkillGroup.groups(value.skillSummary).count)).monospacedDigit()
-                        Spacer()
-                        Text(store.editCandidateID != nil ? "Preview" : store.hasDraftChanges ? "Draft" : "Saved")
-                            .font(.caption).foregroundStyle(JournalTheme.secondary)
-                        Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption)
-                    }.font(.subheadline.weight(.semibold)).frame(minHeight: 44)
-                }.buttonStyle(.plain).accessibilityIdentifier("editor.skills")
-                    .accessibilityValue(expanded ? "Expanded" : "Collapsed")
-                    .fixedSize(horizontal: false, vertical: true)
-                if expanded {
-                    ScrollView {
-                        skillList(value).frame(maxWidth: .infinity, alignment: .leading).padding(.trailing, 8)
-                    }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        .layoutPriority(-1).accessibilityIdentifier("editor.skillsScroll")
-                }
             } else {
-                Label("Garden effects unavailable", systemImage: "info.circle").font(.subheadline)
-                refreshButton
+                HStack {
+                    Text("Garden effects unavailable").font(.caption)
+                    Button("Skills", action: openSkills).buttonStyle(.journalQuiet).accessibilityIdentifier("editor.skills")
+                    refreshButton
+                }
             }
-        }.frame(maxWidth: .infinity, alignment: .topLeading).tint(JournalTheme.action)
+        }.frame(maxWidth: .infinity, alignment: .leading).tint(JournalTheme.action)
             .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { now = $0 }
     }
-    private func metrics(_ value: GardenStrategyEvaluation) -> some View {
-        let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 16))
-        return layout {
-            metric("Attraction", icon: "attraction", value: JournalAmount.water(value.totalAttractionMicroUnits),
-                change: store.savedStrategy.flatMap { saved in
-                    saved.totalAttractionMicroUnits == value.totalAttractionMicroUnits ? nil : GardenStrategyCopy.delta(saved.totalAttractionMicroUnits, value.totalAttractionMicroUnits)
-                }, identifier: "editor.attraction")
-            metric("Offline capacity", icon: "offline_capacity", value: value.offlineCapacity.formatted(),
-                change: store.savedStrategy.flatMap { saved in
-                    let difference = value.offlineCapacity - saved.offlineCapacity
-                    return difference == 0 ? nil : (difference > 0 ? "+" : "") + difference.formatted()
-                }, identifier: "editor.offlineCapacity")
-        }.accessibilityIdentifier("editor.strategyMetrics")
-    }
-    private func metric(_ title: String, icon: String, value: String, change: String?, identifier: String) -> some View {
-        HStack(alignment: .top, spacing: 8) {
-            QuantityIcon(metric: icon)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.caption).foregroundStyle(JournalTheme.secondary)
-                Text(value).font(.headline).monospacedDigit().fixedSize(horizontal: false, vertical: true)
-                if let change = change { Text("\(change) from saved").font(.caption).monospacedDigit() }
-            }
-        }.frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine).accessibilityIdentifier(identifier)
+    private func metric(_ title: String, icon: String, value: String, id: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(.caption).foregroundStyle(JournalTheme.secondary)
+            QuantityLabel(metric: icon, text: value).font(.headline).monospacedDigit()
+        }.frame(maxWidth: .infinity, minHeight: 44, alignment: .topLeading)
+            .accessibilityElement(children: .combine).accessibilityIdentifier(id)
     }
     private var refreshButton: some View {
         Button("Refresh effects") { Task { await store.refresh() } }.buttonStyle(.journalQuiet)
             .disabled(store.connectionBusy || store.pending != nil)
     }
-    private func skillList(_ value: GardenStrategyEvaluation) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            let groups = GardenSkillGroup.groups(value.skillSummary)
-            if groups.isEmpty { Text("No active skills").font(.callout) }
-            ForEach(groups) { GardenSkillDisclosure(group: $0, store: store, evaluation: value) }
-            let changes = GardenStrategyCopy.changes(from: store.savedStrategy, to: value)
-            if !changes.isEmpty {
-                Divider()
-                ForEach(changes, id: \.self) { Text($0).font(.caption) }
-            }
-            let inactive = GardenInactiveSkillGroup.groups(plants: store.strategyPlants, items: store.strategyItems, summary: value.skillSummary)
-            if !inactive.isEmpty {
-                Divider()
-                DisclosureGroup("Inactive skills (\(inactive.count))") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(inactive) { skill in
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(skill.name).font(.callout.weight(.semibold))
-                                if !skill.sourceIsAdult {
-                                    Text("Requires a fully grown source").font(.caption)
-                                } else if let condition = skill.rule.condition {
-                                    Text("Companions \(store.strategyPlants.filter { condition.selector.matches($0) }.count) / \(condition.minimum)").font(.caption)
-                                } else if skill.rule.magnitude?.type == "daily_flights" {
-                                    Text("Requires flights synced today").font(.caption)
-                                } else { Text("Requirements not met").font(.caption) }
-                                Text(skill.rule.description).font(.caption).foregroundStyle(JournalTheme.secondary)
-                            }
-                        }
-                    }.padding(.top, 8)
-                }.font(.subheadline).accessibilityIdentifier("editor.inactiveSkills")
-            }
-            if let water = value.skillSummary.waterHeadline { Text(water).font(.callout).monospacedDigit() }
-            ForEach(value.limitNotices ?? [], id: \.self) { Text($0).font(.caption) }
-            if value.skillSummary.capReached { Text(value.skillSummary.caps.description).font(.caption) }
-        }
-    }
 }
 
 @MainActor
-struct GardenSkillDisclosure: View {
-    let group: GardenSkillGroup
+struct GardenSkillsPage: View {
     @ObservedObject var store: GardenEditorStore
-    let evaluation: GardenStrategyEvaluation
+    let close: () -> Void
+    private var evaluation: GardenStrategyEvaluation? { store.editing ? store.strategyPreview : store.savedStrategy }
+    private var plants: [APIOwnedPlant] { store.editing ? store.strategyPlants : store.confirmed?.plants ?? [] }
+    private var items: [APIOwnedItem] { store.editing ? store.strategyItems : store.confirmed?.items ?? [] }
+    private var groups: [GardenSkillGroup] {
+        if let evaluation = evaluation { return GardenSkillGroup.groups(in: evaluation) }
+        let available = GardenAvailableSkill.collect(plants: plants, items: items)
+        let effective = store.editing ? [] : GardenSkillGroup.groups(store.confirmed?.skillSummary)
+        let names = Set(available.map(\.name)).union(effective.map(\.name))
+        return names.sorted().map { name in
+            GardenSkillGroup(name: name, effects: effective.first { $0.name == name }?.effects ?? [],
+                availability: available.first { $0.name == name })
+        }
+    }
     var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                if store.editing {
+                    Text(store.editCandidateID != nil ? "Placement preview" : store.hasDraftChanges ? "Unsaved garden" : "Saved garden")
+                        .font(.caption).foregroundStyle(JournalTheme.secondary)
+                }
+                if groups.isEmpty { Text("No active skills").foregroundStyle(JournalTheme.secondary) }
+                ForEach(groups) { group in
+                    skill(group).padding(12)
+                        .background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
+                }
+                if let evaluation = evaluation {
+                    ForEach(evaluation.limitNotices ?? [], id: \.self) { Text($0).font(.caption) }
+                    if evaluation.skillSummary.capReached {
+                        DisclosureGroup("Boost cap reached") { Text(evaluation.skillSummary.caps.description).font(.footnote) }
+                    }
+                } else { Text("Current effects unavailable. Refresh your garden.").font(.caption) }
+                if let grants = store.confirmed?.dailyWater, !grants.isEmpty {
+                    JournalSectionHeading(title: "Recent Morning Rain")
+                    ForEach(grants) { grant in Text("\(grant.gameDate): +\(grant.water) water across \(grant.plantCount) plants").font(.callout) }
+                }
+                if store.showingCached { Text("Last confirmed context").font(.caption).foregroundStyle(JournalTheme.secondary) }
+            }.padding(20)
+        }.navigationTitle("Garden skills").navigationBarTitleDisplayMode(.inline)
+            .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
+            .accessibilityIdentifier("garden.skillsPage")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                        .buttonStyle(.journalIcon).accessibilityLabel("Close garden skills").accessibilityIdentifier("garden.skills.close")
+                }
+            }
+    }
+    private func skill(_ group: GardenSkillGroup) -> some View {
         DisclosureGroup {
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(Array(Set(group.effects.map(\.description))).sorted(), id: \.self) { Text($0).font(.caption) }
-                ForEach(group.effects, id: \.id) { effect in
-                    if effect.system == "growth", effect.scope != "daily_water" {
-                        Text("\(effect.bonusText) for \(effect.recipientPlantIds.count) planted plants").font(.caption)
+                let descriptions = (group.availability?.rules.map(\.description) ?? []) + group.effects.map(\.description)
+                ForEach(Array(Set(descriptions)).sorted(), id: \.self) { Text($0).font(.caption) }
+                ForEach(group.availability?.rules ?? []) { rule in
+                    if let condition = rule.condition {
+                        let count = group.availability?.qualifyingCounts["condition:" + rule.id] ?? 0
+                        if count < condition.minimum {
+                            Text("Active; companion requirement \(count) / \(condition.minimum)").font(.caption)
+                        }
+                    }
+                    if let magnitude = rule.magnitude, let count = group.availability?.qualifyingCounts[rule.id] {
+                        let title = magnitude.type == "per_species" ? "Distinct species" : "Qualifying plants"
+                        Text("\(title): \(count)").font(.caption)
                     }
                 }
-                if !sourceNames.isEmpty { Text("Sources: \(sourceNames.joined(separator: ", "))").font(.caption) }
+                if group.effects.isEmpty { Text("Active; bonus applies when its requirements are met.").font(.caption) }
+                let names = sourceNames(group)
+                if !names.isEmpty { Text("Sources: \(names.joined(separator: ", "))").font(.caption) }
                 if group.sources.count > 1 { Text("Shared bonus. Duplicates do not add together.").font(.caption) }
-                ForEach(countRules, id: \.id) { rule in
-                    if let magnitude = rule.magnitude {
-                        let selected = (store.strategyPlants).filter { magnitude.selector?.matches($0) ?? true }
-                        let count = magnitude.type == "per_species" ? Set(selected.map(\.speciesId)).count : selected.count
-                        Text(countDescription(magnitude, count: count)).font(.caption).monospacedDigit()
-                    }
-                }
-                if group.effects.contains(where: { $0.scope == "daily_water" }) {
-                    Text("Applies at the next game-day reset after saving.").font(.caption)
-                }
-                if evaluation.skillSummary.capReached {
-                    Text("Some growth bonuses are capped. The preview includes limits.").font(.caption)
-                }
-            }.foregroundStyle(JournalTheme.secondary).padding(.top, 4)
+                if group.name == "Morning Rain" { Text("Applies at the next game-day reset after saving.").font(.caption) }
+            }.foregroundStyle(JournalTheme.secondary).padding(.top, 6)
         } label: {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(group.name).font(.callout.weight(.semibold))
-                ForEach(group.bonuses, id: \.self) { Text($0).font(.caption).foregroundStyle(JournalTheme.secondary) }
-            }
-        }.accessibilityIdentifier("garden.skill.\(group.effects.first?.skillId ?? group.name)")
+            VStack(alignment: .leading, spacing: 4) {
+                Text(group.name).font(.headline)
+                ForEach(group.bonuses, id: \.self) { Text($0).font(.subheadline).foregroundStyle(JournalTheme.secondary) }
+            }.fixedSize(horizontal: false, vertical: true)
+        }.accessibilityIdentifier("garden.skill.\(group.effects.first?.skillId ?? group.availability?.rules.first?.id ?? group.name)")
     }
-    private func countDescription(_ magnitude: APIStrategyMagnitude, count: Int) -> String {
-        let title = magnitude.type == "per_species" ? "Distinct species" : "Qualifying plants"
-        guard let maximum = magnitude.maximum.flatMap({ Decimal(string: $0) }),
-              let unit = Decimal(string: magnitude.value), unit > 0 else { return "\(title): \(count)" }
-        var ratio = maximum / unit, rounded = Decimal()
-        NSDecimalRound(&rounded, &ratio, 0, .up)
-        let threshold = NSDecimalNumber(decimal: rounded).intValue
-        return "\(title) \(min(count, threshold)) / \(threshold)"
-    }
-    private var sourceNames: [String] {
+    private func sourceNames(_ group: GardenSkillGroup) -> [String] {
         group.sources.compactMap { id -> String? in
-            if let plant = store.ownedCopy(id) {
+            if let plant = plants.first(where: { $0.id == id }) {
                 return store.catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId.capitalized
             }
-            return store.draft?.items.first { $0.id == id }?.displayName
+            return items.first(where: { $0.id == id })?.displayName
         }.sorted()
-    }
-    private var countRules: [APIGardenSkillDefinition] {
-        let rules = (store.strategyPlants).flatMap { $0.gardenSkills ?? [] } +
-            (store.strategyItems).flatMap { $0.strategyRules?.effects ?? [] }
-        var seen = Set<String>()
-        return rules.filter { $0.name == group.name && ["per_species", "per_copy"].contains($0.magnitude?.type ?? "") && seen.insert($0.id).inserted }
     }
 }

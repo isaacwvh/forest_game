@@ -1,5 +1,39 @@
 import SwiftUI
 
+/// One bounded editing surface keeps Save and tools outside contextual scrolling.
+struct GardenEditorDock<Content: View, Tools: View, Save: View>: View {
+    @ViewBuilder let content: () -> Content
+    @ViewBuilder let tools: () -> Tools
+    @ViewBuilder let save: () -> Save
+    @State private var heights: [String: CGFloat] = [:]
+    var body: some View {
+        GeometryReader { geometry in
+            let available = max(0, geometry.size.height - (heights["tools"] ?? 0) - (heights["save"] ?? 0))
+            VStack(spacing: 0) {
+                ScrollView {
+                    content().frame(maxWidth: .infinity).background(measure("content"))
+                }.frame(height: min(heights["content"] ?? 0, available))
+                tools().fixedSize(horizontal: false, vertical: true).background(measure("tools"))
+                save().fixedSize(horizontal: false, vertical: true).background(measure("save"))
+            }.foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+        }.onPreferenceChange(GardenDockHeights.self) { heights = $0 }
+            .accessibilityIdentifier("editor.dock")
+    }
+    private func measure(_ key: String) -> some View {
+        GeometryReader { geometry in
+            Color.clear.preference(key: GardenDockHeights.self, value: [key: geometry.size.height])
+        }
+    }
+}
+
+private struct GardenDockHeights: PreferenceKey {
+    static var defaultValue: [String: CGFloat] = [:]
+    static func reduce(value: inout [String: CGFloat], nextValue: () -> [String: CGFloat]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, next in next })
+    }
+}
+
 /// Native context menus label an icon on hold without firing its tap action.
 struct GardenActionButton: View {
     let title: String
@@ -35,6 +69,8 @@ struct GardenSelectionPopup: View {
     var store: (() -> Void)? = nil
     var editingDisabled = false
     var replace: (() -> Void)? = nil
+    var impactBefore: GardenStrategyEvaluation? = nil
+    var impactAfter: GardenStrategyEvaluation? = nil
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         JournalPlantFrame(rarity: rarity) {
@@ -77,6 +113,10 @@ struct GardenSelectionPopup: View {
                         .buttonStyle(.journalIcon).accessibilityLabel(item == nil ? "Close plant selection" : "Close item selection")
                         .accessibilityIdentifier("garden.selection.close")
                 }.padding(.horizontal, 8).padding(.top, 6)
+                if store != nil {
+                    GardenActionImpact(title: "If stored", before: impactBefore, after: impactAfter)
+                        .padding(.horizontal, 8).padding(.top, 8)
+                }
                 HStack(spacing: 4) {
                     if let move = move {
                         GardenActionButton(title: "Move", symbol: "arrow.up.and.down.and.arrow.left.and.right",
