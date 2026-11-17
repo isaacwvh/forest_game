@@ -624,6 +624,31 @@ final class ForestUITests: XCTestCase {
         XCTAssertEqual(try inspect(), initial)
     }
 
+    func testUnfinishedDraftUsesEditBadgeAndResumesThroughEdit() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()
+        let edit = app.buttons["navigation.Edit"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 15))
+        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: edit); waitForExpectations(timeout: 10)
+        XCTAssertNotEqual(edit.value as? String, "Unsaved garden changes")
+        edit.tap()
+        app.buttons["editor.storage"].tap()
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "storage.copy.")).firstMatch.tap()
+        app.buttons["editor.place"].tap()
+        app.buttons["editor.apply"].tap()
+        XCTAssertTrue(app.staticTexts["editor.unsavedChanges"].waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home); app.activate()
+        XCTAssertTrue(edit.waitForExistence(timeout: 10))
+        XCTAssertEqual(edit.value as? String, "Unsaved garden changes")
+        XCTAssertFalse(app.staticTexts["Unfinished garden draft"].exists)
+        XCTAssertFalse(app.buttons["editor.resumeDraft"].exists)
+        edit.tap()
+        XCTAssertTrue(app.staticTexts["editor.unsavedChanges"].waitForExistence(timeout: 5))
+        app.buttons["editor.saveGarden"].tap()
+        XCTAssertTrue(edit.waitForExistence(timeout: 10))
+        XCTAssertNotEqual(edit.value as? String, "Unsaved garden changes")
+    }
+
     func testBackgroundExitsFocusedEditingAndCancelsThePreview() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-garden"]; app.launch()

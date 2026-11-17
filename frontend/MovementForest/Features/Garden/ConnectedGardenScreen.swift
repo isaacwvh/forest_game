@@ -218,14 +218,6 @@ struct ConnectedGardenScreen: View {
     private var browsingStatus: some View {
         VStack(spacing: 8) {
             if let issue = store.draftPersistenceIssue { Text(issue).font(.caption).padding(10).background(JournalTheme.paper) }
-            if store.hasDraftChanges && store.pending == nil {
-                HStack {
-                    Text("Unfinished garden draft").font(.callout)
-                    Spacer()
-                    Button("Resume draft") { store.editing = true }.buttonStyle(.journalSecondary)
-                        .disabled(store.connectionBusy).accessibilityIdentifier("editor.resumeDraft")
-                }.padding(10).background(JournalTheme.paper).gardenOverlayTarget()
-            }
             if let accountSummary = accountSummary {
                 HomeAccountHeader(store: accountSummary, visitors: visitors,
                     attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },

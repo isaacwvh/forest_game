@@ -4,6 +4,14 @@ Implemented locally on 17 November 2026. This supersedes the expanded editor
 skills panel, inactive-skill disclosure and independent Save footer described in
 GARDEN_STRATEGY_ACCEPTANCE.md. Gameplay rules and backend contracts are unchanged.
 
+## Edit draft badge — 18 November 2026
+
+Home no longer shows an unfinished-draft banner. A small red exclamation badge
+appears in the corner of Edit while an unsubmitted draft has changes. Edit resumes
+that draft; saving, discarding or undoing to the saved layout clears the badge.
+VoiceOver announces Unsaved garden changes on Edit without an extra focus target.
+A hosted UI regression covers backgrounding with a draft, resuming and saving.
+
 ## Compact impact follow-up
 
 If stored now appears at the top, below the metrics, on an almost transparent

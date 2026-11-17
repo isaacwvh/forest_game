@@ -326,12 +326,23 @@ struct RootView: View {
                         Text(destination.rawValue).font(.caption).lineLimit(2).minimumScaleFactor(0.8)
                             .multilineTextAlignment(.center)
                     }.frame(maxWidth: .infinity, minHeight: 50)
+                        .overlay(alignment: .topTrailing) {
+                            if destination == .edit && hasUnfinishedGardenDraft {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .symbolRenderingMode(.palette).foregroundStyle(.white, JournalTheme.danger)
+                                    .font(.system(size: 14, weight: .bold))
+                                    .background(Circle().fill(JournalTheme.paper).padding(-1))
+                                    .padding(.top, 1).padding(.trailing, 8)
+                                    .allowsHitTesting(false).accessibilityHidden(true)
+                            }
+                        }
                 }
                 .buttonStyle(.journalNavigation(selectedTab == destination && collectionDestination == nil))
                 .foregroundStyle(selectedTab == destination && collectionDestination == nil ? JournalTheme.action : JournalTheme.secondary)
                 .disabled(destination == .edit && connection.editor?.canStartEditing != true)
                 .accessibilityIdentifier("navigation." + destination.id)
                 .accessibilityLabel(destination.rawValue)
+                .accessibilityValue(destination == .edit && hasUnfinishedGardenDraft ? "Unsaved garden changes" : "")
                 .accessibilityAddTraits(selectedTab == destination && collectionDestination == nil ? .isSelected : [])
             }
         }.padding(.horizontal, 8).padding(.top, 4)
@@ -341,6 +352,10 @@ struct RootView: View {
             .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
             .background(JournalTheme.paper.ignoresSafeArea(edges: .bottom))
             .overlay(alignment: .top) { JournalTheme.vine.opacity(0.25).frame(height: 0.5) }
+    }
+
+    private var hasUnfinishedGardenDraft: Bool {
+        connection.editor?.hasDraftChanges == true && connection.editor?.pending == nil
     }
 
     private var homeNavigation: some View {
