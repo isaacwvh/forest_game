@@ -4,6 +4,20 @@ Implemented locally on 17 November 2026. This supersedes the expanded editor
 skills panel, inactive-skill disclosure and independent Save footer described in
 GARDEN_STRATEGY_ACCEPTANCE.md. Gameplay rules and backend contracts are unchanged.
 
+## Compact impact follow-up
+
+If stored now appears at the top, below the metrics, on an almost transparent
+background over the garden. The bottom selection popup keeps its original
+controls. Both impact boxes use intrinsic collapsed height, compact insets and a
+tappable summary; expanded details use their measured height within a bound.
+First/last qualifying-source explanations are absent. Native regression coverage
+checks compact height and that the storage preview stays above the popup.
+
+For a simple conditional test, plant a mature Moonbell, then place/store a Heartleaf
+companion (a sprout qualifies). Dewlit Path changes from +4% to +8% step water and
+back; the mature source stays active in both states. Refresh Storage after a test
+grant. No backend code or schema change is needed for this layout follow-up.
+
 ## User test flow
 
 1. Open Edit. Expect Undo/Redo, Edit garden and X, plus the compact Attraction,

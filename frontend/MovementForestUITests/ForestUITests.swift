@@ -513,6 +513,9 @@ final class ForestUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["editor.unsavedChanges"].exists)
         let impact = app.descendants(matching: .any).matching(identifier: "editor.actionImpact").firstMatch
         XCTAssertTrue(impact.exists)
+        XCTAssertLessThanOrEqual(impact.frame.maxY, popup.frame.minY, "Storage impact belongs at the top, above the selection popup")
+        XCTAssertFalse(app.staticTexts["First qualifying source added"].exists)
+        XCTAssertFalse(app.staticTexts["Last qualifying source removed"].exists)
         let saveGarden = app.buttons["editor.saveGarden"]
         XCTAssertTrue(saveGarden.isEnabled)
         XCTAssertTrue(saveGarden.isHittable, "Save must stay outside the scrolling skills and narrow navigation toolbar")

@@ -87,7 +87,7 @@ struct ConnectedGardenScreen: View {
                         if let visitors = visitors { VisitorGardenOverlay(store: visitors, renderer: renderer) }
                     }
                 } status: {
-                    if store.editing { statusPanel }
+                    if store.editing { editorStatus }
                     else { browsingStatus }
                 } controls: {
                     if store.editing { controls }
@@ -284,6 +284,17 @@ struct ConnectedGardenScreen: View {
         }
     }
 
+    private var editorStatus: some View {
+        VStack(spacing: 4) {
+            statusPanel
+            if store.editCandidateID == nil, let id = store.selectedID,
+               store.selectedPlanted != nil || store.selectedItem != nil {
+                GardenActionImpact(title: "If stored", before: store.draftStrategy, after: store.strategyIfStored(id), gardenOverlay: true)
+                    .gardenOverlayTarget().padding(.horizontal, 12)
+            }
+        }
+    }
+
     private var statusPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
             GardenStrategyPanel(store: store, openSkills: { sheet = .information })
@@ -414,8 +425,7 @@ struct ConnectedGardenScreen: View {
             rotate: store.editing ? { store.beginItem(item, action: "rotate") } : nil,
             store: store.editing ? { Task { await store.storeItem(item) } } : nil,
             editingDisabled: !store.canEdit || renderer.isLoading,
-            replace: { store.beginReplacement(); sheet = .storage },
-            impactBefore: store.draftStrategy, impactAfter: store.strategyIfStored(item.id))
+            replace: { store.beginReplacement(); sheet = .storage })
     }
 
     @ViewBuilder private func selectionPopup(_ selected: APIOwnedPlant) -> some View {
@@ -433,8 +443,7 @@ struct ConnectedGardenScreen: View {
                         await store.storeSelected()
                     }
                 }, editingDisabled: !store.canEdit || renderer.isLoading,
-                replace: { store.beginReplacement(); sheet = .storage },
-                impactBefore: store.draftStrategy, impactAfter: store.strategyIfStored(selected.id))
+                replace: { store.beginReplacement(); sheet = .storage })
         } else {
             GardenSelectionPopup(name: name(of: selected), variant: selected.variantId.capitalized,
                 rarity: store.catalogue?.rarity(for: selected.speciesId), stage: selected.growthStage.title,

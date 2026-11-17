@@ -63,7 +63,7 @@ enum GardenStrategyCopy {
         let b = (Decimal(string: after.totalAttractionMicroUnits) ?? 0) / 1_000_000
         let attraction = b - a
         result.append(GardenImpactRow(id: "attraction", text: attraction == 0 ? "No attraction change" : "\(signed(attraction)) attraction",
-            detail: "Attraction \(number(a)) → \(number(b))", direction: attraction < 0 ? -1 : attraction > 0 ? 1 : 0))
+            detail: attraction == 0 ? "" : "Attraction \(number(a)) → \(number(b))", direction: attraction < 0 ? -1 : attraction > 0 ? 1 : 0))
         let capacity = after.offlineCapacity - before.offlineCapacity
         if capacity != 0 {
             result.append(GardenImpactRow(id: "capacity", text: "\(signed(Decimal(capacity))) visitor storage",
@@ -74,7 +74,7 @@ enum GardenStrategyCopy {
         for name in Set(old.keys).symmetricDifference(Set(new.keys)).sorted() {
             let adding = new[name] != nil
             result.append(GardenImpactRow(id: "source/" + name, text: "\(adding ? "+" : "−") \(name)",
-                detail: adding ? "First qualifying source added" : "Last qualifying source removed", direction: adding ? 1 : -1))
+                detail: "", direction: adding ? 1 : -1))
         }
         let common = Set(before.skillSummary.growthFactors.map(\.plantId)).intersection(after.skillSummary.growthFactors.map(\.plantId))
         for name in Set(old.keys).intersection(new.keys).sorted() {
@@ -192,9 +192,11 @@ struct GardenActionImpact: View {
     let title: String
     let before: GardenStrategyEvaluation?
     let after: GardenStrategyEvaluation?
+    var gardenOverlay = false
     @State private var expanded = false
-    @Environment(\.dynamicTypeSize) private var textSize
+    @State private var detailHeight: CGFloat = 0
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     private var rows: [GardenImpactRow] {
         guard let before = before, let after = after else { return [] }
         return GardenStrategyCopy.impact(from: before, to: after)
@@ -202,38 +204,62 @@ struct GardenActionImpact: View {
     var body: some View {
         let values = rows
         let identity = title + (before?.signature ?? "") + (after?.signature ?? "") + values.map(\.id).joined()
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(JournalTheme.secondary)
+        let hasDetails = values.count > 3 || values.contains { !$0.detail.isEmpty }
+        VStack(alignment: .leading, spacing: 3) {
             if values.isEmpty {
+                Text(title).font(.caption.weight(.semibold)).foregroundStyle(JournalTheme.secondary)
                 Text("Effects unavailable. Refresh your garden.").font(.caption).foregroundStyle(JournalTheme.secondary)
             } else {
-                ViewThatFits(in: .vertical) {
-                    impactRows(values)
-                    ScrollView { impactRows(values) }
-                }.frame(maxHeight: verticalSizeClass == .compact ? 44 : expanded || textSize.isAccessibilitySize ? 180 : 110, alignment: .top)
-                Button { expanded.toggle() } label: {
-                    HStack(spacing: 4) {
-                        Text(expanded ? "Less detail" : values.count > 3 ? "\(values.count - 3) more changes" : "Details")
-                        Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                    }.font(.caption).frame(minHeight: 44)
-                }.buttonStyle(.journalQuiet).accessibilityIdentifier("editor.impactDetails")
+                if hasDetails {
+                    Button { expanded.toggle() } label: {
+                        summary(values, expandable: true).frame(minHeight: 44, alignment: .leading).contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityHint(expanded ? "Hide impact details" : "Show impact details")
+                        .accessibilityValue(expanded ? "Expanded" : "Collapsed").accessibilityIdentifier("editor.impactDetails")
+                } else { summary(values, expandable: false) }
+                if expanded {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 3) {
+                            ForEach(Array(values.dropFirst(3))) { row in impactRow(row) }
+                            ForEach(values.filter { !$0.detail.isEmpty }) { row in
+                                Text(row.detail).font(.caption).foregroundStyle(JournalTheme.secondary)
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                            .background(GeometryReader { geometry in
+                                Color.clear.preference(key: GardenImpactDetailHeight.self, value: geometry.size.height)
+                            })
+                    }.frame(height: min(detailHeight, verticalSizeClass == .compact ? 72 : 160))
+                }
             }
-        }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 12).padding(.top, 10).padding(.bottom, expanded ? 10 : 0)
-            .background(JournalTheme.sage.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+        }.frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .background(gardenOverlay ? JournalTheme.paper.opacity(reduceTransparency ? 1 : 0.08) : JournalTheme.sage.opacity(0.3),
+                in: RoundedRectangle(cornerRadius: 8))
             .accessibilityElement(children: .contain).accessibilityIdentifier("editor.actionImpact")
             .onChange(of: identity) { _ in expanded = false }
+            .onPreferenceChange(GardenImpactDetailHeight.self) { detailHeight = $0 }
     }
-    private func impactRows(_ values: [GardenImpactRow]) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(expanded ? values : Array(values.prefix(3))) { row in
-                Text(row.text).font(.callout).monospacedDigit()
-                    .foregroundStyle(row.direction < 0 ? JournalTheme.danger : row.direction > 0 ? JournalTheme.action : JournalTheme.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if expanded {
-                ForEach(values) { row in Text(row.detail).font(.caption).foregroundStyle(JournalTheme.secondary) }
-            }
+    private func summary(_ values: [GardenImpactRow], expandable: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                Text(title).font(.caption.weight(.semibold))
+                Spacer(minLength: 4)
+                if values.count > 3 && !expanded { Text("\(values.count - 3) more").font(.caption2) }
+                if expandable { Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption2) }
+            }.foregroundStyle(JournalTheme.secondary)
+            ForEach(Array(values.prefix(3))) { row in impactRow(row) }
         }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+    private func impactRow(_ row: GardenImpactRow) -> some View {
+        Text(row.text).font(.subheadline).monospacedDigit()
+            .foregroundStyle(row.direction < 0 ? JournalTheme.danger : row.direction > 0 ? JournalTheme.action : JournalTheme.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+private struct GardenImpactDetailHeight: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 

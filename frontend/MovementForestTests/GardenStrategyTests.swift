@@ -81,6 +81,8 @@ enum GardenImpactChecks {
         let single = try evaluate([moon]), double = try evaluate([moon, moon2])
         check(rows(empty, single).contains { $0.text == "+ Sleeping Dew" && $0.direction == 1 }, "First mature plant adds its skill")
         check(rows(single, empty).contains { $0.text == "− Sleeping Dew" && $0.direction == -1 }, "Last mature plant loses its skill")
+        check(rows(empty, single).filter { $0.id.hasPrefix("source/") }.allSatisfy { $0.detail.isEmpty } &&
+            rows(single, empty).filter { $0.id.hasPrefix("source/") }.allSatisfy { $0.detail.isEmpty }, "Skill source rows omit redundant explanations")
         check(rows(single, double).count == 1 && rows(double, single).count == 1, "Equivalent duplicate source must stay quiet")
         let immature = try evaluate([copy(moon, young: true)])
         check(GardenSkillGroup.groups(in: immature).isEmpty, "Immature sources must not appear in Skills")

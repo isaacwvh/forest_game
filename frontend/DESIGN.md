@@ -1,3 +1,13 @@
+## Compact impact follow-up — 17 November 2026
+
+If stored appears below the top metrics on an almost transparent parchment
+backing over the garden; the bottom selection popup retains its existing controls.
+Reduce Transparency restores an opaque backing. Impact boxes use intrinsic height,
+small insets and no reserved collapsed scrolling region or separate Details row.
+Tap the summary to reveal bounded, content-measured details. If planted/If placed
+remains immediately above Place. Keep the signed skill name and omit first/last
+qualifying-source explanations, including in expanded details.
+
 ## Compact garden editor and shared skills — 17 November 2026
 
 The user-approved sketch governs Edit: native Undo/Redo, Edit garden, bold red

@@ -150,6 +150,20 @@ final class GardenViewportTests: XCTestCase {
                        "Token feedback must not vertically offset the token icon inside the shared row")
     }
 
+    func testImpactBoxUsesCompactIntrinsicHeight() throws {
+        let example = try XCTUnwrap(GardenStrategyContract.load().cases.first { $0.name == "adult_moonwillow" })
+        let before = try GardenStrategyEvaluator.evaluate(plants: [], items: [], context: example.context)
+        let after = try GardenStrategyEvaluator.evaluate(plants: example.plants, items: [], context: example.context)
+        for overlay in [false, true] {
+            let view = GardenActionImpact(title: overlay ? "If stored" : "If planted", before: before, after: after, gardenOverlay: overlay)
+                .environment(\.dynamicTypeSize, .large)
+            let host = UIHostingController(rootView: view)
+            let size = host.sizeThatFits(in: CGSize(width: 320, height: 800))
+            XCTAssertGreaterThanOrEqual(size.height, 44)
+            XCTAssertLessThanOrEqual(size.height, 100, "Two impact rows must not reserve an empty scrolling region or a separate Details row")
+        }
+    }
+
     func testEditorDockKeepsSaveAndToolsOutsideLongPopup() async throws {
         for size in [CGSize(width: 320, height: 568), CGSize(width: 844, height: 390)] {
             var frames: [String: CGRect] = [:]

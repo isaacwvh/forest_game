@@ -179,7 +179,7 @@ struct PlantDetailScreen: View {
                 VStack(spacing: 0) {
                     Divider()
                     GardenActionImpact(title: strategyTitle, before: strategyBefore, after: strategyAfter)
-                        .padding(.horizontal, 14).padding(.top, 12)
+                        .padding(.horizontal, 12).padding(.top, 6)
                     if saleEnabled, let collection = collection, let owned = owned {
                         PlantSaleControls(store: collection, plant: owned, enabled: saleEnabled,
                             onPlace: onPlace, placementDisabled: placementDisabled).padding(14)

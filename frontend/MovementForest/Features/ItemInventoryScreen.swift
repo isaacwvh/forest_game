@@ -109,14 +109,14 @@ struct ItemDetailScreen: View {
                 ItemSaleControls(store: collection, item: item, editingEnabled: store.canEdit,
                                  place: place, close: close).padding(16).background(JournalTheme.sage.opacity(0.65))
             } else if let item = item, item.placement == nil, let place = place {
-                VStack(spacing: 12) {
+                VStack(spacing: 6) {
                     if store.editing {
                         GardenActionImpact(title: store.replacementID == nil ? "If placed" : "If replaced",
                             before: store.draftStrategy, after: store.strategyIfPlaced(item))
                     }
                     Button { place(item) } label: { Text("Place").frame(maxWidth: .infinity, minHeight: 44) }
                         .buttonStyle(.journalPrimary).disabled(!store.canEdit).accessibilityIdentifier("itemDetails.place")
-                }.padding(16).background(JournalTheme.paper)
+                }.padding(.horizontal, 12).padding(.vertical, 8).background(JournalTheme.paper)
             }
         }
     }

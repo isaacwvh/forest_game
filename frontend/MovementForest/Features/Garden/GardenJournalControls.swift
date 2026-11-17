@@ -69,8 +69,6 @@ struct GardenSelectionPopup: View {
     var store: (() -> Void)? = nil
     var editingDisabled = false
     var replace: (() -> Void)? = nil
-    var impactBefore: GardenStrategyEvaluation? = nil
-    var impactAfter: GardenStrategyEvaluation? = nil
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         JournalPlantFrame(rarity: rarity) {
@@ -113,10 +111,6 @@ struct GardenSelectionPopup: View {
                         .buttonStyle(.journalIcon).accessibilityLabel(item == nil ? "Close plant selection" : "Close item selection")
                         .accessibilityIdentifier("garden.selection.close")
                 }.padding(.horizontal, 8).padding(.top, 6)
-                if store != nil {
-                    GardenActionImpact(title: "If stored", before: impactBefore, after: impactAfter)
-                        .padding(.horizontal, 8).padding(.top, 8)
-                }
                 HStack(spacing: 4) {
                     if let move = move {
                         GardenActionButton(title: "Move", symbol: "arrow.up.and.down.and.arrow.left.and.right",
