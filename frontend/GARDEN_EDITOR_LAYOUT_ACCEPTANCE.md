@@ -4,6 +4,14 @@ Implemented locally on 17 November 2026. This supersedes the expanded editor
 skills panel, inactive-skill disclosure and independent Save footer described in
 GARDEN_STRATEGY_ACCEPTANCE.md. Gameplay rules and backend contracts are unchanged.
 
+## Skill disclosure text — 18 November 2026
+
+Expanded skills consistently show description, Conditions, then Sources, all
+left-aligned at full content width. Conditions retain companion/count/step-band
+and reset requirements, including met conditions. Source rows show (Item) or
+(Plant) followed by the name in the existing accessible rarity colour. Check
+Borrowed Wisdom, Dewlit Path and Gentle Hold, including narrow/large text layouts.
+
 ## Edit draft badge — 18 November 2026
 
 Home no longer shows an unfinished-draft banner. A small red exclamation badge

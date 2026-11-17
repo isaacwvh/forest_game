@@ -370,24 +370,22 @@ struct GardenSkillsPage: View {
             VStack(alignment: .leading, spacing: 6) {
                 let descriptions = (group.availability?.rules.map(\.description) ?? []) + group.effects.map(\.description)
                 ForEach(Array(Set(descriptions)).sorted(), id: \.self) { Text($0).font(.caption) }
-                ForEach(group.availability?.rules ?? []) { rule in
-                    if let condition = rule.condition {
-                        let count = group.availability?.qualifyingCounts["condition:" + rule.id] ?? 0
-                        if count < condition.minimum {
-                            Text("Active; companion requirement \(count) / \(condition.minimum)").font(.caption)
+                Text("Conditions: \(conditions(group))").font(.caption)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("Sources:").fixedSize()
+                    VStack(alignment: .leading, spacing: 3) {
+                        ForEach(sources(group)) { source in
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text("(\(source.kind))").fixedSize()
+                                PlantNameText(source.name, rarity: source.rarity)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }.frame(maxWidth: .infinity, alignment: .leading)
+                                .accessibilityElement(children: .combine)
                         }
                     }
-                    if let magnitude = rule.magnitude, let count = group.availability?.qualifyingCounts[rule.id] {
-                        let title = magnitude.type == "per_species" ? "Distinct species" : "Qualifying plants"
-                        Text("\(title): \(count)").font(.caption)
-                    }
-                }
-                if group.effects.isEmpty { Text("Active; bonus applies when its requirements are met.").font(.caption) }
-                let names = sourceNames(group)
-                if !names.isEmpty { Text("Sources: \(names.joined(separator: ", "))").font(.caption) }
-                if group.sources.count > 1 { Text("Shared bonus. Duplicates do not add together.").font(.caption) }
-                if group.name == "Morning Rain" { Text("Applies at the next game-day reset after saving.").font(.caption) }
-            }.foregroundStyle(JournalTheme.secondary).padding(.top, 6)
+                }.font(.caption).frame(maxWidth: .infinity, alignment: .leading)
+            }.frame(maxWidth: .infinity, alignment: .leading).multilineTextAlignment(.leading)
+                .foregroundStyle(JournalTheme.secondary).padding(.top, 6)
         } label: {
             VStack(alignment: .leading, spacing: 4) {
                 Text(group.name).font(.headline)
@@ -395,12 +393,48 @@ struct GardenSkillsPage: View {
             }.fixedSize(horizontal: false, vertical: true)
         }.accessibilityIdentifier("garden.skill.\(group.effects.first?.skillId ?? group.availability?.rules.first?.id ?? group.name)")
     }
-    private func sourceNames(_ group: GardenSkillGroup) -> [String] {
-        group.sources.compactMap { id -> String? in
-            if let plant = plants.first(where: { $0.id == id }) {
-                return store.catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId.capitalized
+    private func conditions(_ group: GardenSkillGroup) -> String {
+        var values: [String] = []
+        for rule in group.availability?.rules ?? [] {
+            if let condition = rule.condition {
+                let names = condition.selector.species.map { id in
+                    store.catalogue?.species.first { $0.speciesId == id }?.displayName ?? id.capitalized
+                }
+                let label = names.isEmpty ? (condition.selector.tags.isEmpty ? "Companions" : condition.selector.tags.map { $0.capitalized }.joined(separator: " + ")) : names.joined(separator: " or ")
+                let count = group.availability?.qualifyingCounts["condition:" + rule.id] ?? 0
+                values.append("\(label): \(count) / \(condition.minimum)")
             }
-            return items.first(where: { $0.id == id })?.displayName
-        }.sorted()
+            if let count = group.availability?.qualifyingCounts[rule.id] {
+                values.append("\(rule.magnitude?.type == "per_species" ? "Distinct species" : "Qualifying plants"): \(count)")
+            }
+            if rule.stepBand == "first_2000" { values.append("First 2,000 steps each day") }
+            if rule.stepBand == "after_2000" { values.append("Steps after 2,000 each day") }
+            if rule.magnitude?.type == "daily_flights" {
+                values.append(evaluation.map { "Flights today: \($0.context.dailyFlights)" } ?? "Flights synced today")
+            }
+        }
+        if group.name == "Morning Rain" { values.append("Next game-day reset after saving") }
+        if values.isEmpty {
+            values.append(sources(group).contains { $0.kind == "Plant" } ? "Fully grown and planted" : "While placed")
+        }
+        if group.sources.count > 1 { values.append("Duplicates do not stack") }
+        var seen = Set<String>()
+        return values.filter { seen.insert($0).inserted }.joined(separator: "; ")
+    }
+    private struct SkillSource: Identifiable {
+        let id: UUID
+        let kind: String
+        let name: String
+        let rarity: String?
+    }
+    private func sources(_ group: GardenSkillGroup) -> [SkillSource] {
+        group.sources.compactMap { id -> SkillSource? in
+            if let plant = plants.first(where: { $0.id == id }) {
+                let name = store.catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName ?? plant.speciesId.capitalized
+                return SkillSource(id: id, kind: "Plant", name: name, rarity: store.catalogue?.rarity(for: plant.speciesId))
+            }
+            guard let item = items.first(where: { $0.id == id }) else { return nil }
+            return SkillSource(id: id, kind: "Item", name: item.displayName, rarity: item.rarity)
+        }.sorted { $0.name == $1.name ? $0.id.uuidString < $1.id.uuidString : $0.name < $1.name }
     }
 }
