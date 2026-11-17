@@ -1,5 +1,26 @@
 # Native baseline conventions
 
+## Purchase feedback and quiet updates — 17 November 2026
+
+Shop purchase confirmations use a small parchment overlay with a forest-green
+check and a 44-point Close target. New confirmed pack/item receipts show singular
+or plural Saved to Storage copy once during the current Shop visit. The overlay
+stays until closed or the page is left; a later purchase replaces it. Closing it
+does not clear a durable receipt, and restored results do not replay on entry.
+Confirmation remains visible if a later inventory refresh fails.
+
+Loaded pages keep routine confirming/saving/refreshing rows out of their layout.
+Pending-request Retry controls appear for unresolved requests after the active
+attempt ends. Initial loading, real failures, offline/cache labels and recovery
+remain explicit. Empty-state messages stay mounted during routine reads. Account
+and discovery refreshes do not flash saved-data notices after live confirmation.
+
+Packs uses a compact last-opening row: 64-point portrait, name, variant/stage/rarity
+and pinned receipt growth. Its heading is subheadline-sized; accessibility text
+stacks and wraps. Receipt selection, opening ceremony, purchase/accounting guards,
+request identities and persistent recovery are unchanged. See the follow-up
+walkthrough in STAGE5_UI_ACCEPTANCE.md; native validation remains pending.
+
 ## Plant progress and catalog collection — 14 November 2026
 
 Full owned profiles use three rows: current stage and four dots; the pinned-stage

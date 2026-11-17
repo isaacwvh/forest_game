@@ -1,3 +1,26 @@
+## Purchase feedback and quiet updates — 17 November 2026
+
+Shop now shows a dismissible journal overlay for newly confirmed pack/item
+purchases. Loaded pages omit routine progress/pending rows, retain empty content
+during reads and avoid saved-data flashes. Packs has a compact last-opening row.
+Receipt persistence, mutation/recovery guards, backend, APIs, assets and the pack
+opening ceremony are unchanged.
+
+Passed locally on Windows:
+
+- `python frontend/scripts/validate_frontend.py`: generated project, all asset
+  hashes/archives, bundle membership, fixture contracts and contrast checks.
+- `python frontend/scripts/check_swift_syntax.py`: all 101 Swift files parse.
+- `git diff --check`: no whitespace errors.
+
+Native regression coverage was extended for purchase popup wording/dismissal,
+no replay on refresh/return, stable Shop position, compact result sizing, narrow
+and accessibility layouts, quiet discovery invalidation and retained cache labels.
+Xcode builds, XCTest/UI tests and device visual/VoiceOver acceptance were not run:
+this Windows workspace has no Apple SDK or Xcode. Use `scripts/test-mac.sh` on a
+Mac and the follow-up walkthrough in STAGE5_UI_ACCEPTANCE.md before acceptance.
+These are local checks; no remote CI result is claimed.
+
 ## Plant progress and catalog collection — 14 November 2026
 
 Full profiles now use stage/dots, the existing pinned-stage fraction, and cumulative

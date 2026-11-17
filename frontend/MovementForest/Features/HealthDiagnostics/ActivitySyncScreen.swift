@@ -31,7 +31,6 @@ struct ActivitySyncScreen: View {
                                     timeZone: TimeZone(identifier: editor.profile.gameTimezone) ?? .current)
                 VStack(alignment: .leading, spacing: 10) {
                     JournalSectionHeading(title: "Sync status")
-                    if sync.busy { ProgressView("Confirming activity…") }
                     Text(sync.message).accessibilityIdentifier("sync.status")
                     if let status = sync.status {
                         DetailRow(title: "Last confirmed sync", value: status.lastSyncAt.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "Not yet synced")
@@ -123,7 +122,6 @@ struct GardenActivityStatus: View {
     @ObservedObject var sync: ActivitySyncCoordinator
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            if sync.busy { ProgressView("Syncing activity…") }
             Text(sync.message).font(.caption)
             if !sync.recaps.isEmpty {
                 Text("New confirmed activity · Review it in Activity").font(.caption).fontWeight(.semibold)

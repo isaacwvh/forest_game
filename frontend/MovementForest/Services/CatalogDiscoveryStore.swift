@@ -30,8 +30,14 @@ final class CatalogDiscoveryStore: ObservableObject {
     private let cache: any CatalogDiscoveryPersisting
     private var attached = true
     private var dirty = true
+    private var hasLiveConfirmation = false
     private var viewers = Set<UUID>()
     private var refreshTask: Task<Void, Never>?
+
+    // Restored/stale data stays labelled without flashing on routine invalidation.
+    var showsSavedDiscovery: Bool {
+        snapshot != nil && lastConfirmed && (!hasLiveConfirmation || (!dirty && !refreshing))
+    }
 
     init(userID: UUID, service: any CatalogDiscoveryServing, cache: (any CatalogDiscoveryPersisting)? = nil) {
         self.userID = userID; self.service = service
@@ -106,7 +112,7 @@ final class CatalogDiscoveryStore: ObservableObject {
                     }
                 }
                 // Mark as last confirmed if growth invalidated this request while it was in flight.
-                snapshot = incoming; lastConfirmed = dirty; failed = false
+                snapshot = incoming; lastConfirmed = dirty; failed = false; hasLiveConfirmation = true
                 do {
                     try cache.save(CatalogDiscoveryCache(snapshot: incoming, confirmedAt: Date()),
                                    server: service.serverID, user: userID)

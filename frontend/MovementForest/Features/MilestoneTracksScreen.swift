@@ -80,7 +80,7 @@ struct MilestoneTracksScreen: View {
                             Button("Next unclaimed goal") { proxy.scrollTo(nextGoal, anchor: .top) }
                                 .buttonStyle(.journalQuiet).frame(minHeight: 44)
                         }
-                        if rows.isEmpty && !store.busy && store.milestonesConfirmedAt != nil {
+                        if rows.isEmpty && store.milestonesConfirmedAt != nil {
                             Text(selected == .event ? "No active event." : "No milestones available.")
                                 .foregroundStyle(JournalTheme.secondary).padding(.vertical, 24)
                         }
@@ -225,7 +225,7 @@ struct MilestoneTracksScreen: View {
             .accessibilityIdentifier("milestones.track.\(track.rawValue)")
     }
     @ViewBuilder private var status: some View {
-        if store.busy { ProgressView("Confirming…") }
+        if store.busy && store.milestonesConfirmedAt == nil { ProgressView("Loading milestones…") }
         if let confirmedAt = store.milestonesConfirmedAt, store.refreshFailed {
             Text("Cached milestones · \(confirmedAt.formatted(date: .abbreviated, time: .shortened))")
                 .font(.caption).foregroundStyle(JournalTheme.secondary)
@@ -233,7 +233,7 @@ struct MilestoneTracksScreen: View {
         if let message = store.message, store.refreshFailed || store.recoveryLocked {
             Text(message).font(.callout).accessibilityIdentifier("collection.status")
         }
-        if store.state.pending != nil {
+        if store.state.pending != nil && !store.busy {
             Text("Awaiting confirmation").font(.callout)
             Button("Retry saved request") { Task { await store.refresh() } }
                 .buttonStyle(.journalSecondary).disabled(store.busy).frame(minHeight: 44)

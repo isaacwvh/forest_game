@@ -765,6 +765,7 @@ final class ForestUITests: XCTestCase {
         let purchase = app.buttons["collection.exchange.woodland"]
         XCTAssertTrue(purchase.waitForExistence(timeout: 15))
         XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", ": Not enough ")).firstMatch.exists)
+        let purchaseTop = purchase.frame.minY
         let requests = app.staticTexts["fixture.collectionRequests"]
         let tokens = app.staticTexts["fixture.collectionTokens"]
         let packs = app.staticTexts["fixture.collectionPacks"]
@@ -795,7 +796,16 @@ final class ForestUITests: XCTestCase {
         waitForExpectations(timeout: 10)
         XCTAssertEqual(tokens.value as? String, "4")
         XCTAssertEqual(packs.value as? String, "3")
-        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "collection.exchangeSuccess").firstMatch.exists)
+        let closeNotice = app.buttons["shop.purchaseNotice.close"]
+        XCTAssertTrue(closeNotice.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Packs saved to Storage."].exists)
+        XCTAssertEqual(purchase.frame.minY, purchaseTop, accuracy: 1, "Purchase feedback must not move the Shop content")
+        XCTAssertGreaterThanOrEqual(closeNotice.frame.height, 44)
+        closeNotice.tap()
+        XCTAssertFalse(closeNotice.exists)
+        app.buttons["Refresh collection"].tap()
+        XCTAssertFalse(closeNotice.exists, "Refreshing must not replay a dismissed receipt")
+        XCTAssertEqual(requests.value as? String, "1", "Closing/refreshing feedback must not submit another purchase")
 
         app.segmentedControls.buttons["Packs"].tap()
         let open = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "collection.open.")).firstMatch
@@ -808,6 +818,12 @@ final class ForestUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Opening history"].exists)
         app.swipeUp()
         XCTAssertTrue(app.staticTexts["Last confirmed result"].exists)
+        let lastResult = app.descendants(matching: .any).matching(identifier: "packs.lastResult").firstMatch
+        XCTAssertTrue(lastResult.exists)
+        XCTAssertLessThanOrEqual(lastResult.frame.height, 144)
+        app.segmentedControls.buttons["Exchange"].tap()
+        XCTAssertTrue(purchase.waitForExistence(timeout: 5))
+        XCTAssertFalse(closeNotice.exists, "Returning to Shop must not replay a saved receipt")
     }
 
     func testPackContentsListsVariantOddsWithoutArtworkOrExpansionAndNeverPurchases() {

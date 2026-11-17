@@ -5,6 +5,28 @@ import UIKit
 
 @MainActor
 final class F8PresentationTests: XCTestCase {
+    func testPurchaseNoticesDistinguishPackAndItemReceiptsWithoutTreatingOtherRewardsAsPurchases() throws {
+        var receipt = APICollectionReceipt(requestId: UUID(), tokenBalance: "4", economyVersion: 1,
+            exchangeId: UUID(), quantity: 2)
+        let packNotice = try XCTUnwrap(ShopPurchaseNotice(receipt: receipt))
+        XCTAssertEqual(packNotice.id, receipt.requestId)
+        XCTAssertEqual(packNotice.message, "Packs saved to Storage.")
+        receipt.quantity = 1
+        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Pack saved to Storage.")
+        receipt.exchangeId = nil; receipt.purchaseId = UUID()
+        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Item saved to Storage.")
+        receipt.quantity = 2
+        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Items saved to Storage.")
+        receipt.quantity = nil; receipt.ownedItemIds = [UUID(), UUID()]
+        XCTAssertEqual(ShopPurchaseNotice(receipt: receipt)?.message, "Items saved to Storage.")
+        receipt.purchaseId = nil; receipt.milestoneId = "first_visit"
+        XCTAssertNil(ShopPurchaseNotice(receipt: receipt))
+        receipt.milestoneId = nil; receipt.openingId = UUID()
+        XCTAssertNil(ShopPurchaseNotice(receipt: receipt))
+        receipt.openingId = nil; receipt.saleId = UUID()
+        XCTAssertNil(ShopPurchaseNotice(receipt: receipt))
+    }
+
     func testRarityTextColoursRemainReadableOnLightGardenAndDarkReveal() {
         func luminance(_ rgb: [Double]) -> Double {
             let linear = rgb.map { $0 <= 0.04045 ? $0 / 12.92 : pow(($0 + 0.055) / 1.055, 2.4) }

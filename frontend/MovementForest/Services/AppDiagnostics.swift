@@ -9,7 +9,7 @@ struct GardenFeedback: Equatable {
     let text: String
     let kind: Kind
     let source: Source
-    var visibleInGarden: Bool { kind != .success }
+    var visibleInGarden: Bool { kind != .success && kind != .pending }
 }
 
 enum InternalTools {

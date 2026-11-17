@@ -2,6 +2,31 @@
 
 Implemented on 5 November 2026. Native validation and device acceptance remain pending.
 
+## Purchase feedback and quiet updates — 17 November 2026
+
+Source implemented; the checks below still require Mac/iPhone execution.
+
+1. Buy one and multiple packs/items, including featured decorations. One small
+   journal popup shows the correct singular/plural Saved to Storage copy. Its
+   Close target is at least 44 points; closing it changes no wallet/inventory
+   values and makes no request. There is no purchase-success footer.
+2. Leave a popup open and purchase again: the new confirmation replaces it. Close,
+   refresh, switch pages, return, and relaunch: old success does not replay. Repeat
+   with account switches and a pending purchase recovered on the current visit.
+3. Hold responses while buying/claiming and refreshing Shop, Packs, Milestones,
+   Catalog/details, Inventory, Garden/Edit and Activity. Loaded content must not
+   move to make room for routine progress text, saved-data notices, pending Retry
+   controls or disappearing empty messages. Busy actions remain disabled.
+4. Interrupt a purchase/save/claim. Unresolved requests retain their recovery
+   notices and original identity/body. A confirmed purchase followed by a failed
+   list refresh shows its success and the refresh failure without spending again.
+5. Packs shows the newest confirmed opening in a compact row, including receipt
+   stage/growth. Later purchases, sales and milestones do not replace it or imply
+   current ownership. Check the unchanged opening ceremony and pagination.
+6. Check narrow screens, accessibility text, VoiceOver and Reduce Motion. Popup
+   and result text wrap; Close remains reachable. Restored/offline data is still
+   labelled and initial loading/failure/Retry states remain available.
+
 ## Scope
 
 - Exchange/Packs portrait grids, neutral botanical pack frames, fixed name/art/action

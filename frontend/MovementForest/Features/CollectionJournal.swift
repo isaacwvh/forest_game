@@ -1,5 +1,47 @@
 import SwiftUI
 
+/// Ephemeral purchase feedback; closing it never acknowledges or clears a receipt.
+struct ShopPurchaseNotice: Identifiable, Equatable {
+    let id: UUID
+    let message: String
+    init?(receipt: APICollectionReceipt) {
+        let noun: String
+        if receipt.purchaseId != nil {
+            noun = (receipt.quantity ?? receipt.ownedItemIds?.count ?? 1) == 1 ? "Item" : "Items"
+        } else if receipt.exchangeId != nil {
+            noun = (receipt.quantity ?? receipt.packs?.count ?? 1) == 1 ? "Pack" : "Packs"
+        } else { return nil }
+        id = receipt.requestId
+        message = "\(noun) saved to Storage."
+    }
+}
+
+struct ShopPurchasePopup: View {
+    let notice: ShopPurchaseNotice
+    let close: () -> Void
+    @AccessibilityFocusState private var messageFocused: Bool
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle").font(.title3)
+                .foregroundStyle(JournalTheme.action).accessibilityHidden(true)
+            Text(notice.message).font(.system(.subheadline, design: .serif).weight(.medium))
+                .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityFocused($messageFocused)
+            Button(action: close) { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                .buttonStyle(.journalIcon).accessibilityLabel("Close purchase notification")
+                .accessibilityIdentifier("shop.purchaseNotice.close")
+        }.padding(.leading, 14).padding(.trailing, 4).padding(.vertical, 4)
+            .foregroundStyle(JournalTheme.ink)
+            .background(JournalTheme.paper, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JournalTheme.vine, lineWidth: 1).allowsHitTesting(false))
+            .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 3)
+            .frame(maxWidth: 360).accessibilityElement(children: .contain)
+            .accessibilityIdentifier("shop.purchaseNotice")
+            .onAppear { messageFocused = true }
+            .onChange(of: notice.id) { _ in messageFocused = true }
+    }
+}
+
 struct CatalogCollectionTracker: View {
     let catalogue: APICatalogue?
     @ObservedObject var discovery: CatalogDiscoveryStore
@@ -157,32 +199,39 @@ struct CollectionPlantReceiptCard: View {
     let receipt: APICollectionReceipt
     let catalogue: APICatalogue?
     let assets: any AssetCatalogProviding
-    @ScaledMetric(relativeTo: .headline) private var nameHeight: CGFloat = 24
+    @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         if let plant = receipt.plant {
+            let summary = JournalGrowthSummary(plant: plant)
             JournalPlantFrame(rarity: receipt.rarity) {
-                VStack(spacing: 6) {
+                let layout = textSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10)) :
+                    AnyLayout(HStackLayout(alignment: .center, spacing: 12))
+                layout {
                     Group {
                         if let catalogue = catalogue {
                             JournalPlantImage(plant: plant.rendered(catalogue: catalogue, assets: assets), catalog: assets)
                         } else { Image(systemName: "leaf").font(.largeTitle) }
-                    }.frame(height: 100).frame(maxWidth: .infinity).padding(8)
-                        .background(JournalTheme.sage.opacity(0.45))
-                    PlantNameText(catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName
-                                  ?? plant.speciesId.capitalized,
-                                  rarity: receipt.rarity, announcesRarity: false)
-                        .font(.system(.headline, design: .serif))
-                        .lineLimit(1).minimumScaleFactor(0.65).frame(height: nameHeight)
-                        .padding(.horizontal, 6)
-                    Text("\(plant.variantId.capitalized) · \(plant.growthStage.number)/4")
-                        .font(.caption).foregroundStyle(JournalTheme.secondary)
-                        .lineLimit(1).minimumScaleFactor(0.75).padding(.horizontal, 6)
-                    Text(PackRevealStep.rarityName(receipt.rarity))
-                        .font(.caption).foregroundStyle(JournalTheme.secondary)
-                    JournalPlantProgress(plant: plant).padding(.horizontal, 8).padding(.bottom, 8)
-                }.clipShape(RoundedRectangle(cornerRadius: 16))
-            }.frame(maxWidth: 200).foregroundStyle(JournalTheme.ink)
+                    }.frame(width: 64, height: 64).padding(4)
+                        .background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 8))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        PlantNameText(catalogue?.species.first { $0.speciesId == plant.speciesId }?.displayName
+                                      ?? plant.speciesId.capitalized,
+                                      rarity: receipt.rarity, announcesRarity: false)
+                            .font(.system(.subheadline, design: .serif).weight(.semibold))
+                        Text("\(catalogue?.variant(species: plant.speciesId, variant: plant.variantId)?.displayName ?? plant.variantId.capitalized) · \(plant.growthStage.title) · \(PackRevealStep.rarityName(receipt.rarity))")
+                            .font(.caption).foregroundStyle(JournalTheme.secondary)
+                        if let fraction = summary.fraction {
+                            ProgressView(value: fraction).tint(JournalTheme.action)
+                                .accessibilityLabel("Confirmed opening growth")
+                                .accessibilityValue(summary.exactWaterProgress ?? summary.caption)
+                        }
+                        Text(summary.caption).font(.caption2).foregroundStyle(JournalTheme.secondary)
+                    }.fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+                }.padding(10)
+            }.frame(maxWidth: .infinity).foregroundStyle(JournalTheme.ink)
                 .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("packs.lastResult")
         }
     }
 }

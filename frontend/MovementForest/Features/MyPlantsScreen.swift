@@ -244,7 +244,7 @@ struct MyPlantsScreen: View {
                     Text("Your stored copies will appear when your garden loads.").foregroundStyle(JournalTheme.secondary)
                 } else {
                     let plants = store.inventory.filter(matches)
-                    if plants.isEmpty && !store.state.busy {
+                    if plants.isEmpty {
                         Text(filtering ? "No matching stored plants loaded." :
                             store.nextCursor == nil ? "No stored plants." : "More stored plants are available.")
                             .foregroundStyle(JournalTheme.secondary)
@@ -295,7 +295,7 @@ struct MyPlantsScreen: View {
     }
     @ViewBuilder private var status: some View {
         if store.showingCached { Label("Saved plants · Connect to refresh", systemImage: "wifi.slash").font(.callout) }
-        if store.state.busy { ProgressView("Loading your plants…") }
+        if store.state.busy && store.confirmed == nil { ProgressView("Loading your plants…") }
         if let message = store.gardenMessage { Text(message).font(.callout) }
         if store.state == .unknown {
             Button("Retry saved edit") { Task { await store.retryPending() } }

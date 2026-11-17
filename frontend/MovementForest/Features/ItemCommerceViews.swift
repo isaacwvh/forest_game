@@ -14,7 +14,7 @@ struct ItemSaleControls: View {
     @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if store.state.pending != nil {
+            if store.state.pending != nil && !store.busy {
                 Text("Awaiting confirmation").font(.callout)
                 Button("Retry saved request") { Task { await store.refresh(); await loadQuote() } }
                     .buttonStyle(.journalSecondary).frame(minHeight: 44).disabled(store.busy)

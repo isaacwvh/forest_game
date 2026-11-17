@@ -9,7 +9,8 @@ final class DiagnosticsTests: XCTestCase {
         let failure = GardenFeedback(text: "Saved.", kind: .failure, source: .gardenRead)
         XCTAssertFalse(success.visibleInGarden)
         XCTAssertTrue(failure.visibleInGarden)
-        let kinds: [GardenFeedback.Kind] = [.pending, .failure, .uncertain, .offline, .locked, .information]
+        XCTAssertFalse(GardenFeedback(text: "Any translated progress", kind: .pending, source: .gardenEdit).visibleInGarden)
+        let kinds: [GardenFeedback.Kind] = [.failure, .uncertain, .offline, .locked, .information]
         for kind in kinds {
             XCTAssertTrue(GardenFeedback(text: "", kind: kind, source: .visitorReward).visibleInGarden)
         }

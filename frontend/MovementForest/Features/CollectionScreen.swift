@@ -53,6 +53,8 @@ struct CollectionScreen: View {
     @State private var inspectingPack: APIPackDefinition?
     @State private var purchasingOffer: APIExchangeOffer?
     @State private var purchasingItem: APIItemShopOffer?
+    @State private var purchaseNotice: ShopPurchaseNotice?
+    @State private var shopVisible = false
     @State private var discoveryViewer = UUID()
     @Environment(\.scenePhase) private var scenePhase
     @AccessibilityFocusState private var resultFocused: Bool
@@ -66,6 +68,23 @@ struct CollectionScreen: View {
             if destination == .catalog { catalogContent }
             else if destination == .milestones { MilestoneTracksScreen(store: store) }
             else { content }
+        }
+        .overlay(alignment: .top) {
+            if destination == .exchange, let notice = purchaseNotice {
+                ShopPurchasePopup(notice: notice, close: { purchaseNotice = nil })
+                    .padding(.horizontal, 16).padding(.top, 8)
+            }
+        }
+        .onAppear { shopVisible = destination == .exchange }
+        .onChange(of: destination) { destination in
+            purchaseNotice = nil
+            shopVisible = destination == .exchange
+        }
+        .onChange(of: store.state.result?.requestId) { _ in
+            // Observe new durable confirmations, never a restored receipt on entry.
+            guard shopVisible, destination == .exchange, store.state.pending == nil,
+                  let receipt = store.state.result, let notice = ShopPurchaseNotice(receipt: receipt) else { return }
+            purchaseNotice = notice
         }
         .refreshable { await refresh() }
         .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
@@ -115,7 +134,11 @@ struct CollectionScreen: View {
         }
         .onChange(of: hasPackModal) { openingChanged?($0) }
         .transformPreference(EntryPresentationBlocker.self) { $0 = $0 || hasPackModal }
-        .onDisappear { openingChanged?(false); store.discovery.endViewing(discoveryViewer) }
+        .onDisappear {
+            // A purchase inspector temporarily covers this same Shop visit.
+            if !hasPackModal { shopVisible = false; purchaseNotice = nil }
+            openingChanged?(false); store.discovery.endViewing(discoveryViewer)
+        }
     }
     private func refresh() async {
         async let collection: Void = store.refresh()
@@ -165,11 +188,11 @@ struct CollectionScreen: View {
         if store.offers.contains(where: { $0.pack.isFixture }) {
             Text("Development prices and odds").font(.caption).foregroundStyle(JournalTheme.secondary)
         }
-        if store.busy { ProgressView("Confirming…").tint(JournalTheme.action) }
+        if store.busy && store.tokenBalance == nil { ProgressView("Loading collection…").tint(JournalTheme.action) }
         if let message = store.message, store.refreshFailed || store.recoveryLocked {
             Text(message).font(.callout).accessibilityIdentifier("collection.status")
         }
-        if store.state.pending != nil {
+        if store.state.pending != nil && !store.busy {
             Text("Awaiting confirmation").font(.callout)
             Button("Retry saved request") { Task { await store.refresh() } }
                 .buttonStyle(.journalSecondary)
@@ -179,7 +202,7 @@ struct CollectionScreen: View {
     private var exchangeContent: some View {
         VStack(alignment: .leading, spacing: 14) {
             JournalSectionHeading(title: "Packs")
-            if store.offers.isEmpty && !store.busy {
+            if store.offers.isEmpty && (store.tokenBalance != nil || !store.busy) {
                 Text("No packs available.").foregroundStyle(JournalTheme.secondary)
             }
             JournalGrid(minimumWidth: 142) {
@@ -188,7 +211,8 @@ struct CollectionScreen: View {
                         inspect: { inspectingPack = offer.pack }, purchase: { purchasingOffer = offer })
                 }
             }
-            if store.exchangeOfferID != nil, store.confirmedExchange == nil, let message = store.exchangeMessage {
+            if !store.busy, store.refreshFailed || store.recoveryLocked,
+               store.exchangeOfferID != nil, store.confirmedExchange == nil, let message = store.exchangeMessage {
                 Text(message).font(.callout).accessibilityIdentifier("collection.exchangeFeedback")
             }
             JournalSectionHeading(title: "Decorations")
@@ -199,7 +223,7 @@ struct CollectionScreen: View {
             if store.itemCapacity?.full == true {
                 Text("Item inventory full. Sell a stored item to make room.").font(.callout)
             }
-            if store.itemOffers.isEmpty && !store.busy {
+            if store.itemOffers.isEmpty && (store.tokenBalance != nil || !store.busy) {
                 Text("No decorations available.").foregroundStyle(JournalTheme.secondary)
             }
             JournalGrid(minimumWidth: 142) {
@@ -215,13 +239,12 @@ struct CollectionScreen: View {
                     }
                 }
             }
-            if store.state.result?.purchaseId != nil { Text("Item saved to Storage.").font(.callout) }
         }
     }
     private var packsContent: some View {
         VStack(alignment: .leading, spacing: 14) {
             JournalSectionHeading(title: "Unopened packs")
-            if store.packs.isEmpty && !store.busy {
+            if store.packs.isEmpty && (store.tokenBalance != nil || !store.busy) {
                 Text("No unopened packs.").foregroundStyle(JournalTheme.secondary)
                 Button("Browse Shop") { navigate?(.exchange) }.buttonStyle(.journalSecondary).frame(minHeight: 44)
             }
@@ -243,7 +266,8 @@ struct CollectionScreen: View {
             if store.packCursor != nil {
                 Button("Load more packs") { Task { await store.loadMore() } }.buttonStyle(.journalSecondary).disabled(store.busy).frame(minHeight: 44)
             }
-            JournalSectionHeading(title: "Last confirmed result")
+            Text("Last confirmed result").font(.system(.subheadline, design: .serif).weight(.semibold))
+                .foregroundStyle(JournalTheme.secondary).accessibilityAddTraits(.isHeader)
             if let result = latestOpening {
                 ReceiptRow(receipt: result, catalogue: store.catalogue, assets: assets)
                     .frame(maxWidth: .infinity).accessibilityFocused($resultFocused)
@@ -288,7 +312,7 @@ struct CollectionScreen: View {
                     }.accessibilityLabel("Filter by rarity")
                 }
                 CatalogDiscoveryNotice(discovery: store.discovery)
-                if store.busy { ProgressView("Refreshing catalog…") }
+                if store.busy && store.catalogue == nil { ProgressView("Loading catalog…") }
                 if let message = store.message, store.refreshFailed || store.recoveryLocked {
                     Text(message).font(.callout).accessibilityIdentifier("collection.status")
                 }
@@ -301,7 +325,7 @@ struct CollectionScreen: View {
                                            assets: assets, discovery: store.discovery)
                     }
                 }
-                if filteredSpecies.isEmpty && !store.busy {
+                if filteredSpecies.isEmpty && (store.catalogue != nil || !store.busy) {
                     Text(catalogueSpecies.isEmpty ? "Refresh to load the plant catalogue." : "No matching plants.")
                         .foregroundStyle(JournalTheme.secondary)
                 }
@@ -460,15 +484,16 @@ struct CatalogRow: Identifiable {
 private struct CatalogDiscoveryNotice: View {
     @ObservedObject var discovery: CatalogDiscoveryStore
     var body: some View {
-        if discovery.refreshing {
-            ProgressView("Checking discovery…")
-        } else if discovery.failed {
+        if discovery.failed {
             VStack(alignment: .leading, spacing: 6) {
                 Text(discovery.snapshot == nil ? "Discovery unavailable" : "Last confirmed discovery")
                     .font(.callout).foregroundStyle(.secondary)
-                Button("Retry discovery") { Task { await discovery.refresh() } }.buttonStyle(.journalSecondary).frame(minHeight: 44)
+                Button("Retry discovery") { Task { await discovery.refresh() } }
+                    .buttonStyle(.journalSecondary).disabled(discovery.refreshing).frame(minHeight: 44)
             }
-        } else if discovery.snapshot != nil && discovery.lastConfirmed {
+        } else if discovery.snapshot == nil && discovery.refreshing {
+            ProgressView("Loading discovery…")
+        } else if discovery.showsSavedDiscovery {
             Text("Last confirmed discovery").font(.caption).foregroundStyle(.secondary)
         }
     }

@@ -48,6 +48,46 @@ final class CatalogDiscoveryTests: XCTestCase {
         store.revealed(species: "oak", variant: variant, stage: stage)
     }
 
+    func testRoutineDiscoveryInvalidationDoesNotFlashSavedDataNotice() async throws {
+        let value = try fixture(), service = FakeDiscovery(try fixture())
+        let store = CatalogDiscoveryStore(userID: value.userId, service: service, cache: MemoryDiscoveryCache())
+        await store.refresh()
+        XCTAssertFalse(store.showsSavedDiscovery)
+        service.hold = true
+        let suspended = expectation(description: "Routine discovery refresh suspended")
+        service.onSuspended = { suspended.fulfill() }
+        store.invalidate()
+        XCTAssertTrue(store.lastConfirmed)
+        XCTAssertFalse(store.showsSavedDiscovery)
+        let refresh = Task { await store.refresh() }
+        await fulfillment(of: [suspended], timeout: 5)
+        XCTAssertTrue(store.refreshing)
+        XCTAssertFalse(store.showsSavedDiscovery)
+        service.continuation?.resume(returning: value); service.continuation = nil
+        await refresh.value
+        XCTAssertFalse(store.showsSavedDiscovery)
+    }
+
+    func testRestoredDiscoveryStaysLabelledUntilLiveConfirmation() async throws {
+        let value = try fixture(), service = FakeDiscovery(try fixture()), cache = MemoryDiscoveryCache()
+        cache.value = CatalogDiscoveryCache(snapshot: value, confirmedAt: Date())
+        let store = CatalogDiscoveryStore(userID: value.userId, service: service, cache: cache)
+        XCTAssertTrue(store.showsSavedDiscovery)
+        service.hold = true
+        let suspended = expectation(description: "Restored discovery refresh suspended")
+        service.onSuspended = { suspended.fulfill() }
+        let refresh = Task { await store.refresh() }
+        await fulfillment(of: [suspended], timeout: 5)
+        XCTAssertTrue(store.showsSavedDiscovery)
+        service.continuation?.resume(returning: value); service.continuation = nil
+        await refresh.value
+        XCTAssertFalse(store.showsSavedDiscovery)
+        cache.failSave = true
+        service.hold = false
+        await store.refresh()
+        XCTAssertTrue(store.showsSavedDiscovery, "A failed cache save must keep verified data labelled")
+    }
+
     func testCollectionProgressSurvivesCachedFailuresAndClearsOnAccountDetach() async throws {
         let grown = try fixture(), cache = MemoryDiscoveryCache(), service = FakeDiscovery(try fixture())
         let catalogue = APICatalogue(catalogVersion: grown.catalogVersion, isFixture: true, coordinateUnit: "garden_unit",

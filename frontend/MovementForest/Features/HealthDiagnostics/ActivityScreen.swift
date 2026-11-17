@@ -31,7 +31,7 @@ struct ActivityScreen: View {
                     }
                 }
                 if let issue = store.requestIssue { Section { Text(issue) } }
-                if store.isLoading { Section { ProgressView("Reading activity…") } }
+                if store.isLoading && store.report == nil { Section { ProgressView("Reading activity…") } }
                 if let report = store.report {
                     Section("Daily Health details") {
                         if let steps = report.todaySteps {

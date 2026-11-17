@@ -103,7 +103,8 @@ struct AccountCollectionWallet: View {
     var cached = false
     var body: some View {
         CollectionWalletSummary(balance: balance, capacity: capacity, showsPlants: showsPlants,
-            cached: cached || account.lastConfirmed, gems: AccountDisplay.gemBalance(account.snapshot?.wallet))
+            cached: cached || account.showsSavedProgress || (account.failed && account.snapshot != nil),
+            gems: AccountDisplay.gemBalance(account.snapshot?.wallet))
     }
 }
 

@@ -189,6 +189,38 @@ final class JournalPresentationTests: XCTestCase {
         }
     }
     @MainActor
+    func testLastOpeningReceiptIsCompactAndReflowsAtAccessibilitySizes() throws {
+        let assets = try BundleAssetCatalog()
+        let receipt = APICollectionReceipt(requestId: UUID(), tokenBalance: "4", economyVersion: 1,
+            openingId: UUID(), rarity: "rare", plant: copy())
+        for width: CGFloat in [232, 320] {
+            for textSize: DynamicTypeSize in [.large, .accessibility3] {
+                let host = UIHostingController(rootView:
+                    CollectionPlantReceiptCard(receipt: receipt, catalogue: nil, assets: assets)
+                        .environment(\.dynamicTypeSize, textSize))
+                let size = host.sizeThatFits(in: CGSize(width: width, height: 2000))
+                XCTAssertLessThanOrEqual(size.width, width + 1)
+                XCTAssertGreaterThanOrEqual(size.height, 84)
+                XCTAssertTrue(size.height.isFinite)
+                if textSize == .large { XCTAssertLessThanOrEqual(size.height, 144) }
+            }
+        }
+    }
+    @MainActor
+    func testPurchasePopupFitsNarrowScreensAndAccessibilityTextWithoutShrinkingItsCloseTarget() throws {
+        let receipt = APICollectionReceipt(requestId: UUID(), tokenBalance: "4", economyVersion: 1,
+            exchangeId: UUID(), quantity: 2)
+        let notice = try XCTUnwrap(ShopPurchaseNotice(receipt: receipt))
+        for textSize: DynamicTypeSize in [.large, .accessibility3] {
+            let host = UIHostingController(rootView:
+                ShopPurchasePopup(notice: notice, close: {}).environment(\.dynamicTypeSize, textSize))
+            let size = host.sizeThatFits(in: CGSize(width: 232, height: 2000))
+            XCTAssertLessThanOrEqual(size.width, 233)
+            XCTAssertGreaterThanOrEqual(size.height, 52)
+            XCTAssertTrue(size.height.isFinite)
+        }
+    }
+    @MainActor
     func testSimpleVariantOddsFitNarrowScreensWithLongNames() {
         let odds = SpeciesDrawOdds(speciesId: "moonwillow", rarity: "epic", withinRarity: 0.5, overall: 0.0000001,
                                   variants: [VariantDrawOdds(variantId: "standard", conditional: 1, overall: 0.0000001)])
