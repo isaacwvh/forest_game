@@ -96,6 +96,53 @@ final class ForestUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
     }
 
+    func testCompactMilestoneRowsKeepProgressAndRewardButtonsInsideUniformFrames() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-collection", "--fixture-milestones"]
+        app.launch()
+        let page = app.segmentedControls.buttons["Milestones"]
+        XCTAssertTrue(page.waitForExistence(timeout: 15))
+        page.tap()
+        let list = app.scrollViews["milestones.list"]
+        var standardRowHeight: CGFloat?
+        for track in ["steps", "butterfly", "growth", "special"] {
+            selectMilestoneTrack(track, in: app)
+            let candidates = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "identifier BEGINSWITH %@", "milestones.row."))
+            XCTAssertTrue(candidates.firstMatch.waitForExistence(timeout: 5))
+            let visibleRows = candidates.allElementsBoundByIndex.filter {
+                $0.frame.height > 0 && $0.frame.minY >= list.frame.minY && $0.frame.maxY <= list.frame.maxY
+            }.sorted { $0.frame.minY < $1.frame.minY }
+            XCTAssertGreaterThanOrEqual(visibleRows.count, 2)
+            let first = try XCTUnwrap(visibleRows.first)
+            if let height = standardRowHeight { XCTAssertEqual(first.frame.height, height, accuracy: 1) }
+            else { standardRowHeight = first.frame.height }
+            for row in visibleRows {
+                XCTAssertEqual(row.frame.height, first.frame.height, accuracy: 1)
+                XCTAssertGreaterThanOrEqual(row.frame.minX, list.frame.minX)
+                XCTAssertLessThanOrEqual(row.frame.maxX, list.frame.maxX)
+                let id = String(row.identifier.dropFirst("milestones.row.".count))
+                let bar = app.descendants(matching: .any).matching(identifier: "milestones.progress.\(id)").firstMatch
+                XCTAssertTrue(bar.exists)
+                XCTAssertGreaterThan(bar.frame.height, 0)
+                XCTAssertGreaterThanOrEqual(bar.frame.minX, row.frame.minX)
+                XCTAssertLessThanOrEqual(bar.frame.maxX, row.frame.maxX)
+                XCTAssertGreaterThanOrEqual(bar.frame.minY, row.frame.minY)
+                XCTAssertLessThanOrEqual(bar.frame.maxY, row.frame.maxY)
+                let claim = app.buttons["milestone.\(id)"]
+                if claim.exists {
+                    XCTAssertGreaterThanOrEqual(claim.frame.width, 44)
+                    XCTAssertGreaterThanOrEqual(claim.frame.height, 44)
+                    XCTAssertGreaterThanOrEqual(claim.frame.minX, bar.frame.maxX)
+                    XCTAssertLessThanOrEqual(claim.frame.maxX, row.frame.maxX)
+                    XCTAssertGreaterThanOrEqual(claim.frame.minY, row.frame.minY)
+                    XCTAssertLessThanOrEqual(claim.frame.maxY, row.frame.maxY)
+                }
+            }
+        }
+        XCTAssertEqual(app.staticTexts["fixture.collectionRequests"].value as? String, "0")
+    }
+
     private func selectMilestoneTrack(_ track: String, in app: XCUIApplication) {
         let menu = app.buttons["milestones.trackMenu"]
         if menu.exists { menu.tap() }

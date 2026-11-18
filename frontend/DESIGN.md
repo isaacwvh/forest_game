@@ -1,3 +1,24 @@
+## Compact milestone quest rows — 18 November 2026
+
+The approved compact-row render supersedes earlier milestone rail/reward-label
+layout guidance. All five tracks share a quest-type icon, requirement description,
+progress bar with in-bar current/target text, and a standard reward/state box.
+Default dimensions target an 88-point row and 80 × 72-point reward box; one shared
+measurement reserves space for the longest real copy, values and bundles across all
+tracks and filters. Larger text/narrow widths wrap or stack without clipping. The decorative
+Steps/Butterfly rails are removed; ordering and next-unclaimed navigation remain.
+
+Rewards show only artwork and quantities. Locked/blocked boxes use a dotted
+outline; claimable boxes are green; confirmed claims show a check and Claimed in
+the same frame. Pending, legacy, superseded, unavailable and storage-full states
+remain explicit. An information affordance on the quest icon exposes a full
+unavailable reason. Event metadata sits above its standard row. Track selectors,
+Growth filters, information, saved anchors and empty/cache/recovery states remain.
+
+This is presentation only. Eligibility, reward amounts, progress fractions,
+mutation/storage guards, claim requests, confirmed receipts and persistence are
+unchanged. See MILESTONES_ACCEPTANCE.md for validation limits and device checks.
+
 ## Compact impact follow-up — 17 November 2026
 
 If stored appears below the top metrics on an almost transparent parchment

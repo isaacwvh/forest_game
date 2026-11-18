@@ -1,3 +1,82 @@
+# Compact milestone rows — 18 November 2026
+
+Implemented the approved compact composition in `MilestoneTracksScreen.swift`.
+All five tracks share quest-type artwork, one description, an in-bar progress
+label and an equally sized reward/state box. The default target is an 88-point
+row with an 80 × 72-point reward box. A single measurement across all tracks and
+filters reserves space for the longest real description, numeric labels, reward
+bundles and state messages. Narrow/large-text layouts wrap or stack. No requirement is line-limited.
+
+Rewards use the bundled token/gem/pack artwork and quantities without visible
+reward names. Dotted boxes are uncollectable; green boxes reuse the existing claim
+button; Pending, Claimed, Previously fulfilled, superseded, Unavailable and Pack
+storage full use the same frame. Full unavailable reasons remain available from
+a labelled 44-point information target on the quest icon and in accessibility.
+The introductory display copy reads Start your journey. Event metadata is outside
+the standard quest card; decorative timeline rails are removed. The summary and
+next-unclaimed control share a compact row when they fit.
+
+## Scope verification
+
+No backend, service, coordinator, API, model, persistence or asset source changes.
+The existing `progressFraction`, integer progress formatting, state precedence,
+`store.claim(row)`, `store.canMutate`, pack-room guard, retry/status handling,
+ordering/filtering and saved track/scroll lifecycle are preserved. A source diff
+review compared these unchanged functions/guards with HEAD. UI state for the full
+unavailable-reason alert is local to the row; it performs no game operation.
+
+## Local validation
+
+Passed on Windows:
+
+- `python frontend/scripts/validate_frontend.py`: project freshness, resource and
+  archive hashes, bundle membership, wire contracts and palette contrast.
+- `python frontend/scripts/check_swift_syntax.py`: all 105 Swift files.
+- `python tools/validate_woodland_release.py`: all species, variants and packs.
+- Impeccable detector on the changed milestone UI: no findings.
+- Scoped `git diff --check` and the source/guard review above.
+
+- New reward and in-bar text contrast: at least 6.40:1 in the checked composites.
+- Full backend regression: **751 passed, 3 existing opt-in physical storage
+  benchmarks skipped**, in 793.80 seconds. Used a newly initialized isolated local
+  PostgreSQL cluster, which was stopped after the run. Log:
+  `backend/.local-milestones-ui-validation/3ed89534ca/tests.log`.
+
+No push or remote CI has been performed.
+
+## Added native regressions — execution still required
+
+`MilestoneTracksTests` now checks description-only copy, named accessibility for
+mixed reward bundles, unavailable/claimed/future/introductory progress, standard
+row/reward dimensions across states, 320/375/393/430-point device widths, ordinary/
+XXXL/maximum accessibility fonts, three reward types and long exact ratios.
+Hosted view tests measure both short and long real quest requirements. The UI
+suite checks that row heights match and that all visible progress bars and claim
+buttons remain within their row across Steps, Butterfly, Growth and Special.
+Existing selector-painting, repeated cached-entry, empty-Event, saved-anchor and
+maximum-text UI regressions remain in place.
+
+These XCTest/SwiftUI tests were syntax-parsed, not run on Windows. This host has
+no Xcode/Apple SDK or iPhone simulator. Run `bash frontend/scripts/test-mac.sh`
+on macOS for native XCTest/UI execution and Debug/Release/InternalRelease builds.
+Then inspect:
+
+- Every track, especially event headers/deadlines and long Growth requirements.
+- Locked, ready, pending, claimed, legacy, superseded, full-storage and unavailable
+  boxes; no frame change when a pending claim is confirmed.
+- Visible selector painting after leaving/returning, refreshing and saved scrolling.
+- In-bar numeric text at zero/tiny/full/over-target/missing progress, large values
+  and maximum Dynamic Type; no clipped descriptions or quantities.
+- VoiceOver requirement, progress, all named reward types, button/state semantics,
+  full unavailable explanations and existing pending/offline recovery messages.
+- Real claims still use confirmed-only accounting and the existing storage and
+  mutation restrictions. This UI change does not certify a native device pass.
+
+The older entries below describe historical implementations; the compact layout
+above supersedes their timeline/reward-text guidance.
+
+---
+
 # Milestone tracks acceptance — 13 November 2026
 
 The native Milestones route now presents five artwork selectors on the existing

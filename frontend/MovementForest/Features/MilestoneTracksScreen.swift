@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum MilestoneTrack: String, CaseIterable, Identifiable {
     case steps, butterfly, growth, special, event
@@ -32,6 +33,9 @@ struct MilestoneTracksScreen: View {
     @State private var restoredSelection: String?
     @State private var showsInformation = false
     @Environment(\.dynamicTypeSize) private var textSize
+    @ScaledMetric(relativeTo: .subheadline) private var questFontSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .caption2) private var progressFontSize: CGFloat = 10.5
+    @ScaledMetric(relativeTo: .caption) private var rewardFontSize: CGFloat = 12
     init(store: CollectionCoordinator) {
         self.store = store
         _selected = State(initialValue: MilestoneTrack(rawValue: store.state.milestoneTrack ?? "steps") ?? .steps)
@@ -49,9 +53,6 @@ struct MilestoneTracksScreen: View {
         row.claimed || store.confirmedMilestoneIDs.contains(row.id)
     }
     private var nextGoal: String? { rows.first { !claimed($0) && $0.supersededBy == nil }?.id }
-    private var nextIncomplete: String? {
-        rows.first { !claimed($0) && !$0.eligible && $0.supersededBy == nil }?.id
-    }
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
@@ -65,56 +66,69 @@ struct MilestoneTracksScreen: View {
                 }
             }
             .background(JournalTheme.paper)
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: selected.timeline ? 0 : 14) {
-                        Color.clear.frame(height: 1).id("milestones.top")
-                        status
-                        if selected.timeline, let total = trackRows.first(where: {
-                            $0.metric == (selected == .steps ? "steps" : "butterflies")
-                        })?.progressValue {
-                            Text("\(Int64(min(total, Double(Int64.max - 1024))).formatted()) \(selected == .steps ? "lifetime steps" : "butterflies welcomed")")
-                                .font(.title3).frame(maxWidth: .infinity).padding(.vertical, 16)
-                        }
-                        if let nextGoal = nextGoal, selected.timeline {
-                            Button("Next unclaimed goal") { proxy.scrollTo(nextGoal, anchor: .top) }
-                                .buttonStyle(.journalQuiet).frame(minHeight: 44)
-                        }
-                        if rows.isEmpty && store.milestonesConfirmedAt != nil {
-                            Text(selected == .event ? "No active event." : "No milestones available.")
-                                .foregroundStyle(JournalTheme.secondary).padding(.vertical, 24)
-                        }
-                        ForEach(rows) { row in
-                            milestone(row).id(row.id)
-                                .background(GeometryReader { geometry in
-                                    Color.clear.preference(key: MilestoneRowPositions.self,
-                                        value: [row.id: geometry.frame(in: .named("milestoneScroll")).minY])
-                                })
-                        }
-                    }.padding(16).padding(.bottom, 20)
+            GeometryReader { geometry in
+                let layout = MilestoneQuestLayout(width: max(1, geometry.size.width - 32),
+                    rows: store.milestones, questFontSize: questFontSize, progressFontSize: progressFontSize,
+                    rewardFontSize: rewardFontSize, accessibility: textSize.isAccessibilitySize)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 6) {
+                            Color.clear.frame(height: 1).id("milestones.top")
+                            status
+                            if selected.timeline {
+                                ViewThatFits(in: .horizontal) {
+                                    HStack(spacing: 8) {
+                                        timelineTotal.fixedSize()
+                                        Spacer(minLength: 0)
+                                        nextGoalButton(proxy).fixedSize()
+                                    }
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        timelineTotal
+                                        nextGoalButton(proxy)
+                                    }
+                                }
+                            }
+                            if rows.isEmpty && store.milestonesConfirmedAt != nil {
+                                Text(selected == .event ? "No active event." : "No milestones available.")
+                                    .foregroundStyle(JournalTheme.secondary).padding(.vertical, 24)
+                            }
+                            ForEach(rows) { row in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    eventHeader(row)
+                                    MilestoneQuestRow(row: row, track: selected, layout: layout) {
+                                        action(row, layout: layout)
+                                    }
+                                }.id(row.id)
+                                    .background(GeometryReader { geometry in
+                                        Color.clear.preference(key: MilestoneRowPositions.self,
+                                            value: [row.id: geometry.frame(in: .named("milestoneScroll")).minY])
+                                    })
+                            }
+                        }.padding(16).padding(.bottom, 20)
+                    }
+                    .coordinateSpace(name: "milestoneScroll")
+                    .onPreferenceChange(MilestoneRowPositions.self) { positions in
+                        let ids = Set(rows.map(\.id))
+                        visibleAnchor = positions.filter { ids.contains($0.key) && $0.value >= -4 }
+                            .min { $0.value < $1.value }?.key
+                    }
+                    .onChange(of: selectionKey) { _ in
+                        visibleAnchor = nil
+                        restoredSelection = nil
+                    }
+                    .task(id: [selectionKey] + rows.map(\.id)) {
+                        // Cached rows can already exist on entry. Restore after layout,
+                        // once per selection, rather than racing three scroll callbacks.
+                        guard restoredSelection != selectionKey, !rows.isEmpty else { return }
+                        await Task.yield()
+                        guard !Task.isCancelled else { return }
+                        let saved = store.state.milestoneScroll?[selected.rawValue]
+                        let anchor = saved.flatMap { candidate in rows.contains { $0.id == candidate } ? candidate : nil }
+                        proxy.scrollTo(anchor ?? "milestones.top", anchor: .top)
+                        restoredSelection = selectionKey
+                    }
+                    .accessibilityIdentifier("milestones.list")
                 }
-                .coordinateSpace(name: "milestoneScroll")
-                .onPreferenceChange(MilestoneRowPositions.self) { positions in
-                    let ids = Set(rows.map(\.id))
-                    visibleAnchor = positions.filter { ids.contains($0.key) && $0.value >= -4 }
-                        .min { $0.value < $1.value }?.key
-                }
-                .onChange(of: selectionKey) { _ in
-                    visibleAnchor = nil
-                    restoredSelection = nil
-                }
-                .task(id: [selectionKey] + rows.map(\.id)) {
-                    // Cached rows can already exist on entry. Restore after layout,
-                    // once per selection, rather than racing three scroll callbacks.
-                    guard restoredSelection != selectionKey, !rows.isEmpty else { return }
-                    await Task.yield()
-                    guard !Task.isCancelled else { return }
-                    let saved = store.state.milestoneScroll?[selected.rawValue]
-                    let anchor = saved.flatMap { candidate in rows.contains { $0.id == candidate } ? candidate : nil }
-                    proxy.scrollTo(anchor ?? "milestones.top", anchor: .top)
-                    restoredSelection = selectionKey
-                }
-                .accessibilityIdentifier("milestones.list")
             }
             .clipped()
         }
@@ -242,9 +256,23 @@ struct MilestoneTracksScreen: View {
                 .buttonStyle(.journalSecondary).disabled(store.busy).frame(minHeight: 44)
         }
     }
-    private func milestone(_ row: APIIntroMilestone) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let name = row.eventName, rows.first(where: { $0.eventId == row.eventId })?.id == row.id {
+    @ViewBuilder private var timelineTotal: some View {
+        if let total = trackRows.first(where: {
+            $0.metric == (selected == .steps ? "steps" : "butterflies")
+        })?.progressValue {
+            Text("\(Int64(min(total, Double(Int64.max - 1024))).formatted()) \(selected == .steps ? "lifetime steps" : "butterflies welcomed")")
+                .font(.caption).foregroundStyle(JournalTheme.secondary)
+        }
+    }
+    @ViewBuilder private func nextGoalButton(_ proxy: ScrollViewProxy) -> some View {
+        if let nextGoal = nextGoal {
+            Button("Next unclaimed goal") { proxy.scrollTo(nextGoal, anchor: .top) }
+                .font(.caption).buttonStyle(.plain).foregroundStyle(JournalTheme.action).frame(minHeight: 44)
+        }
+    }
+    @ViewBuilder private func eventHeader(_ row: APIIntroMilestone) -> some View {
+        if let name = row.eventName, rows.first(where: { $0.eventId == row.eventId })?.id == row.id {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(name).font(.headline)
                 if let end = row.endsAt {
                     if end > Date() { (Text("Ends in ") + Text(end, style: .relative)).font(.caption) }
@@ -253,96 +281,314 @@ struct MilestoneTracksScreen: View {
                 if let claimUntil = row.claimUntil {
                     Text("Claim by \(claimUntil.formatted(date: .abbreviated, time: .shortened))").font(.caption)
                 }
-            }
-            if textSize.isAccessibilitySize {
-                rewardContent(row)
-                action(row)
-            } else {
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .center, spacing: 12) {
-                        rewardContent(row).frame(minWidth: 180)
-                        action(row).fixedSize(horizontal: true, vertical: true)
-                    }
-                    VStack(alignment: .leading, spacing: 10) {
-                        rewardContent(row)
-                        action(row)
-                    }
-                }
-            }
-            if !claimed(row), row.supersededBy == nil, let threshold = row.threshold,
-               row.progressValue != nil, row.metric != "opening",
-               !selected.timeline || row.id == nextIncomplete {
-                ProgressView(value: row.progressFraction)
-                    .accessibilityLabel(row.title)
-                    .accessibilityValue("\(Int64(min(row.progressValue ?? 0, Double(Int64.max - 1024)))) of \(threshold)")
-            }
-            if let reason = row.unavailableReason {
-                Text(reason).font(.caption).foregroundStyle(JournalTheme.secondary)
-            }
-        }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
-            .fixedSize(horizontal: false, vertical: true)
-            .background(row.eligible ? JournalTheme.sage : JournalTheme.paper,
-                        in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JournalTheme.vine.opacity(0.45), lineWidth: 1))
-            .padding(.leading, selected.timeline ? 28 : 0)
-            .overlay(alignment: .leading) {
-                if selected.timeline {
-                    // The rail follows the text height; it never determines it.
-                    VStack(spacing: 0) {
-                        Rectangle().fill(JournalTheme.vine.opacity(0.45)).frame(width: 1)
-                        Image(systemName: claimed(row) ? "checkmark.circle.fill" : row.eligible ? "circle.inset.filled" : row.id == nextIncomplete ? "record.circle" : "circle")
-                            .font(.title3).foregroundStyle(JournalTheme.action)
-                        Rectangle().fill(JournalTheme.vine.opacity(0.45)).frame(width: 1)
-                    }.frame(width: 18).accessibilityHidden(true)
-                }
-            }
-            .padding(.vertical, selected.timeline ? 5 : 0)
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("milestones.row.\(row.id)")
+            }.padding(.top, 8).accessibilityElement(children: .combine)
+        }
     }
-    private func rewardContent(_ row: APIIntroMilestone) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            if let pack = row.rewardPacks?.first {
-                CollectionPackArtwork(packID: pack.packId, height: 44).frame(width: 36)
-            } else { QuantityIcon(metric: row.rewardTokens == "0" ? "gems" : "tokens").frame(minWidth: 36) }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(row.title).font(.subheadline.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
-                MilestoneRewardLabels(tokens: row.rewardTokens, gems: row.rewardGems,
-                                      packs: row.rewardPacks ?? [])
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        }.frame(maxWidth: .infinity, alignment: .leading).multilineTextAlignment(.leading)
-    }
-    @ViewBuilder private func action(_ row: APIIntroMilestone) -> some View {
+    @ViewBuilder private func action(_ row: APIIntroMilestone, layout: MilestoneQuestLayout) -> some View {
+        // Preserve the existing state precedence, mutation guards and claim operation.
         if store.state.pending?.milestoneID == row.id {
-            Label("Pending", systemImage: "clock").font(.caption)
+            MilestoneRewardBox(layout: layout) {
+                VStack(spacing: 4) { ProgressView(); Text("Pending") }
+            }
         } else if let superseded = row.supersededBy {
-            Text(superseded == "special_run_10km" ? "Included in 10 km reward" : "Fulfilled")
-                .font(.caption).fixedSize(horizontal: false, vertical: true)
+            MilestoneRewardBox(layout: layout) {
+                Text(superseded == "special_run_10km" ? "Included in 10 km reward" : "Fulfilled")
+            }
         } else if row.legacyMilestoneId != nil {
-            Text("Previously fulfilled").font(.caption)
+            MilestoneRewardBox(layout: layout) { Text("Previously fulfilled") }
         } else if claimed(row) {
-            Label("Claimed", systemImage: "checkmark").font(.caption)
+            MilestoneRewardBox(layout: layout, appearance: .claimed) {
+                VStack(spacing: 4) { Image(systemName: "checkmark"); Text("Claimed") }
+            }
         } else if row.eligible {
             let count = row.rewardPacks?.reduce(0) { $0 + $1.quantity } ?? 0
             let full = count > (store.capacity?.packRoom ?? 0)
-            VStack(spacing: 4) {
-                Button("Claim") { Task { await store.claim(row) } }
-                    .buttonStyle(.journalPrimary).frame(minHeight: 44)
-                    .disabled(!store.canMutate || full)
-                    .accessibilityLabel("Claim \(row.title)")
-                    .accessibilityIdentifier("milestone.\(row.id)")
-                if full { Text("Pack storage full").font(.caption) }
+            Button { Task { await store.claim(row) } } label: {
+                MilestoneRewardBox(layout: layout, appearance: store.canMutate && !full ? .ready : .locked) {
+                    if full { Text("Pack storage full") }
+                    else { MilestoneQuestRewards(row: row, layout: layout) }
+                }
             }
-        } else if row.unavailableReason == nil, let threshold = row.threshold,
-                  let progress = row.progressValue {
-            Text("\(Int64(min(progress, Double(Int64.max - 1024))).formatted()) / \(threshold.formatted())")
-                .font(.caption).monospacedDigit().fixedSize(horizontal: false, vertical: true)
-        } else { Text("Unavailable").font(.caption) }
+                .buttonStyle(.plain)
+                .disabled(!store.canMutate || full)
+                .accessibilityLabel("Claim \(MilestoneQuestPresentation.description(row))")
+                .accessibilityValue(MilestoneQuestPresentation.rewards(row) + (full ? ", Pack storage full" : ""))
+                .accessibilityHint(full ? "Open a pack in Packs, then retry." : "")
+                .accessibilityIdentifier("milestone.\(row.id)")
+        } else if row.unavailableReason == nil, row.threshold != nil, row.progressValue != nil {
+            MilestoneRewardBox(layout: layout) { MilestoneQuestRewards(row: row, layout: layout) }
+        } else {
+            MilestoneRewardBox(layout: layout) { Text("Unavailable") }
+                .accessibilityValue(row.unavailableReason ?? "Progress unavailable")
+        }
+    }
+}
+
+/// Display strings only; eligibility, progress fractions and rewards stay with the existing models/store.
+enum MilestoneQuestPresentation {
+    static func description(_ row: APIIntroMilestone) -> String {
+        row.metric == "opening" ? "Start your journey" : row.description
+    }
+    static func progress(_ row: APIIntroMilestone) -> (current: String, target: String)? {
+        guard let threshold = row.threshold, threshold > 0, let value = row.progressValue else { return nil }
+        return (Int64(min(value, Double(Int64.max - 1024))).formatted(), threshold.formatted())
+    }
+    static func rewards(_ row: APIIntroMilestone) -> String {
+        var labels: [String] = []
+        if row.rewardTokens != "0" { labels.append("\(row.rewardTokens) tokens") }
+        if let gems = row.rewardGems, gems != "0" { labels.append("\(gems) gems") }
+        labels += (row.rewardPacks ?? []).map {
+            "\($0.quantity) \($0.displayName) \($0.quantity == 1 ? "pack" : "packs")"
+        }
+        return labels.joined(separator: ", ")
+    }
+}
+
+/// One measurement across the page's tracks/filters, independent of a row's claim state.
+/// Measure real copy at the scaled fonts instead of clipping it to a fixed line limit.
+struct MilestoneQuestLayout {
+    let width: CGFloat
+    let questFontSize: CGFloat
+    let progressFontSize: CGFloat
+    let rewardFontSize: CGFloat
+    let rewardIconSize: CGFloat
+    let rewardWidth: CGFloat
+    let rewardHeight: CGFloat
+    let descriptionWidth: CGFloat
+    let descriptionHeight: CGFloat
+    let barHeight: CGFloat
+    let twoLineProgress: Bool
+    let stacked: Bool
+    let contentHeight: CGFloat
+    var rowHeight: CGFloat { contentHeight + 16 }
+
+    init(width: CGFloat, rows: [APIIntroMilestone], questFontSize: CGFloat = 14,
+         progressFontSize: CGFloat = 10.5, rewardFontSize: CGFloat = 12, accessibility: Bool = false) {
+        self.width = width
+        self.questFontSize = questFontSize
+        self.progressFontSize = progressFontSize
+        self.rewardFontSize = rewardFontSize
+        let scale = rewardFontSize / 12
+        let rewardIconSize = 22 * scale
+        let amountFont = UIFont.monospacedDigitSystemFont(ofSize: rewardFontSize, weight: .semibold)
+        let amounts = rows.flatMap { row in
+            [row.rewardTokens, row.rewardGems ?? "0"] + (row.rewardPacks ?? []).map { $0.quantity.formatted() }
+        }
+        let amountWidth = amounts.map { ($0 as NSString).size(withAttributes: [.font: amountFont]).width }.max() ?? 0
+        let rewardWidth = min(max(1, width - 20), max(80 * scale, ceil(amountWidth) + rewardIconSize + 20))
+        let stacked = accessibility || width - 20 - 32 - 20 - rewardWidth < 120
+        let descriptionWidth = max(1, width - 20 - 32 - 10 - (stacked ? 0 : rewardWidth + 10))
+        func height(_ text: String, font: UIFont, width: CGFloat) -> CGFloat {
+            ceil((text as NSString).boundingRect(with: CGSize(width: max(1, width), height: .greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: font], context: nil).height)
+        }
+        let questFont = UIFont.systemFont(ofSize: questFontSize, weight: .semibold)
+        let descriptionHeight = max(rows.contains { $0.unavailableReason != nil } ? 44 : 32,
+            max(36 * questFontSize / 14,
+                (rows.map { height(MilestoneQuestPresentation.description($0), font: questFont, width: descriptionWidth) }.max() ?? 0) + 2))
+        let barWidth = stacked ? max(1, width - 20) : descriptionWidth
+        let progressFont = UIFont.monospacedDigitSystemFont(ofSize: progressFontSize, weight: .semibold)
+        let twoLineProgress = rows.contains { row in
+            let label = MilestoneQuestPresentation.progress(row).map { "\($0.current) / \($0.target)" } ?? "Progress unavailable"
+            return (label as NSString).size(withAttributes: [.font: progressFont]).width > barWidth - 16
+        }
+        // Even unusually large individual values may wrap; reserve the tallest label for all rows.
+        let labelHeight = rows.map { row -> CGFloat in
+            guard let value = MilestoneQuestPresentation.progress(row) else {
+                return height("Progress unavailable", font: progressFont, width: barWidth - 16)
+            }
+            if twoLineProgress {
+                return height(value.current, font: progressFont, width: barWidth - 16) +
+                    height("/ \(value.target)", font: progressFont, width: barWidth - 16)
+            }
+            return height("\(value.current) / \(value.target)", font: progressFont, width: barWidth - 16)
+        }.max() ?? progressFont.lineHeight
+        let barHeight = max(20 * progressFontSize / 10.5, labelHeight + 6)
+        let stateFont = UIFont.systemFont(ofSize: progressFontSize, weight: .semibold)
+        let stateHeight = ["Included in 10 km reward", "Previously fulfilled", "Pack storage full", "Unavailable"].map {
+            height($0, font: stateFont, width: rewardWidth - 16)
+        }.max() ?? 0
+        let amountHeight = amounts.map { height($0, font: amountFont, width: rewardWidth - rewardIconSize - 20) }.max() ?? 0
+        let maxLines = rows.map { row in
+            (row.rewardTokens == "0" ? 0 : 1) + (row.rewardGems == nil || row.rewardGems == "0" ? 0 : 1) +
+                (row.rewardPacks?.count ?? 0)
+        }.max() ?? 0
+        let rewardHeight = max(72 * scale, max(stateHeight + 16,
+            CGFloat(maxLines) * max(rewardIconSize, amountHeight) + CGFloat(max(0, maxLines - 1)) * 4 + 16))
+        self.rewardIconSize = rewardIconSize
+        self.rewardWidth = rewardWidth
+        self.rewardHeight = rewardHeight
+        self.descriptionWidth = descriptionWidth
+        self.descriptionHeight = descriptionHeight
+        self.barHeight = barHeight
+        self.twoLineProgress = twoLineProgress
+        self.stacked = stacked
+        contentHeight = stacked ? descriptionHeight + 8 + barHeight + 8 + rewardHeight :
+            max(rewardHeight, descriptionHeight + 8 + barHeight)
+    }
+}
+
+struct MilestoneQuestRow<Reward: View>: View {
+    let row: APIIntroMilestone
+    let track: MilestoneTrack
+    let layout: MilestoneQuestLayout
+    @ViewBuilder var reward: () -> Reward
+    @State private var showsUnavailableReason = false
+
+    var body: some View {
+        Group {
+            if layout.stacked {
+                VStack(alignment: .trailing, spacing: 8) {
+                    HStack(spacing: 10) { artwork; description }
+                    MilestoneQuestProgress(row: row, layout: layout)
+                    reward()
+                }
+            } else {
+                HStack(spacing: 10) {
+                    artwork
+                    VStack(alignment: .leading, spacing: 8) {
+                        description
+                        MilestoneQuestProgress(row: row, layout: layout)
+                    }.frame(width: layout.descriptionWidth)
+                    reward()
+                }
+            }
+        }
+        .frame(height: layout.contentHeight)
+        .padding(.horizontal, 10).padding(.vertical, 8)
+        .frame(width: layout.width)
+        .background(JournalTheme.paper, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(JournalTheme.vine.opacity(0.45), lineWidth: 1))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("milestones.row.\(row.id)")
+        .alert("Reward unavailable", isPresented: $showsUnavailableReason) {
+            Button("OK", role: .cancel) { }
+        } message: { Text(row.unavailableReason ?? "") }
+    }
+    private var description: some View {
+        Text(MilestoneQuestPresentation.description(row))
+            .font(.system(size: layout.questFontSize, weight: .semibold))
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(width: layout.descriptionWidth, height: layout.descriptionHeight, alignment: .topLeading)
+    }
+    @ViewBuilder private var artwork: some View {
+        if let reason = row.unavailableReason {
+            Button { showsUnavailableReason = true } label: {
+                MilestoneTrackArtwork(track: track, width: 32)
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: "info.circle.fill").font(.system(size: 12))
+                            .foregroundStyle(JournalTheme.action, JournalTheme.paper)
+                    }.frame(width: 44, height: 44)
+            }.buttonStyle(.plain).frame(width: 32)
+                .accessibilityLabel("Reward unavailable: \(reason)")
+                .accessibilityHint("Show full explanation")
+        } else { MilestoneTrackArtwork(track: track, width: 32) }
+    }
+}
+
+struct MilestoneQuestProgress: View {
+    let row: APIIntroMilestone
+    let layout: MilestoneQuestLayout
+    private var label: String {
+        MilestoneQuestPresentation.progress(row).map { "\($0.current) / \($0.target)" } ?? "Progress unavailable"
+    }
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(JournalTheme.sage)
+                if MilestoneQuestPresentation.progress(row) != nil {
+                    Rectangle().fill(JournalTheme.action.opacity(0.28))
+                        .frame(width: geometry.size.width * row.progressFraction)
+                }
+            }.clipShape(RoundedRectangle(cornerRadius: layout.barHeight / 2))
+        }
+        .frame(height: layout.barHeight)
+        .overlay(alignment: .leading) {
+            Group {
+                if layout.twoLineProgress, let value = MilestoneQuestPresentation.progress(row) {
+                    VStack(alignment: .leading, spacing: 0) { Text(value.current); Text("/ \(value.target)") }
+                } else { Text(label) }
+            }.font(.system(size: layout.progressFontSize, weight: .semibold).monospacedDigit())
+                .foregroundStyle(JournalTheme.ink).fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 8)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(MilestoneQuestPresentation.description(row)) progress")
+        .accessibilityValue(label)
+        .accessibilityIdentifier("milestones.progress.\(row.id)")
+    }
+}
+
+struct MilestoneRewardBox<Content: View>: View {
+    enum Appearance { case locked, ready, claimed }
+    let layout: MilestoneQuestLayout
+    var appearance: Appearance = .locked
+    @ViewBuilder var content: () -> Content
+    var body: some View {
+        content()
+            .font(.system(size: layout.progressFontSize, weight: .semibold))
+            .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            .padding(8)
+            .frame(width: layout.rewardWidth, height: layout.rewardHeight)
+            .foregroundStyle(appearance == .ready ? JournalTheme.paper : JournalTheme.ink)
+            .background(appearance == .ready ? JournalTheme.action : JournalTheme.sage,
+                        in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(JournalTheme.vine,
+                style: StrokeStyle(lineWidth: 1, dash: appearance == .locked ? [2, 3] : [])))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .accessibilityElement(children: .combine)
+    }
+}
+
+private struct MilestoneQuestRewards: View {
+    let row: APIIntroMilestone
+    let layout: MilestoneQuestLayout
+    var body: some View {
+        VStack(spacing: 4) {
+            if row.rewardTokens != "0" { quantity("tokens", value: row.rewardTokens) }
+            if let gems = row.rewardGems, gems != "0" { quantity("gems", value: gems) }
+            ForEach(row.rewardPacks ?? []) { pack in
+                HStack(spacing: 4) {
+                    MilestoneQuestPackIcon(packID: pack.packId, size: layout.rewardIconSize)
+                    Text(pack.quantity.formatted())
+                }
+            }
+        }.font(.system(size: layout.rewardFontSize, weight: .semibold).monospacedDigit())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(MilestoneQuestPresentation.rewards(row))
+    }
+    private func quantity(_ metric: String, value: String) -> some View {
+        HStack(spacing: 4) {
+            Group {
+                if let image = QuantityArtwork.images[metric] { Image(uiImage: image).resizable().scaledToFit() }
+                else { Image(systemName: QuantityArtwork.symbol(metric)).resizable().scaledToFit().padding(2) }
+            }.frame(width: layout.rewardIconSize, height: layout.rewardIconSize).accessibilityHidden(true)
+            Text(value)
+        }
+    }
+}
+
+private struct MilestoneQuestPackIcon: View {
+    let packID: String
+    let size: CGFloat
+    @State private var image: UIImage?
+    var body: some View {
+        Group {
+            if let image = image { Image(uiImage: image).resizable().scaledToFit() }
+            else { Image(systemName: "shippingbox").resizable().scaledToFit().padding(2) }
+        }.frame(width: size, height: size).accessibilityHidden(true)
+            .task(id: packID) {
+                image = nil
+                if let path = PresentationAssets.packPath(packID: packID, part: "sealed") {
+                    image = PresentationAssets.image(path, maximumPixels: 128)
+                }
+            }
     }
 }
 
 private struct MilestoneTrackArtwork: View {
     let track: MilestoneTrack
+    var width: CGFloat = 36
     private static let images: [String: UIImage] = Dictionary(uniqueKeysWithValues:
         MilestoneTrack.allCases.compactMap { track in
             guard let image = PresentationAssets.image("milestones/v1/\(track.rawValue)-128.png", maximumPixels: 128) else { return nil }
@@ -353,7 +599,7 @@ private struct MilestoneTrackArtwork: View {
             if let image = Self.images[track.rawValue] {
                 Image(uiImage: image).resizable().scaledToFit()
             } else { Image(systemName: track.symbol).resizable().scaledToFit().foregroundStyle(JournalTheme.action) }
-        }.frame(width: 36, height: 32).accessibilityHidden(true)
+        }.frame(width: width, height: 32).accessibilityHidden(true)
     }
 }
 
