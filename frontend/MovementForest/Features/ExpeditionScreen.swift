@@ -54,9 +54,6 @@ struct ExpeditionScreen: View {
                         Text(store.status == nil ? "Expedition unavailable." : "No expedition is scheduled yet.").font(.headline)
                         if let message = store.message { Text(message).foregroundStyle(JournalTheme.secondary) }
                     }
-                    Button("Recover activity") { Task { await store.recoverEvidence(retryOlder: true) } }
-                        .disabled(store.recovering || store.recoveryLocked)
-                        .font(.callout).buttonStyle(.journalQuiet)
                 }.padding(20).frame(maxWidth: 620).frame(maxWidth: .infinity)
             }.accessibilityHidden(popup)
             if let run = run {
