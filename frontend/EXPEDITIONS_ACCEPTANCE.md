@@ -25,7 +25,9 @@ puzzle paths.
   with two-line in-bar labels at accessibility sizes. Close and claim remain
   reachable while longer content scrolls. Full capacity/failure/pending messages
   are visible. Missing painting still exposes the exact quests and claims.
-- Rarity-framed Basin/Orrery boxes sit above the 4/9 and 9/9 bar marks. Both open
+- Rarity-framed Basin/Orrery boxes show artwork without Rare/Legendary labels.
+  Their markers align exactly with 4/9 and 9/9 and reach the track's bottom edge
+  at every text size. No instructional caption appears below the painting. Both open
   journal item details with artwork, rarity, description and skill. The bottom
   claim control is dotted when locked, green when earned, and shows Claimed only
   after confirmation. No separate final-reward footer or Earlier expeditions UI

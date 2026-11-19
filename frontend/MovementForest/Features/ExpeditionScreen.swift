@@ -49,8 +49,6 @@ struct ExpeditionScreen: View {
                             Button("Retry saved reward claim") { Task { await store.retryClaim() } }.buttonStyle(.journalSecondary)
                         }
                         puzzle(run)
-                        Text("Tap a piece to see its quest. Collect its reward to restore its colour.")
-                            .font(.caption).foregroundStyle(JournalTheme.secondary)
                     } else if store.busy { ProgressView("Loading expedition…").frame(maxWidth: .infinity) }
                     else {
                         Text(store.status == nil ? "Expedition unavailable." : "No expedition is scheduled yet.").font(.headline)
@@ -145,11 +143,8 @@ struct ExpeditionScreen: View {
                     let x = trackWidth * CGFloat(count) / 9
                     Button { selectedQuest = nil; milestone = count } label: {
                         JournalPlantFrame(rarity: item.rarity) {
-                            VStack(spacing: 4) {
-                                ExpeditionRewardArtwork(reward: item.reward, size: 44)
-                                Text(item.rarity.capitalized).font(.caption)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }.padding(6).frame(height: rewardBoxHeight)
+                            ExpeditionRewardArtwork(reward: item.reward, size: 44)
+                                .frame(height: rewardBoxHeight)
                         }
                     }.buttonStyle(.plain).frame(width: boxWidth)
                         .position(x: x, y: rewardBoxHeight / 2)
@@ -157,12 +152,20 @@ struct ExpeditionScreen: View {
                         .accessibilityValue(entitlement?.claimed == true ? "Claimed" : entitlement != nil ? "Ready to claim" : "\(run.completedCount) of \(count) quests completed")
                         .accessibilityFocused($focusedMilestone, equals: count)
                         .accessibilityIdentifier("expedition.milestone.\(count)")
-                    Rectangle().fill(JournalTheme.vine).frame(width: 1, height: 12)
-                        .position(x: x, y: rewardBoxHeight + 6).accessibilityHidden(true)
                 }
             }.frame(height: rewardBoxHeight + 12)
             ExpeditionProgressBar(current: run.completedCount, target: 9, label: "Quests completed")
                 .padding(.trailing, boxWidth / 2)
+        }.overlay {
+            GeometryReader { geometry in
+                let trackWidth = max(0, geometry.size.width - boxWidth / 2)
+                let markerHeight = max(0, geometry.size.height - rewardBoxHeight)
+                ForEach([4, 9], id: \.self) { count in
+                    Rectangle().fill(JournalTheme.vine).frame(width: 1, height: markerHeight)
+                        .position(x: trackWidth * CGFloat(count) / 9,
+                                  y: rewardBoxHeight + markerHeight / 2)
+                }
+            }.allowsHitTesting(false).accessibilityHidden(true)
         }
     }
     private func itemPopup(_ run: ExpeditionRun, count: Int) -> some View {

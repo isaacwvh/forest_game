@@ -15,7 +15,10 @@ retain collection/reveal even if a later refresh fails. Missing art exposes text
 quest access. Reduce Motion skips reveal transitions; colour is not the only state.
 
 The quest-completion bar has rarity-framed Basin and Orrery item boxes above the
-4/9 and 9/9 marks. Both open the standard journal item inspector with description,
+4/9 and 9/9 marks. Boxes show artwork without rarity text; rarity remains in their
+frames and item details. Markers extend from each box through the bottom of the
+track, sharing its exact 4/9 and 9/9 positions. No instruction caption sits below
+the painting. Both boxes open the standard journal item inspector with description,
 rarity and skill. Its footer is a dotted locked claim control, a green claimable
 control or confirmed Claimed state. There is no duplicate final-reward section or
 Earlier expeditions browser. Recovery remains automatic; Recover activity retries
