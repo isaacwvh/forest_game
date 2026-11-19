@@ -194,7 +194,7 @@ def submit(session, settings, identity, run_id, body, clock):
         for day in body.days:
             start = datetime.combine(day.game_date, datetime.min.time(), UTC)
             if (
-                not run.starts_at <= start < run.ends_at
+                not (start < run.ends_at and start + timedelta(days=1) > run.starts_at)
                 or day.starts_at != max(start, earliest)
                 or not day.starts_at
                 < day.through

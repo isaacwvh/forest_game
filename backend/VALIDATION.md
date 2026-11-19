@@ -1,3 +1,25 @@
+## First expedition partial-month launch — 20 November 2026
+
+Added `0022_expedition_launch` and the explicit first-launch `--start-now` flag.
+The immutable server-clock cutoff excludes pre-launch actions/Health evidence;
+launch-day uploads use the eligible partial UTC interval. Subsequent runs still
+reset at 00:00 UTC on day one, with fresh progress and the same template.
+
+- Focused PostgreSQL regression: **34 passed**, 71.70 seconds: all expedition
+  cases, the complete migration/readiness suite and storage ownership coverage.
+- New cases cover preview rollback, partial-date evidence, rejection of pre-launch
+  evidence, millisecond rounding, full-month renewal, idempotent publication,
+  immutable cutoffs and refusal to use the exception for later/future months.
+- Ruff, formatting and whitespace checks pass. Backend Docker images build.
+- No native code changed. The previous full-suite/native checks below describe
+  the original implementation; this focused run validates the launch exception.
+
+Local deployment: verified a custom-format PostgreSQL backup, applied migration
+`0022_expedition_launch`, and explicitly activated the November assignment at
+`2026-11-19T17:05:00.144Z`. Its first reset is `2026-12-01T00:00:00Z`.
+Database schedule verification and both live/ready HTTP checks pass; all Compose
+services returned healthy. No catalogue reseed or application rebuild was needed.
+
 ## Expeditions — 20 November 2026
 
 Implemented migration `0021_expeditions`, automatic server-wide first-of-month

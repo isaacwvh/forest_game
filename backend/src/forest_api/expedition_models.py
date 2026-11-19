@@ -32,6 +32,21 @@ class ExpeditionSchedule(Base):
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class ExpeditionLaunch(Base):
+    """Optional first partial month; later calendar runs ignore this cutoff."""
+
+    __tablename__ = "expedition_launches"
+    __table_args__ = (
+        CheckConstraint(
+            "starts_at >= (month::timestamp AT TIME ZONE 'UTC') AND "
+            "starts_at < ((month + INTERVAL '1 month') AT TIME ZONE 'UTC')",
+            name="interval",
+        ),
+    )
+    month: Mapped[date] = mapped_column(ForeignKey("expedition_schedule.month"), primary_key=True)
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class ExpeditionRun(Base):
     __tablename__ = "expedition_runs"
     __table_args__ = (UniqueConstraint("owner_id", "month"), UniqueConstraint("id", "owner_id"))

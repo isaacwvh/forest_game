@@ -18,6 +18,11 @@ def main() -> None:
     expedition.add_argument("month", type=date.fromisoformat)
     expedition.add_argument("--apply", action="store_true")
     expedition.add_argument(
+        "--start-now",
+        action="store_true",
+        help="Launch the first partial UTC month from publication time",
+    )
+    expedition.add_argument(
         "--template-file", type=Path, help="Replacement content for a future UTC month"
     )
     milestones = commands.add_parser(
@@ -150,7 +155,12 @@ def main() -> None:
                 print(
                     json.dumps(
                         publish(
-                            session, settings, args.month, apply=args.apply, replacement=replacement
+                            session,
+                            settings,
+                            args.month,
+                            apply=args.apply,
+                            replacement=replacement,
+                            start_now=args.start_now,
                         )
                     )
                 )

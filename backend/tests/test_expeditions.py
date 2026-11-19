@@ -13,6 +13,7 @@ from forest_api import expeditions, items, progression, recovery, services
 from forest_api.activity_models import WorkoutImport
 from forest_api.expedition_models import (
     ExpeditionClaim,
+    ExpeditionLaunch,
     ExpeditionRun,
     ItemStepGrant,
     ItemStepState,
@@ -568,3 +569,135 @@ def test_morning_rain_stage_observer_pack_capacity_and_maintenance(expedition, a
         )
     assert isinstance(result, dict)
     assert claim(client, e, run, reward, request)["packs"] == receipt["packs"]
+
+
+@pytest.fixture
+def first_launch(forest, app):
+    forest["now"][0] += timedelta(microseconds=123456)
+    month = expeditions.month_start(forest["now"][0]).date()
+    with app.state.database.sessions() as session:
+        preview = expeditions.publish(
+            session, app.state.settings, month, start_now=True, clock=lambda: forest["now"][0]
+        )
+    assert not preview["applied"] and preview["initialPartialMonth"]
+    with app.state.database.sessions() as session:
+        assert session.get(ExpeditionLaunch, month) is None
+    with app.state.database.sessions() as session:
+        result = expeditions.publish(
+            session,
+            app.state.settings,
+            month,
+            start_now=True,
+            apply=True,
+            clock=lambda: forest["now"][0],
+        )
+    forest["now"][0] += timedelta(seconds=1)
+    return {
+        **forest,
+        "start": datetime.fromisoformat(result["startsAt"]),
+        "month": month,
+        "headers": {**forest["headers"], "X-Forest-Expeditions": "1", "X-Forest-Recovery": "1"},
+    }
+
+
+def test_first_partial_launch_counts_only_after_publication_and_renews_at_utc_month(
+    first_launch, app, client
+):
+    e = first_launch
+    with app.state.database.sessions.begin() as session:
+        assert (
+            expeditions.run_for(session, e["owner"], e["start"] - timedelta(microseconds=1)) is None
+        )
+    run = current(client, e)
+    assert datetime.fromisoformat(run["startsAt"]) == e["start"]
+    end = expeditions.next_month(expeditions.month_start(e["start"]))
+    assert datetime.fromisoformat(run["endsAt"]) == end
+    assert datetime.fromisoformat(run["coverage"][0]["startsAt"]) == e["start"]
+    assert e["start"].microsecond == 124000
+    e["now"][0] += timedelta(hours=1)
+    date = e["start"].date().isoformat()
+    midnight = e["start"].replace(hour=0, minute=0, second=0, microsecond=0)
+    evidence(
+        client,
+        e,
+        run,
+        [
+            {
+                "gameDate": date,
+                "startsAt": midnight.isoformat(),
+                "through": e["now"][0].isoformat(),
+                "steps": 99999,
+            }
+        ],
+        status=422,
+    )
+    evidence(
+        client,
+        e,
+        run,
+        [
+            {
+                "gameDate": date,
+                "startsAt": e["start"].isoformat(),
+                "through": e["now"][0].isoformat(),
+                "steps": 5000,
+            }
+        ],
+    )
+    assert quest(current(client, e), "monthly_steps_30000")["current"] == 5000
+    e["now"][0] = end
+    renewed = current(client, e)
+    assert renewed["runId"] != run["runId"]
+    assert datetime.fromisoformat(renewed["startsAt"]) == end
+    assert datetime.fromisoformat(renewed["endsAt"]) == expeditions.next_month(end)
+    assert quest(renewed, "monthly_steps_30000")["current"] == 0
+
+
+def test_start_now_is_idempotent_immutable_and_cannot_relaunch_later_month(first_launch, app):
+    from sqlalchemy.exc import IntegrityError
+
+    e = first_launch
+    e["now"][0] += timedelta(hours=2)
+    with app.state.database.sessions() as session:
+        result = expeditions.publish(
+            session,
+            app.state.settings,
+            e["month"],
+            start_now=True,
+            apply=True,
+            clock=lambda: e["now"][0],
+        )
+    assert datetime.fromisoformat(result["startsAt"]) == e["start"]
+    with pytest.raises(IntegrityError), app.state.database.sessions.begin() as session:
+        session.get(ExpeditionLaunch, e["month"]).starts_at += timedelta(seconds=1)
+    e["now"][0] = expeditions.next_month(expeditions.month_start(e["start"])) + timedelta(days=2)
+    with (
+        pytest.raises(ValueError, match="first expedition month"),
+        app.state.database.sessions() as session,
+    ):
+        expeditions.publish(
+            session,
+            app.state.settings,
+            expeditions.month_start(e["now"][0]).date(),
+            start_now=True,
+            apply=True,
+            clock=lambda: e["now"][0],
+        )
+
+
+def test_current_month_still_requires_explicit_start_now_and_future_month_cannot_use_it(
+    forest, app
+):
+    now = forest["now"][0]
+    with pytest.raises(ValueError, match="retrospective"), app.state.database.sessions() as session:
+        expeditions.publish(
+            session, app.state.settings, expeditions.month_start(now).date(), clock=lambda: now
+        )
+    with pytest.raises(ValueError, match="current UTC"), app.state.database.sessions() as session:
+        expeditions.publish(
+            session,
+            app.state.settings,
+            expeditions.next_month(expeditions.month_start(now)).date(),
+            start_now=True,
+            clock=lambda: now,
+        )

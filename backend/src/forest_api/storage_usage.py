@@ -79,6 +79,7 @@ GROUPS = {
     "shared_configuration": {
         "expedition_templates",
         "expedition_schedule",
+        "expedition_launches",
         "item_skill_profiles",
         "item_skill_bindings",
         "shop_releases",

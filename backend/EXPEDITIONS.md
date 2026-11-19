@@ -1,6 +1,7 @@
 # Recurring expeditions
 
-Source implementation: 19 November 2026. Migration: `0021_expeditions`.
+Source implementation: 19–20 November 2026. Migrations: `0021_expeditions`
+and `0022_expedition_launch`.
 Migration creates infrastructure only; it does not schedule an expedition or grant rewards.
 
 ## Calendar and content
@@ -39,8 +40,23 @@ forest publish-expedition 2026-12-01
 forest publish-expedition 2026-12-01 --apply
 ```
 
-No launch month was selected or activated in the implementation session. Preview
-rolls back all writes. Apply publishes the three reward-only item definitions,
+For the first launch only, an explicit `--start-now` can select the current UTC
+month. This creates an immutable server-clock earning cutoff, rounded up to
+millisecond wire precision. Earlier actions and Health evidence cannot count;
+the launch date accepts only its eligible partial interval. For the requested
+November launch, preview and apply with:
+
+```powershell
+forest publish-expedition 2026-11-01 --start-now
+forest publish-expedition 2026-11-01 --start-now --apply
+```
+
+The first run ends December 1 at 00:00 UTC. December and subsequent runs use full
+UTC calendar months with fresh progress and the same template. No monthly command
+is needed. Repeating the launch command preserves its original cutoff. An existing
+full-month assignment cannot be converted, and later months cannot use this flag.
+
+Preview rolls back all writes. Apply publishes the three reward-only item definitions,
 pinned skills and a recurring assignment, not shop offers. All three are explicitly
 sale-unavailable gifts: no token/resale value is invented. Existing shop pools and
 their prices are unchanged. Review gift resale/capacity and newcomer herb access

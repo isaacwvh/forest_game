@@ -4,13 +4,14 @@ from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from uuid import NAMESPACE_URL, uuid5
 
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 
 from forest_api import collection, services
 from forest_api.expedition_definitions import QUESTS, VERSION, definition
 from forest_api.expedition_models import (
     ExpeditionClaim,
     ExpeditionEntitlement,
+    ExpeditionLaunch,
     ExpeditionRun,
     ExpeditionSchedule,
     ExpeditionTemplate,
@@ -27,23 +28,27 @@ def next_month(start):
 
 def run_for(session, owner, boundary):
     session.execute(text("SELECT pg_advisory_xact_lock_shared(591417021)"))
-    start = month_start(boundary)
+    calendar_start = month_start(boundary)
     schedule = session.scalar(
         select(ExpeditionSchedule)
-        .where(ExpeditionSchedule.month <= start.date())
+        .where(ExpeditionSchedule.month <= calendar_start.date())
         .order_by(ExpeditionSchedule.month.desc())
         .limit(1)
     )
     if schedule is None:
         return None
-    identifier = uuid5(NAMESPACE_URL, f"forest/expedition/{owner}/{start.date()}")
+    launch = session.get(ExpeditionLaunch, calendar_start.date())
+    start = launch.starts_at if launch else calendar_start
+    if boundary < start:
+        return None
+    identifier = uuid5(NAMESPACE_URL, f"forest/expedition/{owner}/{calendar_start.date()}")
     run = session.get(ExpeditionRun, identifier)
     if run is None:
-        end = next_month(start)
+        end = next_month(calendar_start)
         run = ExpeditionRun(
             id=identifier,
             owner_id=owner,
-            month=start.date(),
+            month=calendar_start.date(),
             template_version=schedule.template_version,
             starts_at=start,
             ends_at=end,
@@ -211,19 +216,40 @@ def present(session, run, now, *, retry_older=False):
     }
 
 
-def publish(session, settings, month, *, apply=False, clock=None, replacement=None):
+def publish(
+    session, settings, month, *, apply=False, clock=None, replacement=None, start_now=False
+):
     """Publish one recurring assignment; subsequent months need no manual operation."""
     from forest_api.expedition_items import publish_items
     from forest_api.models import AttractionProfile, Species
-    from forest_api.placement import utc_now
 
     with session.begin():
         session.execute(text("SELECT pg_advisory_xact_lock(591417021)"))
-        now = (clock or utc_now)()
+        read_clock = clock or (lambda: session.scalar(select(func.clock_timestamp())))
+        now = read_clock()
         if month.day != 1:
             raise ValueError("Select the first day of a UTC calendar month")
         existing = session.get(ExpeditionSchedule, month)
-        if existing is None and datetime.combine(month, datetime.min.time(), UTC) <= now:
+        launch = session.get(ExpeditionLaunch, month)
+        if start_now:
+            if month != month_start(now).date():
+                raise ValueError("Start-now must select the current UTC calendar month")
+            if existing is not None and launch is None:
+                raise ValueError("Cannot change an existing calendar run into a partial month")
+            if (
+                session.scalar(
+                    select(ExpeditionSchedule.month)
+                    .where(ExpeditionSchedule.month < month)
+                    .limit(1)
+                )
+                is not None
+            ):
+                raise ValueError("Start-now is only available for the first expedition month")
+        if (
+            existing is None
+            and not start_now
+            and datetime.combine(month, datetime.min.time(), UTC) <= now
+        ):
             raise ValueError(
                 "Schedule before 00:00 UTC on the first; retrospective publication is forbidden"
             )
@@ -253,12 +279,26 @@ def publish(session, settings, month, *, apply=False, clock=None, replacement=No
             raise ValueError("Month assignments are immutable")
         if existing is None:
             session.add(ExpeditionSchedule(month=month, template_version=version, published_at=now))
+            session.flush()
+            if start_now:
+                cutoff = now + timedelta(microseconds=(-now.microsecond) % 1000)
+                launch = ExpeditionLaunch(month=month, starts_at=cutoff)
+                session.add(launch)
         result = {
             "applied": apply,
             "month": month.isoformat(),
             "timezone": "UTC",
             "template": version,
             "recursMonthly": True,
+            "startsAt": (
+                launch.starts_at if launch else datetime.combine(month, datetime.min.time(), UTC)
+            )
+            .astimezone(UTC)
+            .isoformat(),
+            "firstRunEndsAt": next_month(
+                datetime.combine(month, datetime.min.time(), UTC)
+            ).isoformat(),
+            "initialPartialMonth": launch is not None,
             "quests": len(QUESTS),
             "items": sorted(
                 {
@@ -280,9 +320,15 @@ def publish(session, settings, month, *, apply=False, clock=None, replacement=No
         session.flush()
         if (
             existing is None
-            and datetime.combine(month, datetime.min.time(), UTC) <= (clock or utc_now)()
+            and not start_now
+            and datetime.combine(month, datetime.min.time(), UTC) <= read_clock()
         ):
             raise ValueError("Publication crossed the UTC start; select a future month")
+        if start_now and (
+            read_clock() >= next_month(month_start(now))
+            or launch.starts_at >= next_month(month_start(now))
+        ):
+            raise ValueError("Publication crossed the UTC month boundary; retry for the new month")
         if not apply:
             session.rollback()
         return result
