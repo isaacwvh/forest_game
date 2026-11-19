@@ -35,6 +35,7 @@ class ItemFacts:
     profile_version: int
     effects: tuple[SkillEffect, ...]
     daily_grant: dict | None = None
+    triggered_grants: tuple[dict, ...] = ()
 
 
 def matches(plant: PlantFacts, selector: PlantSelector | None) -> bool:
@@ -399,6 +400,34 @@ class SkillSnapshot:
                 "eligibleSourceItemIds": [s.id for s in daily_sources],
                 "recipientPlantIds": [p.id for p in self.plants],
             }
+        for item in self.items:
+            for trigger in item.triggered_grants:
+                family = trigger["family"]
+                key = ("step_tier_water", family)
+                if key in rows:
+                    rows[key]["eligibleSourceItemIds"].append(item.id)
+                    continue
+                rows[key] = {
+                    "id": family,
+                    "name": trigger["name"],
+                    "description": (
+                        "2,000 / 4,000 / 6,000 daily steps while placed grant "
+                        "3 / 4 / 5 flat water per planted plant. Duplicates share progress."
+                    ),
+                    "system": "growth",
+                    "scope": "step_tier_water",
+                    "metric": "steps",
+                    "operation": "flat",
+                    "magnitude": "12",
+                    "stackingGroup": "item_" + family,
+                    "sourceKind": "item",
+                    "sourceItemId": item.id,
+                    "profileId": item.profile_id,
+                    "profileVersion": item.profile_version,
+                    "eligibleSourcePlantIds": [],
+                    "eligibleSourceItemIds": [item.id],
+                    "recipientPlantIds": [p.id for p in self.plants],
+                }
         return {
             "policyVersion": self.policy_version,
             "caps": self.caps.model_dump(by_alias=True),

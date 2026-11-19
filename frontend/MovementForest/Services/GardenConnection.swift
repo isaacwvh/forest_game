@@ -42,6 +42,8 @@ private enum DevelopmentCredential {
 
 @MainActor
 final class GardenConnection: ObservableObject {
+    @Published private(set) var expeditions: ExpeditionCoordinator?
+    private var expeditionUpdates: AnyCancellable?
     #if DEBUG
     func installPresentationFixture(assets: any AssetCatalogProviding) async {
         do {
@@ -197,6 +199,7 @@ final class GardenConnection: ObservableObject {
             defaults.set(try JSONEncoder().encode(profile), forKey: "development.gardenAPI.profile.v1")
             accountRequired = false; pendingClient = nil; pendingCredential = nil
             activitySync?.deactivate(); activitySync = nil
+            expeditions?.deactivate(); expeditions = nil; expeditionUpdates = nil
             if let current = editor, !current.recoveryLocked, current.profile.userId == profile.userId,
                current.service.serverID == repository.serverID {
                 await current.replaceService(repository)
@@ -227,6 +230,7 @@ final class GardenConnection: ObservableObject {
         managedGeneration = UUID(); managedTokens?.invalidate(); managedTokens = nil
         managedProfileVerified = false
         activitySync?.deactivate(); activitySync = nil
+            expeditions?.deactivate(); expeditions = nil; expeditionUpdates = nil
         editor?.deactivate(); editor = nil
         editorUpdates = nil; syncUpdates = nil
         pendingIdentity = nil; pendingClient = nil; pendingCredential = nil
@@ -391,6 +395,14 @@ final class GardenConnection: ObservableObject {
                                                        service: APIActivityRepository(client: client),
                                                        installationID: try InstallationIdentity.load(disk: disk))
             activitySync = coordinator
+            expeditions?.deactivate()
+            let expedition = ExpeditionCoordinator(client: client, user: store.profile.userId,
+                disk: disk, health: health, activity: coordinator, collection: collection)
+            expeditions = expedition
+            expeditionUpdates = expedition.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+            coordinator.onExpeditionRefresh = { [weak expedition] in
+                Task { await expedition?.recoverEvidence() }
+            }
             if visitorsEnabled {
                 coordinator.onAccountProgression = { [weak summary] progression, wallet in
                     summary?.receive(progression: progression, wallet: wallet)
@@ -497,6 +509,7 @@ final class GardenConnection: ObservableObject {
             visitors?.deactivate(); visitors = nil; visitorUpdates = nil
             try DevelopmentCredential.remove()
             activitySync?.deactivate(); activitySync = nil
+            expeditions?.deactivate(); expeditions = nil; expeditionUpdates = nil
             editor?.endEditing(); editor = nil
             syncUpdates = nil; editorUpdates = nil
             defaults.removeObject(forKey: Self.urlKey); savedURL = ""

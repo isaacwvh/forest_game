@@ -128,6 +128,13 @@ def reconcile(session, owner, wallet):
             MilestoneBonusGrant.owner_id == owner
         )
     )
+    from forest_api.expedition_models import ExpeditionBonusGrant
+
+    bonuses += session.scalar(
+        select(func.coalesce(func.sum(ExpeditionBonusGrant.amount), 0)).where(
+            ExpeditionBonusGrant.owner_id == owner
+        )
+    )
     from forest_api.collection_models import CollectionEvent
 
     spent = session.scalar(

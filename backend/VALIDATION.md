@@ -1,3 +1,44 @@
+## Expeditions — 20 November 2026
+
+Implemented migration `0021_expeditions`, automatic server-wide first-of-month
+00:00 UTC recurrence, nine independent quests/puzzle rewards, 4/9 entitlements,
+archived permanent claims, reward-only Satchel/Basin/Orrery support, Guiding Glow,
+Alignment of Worlds, and separate bounded UTC Health-evidence recovery. Normal
+garden growth remains seven account-local dates; historical expedition uploads
+cannot award water, XP, gems or daily item tiers.
+
+Executed against a new dedicated PostgreSQL 17 cluster on loopback port 55461,
+using only randomized disposable `forest_test_*` databases and normal durability:
+
+- Full backend regression: **767 passed, 3 skipped**, 1292.78 seconds. Skips are
+  the existing opt-in physical storage benchmarks.
+- Final added Morning Rain/stage-observer/pack-capacity/same-UUID/maintenance
+  integration test: **1 passed**, 12.19 seconds. All 17 expedition test cases
+  (including threshold parametrizations) were executed successfully across these
+  runs. The additional test changes no application source.
+- The suite includes migration parity/downgrade/reupgrade; exact UTC/calendar and
+  millisecond-enrollment boundaries; mixed workout thresholds/overlap/identity;
+  almost-38-day-old recovery without economic side effects; future replacement;
+  repeat monthly copies; reward capacity/replay/compaction; gem reconciliation;
+  snapshot persistence; Guiding Glow and duplicate-once Orrery tier accounting.
+- **92** real Foundation/backend resolver cases pass in both input orders, plus
+  draft persistence and shared action-impact checks. New reward items are included.
+- Real expedition models and coordinator typecheck/run with explicit portable
+  platform interfaces. HTTP fixture, completion versus collection, UTC, retained
+  confirmed collection, exact queued bytes/IDs and invalid-count rejection pass.
+- Ruff checks/formatting, dependency consistency, whitespace and portable native
+  project/resource/contracts pass; all **109 Swift files** parse. Offline wheel
+  builds and every packaged backend module matches current source byte-for-byte.
+- All 18 item packages (15 shop + 3 reward-only) and the clean painting pass
+  checksums/archive/PNG/bundle checks. Design detector reports no findings.
+
+No personal database migration/publication, event activation, commit, push or CI
+run occurred. The disposable cluster was stopped after validation. Apple SDK
+builds, hosted XCTest/SwiftUI, physical HealthKit/background delivery, RealityKit
+playback/performance and device visual/accessibility acceptance were not executed
+on this Windows host. See [implementation](EXPEDITIONS.md) and
+[native acceptance](../frontend/EXPEDITIONS_ACCEPTANCE.md).
+
 ## Garden strategy editor — 17 November 2026
 
 Implemented read-only mixed-layout previews, full pinned prediction data, proof-

@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "worldseed-orrery",
+  "displayName": "Worldseed Orrery",
+  "rarity": "Legendary",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; runtime registration and skills not activated",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "ground-center-of-concentric-orbits",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.92
+  },
+  "dimensionsMetres": {
+    "width": 1.654155433177948,
+    "depth": 1.1085872054100037,
+    "height": 1.7478151514434828
+  },
+  "plannedMaximumDimensionsMetres": {
+    "width": 1.712,
+    "depth": 1.712,
+    "height": 1.776
+  },
+  "uniformScaleFromConcept": 0.8,
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.8270989060401917,
+      -1.930236948055608e-08,
+      -0.5542936325073242
+    ],
+    "max": [
+      0.8270565271377563,
+      1.7478151321411133,
+      0.5542935729026794
+    ],
+    "coverage": "complete animation cycle"
+  },
+  "appearanceId": "standard",
+  "animation": {
+    "name": "worldseed_slow_celestial_orbits",
+    "durationSeconds": 144,
+    "fps": 30,
+    "frames": [
+      1,
+      4321
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "rootMotion": false,
+    "representation": "skeletal",
+    "jointCount": 5,
+    "orbitPeriodsSeconds": [
+      24,
+      36,
+      48
+    ],
+    "endpointPolicy": "Matching endpoint at frame 4321 closes 4320 intervals; repeat without holding the endpoint.",
+    "motion": "Three stone rings and their moons spin independently in fixed orbital planes. Middle ring counter-rotates. Seed bobs gently; base stays fixed."
+  },
+  "ui": {
+    "thumbnail": "ui/worldseed-orrery-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 16,
+  "triangleCount": 65896,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "Smooth matte stone and seed shell; broad quiet color gradients; no noise, bump or displacement."
+  },
+  "emission": {
+    "source": "golden seed heart",
+    "representation": "UsdPreviewSurface emissiveColor",
+    "animated": false
+  },
+  "plannedSkill": null,
+  "assets": [
+    {
+      "file": "models/worldseed-orrery-standard.usdz",
+      "bytes": 3859201,
+      "sha256": "350a24a8133f6e29f1c121b0b153ae0cc2fb9d3c1d298fec08f497c85d3a68d6",
+      "thumbnail": "ui/worldseed-orrery-standard.png"
+    },
+    {
+      "file": "ui/worldseed-orrery-standard.png",
+      "bytes": 121736,
+      "sha256": "9b5e5ea5bf566432dbd1fed21dd80cbeca1e66c16737b1550b6c4c00fb0cf572"
+    }
+  ]
+}

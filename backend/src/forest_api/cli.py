@@ -12,6 +12,14 @@ from forest_api.seed import seed_development_catalogue
 def main() -> None:
     parser = argparse.ArgumentParser(description="Movement Forest development tools")
     commands = parser.add_subparsers(dest="command", required=True)
+    expedition = commands.add_parser(
+        "publish-expedition", help="Preview recurring UTC Observatory publication"
+    )
+    expedition.add_argument("month", type=date.fromisoformat)
+    expedition.add_argument("--apply", action="store_true")
+    expedition.add_argument(
+        "--template-file", type=Path, help="Replacement content for a future UTC month"
+    )
     milestones = commands.add_parser(
         "activate-milestones", help="Preview milestone publication/mapping"
     )
@@ -131,7 +139,22 @@ def main() -> None:
             run(database, settings)
             return
         with database.sessions() as session:
-            if args.command == "publish-item-catalogue":
+            if args.command == "publish-expedition":
+                from forest_api.expeditions import publish
+
+                replacement = (
+                    json.loads(args.template_file.read_text(encoding="utf-8"))
+                    if args.template_file
+                    else None
+                )
+                print(
+                    json.dumps(
+                        publish(
+                            session, settings, args.month, apply=args.apply, replacement=replacement
+                        )
+                    )
+                )
+            elif args.command == "publish-item-catalogue":
                 from forest_api.item_catalogue import publish
 
                 print(

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "file": "observatory.png",
+  "bytes": 3488068,
+  "sha256": "c3f4a4ec0d4dcf91876c0b1704a695d84bd21ff793630d8904c3f517df29c391",
+  "geometry": "ExpeditionPieceShape-v1",
+  "grid": [
+    3,
+    3
+  ],
+  "description": "Clean observatory restoration painting; generated 19 November 2026. No baked UI or puzzle seams."
+}

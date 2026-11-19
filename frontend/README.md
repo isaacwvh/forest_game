@@ -1,3 +1,11 @@
+## Expedition — 19 November 2026
+
+A fifth native destination provides the Observatory puzzle, centred quest popups,
+in-bar ratios, quantity-first rewards and permanent earned claims/archive.
+Account-scoped evidence recovery handles a complete UTC earning month without
+extending seven-day garden growth. See [acceptance](EXPEDITIONS_ACCEPTANCE.md)
+and [backend contract](../backend/EXPEDITIONS.md). No live event is activated.
+
 **Compact garden editor, 17 November 2026:** a three-metric header, pinned unsaved
 marker, shared Garden skills page and separate plant/item action-impact boxes are
 implemented locally. Recipient-only gains stay in attraction; skill source/count

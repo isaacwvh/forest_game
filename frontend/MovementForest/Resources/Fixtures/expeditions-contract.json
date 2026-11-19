@@ -1,0 +1,880 @@
+{
+  "synthetic": true,
+  "initial": {
+    "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+    "month": "2026-12-01",
+    "templateVersion": "forgotten-forest-observatory-v1",
+    "name": "Forgotten Forest Observatory",
+    "timezone": "UTC",
+    "serverNow": "2026-12-01T12:00:00+00:00",
+    "startsAt": "2026-12-01T00:00:00+00:00",
+    "endsAt": "2027-01-01T00:00:00+00:00",
+    "evidenceUntil": "2027-01-08T00:00:00+00:00",
+    "progressVersion": 1,
+    "completedCount": 0,
+    "artworkKey": "expeditions/observatory/v1/observatory.png",
+    "quests": [
+      {
+        "id": "steps_days_3",
+        "piece": 0,
+        "reward": {
+          "itemId": "astronomers-satchel",
+          "version": 1
+        },
+        "target": 3,
+        "description": "Reach at least 5,000 steps on 3 different days during the expedition.",
+        "current": 0,
+        "completedAt": null,
+        "entitlement": null
+      },
+      {
+        "id": "run_walk_sessions_3",
+        "piece": 1,
+        "reward": {
+          "tokens": 400
+        },
+        "target": 3,
+        "description": "Complete 3 recorded runs of at least 2 km or recorded walks of at least 15 minutes, in any combination.",
+        "current": 0,
+        "completedAt": null,
+        "entitlement": null
+      },
+      {
+        "id": "items_together_4",
+        "piece": 2,
+        "reward": {
+          "tokens": 200
+        },
+        "target": 4,
+        "description": "Have at least 4 items placed in your garden together.",
+        "current": 0,
+        "completedAt": null,
+        "entitlement": null
+      },
+      {
+        "id": "active_butterflies_100",
+        "piece": 3,
+        "reward": {
+          "tokens": 250
+        },
+        "target": 100,
+        "description": "Tap to welcome 100 butterflies during the expedition. Stored collections do not count.",
+        "current": 0,
+        "completedAt": null,
+        "entitlement": null
+      },
+      {
+        "id": "packs_opened_3",
+        "piece": 4,
+        "reward": {
+          "gems": 1
+        },
+        "target": 3,
+        "description": "Open 3 packs of any kind during the expedition.",
+        "current": 0,
+        "completedAt": null,
+        "entitlement": null
+      },
+      {
+        "id": "all_stages_together",
+        "piece": 5,
+        "reward": {
+          "tokens": 300
+        },
+        "target": 4,
+        "description": "Have a sprout, seedling, young plant and adult planted together once.",
+        "current": 1,
+        "completedAt": null,
+        "entitlement": null
+      },
+      {
+        "id": "copies_advanced_4",
+        "piece": 6,
+        "reward": {
+          "packId": "woodland",
+          "version": 20
+        },
+        "target": 4,
+        "description": "Help 4 different plant copies advance at least one growth stage during the expedition.",
+        "current": 0,
+        "completedAt": null,
+        "entitlement": null
+      },
+      {
+        "id": "tree_herb_butterflies_50",
+        "piece": 7,
+        "reward": {
+          "tokens": 300
+        },
+        "target": 50,
+        "description": "Tap to welcome 50 butterflies while at least one tree and one herb are planted. Stored collections do not count.",
+        "current": 0,
+        "completedAt": null,
+        "entitlement": null
+      },
+      {
+        "id": "monthly_steps_30000",
+        "piece": 8,
+        "reward": {
+          "tokens": 400
+        },
+        "target": 30000,
+        "description": "Accumulate 30,000 steps during the expedition, with no daily minimum.",
+        "current": 0,
+        "completedAt": null,
+        "entitlement": null
+      }
+    ],
+    "rewards": [],
+    "coverage": [
+      {
+        "gameDate": "2026-12-01",
+        "startsAt": "2026-12-01T00:00:00+00:00",
+        "through": "2026-12-01T12:00:00+00:00",
+        "stepsNeeded": true,
+        "workoutsNeeded": true
+      }
+    ]
+  },
+  "earned": {
+    "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+    "month": "2026-12-01",
+    "templateVersion": "forgotten-forest-observatory-v1",
+    "name": "Forgotten Forest Observatory",
+    "timezone": "UTC",
+    "serverNow": "2026-12-01T12:00:00+00:00",
+    "startsAt": "2026-12-01T00:00:00+00:00",
+    "endsAt": "2027-01-01T00:00:00+00:00",
+    "evidenceUntil": "2027-01-08T00:00:00+00:00",
+    "progressVersion": 10,
+    "completedCount": 9,
+    "artworkKey": "expeditions/observatory/v1/observatory.png",
+    "quests": [
+      {
+        "id": "steps_days_3",
+        "piece": 0,
+        "reward": {
+          "itemId": "astronomers-satchel",
+          "version": 1
+        },
+        "target": 3,
+        "description": "Reach at least 5,000 steps on 3 different days during the expedition.",
+        "current": 3,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "88c14f06-8c14-5dc8-8055-5dbd3e2bfcc0",
+          "rewardKey": "quest:steps_days_3",
+          "reward": {
+            "itemId": "astronomers-satchel",
+            "version": 1
+          },
+          "claimed": false
+        }
+      },
+      {
+        "id": "run_walk_sessions_3",
+        "piece": 1,
+        "reward": {
+          "tokens": 400
+        },
+        "target": 3,
+        "description": "Complete 3 recorded runs of at least 2 km or recorded walks of at least 15 minutes, in any combination.",
+        "current": 3,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "906f43b9-b0c6-586f-a92f-21e2d8a8d79c",
+          "rewardKey": "quest:run_walk_sessions_3",
+          "reward": {
+            "tokens": 400
+          },
+          "claimed": false
+        }
+      },
+      {
+        "id": "items_together_4",
+        "piece": 2,
+        "reward": {
+          "tokens": 200
+        },
+        "target": 4,
+        "description": "Have at least 4 items placed in your garden together.",
+        "current": 4,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "585ec14a-6b53-5275-8c68-fed0e45a8934",
+          "rewardKey": "quest:items_together_4",
+          "reward": {
+            "tokens": 200
+          },
+          "claimed": false
+        }
+      },
+      {
+        "id": "active_butterflies_100",
+        "piece": 3,
+        "reward": {
+          "tokens": 250
+        },
+        "target": 100,
+        "description": "Tap to welcome 100 butterflies during the expedition. Stored collections do not count.",
+        "current": 100,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "76f7209d-1be9-587a-8c2f-59354163ca4a",
+          "rewardKey": "quest:active_butterflies_100",
+          "reward": {
+            "tokens": 250
+          },
+          "claimed": false
+        }
+      },
+      {
+        "id": "packs_opened_3",
+        "piece": 4,
+        "reward": {
+          "gems": 1
+        },
+        "target": 3,
+        "description": "Open 3 packs of any kind during the expedition.",
+        "current": 3,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "16d2065d-4b4a-5865-9525-6b23b91ea24b",
+          "rewardKey": "quest:packs_opened_3",
+          "reward": {
+            "gems": 1
+          },
+          "claimed": false
+        }
+      },
+      {
+        "id": "all_stages_together",
+        "piece": 5,
+        "reward": {
+          "tokens": 300
+        },
+        "target": 4,
+        "description": "Have a sprout, seedling, young plant and adult planted together once.",
+        "current": 4,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "9afa596e-6c3b-5f81-a55e-a33fc55ca0e3",
+          "rewardKey": "quest:all_stages_together",
+          "reward": {
+            "tokens": 300
+          },
+          "claimed": false
+        }
+      },
+      {
+        "id": "copies_advanced_4",
+        "piece": 6,
+        "reward": {
+          "packId": "woodland",
+          "version": 20
+        },
+        "target": 4,
+        "description": "Help 4 different plant copies advance at least one growth stage during the expedition.",
+        "current": 4,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "b9e82d25-b20d-5f55-a1fa-22ee91bac213",
+          "rewardKey": "quest:copies_advanced_4",
+          "reward": {
+            "packId": "woodland",
+            "version": 20
+          },
+          "claimed": false
+        }
+      },
+      {
+        "id": "tree_herb_butterflies_50",
+        "piece": 7,
+        "reward": {
+          "tokens": 300
+        },
+        "target": 50,
+        "description": "Tap to welcome 50 butterflies while at least one tree and one herb are planted. Stored collections do not count.",
+        "current": 50,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "6d853a90-090f-53e2-8178-be9223fb116a",
+          "rewardKey": "quest:tree_herb_butterflies_50",
+          "reward": {
+            "tokens": 300
+          },
+          "claimed": false
+        }
+      },
+      {
+        "id": "monthly_steps_30000",
+        "piece": 8,
+        "reward": {
+          "tokens": 400
+        },
+        "target": 30000,
+        "description": "Accumulate 30,000 steps during the expedition, with no daily minimum.",
+        "current": 30000,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "453515ff-60c0-5e55-818f-c32b701a8bc2",
+          "rewardKey": "quest:monthly_steps_30000",
+          "reward": {
+            "tokens": 400
+          },
+          "claimed": false
+        }
+      }
+    ],
+    "rewards": [
+      {
+        "id": "88c14f06-8c14-5dc8-8055-5dbd3e2bfcc0",
+        "rewardKey": "quest:steps_days_3",
+        "reward": {
+          "itemId": "astronomers-satchel",
+          "version": 1
+        },
+        "claimed": false
+      },
+      {
+        "id": "906f43b9-b0c6-586f-a92f-21e2d8a8d79c",
+        "rewardKey": "quest:run_walk_sessions_3",
+        "reward": {
+          "tokens": 400
+        },
+        "claimed": false
+      },
+      {
+        "id": "585ec14a-6b53-5275-8c68-fed0e45a8934",
+        "rewardKey": "quest:items_together_4",
+        "reward": {
+          "tokens": 200
+        },
+        "claimed": false
+      },
+      {
+        "id": "76f7209d-1be9-587a-8c2f-59354163ca4a",
+        "rewardKey": "quest:active_butterflies_100",
+        "reward": {
+          "tokens": 250
+        },
+        "claimed": false
+      },
+      {
+        "id": "2be0ec8d-8e57-5790-b628-895f61b700ed",
+        "rewardKey": "milestone:4",
+        "reward": {
+          "itemId": "comet-basin",
+          "version": 1
+        },
+        "claimed": false
+      },
+      {
+        "id": "16d2065d-4b4a-5865-9525-6b23b91ea24b",
+        "rewardKey": "quest:packs_opened_3",
+        "reward": {
+          "gems": 1
+        },
+        "claimed": false
+      },
+      {
+        "id": "9afa596e-6c3b-5f81-a55e-a33fc55ca0e3",
+        "rewardKey": "quest:all_stages_together",
+        "reward": {
+          "tokens": 300
+        },
+        "claimed": false
+      },
+      {
+        "id": "b9e82d25-b20d-5f55-a1fa-22ee91bac213",
+        "rewardKey": "quest:copies_advanced_4",
+        "reward": {
+          "packId": "woodland",
+          "version": 20
+        },
+        "claimed": false
+      },
+      {
+        "id": "6d853a90-090f-53e2-8178-be9223fb116a",
+        "rewardKey": "quest:tree_herb_butterflies_50",
+        "reward": {
+          "tokens": 300
+        },
+        "claimed": false
+      },
+      {
+        "id": "453515ff-60c0-5e55-818f-c32b701a8bc2",
+        "rewardKey": "quest:monthly_steps_30000",
+        "reward": {
+          "tokens": 400
+        },
+        "claimed": false
+      },
+      {
+        "id": "f72b8dae-88e8-5209-bdc3-74fece88e54e",
+        "rewardKey": "milestone:9",
+        "reward": {
+          "itemId": "worldseed-orrery",
+          "version": 1
+        },
+        "claimed": false
+      }
+    ],
+    "coverage": []
+  },
+  "restored": {
+    "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+    "month": "2026-12-01",
+    "templateVersion": "forgotten-forest-observatory-v1",
+    "name": "Forgotten Forest Observatory",
+    "timezone": "UTC",
+    "serverNow": "2026-12-01T12:00:00+00:00",
+    "startsAt": "2026-12-01T00:00:00+00:00",
+    "endsAt": "2027-01-01T00:00:00+00:00",
+    "evidenceUntil": "2027-01-08T00:00:00+00:00",
+    "progressVersion": 21,
+    "completedCount": 9,
+    "artworkKey": "expeditions/observatory/v1/observatory.png",
+    "quests": [
+      {
+        "id": "steps_days_3",
+        "piece": 0,
+        "reward": {
+          "itemId": "astronomers-satchel",
+          "version": 1
+        },
+        "target": 3,
+        "description": "Reach at least 5,000 steps on 3 different days during the expedition.",
+        "current": 3,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "88c14f06-8c14-5dc8-8055-5dbd3e2bfcc0",
+          "rewardKey": "quest:steps_days_3",
+          "reward": {
+            "itemId": "astronomers-satchel",
+            "version": 1
+          },
+          "claimed": true
+        }
+      },
+      {
+        "id": "run_walk_sessions_3",
+        "piece": 1,
+        "reward": {
+          "tokens": 400
+        },
+        "target": 3,
+        "description": "Complete 3 recorded runs of at least 2 km or recorded walks of at least 15 minutes, in any combination.",
+        "current": 3,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "906f43b9-b0c6-586f-a92f-21e2d8a8d79c",
+          "rewardKey": "quest:run_walk_sessions_3",
+          "reward": {
+            "tokens": 400
+          },
+          "claimed": true
+        }
+      },
+      {
+        "id": "items_together_4",
+        "piece": 2,
+        "reward": {
+          "tokens": 200
+        },
+        "target": 4,
+        "description": "Have at least 4 items placed in your garden together.",
+        "current": 4,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "585ec14a-6b53-5275-8c68-fed0e45a8934",
+          "rewardKey": "quest:items_together_4",
+          "reward": {
+            "tokens": 200
+          },
+          "claimed": true
+        }
+      },
+      {
+        "id": "active_butterflies_100",
+        "piece": 3,
+        "reward": {
+          "tokens": 250
+        },
+        "target": 100,
+        "description": "Tap to welcome 100 butterflies during the expedition. Stored collections do not count.",
+        "current": 100,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "76f7209d-1be9-587a-8c2f-59354163ca4a",
+          "rewardKey": "quest:active_butterflies_100",
+          "reward": {
+            "tokens": 250
+          },
+          "claimed": true
+        }
+      },
+      {
+        "id": "packs_opened_3",
+        "piece": 4,
+        "reward": {
+          "gems": 1
+        },
+        "target": 3,
+        "description": "Open 3 packs of any kind during the expedition.",
+        "current": 3,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "16d2065d-4b4a-5865-9525-6b23b91ea24b",
+          "rewardKey": "quest:packs_opened_3",
+          "reward": {
+            "gems": 1
+          },
+          "claimed": true
+        }
+      },
+      {
+        "id": "all_stages_together",
+        "piece": 5,
+        "reward": {
+          "tokens": 300
+        },
+        "target": 4,
+        "description": "Have a sprout, seedling, young plant and adult planted together once.",
+        "current": 4,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "9afa596e-6c3b-5f81-a55e-a33fc55ca0e3",
+          "rewardKey": "quest:all_stages_together",
+          "reward": {
+            "tokens": 300
+          },
+          "claimed": true
+        }
+      },
+      {
+        "id": "copies_advanced_4",
+        "piece": 6,
+        "reward": {
+          "packId": "woodland",
+          "version": 20
+        },
+        "target": 4,
+        "description": "Help 4 different plant copies advance at least one growth stage during the expedition.",
+        "current": 4,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "b9e82d25-b20d-5f55-a1fa-22ee91bac213",
+          "rewardKey": "quest:copies_advanced_4",
+          "reward": {
+            "packId": "woodland",
+            "version": 20
+          },
+          "claimed": true
+        }
+      },
+      {
+        "id": "tree_herb_butterflies_50",
+        "piece": 7,
+        "reward": {
+          "tokens": 300
+        },
+        "target": 50,
+        "description": "Tap to welcome 50 butterflies while at least one tree and one herb are planted. Stored collections do not count.",
+        "current": 50,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "6d853a90-090f-53e2-8178-be9223fb116a",
+          "rewardKey": "quest:tree_herb_butterflies_50",
+          "reward": {
+            "tokens": 300
+          },
+          "claimed": true
+        }
+      },
+      {
+        "id": "monthly_steps_30000",
+        "piece": 8,
+        "reward": {
+          "tokens": 400
+        },
+        "target": 30000,
+        "description": "Accumulate 30,000 steps during the expedition, with no daily minimum.",
+        "current": 30000,
+        "completedAt": "2026-12-01T12:00:00+00:00",
+        "entitlement": {
+          "id": "453515ff-60c0-5e55-818f-c32b701a8bc2",
+          "rewardKey": "quest:monthly_steps_30000",
+          "reward": {
+            "tokens": 400
+          },
+          "claimed": true
+        }
+      }
+    ],
+    "rewards": [
+      {
+        "id": "88c14f06-8c14-5dc8-8055-5dbd3e2bfcc0",
+        "rewardKey": "quest:steps_days_3",
+        "reward": {
+          "itemId": "astronomers-satchel",
+          "version": 1
+        },
+        "claimed": true
+      },
+      {
+        "id": "906f43b9-b0c6-586f-a92f-21e2d8a8d79c",
+        "rewardKey": "quest:run_walk_sessions_3",
+        "reward": {
+          "tokens": 400
+        },
+        "claimed": true
+      },
+      {
+        "id": "585ec14a-6b53-5275-8c68-fed0e45a8934",
+        "rewardKey": "quest:items_together_4",
+        "reward": {
+          "tokens": 200
+        },
+        "claimed": true
+      },
+      {
+        "id": "76f7209d-1be9-587a-8c2f-59354163ca4a",
+        "rewardKey": "quest:active_butterflies_100",
+        "reward": {
+          "tokens": 250
+        },
+        "claimed": true
+      },
+      {
+        "id": "2be0ec8d-8e57-5790-b628-895f61b700ed",
+        "rewardKey": "milestone:4",
+        "reward": {
+          "itemId": "comet-basin",
+          "version": 1
+        },
+        "claimed": true
+      },
+      {
+        "id": "16d2065d-4b4a-5865-9525-6b23b91ea24b",
+        "rewardKey": "quest:packs_opened_3",
+        "reward": {
+          "gems": 1
+        },
+        "claimed": true
+      },
+      {
+        "id": "9afa596e-6c3b-5f81-a55e-a33fc55ca0e3",
+        "rewardKey": "quest:all_stages_together",
+        "reward": {
+          "tokens": 300
+        },
+        "claimed": true
+      },
+      {
+        "id": "b9e82d25-b20d-5f55-a1fa-22ee91bac213",
+        "rewardKey": "quest:copies_advanced_4",
+        "reward": {
+          "packId": "woodland",
+          "version": 20
+        },
+        "claimed": true
+      },
+      {
+        "id": "6d853a90-090f-53e2-8178-be9223fb116a",
+        "rewardKey": "quest:tree_herb_butterflies_50",
+        "reward": {
+          "tokens": 300
+        },
+        "claimed": true
+      },
+      {
+        "id": "453515ff-60c0-5e55-818f-c32b701a8bc2",
+        "rewardKey": "quest:monthly_steps_30000",
+        "reward": {
+          "tokens": 400
+        },
+        "claimed": true
+      },
+      {
+        "id": "f72b8dae-88e8-5209-bdc3-74fece88e54e",
+        "rewardKey": "milestone:9",
+        "reward": {
+          "itemId": "worldseed-orrery",
+          "version": 1
+        },
+        "claimed": true
+      }
+    ],
+    "coverage": []
+  },
+  "receipts": [
+    {
+      "requestId": "1df99d21-344e-4b2c-9bd7-eeaea019f386",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "88c14f06-8c14-5dc8-8055-5dbd3e2bfcc0",
+      "rewardKey": "quest:steps_days_3",
+      "tokensEarned": "0",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [
+        "c85363ef-ece0-4fdf-8608-f916a82de97a"
+      ],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "0",
+      "gemBalance": "0",
+      "economyVersion": 2
+    },
+    {
+      "requestId": "94cc1e40-34d9-4131-9891-6ea63f7739c9",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "906f43b9-b0c6-586f-a92f-21e2d8a8d79c",
+      "rewardKey": "quest:run_walk_sessions_3",
+      "tokensEarned": "400",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "400",
+      "gemBalance": "0",
+      "economyVersion": 3
+    },
+    {
+      "requestId": "3998ddf8-8a0c-4161-8a84-e03c357afd32",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "585ec14a-6b53-5275-8c68-fed0e45a8934",
+      "rewardKey": "quest:items_together_4",
+      "tokensEarned": "200",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "600",
+      "gemBalance": "0",
+      "economyVersion": 4
+    },
+    {
+      "requestId": "06402384-0117-4a9d-85d9-88b3d3b56dbf",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "76f7209d-1be9-587a-8c2f-59354163ca4a",
+      "rewardKey": "quest:active_butterflies_100",
+      "tokensEarned": "250",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "850",
+      "gemBalance": "0",
+      "economyVersion": 5
+    },
+    {
+      "requestId": "2b5c054c-c057-49cd-9be5-3b2d51f56693",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "2be0ec8d-8e57-5790-b628-895f61b700ed",
+      "rewardKey": "milestone:4",
+      "tokensEarned": "0",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [
+        "6fb2cdd2-ae2c-469d-a50a-f29136ba3df6"
+      ],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "850",
+      "gemBalance": "0",
+      "economyVersion": 6
+    },
+    {
+      "requestId": "ddc3860e-7ccd-41c5-8dc2-30f9a0f0a99f",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "16d2065d-4b4a-5865-9525-6b23b91ea24b",
+      "rewardKey": "quest:packs_opened_3",
+      "tokensEarned": "0",
+      "gemsEarned": "1",
+      "packs": [],
+      "ownedItemIds": [],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "850",
+      "gemBalance": "1",
+      "economyVersion": 7
+    },
+    {
+      "requestId": "ec5f40ad-9e18-4f2c-83c5-63253e676899",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "9afa596e-6c3b-5f81-a55e-a33fc55ca0e3",
+      "rewardKey": "quest:all_stages_together",
+      "tokensEarned": "300",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "1150",
+      "gemBalance": "1",
+      "economyVersion": 8
+    },
+    {
+      "requestId": "066c8d6c-461e-41e4-abe5-a6c7023672d9",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "b9e82d25-b20d-5f55-a1fa-22ee91bac213",
+      "rewardKey": "quest:copies_advanced_4",
+      "tokensEarned": "0",
+      "gemsEarned": "0",
+      "packs": [
+        {
+          "ownedPackId": "1abe3a84-19ce-4fd5-b0c8-6488ed70a6df",
+          "packId": "woodland",
+          "version": 20,
+          "acquiredAt": "2026-12-01T12:00:00+00:00"
+        }
+      ],
+      "ownedItemIds": [],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "1150",
+      "gemBalance": "1",
+      "economyVersion": 9
+    },
+    {
+      "requestId": "4a416a14-f333-432e-8cc3-e4e34e60b5dc",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "6d853a90-090f-53e2-8178-be9223fb116a",
+      "rewardKey": "quest:tree_herb_butterflies_50",
+      "tokensEarned": "300",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "1450",
+      "gemBalance": "1",
+      "economyVersion": 10
+    },
+    {
+      "requestId": "32e91f3c-639e-4b74-b7c8-f3b98c4d64f7",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "453515ff-60c0-5e55-818f-c32b701a8bc2",
+      "rewardKey": "quest:monthly_steps_30000",
+      "tokensEarned": "400",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "1850",
+      "gemBalance": "1",
+      "economyVersion": 11
+    },
+    {
+      "requestId": "e11b2223-cf9a-4067-a505-6f3ed3560058",
+      "runId": "48b3778c-a172-5948-8d6a-c54c7a101587",
+      "entitlementId": "f72b8dae-88e8-5209-bdc3-74fece88e54e",
+      "rewardKey": "milestone:9",
+      "tokensEarned": "0",
+      "gemsEarned": "0",
+      "packs": [],
+      "ownedItemIds": [
+        "c8ad663b-706a-4af5-8a41-76f2d04cfd91"
+      ],
+      "claimedAt": "2026-12-01T12:00:00+00:00",
+      "tokenBalance": "1850",
+      "gemBalance": "1",
+      "economyVersion": 12
+    }
+  ]
+}

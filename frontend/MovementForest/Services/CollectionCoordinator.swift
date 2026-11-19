@@ -154,6 +154,12 @@ final class CollectionCoordinator: ObservableObject {
             let isOpening = pending.kind == .open
             let matchesOperation: Bool
             switch pending.kind {
+            case .expeditionClaim:
+                let ids = receipt.ownedItemIds ?? []
+                matchesOperation = receipt.requestId == pending.id && receipt.runId == pending.runID &&
+                    receipt.entitlementId == pending.entitlementID && receipt.rewardKey != nil &&
+                    receipt.tokensEarned.flatMap(ExactAmount.integer) != nil &&
+                    receipt.gemsEarned.flatMap(ExactAmount.integer) != nil && Set(ids).count == ids.count
             case .itemPurchase:
                 let body = try ActivityWire.decoder().decode(CollectionExchangeBody.self, from: pending.body)
                 let ids = receipt.ownedItemIds ?? []
@@ -201,11 +207,12 @@ final class CollectionCoordinator: ObservableObject {
             }
             DiagnosticHistory.shared.record("Collection", "confirmed \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
             message = pending.kind == .itemPurchase ? "Item saved to Storage." :
+                pending.kind == .expeditionClaim ? "Expedition reward saved." :
                 pending.kind == .itemSell ? "Item sold for \(receipt.tokensEarned ?? "0") tokens." :
                 pending.kind == .sell ? "Plant sold for \(receipt.tokensEarned ?? "0") tokens." :
                 pending.kind == .milestone ? "Milestone reward saved." :
                 (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
-            if isOpening || pending.kind == .sell || pending.kind == .itemPurchase || pending.kind == .itemSell { await onPlantAwarded?() }
+            if isOpening || pending.kind == .sell || pending.kind == .itemPurchase || pending.kind == .itemSell || pending.kind == .expeditionClaim { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
                     ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
             guard attached else { return }
@@ -331,6 +338,15 @@ final class CollectionCoordinator: ObservableObject {
             await submit(PendingCollectionOperation(id: id, kind: .milestone, target: nil,
                                                      body: body, milestoneID: milestone.id))
         } catch { message = displayFailure(error) }
+    }
+    func claimExpedition(run: UUID, entitlement: UUID) async {
+        guard canMutate else { return }
+        do {
+            let id = UUID()
+            let body = try ActivityWire.encoder().encode(CollectionOpenBody(requestId: id))
+            await submit(PendingCollectionOperation(id: id, kind: .expeditionClaim, target: nil,
+                body: body, runID: run, entitlementID: entitlement))
+        } catch { message = "The expedition claim could not be saved. Try again." }
     }
     func saleQuote(plant: UUID) async throws -> APIPlantSaleQuote {
         guard attached, !recoveryLocked, state.pending == nil else {

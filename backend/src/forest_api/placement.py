@@ -69,6 +69,9 @@ def edit_garden(
 
         settlement_boundary = clock()
         settle_due(session, settings, garden, settlement_boundary)
+        from forest_api.expeditions import observe_garden
+
+        observe_garden(session, garden, settlement_boundary)
         catalogue = services.get_catalogue_state(session, settings, lock=True)
         proposal = propose_layout(session, settings, user, garden, catalogue, body)
         initial, final = proposal.initial, proposal.final
@@ -126,6 +129,7 @@ def edit_garden(
             garden.state_version += 1
             session.flush()
             accounting.after_change(session, garden, boundary)
+            observe_garden(session, garden, boundary)
             session.flush()
 
         presenter = services.PlantPresenter(session)

@@ -767,6 +767,10 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
             from forest_api.milestone_tracks import observe_visitors
 
             observe_visitors(session, user.id, boundary, visits)
+            if kind == "active_welcome":
+                from forest_api.expeditions import observe_welcome
+
+                observe_welcome(session, garden, boundary, target)
             session.add(
                 VisitorRewardEvent(
                     id=event_id,

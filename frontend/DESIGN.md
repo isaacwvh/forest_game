@@ -1,3 +1,23 @@
+## Monthly expedition — 19 November 2026
+
+Expedition is the fifth bottom destination; the original controls and mounted
+Garden remain. It uses the existing journal paper, sage tracks, forest-green
+actions and readable serif title. One continuous Observatory painting forms nine
+organic pieces. Greyscale becomes colour only after a confirmed piece reward
+claim. The four-quest Basin and nine-quest Orrery remain independent rewards.
+
+Quest detail is a small centred popup with a 44-point Close control, the exact
+requirement, an in-bar current/target ratio and quantity-first reward artwork.
+There is no separate quest title, bottom sheet or View all quests button.
+Content-measured scrolling preserves Close and claim at large text sizes. Ratios
+stay inside their bars, using two lines at accessibility sizes. Confirmed receipts
+retain collection/reveal even if a later refresh fails. Missing art exposes text
+quest access. Reduce Motion skips reveal transitions; colour is not the only state.
+
+Every monthly run renews at server-wide 00:00 UTC on day one. Earlier earned
+rewards/owned items survive; archive and evidence grace remain separate from the
+current run. See EXPEDITIONS_ACCEPTANCE.md for actual Mac/iPhone acceptance gates.
+
 ## Compact milestone quest rows — 18 November 2026
 
 The approved compact-row render supersedes earlier milestone rail/reward-label

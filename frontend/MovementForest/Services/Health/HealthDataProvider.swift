@@ -8,10 +8,14 @@ protocol HealthDataProviding {
     func requestReadAccess() async throws
     func readActivity(now: Date, timeZone: TimeZone) async -> ActivityReport
     func readStepObservation(now: Date, timeZone: TimeZone) async -> ActivityReport
+    func readExpeditionEvidence(ranges: [ExpeditionCoverage], now: Date) async throws -> ExpeditionHealthEvidence
     func observeChanges(_ handler: @escaping @MainActor () async -> Void)
 }
 
 extension HealthDataProviding {
+    func readExpeditionEvidence(ranges: [ExpeditionCoverage], now: Date) async throws -> ExpeditionHealthEvidence {
+        throw ForestError.invalidData("Expedition Health evidence is unavailable from this provider.")
+    }
     func observeChanges(_ handler: @escaping @MainActor () async -> Void) { }
     func readStepObservation(now: Date, timeZone: TimeZone) async -> ActivityReport {
         await readActivity(now: now, timeZone: timeZone)

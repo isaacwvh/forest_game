@@ -7,7 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from uuid import UUID
 
-from forest_api import item_catalogue, woodland
+from forest_api import expedition_definitions, item_catalogue, woodland
 from forest_api.activity_inputs import WORKOUT_TYPES
 from forest_api.schemas import BehaviourDefinition
 from forest_api.skill_rules import CAPS_V1, SkillCaps, SkillEffect
@@ -48,7 +48,13 @@ def cases():
 
     def item(record, i):
         raw = (
-            item_catalogue.profile(record["skillId"]) if record.get("skillId") else {"effects": []}
+            (
+                expedition_definitions.profile(record["skillId"])
+                if record.get("skillId") in {"guiding_glow", "alignment_of_worlds"}
+                else item_catalogue.profile(record["skillId"])
+            )
+            if record.get("skillId")
+            else {"effects": []}
         )
         effects = []
         for effect in raw["effects"]:
@@ -79,6 +85,7 @@ def cases():
                 "profileVersion": 1,
                 "effects": effects,
                 "dailyGrant": raw.get("dailyGrant"),
+                **({"triggeredGrants": raw["triggeredGrants"]} if "triggeredGrants" in raw else {}),
             },
         }
 
@@ -123,6 +130,7 @@ def cases():
                 1,
                 tuple(SkillEffect.model_validate(e) for e in i["strategyRules"]["effects"]),
                 i["strategyRules"]["dailyGrant"],
+                tuple(i["strategyRules"].get("triggeredGrants", [])),
             )
             for i in items
         ]
@@ -213,6 +221,31 @@ def cases():
     old["gardenSkills"][0]["magnitude"]["value"] = "0.04"
     old["pinnedProfiles"]["behaviour"]["version"] = 2
     result.append(case("old_and_new_sleeping_dew", [old, new]))
+    reward_items = [
+        item(
+            {
+                "id": key,
+                "displayName": name,
+                "rarity": rarity,
+                "radius": radius,
+                "description": description,
+                "assetVersion": "1.0.0",
+                "skillId": skill,
+            },
+            5000 + n,
+        )
+        for n, (key, name, rarity, radius, description, skill) in enumerate(
+            expedition_definitions.ITEMS
+        )
+    ]
+    for reward_item in reward_items:
+        result.append(case("reward_" + reward_item["itemId"], all_plants[:6], [reward_item]))
+    duplicates = [
+        *reward_items,
+        *[{**i, "ownedItemId": str(UUID(int=6000 + n))} for n, i in enumerate(reward_items)],
+    ]
+    result.append(case("reward_duplicates", all_plants[:6], duplicates))
+    result.append(case("reward_without_plants", [], reward_items))
     # Placement is irrelevant to the pure evaluator, membership is the input list.
     return result
 

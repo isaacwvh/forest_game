@@ -98,6 +98,38 @@ def validate():
         "PASS: bench assets, footprint, alpha icon, bundle inclusion, HTTP placement, 550-token purchases and 137-token resale contract."
     )
     validate_catalogue()
+    validate_expedition_items()
+
+
+def validate_expedition_items():
+    index = json.loads((ROOT / "frontend/MovementForest/Resources/Fixtures/item-asset-index.json").read_text())
+    for name in ("astronomers-satchel", "comet-basin", "worldseed-orrery"):
+        assert f"{name}/v1/item-manifest.json" in index
+        folder = ROOT / "assets/items" / name / "v1"
+        manifest = json.loads((folder / "item-manifest.json").read_text())
+        assert manifest["itemId"] == name and manifest["assetVersion"] == "1.0.0"
+        for asset in manifest["assets"]:
+            path = (folder / asset["file"]).resolve()
+            assert path.is_relative_to(folder.resolve())
+            data = path.read_bytes()
+            assert len(data) == asset["bytes"] and hashlib.sha256(data).hexdigest() == asset["sha256"]
+            if path.suffix == ".usdz":
+                with zipfile.ZipFile(path) as archive:
+                    assert archive.testzip() is None
+                    for entry in archive.infolist():
+                        assert entry.compress_type == zipfile.ZIP_STORED
+                        assert not entry.filename.startswith("/") and ".." not in Path(entry.filename).parts
+                        header = struct.unpack("<4s5H3I2H", data[entry.header_offset:entry.header_offset + 30])
+                        assert (entry.header_offset + 30 + header[-2] + header[-1]) % 64 == 0
+            else:
+                assert struct.unpack(">IIBB", data[16:26]) == (384, 448, 8, 6)
+    painting = ROOT / "assets/expeditions/observatory/v1"
+    manifest = json.loads((painting / "manifest.json").read_text())
+    data = (painting / manifest["file"]).read_bytes()
+    assert len(data) == manifest["bytes"] and hashlib.sha256(data).hexdigest() == manifest["sha256"]
+    assert struct.unpack(">II", data[16:24])[0] == struct.unpack(">II", data[16:24])[1]
+    assert "../assets/expeditions" in (ROOT / "frontend/MovementForest.xcodeproj/project.pbxproj").read_text()
+    print("PASS: three expedition item packages and clean observatory painting, hashes, archives and thumbnails.")
 
 
 def validate_catalogue():
@@ -109,7 +141,7 @@ def validate_catalogue():
             ROOT / "frontend/MovementForest/Resources/Fixtures/item-asset-index.json"
         ).read_text()
     )
-    assert len(definitions) == len(index) == 15
+    assert len(definitions) == 15 and len(index) == 18
     assert {
         r["rarity"]: sum(x["rarity"] == r["rarity"] for x in definitions)
         for r in definitions

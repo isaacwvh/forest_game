@@ -30,6 +30,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-ra --strict-markers"
 filterwarnings = ["error"]
 
@@ -45,6 +46,7 @@ select = ["E", "F", "I", "UP", "B"]
 "src/forest_api/visitor_routes.py" = ["B008"]
 "src/forest_api/collection_routes.py" = ["B008"]
 "src/forest_api/dependencies.py" = ["B008"]
+"src/forest_api/expedition_routes.py" = ["B008"]
 
 [tool.setuptools.package-data]
 forest_api = ["data/*.json"]

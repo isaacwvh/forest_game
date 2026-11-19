@@ -459,6 +459,9 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
             garden.state_version = checked(garden.state_version + 1)
             # UUID ordering is not used for time semantics, only bounded pagination.
             opening_id = uuid4()
+            from forest_api.expeditions import observe_opening
+
+            observe_opening(session, user.id, boundary, opening_id)
             receipt = {
                 "requestId": str(body.request_id),
                 "openingId": str(opening_id),

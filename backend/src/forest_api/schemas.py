@@ -285,6 +285,7 @@ class GardenDTO(DTO):
     skill_summary: dict | None = None
     strategy_context: dict | None = None
     daily_water: list[dict] = Field(default_factory=list)
+    step_tier_water: list[dict] = Field(default_factory=list)
 
 
 class StageAssetDTO(DTO):

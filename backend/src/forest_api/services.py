@@ -235,7 +235,9 @@ def replay(
         "register_account",
         "update_profile",
         "activity_enrolment",
-    } or operation.startswith(("recap_ack:", "milestone_claim:")):
+    } or operation.startswith(
+        ("recap_ack:", "milestone_claim:", "expedition_claim:", "expedition_evidence:")
+    ):
         return record.completion["outcome"]
     if operation in {"token_exchange", "pack_open", "item_purchase"}:
         from forest_api.collection_models import CollectionEvent, PackOpening
@@ -551,11 +553,16 @@ def present_garden(
     presenter = presenter or PlantPresenter(session)
     skills = skill_snapshot(session, garden, presenter=presenter, rows=rows, boundary=boundary)
     presented = [presenter.plant(plant, placement) for plant, placement in rows]
-    from forest_api import daily_items, items
+    from forest_api import daily_items, item_step_grants, items
 
     placed_items = [
         items.present(row) for row in items.rows(session, garden.owner_id, placed_only=True)
     ]
+    if any(
+        item.item_id in {"astronomers-satchel", "comet-basin", "worldseed-orrery"}
+        for item in placed_items
+    ) and not session.info.get("expeditions_client"):
+        raise ApiError(426, "expedition_update_required", "Update the app for expedition rewards")
     if any(item.item_id != "wooden-bench" for item in placed_items) and not session.info.get(
         "item_rotations_client"
     ):
@@ -583,6 +590,7 @@ def present_garden(
         daily_water=daily_items.recent(
             session, garden.owner_id, boundary or session.scalar(select(func.clock_timestamp()))
         ),
+        step_tier_water=item_step_grants.recent(session, garden.owner_id),
     )
 
 
@@ -688,6 +696,9 @@ def read_garden(session: Session, settings: Settings, identity: Identity) -> Gar
             else session.scalar(select(func.clock_timestamp()))
         )
         settle_due(session, settings, garden, boundary)
+        from forest_api.expeditions import observe_garden
+
+        observe_garden(session, garden, boundary)
         catalogue = get_catalogue_state(session, settings, lock=True)
         return present_garden(session, garden, catalogue, boundary=boundary)
 

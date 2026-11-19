@@ -40,7 +40,9 @@ def retention(operation):
         "visitor_claim",
         "token_exchange",
         "pack_open",
-    } or operation.startswith(("recap_ack:", "milestone_claim:")):
+    } or operation.startswith(
+        ("recap_ack:", "milestone_claim:", "expedition_claim:", "expedition_evidence:")
+    ):
         return timedelta(days=7)
 
 
@@ -52,7 +54,9 @@ def completion(operation, response):
         "register_account",
         "update_profile",
         "activity_enrolment",
-    } or operation.startswith(("recap_ack:", "milestone_claim:")):
+    } or operation.startswith(
+        ("recap_ack:", "milestone_claim:", "expedition_claim:", "expedition_evidence:")
+    ):
         outcome = response
     elif operation in {"token_exchange", "pack_open", "plant_sell", "item_purchase", "item_sell"}:
         outcome = {
@@ -115,6 +119,8 @@ def maintain(session, *, apply=False, limit=500, now=None):
                 ApiRequest.operation.in_(CONTROLS | ORDINARY)
                 | ApiRequest.operation.startswith("recap_ack:")
                 | ApiRequest.operation.startswith("milestone_claim:")
+                | ApiRequest.operation.startswith("expedition_claim:")
+                | ApiRequest.operation.startswith("expedition_evidence:")
             )
             .where(
                 (ApiRequest.completion.is_(None))

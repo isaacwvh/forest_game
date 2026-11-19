@@ -115,6 +115,7 @@ def evaluate_proposal(session, settings, garden, catalogue, proposal, boundary):
                 rules["profileVersion"],
                 tuple(SkillEffect.model_validate(e) for e in rules["effects"]),
                 rules["dailyGrant"],
+                tuple(rules.get("triggeredGrants", [])),
             )
         )
     snapshot = SkillSnapshot(

@@ -185,6 +185,13 @@ def read(session, identity, limit, after):
         user = services.get_user(session, identity, lock=True)
         services.lock_garden(session, user.id)
         values = rows(session, user.id)
+        if any(
+            row[2].id in {"astronomers-satchel", "comet-basin", "worldseed-orrery"}
+            for row in values
+        ) and not session.info.get("expeditions_client"):
+            raise ApiError(
+                426, "expedition_update_required", "Update the app for expedition rewards"
+            )
         if any(row[2].id != "wooden-bench" for row in values) and not session.info.get(
             "item_rotations_client"
         ):

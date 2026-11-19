@@ -179,6 +179,9 @@ struct APIOpeningPage: Codable { let openings: [APICollectionReceipt]; let nextC
 
 /// Both operations share accounting fields; the selected operation validates its result.
 struct APICollectionReceipt: Codable, Identifiable {
+    var runId: UUID? = nil
+    var entitlementId: UUID? = nil
+    var rewardKey: String? = nil
     var gemBalance: String? = nil
     var gemsSpent: String? = nil
     let requestId: UUID
@@ -257,14 +260,21 @@ struct CollectionSellBody: Codable {
 }
 
 struct PendingCollectionOperation: Codable, Equatable {
-    enum Kind: String, Codable { case exchange, open, milestone, sell, itemPurchase, itemSell }
+    enum Kind: String, Codable { case exchange, open, milestone, sell, itemPurchase, itemSell, expeditionClaim }
     let id: UUID
     let kind: Kind
     let target: UUID?
     let body: Data
     var milestoneID: String? = nil
+    var runID: UUID? = nil
+    var entitlementID: UUID? = nil
     func validate() throws {
         switch kind {
+        case .expeditionClaim:
+            let request = try ActivityWire.decoder().decode(CollectionOpenBody.self, from: body)
+            guard request.requestId == id, runID != nil, entitlementID != nil, target == nil else {
+                throw ForestError.invalidData("The saved expedition claim could not be verified.")
+            }
         case .itemPurchase:
             let request = try ActivityWire.decoder().decode(CollectionExchangeBody.self, from: body)
             guard request.requestId == id, target == nil, (1...20).contains(request.quantity),
@@ -366,6 +376,7 @@ struct APICollectionRepository: CollectionServing {
         try operation.validate()
         let path: String
         switch operation.kind {
+        case .expeditionClaim: path = "v1/me/expeditions/\(operation.runID!.uuidString)/rewards/\(operation.entitlementID!.uuidString)/claim"
         case .itemPurchase: path = "v1/me/item-purchases"
         case .itemSell: path = "v1/me/items/\(operation.target!.uuidString)/sell"
         case .sell: path = "v1/me/plants/\(operation.target!.uuidString)/sell"

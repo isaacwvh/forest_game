@@ -9,6 +9,7 @@ from sqlalchemy.engine import make_url
 from forest_api import (
     activity_models,  # noqa: F401 - register typed activity and milestone metadata
     collection_models,  # noqa: F401 - register B7 metadata
+    expedition_models,  # noqa: F401 - recurring expeditions
     history_models,  # noqa: F401 - compact accounting and temporary provenance
     item_models,  # noqa: F401 - separate item ownership and placement
     milestone_models,  # noqa: F401 - permanent milestone progress and entitlements

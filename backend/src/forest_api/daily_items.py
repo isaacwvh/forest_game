@@ -69,6 +69,14 @@ def settle_due(session, settings, garden, now):
             boundary = datetime.combine(day, datetime.min.time(), zone).astimezone(UTC)
             visitors.settle(session, settings, garden, boundary)
             changed = False
+            from forest_api.calculations import stage_for
+
+            before_stages = {
+                p.id: stage_for(p.growth_micro_units, limits[p.id].thresholds) for p in plants
+            }
+            from forest_api.expeditions import observe_garden
+
+            observe_garden(session, garden, boundary)
             for plant in growing:
                 key = owner.id, plant.id, day, "morning_rain"
                 if session.get(DailyItemGrant, key) is not None:
@@ -127,6 +135,9 @@ def settle_due(session, settings, garden, now):
                 garden.state_version = collection.checked(garden.state_version + 1)
                 session.flush()
                 discovery.record_reached(session, owner.id, plants, boundary)
+                from forest_api.expeditions import observe_garden
+
+                observe_garden(session, garden, boundary, before=before_stages)
                 visitors.VisitorAccounting(settings).after_change(session, garden, boundary)
             state.settled_at = boundary
             session.flush()

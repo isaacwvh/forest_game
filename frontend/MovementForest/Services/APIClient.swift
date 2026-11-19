@@ -130,6 +130,7 @@ struct APIClient {
         request.setValue("1", forHTTPHeaderField: "X-Forest-Woodland")
         request.setValue("2", forHTTPHeaderField: "X-Forest-Discovery")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Milestones")
+        request.setValue("1", forHTTPHeaderField: "X-Forest-Expeditions")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Items")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Item-Commerce")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Item-Rotations")

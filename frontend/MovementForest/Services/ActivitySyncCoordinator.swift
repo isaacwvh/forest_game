@@ -15,6 +15,7 @@ final class ActivitySyncCoordinator: ObservableObject {
     @Published private(set) var recoveryLocked = false
     let installationID: UUID
     var onConfirmedGrowth: (() -> Void)?
+    var onExpeditionRefresh: (() -> Void)?
     var onAccountProgression: ((APIAccountProgression?, APIAccountWallet?) -> Void)?
     private let editor: GardenEditorStore
     private let health: ActivityStore
@@ -207,6 +208,7 @@ final class ActivitySyncCoordinator: ObservableObject {
             } else { message = "Activity sync is off. Your confirmed garden is up to date." }
             await editor.refresh()
             try await loadRecaps()
+            onExpeditionRefresh?()
             return !editor.showingCached && editor.state == .ready
         } catch {
             guard active else { return false }

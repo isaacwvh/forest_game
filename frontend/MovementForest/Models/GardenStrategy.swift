@@ -28,7 +28,15 @@ struct APIItemStrategyRules: Codable, Equatable {
     let profileVersion: Int
     let effects: [APIGardenSkillDefinition]
     var dailyGrant: DailyGrant? = nil
+    var triggeredGrants: [TriggeredGrant]? = nil
     struct DailyGrant: Codable, Equatable { let water: String }
+    struct TriggeredGrant: Codable, Equatable {
+        let type: String
+        let family: String
+        let name: String
+        let tiers: [Tier]
+        struct Tier: Codable, Equatable { let steps: Int; let water: String }
+    }
 }
 struct APIStrategyContext: Codable, Equatable {
     let schemaVersion: Int
@@ -104,6 +112,10 @@ struct GardenAvailableSkill: Codable, Equatable, Identifiable {
             if item.strategyRules?.dailyGrant != nil {
                 definitions["Morning Rain", default: []] += []
                 itemSources["Morning Rain", default: []].insert(item.id)
+            }
+            for trigger in item.strategyRules?.triggeredGrants ?? [] {
+                definitions[trigger.name, default: []] += []
+                itemSources[trigger.name, default: []].insert(item.id)
             }
         }
         return definitions.keys.sorted().map { name in
@@ -267,6 +279,17 @@ enum GardenStrategyEvaluator {
                 description: "+2.5 water per eligible planted plant at account-local midnight. Duplicate harps apply once.",
                 system: "growth", scope: "daily_water", metric: nil, operation: "flat", magnitude: grant.water,
                 stackingGroup: "item_morning_rain", sourceItemId: source.id, sourceKind: "item", eligibleSourceItemIds: daily.map(\.id),
+                profileId: rules.profileId, profileVersion: rules.profileVersion, eligibleSourcePlantIds: [], recipientPlantIds: plants.map(\.id))
+        }
+        let triggered = items.filter { !($0.strategyRules?.triggeredGrants ?? []).isEmpty }.sorted { $0.id.uuidString < $1.id.uuidString }
+        if let source = triggered.first, let rules = source.strategyRules,
+           let trigger = rules.triggeredGrants?.first {
+            guard trigger.type == "daily_placed_steps_flat_water", trigger.family == "alignment_of_worlds",
+                  trigger.tiers.map(\.steps) == [2000, 4000, 6000], trigger.tiers.map(\.water) == ["3", "4", "5"] else { throw unavailable }
+            rows["step_tier_water/alignment_of_worlds"] = APISkillSummary.Effect(skillId: trigger.family, name: trigger.name,
+                description: "2,000 / 4,000 / 6,000 daily steps while placed grant 3 / 4 / 5 flat water per planted plant. Duplicates share progress.",
+                system: "growth", scope: "step_tier_water", metric: "steps", operation: "flat", magnitude: "12",
+                stackingGroup: "item_alignment_of_worlds", sourceItemId: source.id, sourceKind: "item", eligibleSourceItemIds: triggered.map(\.id),
                 profileId: rules.profileId, profileVersion: rules.profileVersion, eligibleSourcePlantIds: [], recipientPlantIds: plants.map(\.id))
         }
         var limits: [String] = []

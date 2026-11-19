@@ -183,6 +183,7 @@ enum GardenStrategyCopy {
             }
         case "welcome_duration": return "welcome time"
         case "daily_water": return "daily water per plant"
+        case "step_tier_water": return "maximum daily tier water per plant"
         default: return "attraction"
         }
     }
@@ -353,6 +354,12 @@ struct GardenSkillsPage: View {
                     JournalSectionHeading(title: "Recent Morning Rain")
                     ForEach(grants) { grant in Text("\(grant.gameDate): +\(grant.water) water across \(grant.plantCount) plants").font(.callout) }
                 }
+                if let grants = store.confirmed?.stepTierWater, !grants.isEmpty {
+                    JournalSectionHeading(title: "Recent Alignment of Worlds")
+                    ForEach(grants) { grant in
+                        Text("\(grant.gameDate), \(grant.tier) steps: +\(grant.water) water across \(grant.plantCount) plants").font(.callout)
+                    }
+                }
                 if store.showingCached { Text("Last confirmed context").font(.caption).foregroundStyle(JournalTheme.secondary) }
             }.padding(20)
         }.navigationTitle("Garden skills").navigationBarTitleDisplayMode(.inline)
@@ -414,6 +421,7 @@ struct GardenSkillsPage: View {
             }
         }
         if group.name == "Morning Rain" { values.append("Next game-day reset after saving") }
+        if group.name == "Alignment of Worlds" { values.append("2,000 / 4,000 / 6,000 eligible steps each game day while placed; +3 / +4 / +5 flat water. Storing pauses progress.") }
         if values.isEmpty {
             values.append(sources(group).contains { $0.kind == "Plant" } ? "Fully grown and planted" : "While placed")
         }

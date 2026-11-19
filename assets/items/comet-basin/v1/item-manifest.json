@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "assetKind": "item",
+  "itemId": "comet-basin",
+  "displayName": "Comet Basin",
+  "rarity": "Rare",
+  "assetVersion": "1.0.0",
+  "format": "usdz",
+  "status": "asset-only; not registered in the app",
+  "units": "metres",
+  "authoringUpAxis": "Z",
+  "exportUpAxis": "Y",
+  "exportForwardAxis": "-Z",
+  "placement": {
+    "anchor": "ground_center",
+    "originDefinition": "center-of-complete-plan-envelope-at-ground",
+    "groundHeight": 0,
+    "gameplayClearance": "configured separately",
+    "proposedClearanceRadiusMetres": 0.69
+  },
+  "dimensionsMetres": {
+    "width": 0.9152,
+    "depth": 0.88,
+    "height": 0.6864
+  },
+  "uniformScaleFromConcept": 0.88,
+  "bounds": {
+    "axis": "Y-up",
+    "min": [
+      -0.4575999975204468,
+      1.5914874751388197e-08,
+      -0.4399999976158142
+    ],
+    "max": [
+      0.4575999975204468,
+      0.6863999962806702,
+      0.4399999678134918
+    ]
+  },
+  "appearanceId": "standard",
+  "animation": {
+    "name": "comet_water_ripples",
+    "durationSeconds": 6,
+    "fps": 30,
+    "frames": [
+      1,
+      181
+    ],
+    "loop": true,
+    "rootAnchored": true,
+    "rootMotion": false,
+    "representation": "skeletal",
+    "endpointPolicy": "181 samples close 180 frame intervals; repeat without holding the duplicate endpoint.",
+    "motion": "Three fine water crests expand outward from the stationary comet tail projection. Each crest rises subtly and sinks below the water at its reset. Comet, bowl, feet and water base stay stationary.",
+    "stationaryComet": true
+  },
+  "ui": {
+    "thumbnail": "ui/comet-basin-standard.png",
+    "width": 384,
+    "height": 448,
+    "alpha": true
+  },
+  "meshCount": 1,
+  "materialCount": 6,
+  "triangleCount": 31432,
+  "textures": {
+    "embedded": true,
+    "resolution": [
+      1024,
+      1024
+    ],
+    "count": 1,
+    "treatment": "Smooth refined color atlas, subtle broad tonal variation. No grain, procedural noise, bump or displacement."
+  },
+  "assets": [
+    {
+      "file": "models/comet-basin-standard.usdz",
+      "bytes": 1619705,
+      "sha256": "3678235c7fd8f2833bf7da9ec44ecabd0a0f374ac5775690147b4f0499584a6a",
+      "thumbnail": "ui/comet-basin-standard.png"
+    },
+    {
+      "file": "ui/comet-basin-standard.png",
+      "bytes": 81044,
+      "sha256": "e50a5addd180aed4bf48fbfb078cc6e86138a6208ed0e1884f97fa60edada61d"
+    }
+  ]
+}

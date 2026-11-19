@@ -293,6 +293,9 @@ def sync(
             rows=[(plant, None) for plant in plants],
             boundary=boundary,
         )
+        from forest_api.expeditions import observe_garden
+
+        observe_garden(session, garden, boundary)
         source_facts = {plant.id: plant for plant in skills.plants}
         day_results, credits = [], []
         growth_traces = []
@@ -500,6 +503,13 @@ def sync(
 
         from forest_api import growth_history
 
+        # Complete ordinary growth is one snapshot, before any flat tier batches.
+        observe_garden(session, garden, boundary, before={p.id: before[p.id][2] for p in plants})
+        from forest_api.item_step_grants import settle_steps
+
+        settle_steps(
+            session, settings, garden, plants, presenter, skills, day_results, boundary, accounting
+        )
         growth_history.store(session, growth_traces)
         discovery.record_reached(session, user.id, plants, boundary)
         changed = any(

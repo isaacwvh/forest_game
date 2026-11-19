@@ -57,6 +57,7 @@ def generated_files():
                        ("png-128", "../assets/quantity-icons-v1/png-128"),
                        ("journal", "../assets/journal"),
                        ("milestones", "../assets/milestones"),
+                       ("expeditions", "../assets/expeditions"),
                        ("garden-environment", "../assets/garden-environment"),
                        ("Fixtures", "MovementForest/Resources/Fixtures")]:
         resource_refs.append(add("resource-" + name, "PBXFileReference", lastKnownFileType="folder",

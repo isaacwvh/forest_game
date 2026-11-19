@@ -51,6 +51,14 @@ struct APIOwnedPlant: Codable, Identifiable, Equatable {
     }
 }
 
+struct APIStepTierWater: Codable, Equatable, Identifiable {
+    var id: String { "\(gameDate)/\(tier)" }
+    let gameDate: String
+    let tier: Int
+    let water: String
+    let plantCount: Int
+}
+
 struct APIDailyItemWater: Codable, Equatable, Identifiable {
     var id: String { gameDate }
     let gameDate: String
@@ -73,6 +81,7 @@ struct APIGarden: Codable, Equatable {
     var strategyContext: APIStrategyContext? = nil
     var items: [APIOwnedItem]? = nil
     var dailyWater: [APIDailyItemWater]? = nil
+    var stepTierWater: [APIStepTierWater]? = nil
 
     func rendered(catalogue: APICatalogue, assets: any AssetCatalogProviding) throws -> GardenSnapshot {
         guard coordinateUnit == "garden_unit", catalogue.coordinateUnit == coordinateUnit,
@@ -297,6 +306,7 @@ struct APISkillSummary: Codable, Equatable {
             case "offline_capacity": destination = "storage"
             case "welcome_duration": destination = "welcome time"
             case "daily_water": destination = "daily water per plant"
+            case "step_tier_water": destination = "maximum daily tier water per plant"
             default: destination = "attraction"
             }
             return "+\(value) \(destination)"

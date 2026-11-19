@@ -50,6 +50,7 @@ def facts(session, garden):
                 profile.version,
                 tuple(effects),
                 profile.rules.get("dailyGrant"),
+                tuple(profile.rules.get("triggeredGrants", [])),
             )
         )
     return tuple(result)
@@ -60,6 +61,18 @@ def descriptions(session, definition):
     if binding is None:
         return []
     profile = session.get(ItemSkillProfile, (binding.profile_id, binding.profile_version))
+    if profile.rules.get("triggeredGrants"):
+        return [
+            {
+                "id": profile.id,
+                "name": "Alignment of Worlds",
+                "description": (
+                    "While placed, 2,000 / 4,000 / 6,000 eligible daily steps grant "
+                    "3 / 4 / 5 flat water per planted plant. Copies share progress; "
+                    "storing pauses it."
+                ),
+            }
+        ]
     if profile.rules.get("dailyGrant"):
         return [
             {
@@ -106,4 +119,9 @@ def rules_for_definition(session, definition):
         "profileVersion": profile.version,
         "effects": effects,
         "dailyGrant": profile.rules.get("dailyGrant"),
+        **(
+            {"triggeredGrants": profile.rules["triggeredGrants"]}
+            if "triggeredGrants" in profile.rules
+            else {}
+        ),
     }

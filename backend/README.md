@@ -1,3 +1,11 @@
+## Recurring UTC expeditions — 19 November 2026
+
+Source implementation adds nine-quest monthly Observatory runs, reward-only items,
+Guiding Glow and Alignment of Worlds, centred native puzzle claims and bounded
+UTC Health-evidence recovery. Renewal is server-wide at 00:00 UTC on the first.
+Migration does not activate the event. See [EXPEDITIONS.md](EXPEDITIONS.md) for
+publication, contracts, long-absence sync and validation.
+
 **Garden strategy previews, 17 November 2026:** owner DTO prediction context,
 read-only `/v1/me/garden/preview`, and optional proof-bound atomic saves are
 source-implemented. This increment adds no schema migration, retained preview

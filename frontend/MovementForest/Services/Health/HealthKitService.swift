@@ -88,6 +88,54 @@ final class HealthKitService: HealthDataProviding {
         }
     }
 
+    func readExpeditionEvidence(ranges: [ExpeditionCoverage], now: Date) async throws -> ExpeditionHealthEvidence {
+        guard isAvailable, ranges.count <= 7 else {
+            throw ForestError.invalidData("Health evidence is unavailable or the request is too large.")
+        }
+        var days: [ExpeditionEvidenceDay] = []
+        for range in ranges {
+            let through = min(range.through, now)
+            guard range.startsAt < through else {
+                throw ForestError.invalidData("Check automatic date and time, then retry Health sync.")
+            }
+            var steps: Int64?
+            if range.stepsNeeded, let type = HKQuantityType.quantityType(forIdentifier: .stepCount) {
+                let runner = HealthQueryRunner<Double?>(store: store)
+                let total = try? await runner.run { finish in
+                    let predicate = HKQuery.predicateForSamples(withStart: range.startsAt, end: through,
+                        options: [.strictStartDate, .strictEndDate])
+                    let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, value, error in
+                        if let error = error { finish(.failure(error)) }
+                        else { finish(.success(value?.sumQuantity()?.doubleValue(for: .count()))) }
+                    }
+                    return query
+                }
+                steps = try ActivityWire.steps(total)
+            }
+            days.append(ExpeditionEvidenceDay(gameDate: range.gameDate, startsAt: range.startsAt,
+                through: through, steps: steps, workoutsComplete: false))
+        }
+        var workouts: [WorkoutUpload] = []
+        if ranges.contains(where: { $0.workoutsNeeded }), let first = ranges.first, let last = ranges.last {
+            do {
+                let values = try await readWorkouts(now: min(last.through, now), timeZone: TimeZone(secondsFromGMT: 0)!, from: first.startsAt)
+                let candidates = values.filter { value in
+                    [UInt(37), UInt(52)].contains(value.activityType) && ranges.contains {
+                        $0.startsAt <= value.start && value.start < $0.through
+                    }
+                }
+                let encoded = candidates.compactMap(ActivityWire.workout)
+                // Unrepresentable records must not mark a query completely uploaded.
+                guard encoded.count == candidates.count else {
+                    return ExpeditionHealthEvidence(days: days, workouts: encoded)
+                }
+                workouts = encoded
+                for index in days.indices where ranges[index].workoutsNeeded { days[index].workoutsComplete = true }
+            } catch { /* Successful step observations still upload; workout coverage stays unfinished. */ }
+        }
+        return ExpeditionHealthEvidence(days: days, workouts: workouts)
+    }
+
     private func readSteps(intervals: [DateInterval], timeZone: TimeZone, now: Date) async throws -> [ActivityDay] {
         let totals = try await readQuantity(intervals: intervals, timeZone: timeZone, now: now,
                                              identifier: .stepCount, unit: .count())
@@ -130,9 +178,9 @@ final class HealthKitService: HealthDataProviding {
         }
     }
 
-    private func readWorkouts(now: Date, timeZone: TimeZone) async throws -> [WorkoutObservation] {
+    private func readWorkouts(now: Date, timeZone: TimeZone, from requestedStart: Date? = nil) async throws -> [WorkoutObservation] {
         let calendar = ActivityCalendar.calendar(timeZone: timeZone)
-        guard let start = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: now)) else { return [] }
+        guard let start = requestedStart ?? calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: now)) else { return [] }
         let runner = HealthQueryRunner<[WorkoutObservation]>(store: store)
         return try await runner.run { finish in
             // Filter manual entries before selection. The bounded seven-day read

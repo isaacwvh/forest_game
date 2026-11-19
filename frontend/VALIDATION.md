@@ -1,3 +1,24 @@
+## Expeditions — 20 November 2026
+
+Implemented the fifth destination, nine-piece continuous painting, centred
+content-measured popup, in-bar ratios, quantity-first reward artwork, archive,
+account/server-scoped evidence queue, UTC rollover and confirmed-receipt reveal
+that survives a failed refresh. All three item packages are bundled. Skill
+summaries/prediction distinguish Guiding Glow, Orrery tiers and Morning Rain.
+
+Passed locally: project/resource/contracts, all 109 Swift syntax parses, item and
+painting hashes/archives, and design detector. The official portable Swift
+runtime passes all 92 backend resolver cases in both orders, draft/impact checks,
+and real expedition model/coordinator contract and pending-byte checks with
+platform interfaces. Backend full regression passed 767 tests with 3 existing
+benchmark skips; the final additional growth/pack-recovery integration passed.
+
+Hosted ExpeditionTests include actual SwiftUI shape partitioning and pinned claim
+checks but were not executed here. Apple SDK builds, hosted UI/XCTest, real
+HealthKit/background delivery and RealityKit/device appearance/performance remain
+Mac/iPhone acceptance gates: [EXPEDITIONS_ACCEPTANCE.md](EXPEDITIONS_ACCEPTANCE.md).
+No push, CI, live activation or personal save migration occurred.
+
 ## Compact garden editor and shared Skills — 17 November 2026
 
 Implemented the compact three-metric header and pinned red unsaved marker, shared

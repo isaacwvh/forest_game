@@ -4,6 +4,7 @@ from threading import RLock
 from fastapi import FastAPI
 
 from forest_api import (
+    expedition_models,  # noqa: F401 - monthly progress and permanent rewards
     history_models,  # noqa: F401 - register compact-history models
     item_models,  # noqa: F401 - separate item ownership and placement
     milestone_models,  # noqa: F401 - permanent milestone progress and entitlements
@@ -15,6 +16,7 @@ from forest_api.collection_routes import router as collection_router
 from forest_api.config import Settings
 from forest_api.database import Database
 from forest_api.errors import install_error_handlers
+from forest_api.expedition_routes import router as expedition_router
 from forest_api.routes import router
 from forest_api.visitor_routes import router as visitor_router
 from forest_api.visitors import VisitorAccounting
@@ -62,6 +64,7 @@ def _create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router)
     app.include_router(visitor_router)
     app.include_router(collection_router)
+    app.include_router(expedition_router)
     # Eagerly materialize lazy route/dependency adapters while construction is
     # serialized, instead of racing Pydantic annotation caches on first requests.
     app.openapi()
