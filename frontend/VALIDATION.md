@@ -1,3 +1,19 @@
+## Expedition layout follow-up — 20 November 2026
+
+Presentation-only changes: compact centred quest popup with artwork then quantity;
+rarity-framed 4/9 and 9/9 reward boxes above the progress bar; standard journal
+item inspectors with locked/ready/claimed footers; removal of the duplicate final
+reward section and Earlier expeditions browser; Expedition moved below Milestones
+in the sidebar, restoring the four core bottom destinations. Automatic and manual
+evidence recovery, durable claims and server APIs are unchanged.
+
+Passed: all 109 Swift syntax parses, portable project/resource/asset/contract
+validation, whitespace checks and the scoped layout detector (no findings).
+Source review covers bounded content/footer measurement, large-text reward boxes,
+44-point actions, modal accessibility and focus restoration, and exhaustive menu
+routing. Xcode compilation, native rendering and iPhone visual acceptance were
+not executed on Windows; use EXPEDITIONS_ACCEPTANCE.md for the device pass.
+
 ## Expeditions — 20 November 2026
 
 Implemented the fifth destination, nine-piece continuous painting, centred

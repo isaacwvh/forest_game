@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum CollectionDestination: String, CaseIterable, Identifiable {
-    case exchange = "Shop", catalog = "Catalog", draws = "Packs", milestones = "Milestones"
+    case exchange = "Shop", catalog = "Catalog", draws = "Packs", milestones = "Milestones", expedition = "Expedition"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -9,6 +9,7 @@ enum CollectionDestination: String, CaseIterable, Identifiable {
         case .catalog: return "books.vertical"
         case .draws: return "shippingbox"
         case .milestones: return "checkmark.seal"
+        case .expedition: return "map"
         }
     }
 }
@@ -23,7 +24,9 @@ struct CollectionHostScreen: View {
     var openingChanged: ((Bool) -> Void)? = nil
     var body: some View {
         Group {
-            if let store = connection.collection {
+            if destination == .expedition {
+                ExpeditionHostScreen(connection: connection)
+            } else if let store = connection.collection {
                 CollectionScreen(store: store, destination: destination, assets: assets, navigate: navigate,
                                  openingChanged: openingChanged, accountSummary: connection.accountSummary,
                                  inventoryEmbedded: inventoryEmbedded).id(store.id)
@@ -169,7 +172,7 @@ struct CollectionScreen: View {
                 case .milestones: EmptyView()
                 case .exchange: exchangeContent
                 case .draws: packsContent
-                case .catalog: EmptyView()
+                case .catalog, .expedition: EmptyView()
                 }
             }.padding(16).padding(.bottom, 20)
         }

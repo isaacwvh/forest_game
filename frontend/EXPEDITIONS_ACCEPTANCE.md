@@ -12,17 +12,24 @@ puzzle paths.
 ## Inspect in one batched device pass
 
 - 320/375/393/430-point portrait widths, ordinary/XXXL/maximum accessibility text.
-  Fifth bottom destination fits; Garden/camera stays mounted; navigation and Edit
+  Sidebar Expedition appears below Milestones; the bottom bar contains only
+  Inventory, Garden, Edit and Activity. Garden/camera stays mounted; navigation and Edit
   still work. Initial empty event, loading, unavailable and offline/cache states
   remain honest before any publication.
 - All nine organic pieces share the same clipping/hit-test paths and a continuous
   painting. Test all edges/notches. Colour restores only after confirmed piece
   collection, not completion or milestone claims. Reentry does not replay reveals.
 - Popup remains centred, with exact requirement and no separate quest heading.
-  Quantity precedes token/gem/pack/item artwork. Every ratio is inside its bar,
+  Artwork precedes quantity, centred together, in a compact content-sized box
+  (at most 320 points wide). Every ratio is inside its bar,
   with two-line in-bar labels at accessibility sizes. Close and claim remain
   reachable while longer content scrolls. Full capacity/failure/pending messages
   are visible. Missing painting still exposes the exact quests and claims.
+- Rarity-framed Basin/Orrery boxes sit above the 4/9 and 9/9 bar marks. Both open
+  journal item details with artwork, rarity, description and skill. The bottom
+  claim control is dotted when locked, green when earned, and shows Claimed only
+  after confirmation. No separate final-reward footer or Earlier expeditions UI
+  remains. Recovery runs automatically; the manual control retries older dates.
 - VoiceOver has nine labelled piece controls and a protected popup focus scope;
   focus returns after closing. Close has a 44-point target. Colour alone conveys
   no state. Reduce Motion skips reveal motion; Reduce Transparency strengthens
@@ -31,7 +38,7 @@ puzzle paths.
 - A month ends at 00:00 UTC for accounts with different saved game timezones.
   Page open at renewal fetches fresh progress; a pending old claim keeps its run
   ID. Existing arrangements may instantly requalify. Previous rewards/items and
-  earned archive claims remain available; repeat rewards create new copies.
+  permanent earned receipts remain stored; repeat rewards create new copies.
 - Fresh Health enrollment mid-day, partial samples, denied/unreadable quantities,
   delayed reads, recorded runs/walks/pauses, device replacement and clock skew.
   Enrollment boundaries round up to millisecond wire precision; strict step sample

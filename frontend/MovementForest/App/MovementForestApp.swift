@@ -48,7 +48,7 @@ final class AppContainer: ObservableObject {
 }
 
 enum ForestDestination: String, CaseIterable, Identifiable {
-    case myPlants = "Inventory", garden = "Garden", edit = "Edit", activity = "Activity", expedition = "Expedition"
+    case myPlants = "Inventory", garden = "Garden", edit = "Edit", activity = "Activity"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -56,7 +56,6 @@ enum ForestDestination: String, CaseIterable, Identifiable {
         case .garden: return "tree"
         case .edit: return "pencil"
         case .activity: return "figure.walk"
-        case .expedition: return "map"
         }
     }
 }
@@ -171,12 +170,6 @@ struct RootView: View {
                     if selectedTab == .activity {
                         NavigationStack {
                             ConnectedActivityScreen(connection: connection, store: container.activity, assets: catalog)
-                                .toolbar { menuButton; accountButtons }
-                        }
-                    }
-                    if selectedTab == .expedition {
-                        NavigationStack {
-                            ExpeditionHostScreen(connection: connection)
                                 .toolbar { menuButton; accountButtons }
                         }
                     }

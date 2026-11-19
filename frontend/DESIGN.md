@@ -1,22 +1,29 @@
-## Monthly expedition — 19 November 2026
+## Monthly expedition — 20 November 2026
 
-Expedition is the fifth bottom destination; the original controls and mounted
-Garden remain. It uses the existing journal paper, sage tracks, forest-green
+Expedition lives in the sidebar immediately below Milestones. The bottom navigation
+retains Inventory, Garden, Edit and Activity, with the Garden mounted. It uses the existing journal paper, sage tracks, forest-green
 actions and readable serif title. One continuous Observatory painting forms nine
 organic pieces. Greyscale becomes colour only after a confirmed piece reward
 claim. The four-quest Basin and nine-quest Orrery remain independent rewards.
 
 Quest detail is a small centred popup with a 44-point Close control, the exact
-requirement, an in-bar current/target ratio and quantity-first reward artwork.
+requirement, an in-bar current/target ratio and centred artwork then quantity.
 There is no separate quest title, bottom sheet or View all quests button.
 Content-measured scrolling preserves Close and claim at large text sizes. Ratios
 stay inside their bars, using two lines at accessibility sizes. Confirmed receipts
 retain collection/reveal even if a later refresh fails. Missing art exposes text
 quest access. Reduce Motion skips reveal transitions; colour is not the only state.
 
+The quest-completion bar has rarity-framed Basin and Orrery item boxes above the
+4/9 and 9/9 marks. Both open the standard journal item inspector with description,
+rarity and skill. Its footer is a dotted locked claim control, a green claimable
+control or confirmed Claimed state. There is no duplicate final-reward section or
+Earlier expeditions browser. Recovery remains automatic; Recover activity retries
+older evidence on demand. No historical evidence/claim storage is removed.
+
 Every monthly run renews at server-wide 00:00 UTC on day one. Earlier earned
-rewards/owned items survive; archive and evidence grace remain separate from the
-current run. See EXPEDITIONS_ACCEPTANCE.md for actual Mac/iPhone acceptance gates.
+rewards/owned items survive, and evidence grace remains independent of the current
+run. See EXPEDITIONS_ACCEPTANCE.md for actual Mac/iPhone acceptance gates.
 
 ## Compact milestone quest rows — 18 November 2026
 

@@ -24,17 +24,16 @@ struct ExpeditionHostScreen: View {
 struct ExpeditionScreen: View {
     @ObservedObject var store: ExpeditionCoordinator
     @State private var selectedQuest: String?
-    @State private var selectedRun: ExpeditionRun?
     @State private var milestone: Int?
-    @State private var archive = false
     @State private var popupContentHeight: CGFloat = 220
+    @State private var popupFooterHeight: CGFloat = 80
     @AccessibilityFocusState private var focusedQuest: String?
+    @AccessibilityFocusState private var focusedMilestone: Int?
+    @ScaledMetric(relativeTo: .caption) private var rewardBoxHeight: CGFloat = 80
+    @Environment(\.dynamicTypeSize) private var textSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    private var run: ExpeditionRun? {
-        if let selected = selectedRun { return store.archived.first(where: { $0.id == selected.id }) ?? selected }
-        return store.status?.current
-    }
+    private var run: ExpeditionRun? { store.status?.current }
     private var popup: Bool { selectedQuest != nil || milestone != nil }
 
     var body: some View {
@@ -52,53 +51,23 @@ struct ExpeditionScreen: View {
                         puzzle(run)
                         Text("Tap a piece to see its quest. Collect its reward to restore its colour.")
                             .font(.caption).foregroundStyle(JournalTheme.secondary)
-                        finalReward(run)
-                        if store.status?.previous.isEmpty == false, selectedRun == nil {
-                            Text("Earlier expedition activity can still sync during its seven-day grace period. Earned rewards remain claimable.")
-                                .font(.caption).foregroundStyle(JournalTheme.secondary)
-                        }
                     } else if store.busy { ProgressView("Loading expedition…").frame(maxWidth: .infinity) }
                     else {
                         Text(store.status == nil ? "Expedition unavailable." : "No expedition is scheduled yet.").font(.headline)
                         if let message = store.message { Text(message).foregroundStyle(JournalTheme.secondary) }
                     }
-                    HStack {
-                        Button("Earlier expeditions") { archive = true; Task { await store.loadArchive() } }
-                        Spacer()
-                        Button("Recover activity") { Task { await store.recoverEvidence(retryOlder: true) } }
-                            .disabled(store.recovering || store.recoveryLocked)
-                    }.font(.callout).buttonStyle(.journalQuiet)
-                    if selectedRun != nil {
-                        Button("Return to current expedition") { selectedRun = nil }.buttonStyle(.journalSecondary)
-                    }
+                    Button("Recover activity") { Task { await store.recoverEvidence(retryOlder: true) } }
+                        .disabled(store.recovering || store.recoveryLocked)
+                        .font(.callout).buttonStyle(.journalQuiet)
                 }.padding(20).frame(maxWidth: 620).frame(maxWidth: .infinity)
             }.accessibilityHidden(popup)
-            if popup, let run = run { questPopup(run) }
+            if let run = run {
+                if let count = milestone { itemPopup(run, count: count) }
+                else if selectedQuest != nil { questPopup(run) }
+            }
         }
         .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
         .background(JournalPageBackground().ignoresSafeArea())
-        .sheet(isPresented: $archive) {
-            NavigationStack {
-                List {
-                    ForEach(store.archived) { old in
-                        Button {
-                            selectedRun = old; selectedQuest = nil; milestone = nil; archive = false
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(old.name).font(.headline)
-                                Text("\(old.month.prefix(7)) · \(old.completedCount) of 9 completed")
-                                Text("\(old.rewards.filter { !$0.claimed }.count) rewards ready").font(.caption)
-                            }.foregroundStyle(JournalTheme.ink)
-                        }
-                    }
-                    if store.archiveCursor != nil {
-                        Button("Load earlier months") { Task { await store.loadArchive(more: true) } }
-                    }
-                }.scrollContentBackground(.hidden).background(JournalPageBackground().ignoresSafeArea())
-                    .navigationTitle("Earlier expeditions")
-                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { archive = false } } }
-            }
-        }
         .task {
             await store.refresh()
             await store.recoverEvidence()
@@ -106,12 +75,12 @@ struct ExpeditionScreen: View {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
                 guard !Task.isCancelled else { break }
-                if let current = store.status?.current, store.serverNow >= current.endsAt, selectedRun == nil {
+                if let current = store.status?.current, store.serverNow >= current.endsAt {
                     closePopup(); await store.refresh(); await store.recoverEvidence()
                 }
             }
         }
-        .onChange(of: store.status?.current?.runId) { _ in if selectedRun == nil { closePopup() } }
+        .onChange(of: store.status?.current?.runId) { _ in closePopup() }
         .accessibilityIdentifier("expedition.page")
     }
     private func header(_ run: ExpeditionRun) -> some View {
@@ -124,17 +93,7 @@ struct ExpeditionScreen: View {
                 Text(remaining > 0 ? "\(Int(ceil(remaining / 86_400))) days left" : "Expedition ended")
                     .font(.callout).foregroundStyle(JournalTheme.secondary)
             }
-            ExpeditionProgressBar(current: run.completedCount, target: 9, label: "Quests completed")
-            HStack(alignment: .center, spacing: 12) {
-                Button { milestone = 4 } label: {
-                    HStack {
-                        ExpeditionRewardArtwork(reward: ExpeditionReward(itemId: "comet-basin"), size: 36)
-                        Text(run.completedCount >= 4 ? "Four-quest reward" : "Complete 4 quests")
-                    }
-                }.buttonStyle(.journalQuiet).frame(minHeight: 44)
-                Spacer(minLength: 0)
-                ExpeditionRewardArtwork(reward: ExpeditionReward(itemId: "worldseed-orrery"), size: 58)
-            }
+            milestoneBar(run)
             let ready = run.rewards.filter { !$0.claimed }.count
             if ready > 0 { Text("\(ready) \(ready == 1 ? "reward ready" : "rewards ready")").font(.caption).foregroundStyle(JournalTheme.action) }
         }
@@ -175,24 +134,85 @@ struct ExpeditionScreen: View {
             }
         }
     }
-    private func finalReward(_ run: ExpeditionRun) -> some View {
-        VStack(spacing: 10) {
-            HStack { ExpeditionRewardArtwork(reward: ExpeditionReward(itemId: "worldseed-orrery"), size: 64); Text("Worldseed Orrery").font(.headline); Spacer() }
-            Button { milestone = 9 } label: {
-                Text(run.rewards.first { $0.rewardKey == "milestone:9" }?.claimed == true ? "Reward collected" : run.completedCount == 9 ? "Claim reward" : "Complete all 9 quests")
-                    .frame(maxWidth: .infinity, minHeight: 44)
-            }.buttonStyle(.journalPrimary)
+    private func milestoneBar(_ run: ExpeditionRun) -> some View {
+        let boxWidth: CGFloat = textSize.isAccessibilitySize ? 112 : 76
+        return VStack(spacing: 0) {
+            GeometryReader { geometry in
+                let trackWidth = max(0, geometry.size.width - boxWidth / 2)
+                ForEach([4, 9], id: \.self) { count in
+                    let item = ExpeditionMilestoneItem(count: count)
+                    let entitlement = run.rewards.first { $0.rewardKey == "milestone:\(count)" }
+                    let x = trackWidth * CGFloat(count) / 9
+                    Button { selectedQuest = nil; milestone = count } label: {
+                        JournalPlantFrame(rarity: item.rarity) {
+                            VStack(spacing: 4) {
+                                ExpeditionRewardArtwork(reward: item.reward, size: 44)
+                                Text(item.rarity.capitalized).font(.caption)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }.padding(6).frame(height: rewardBoxHeight)
+                        }
+                    }.buttonStyle(.plain).frame(width: boxWidth)
+                        .position(x: x, y: rewardBoxHeight / 2)
+                        .accessibilityLabel("\(item.name), \(item.rarity), \(count)-quest reward")
+                        .accessibilityValue(entitlement?.claimed == true ? "Claimed" : entitlement != nil ? "Ready to claim" : "\(run.completedCount) of \(count) quests completed")
+                        .accessibilityFocused($focusedMilestone, equals: count)
+                        .accessibilityIdentifier("expedition.milestone.\(count)")
+                    Rectangle().fill(JournalTheme.vine).frame(width: 1, height: 12)
+                        .position(x: x, y: rewardBoxHeight + 6).accessibilityHidden(true)
+                }
+            }.frame(height: rewardBoxHeight + 12)
+            ExpeditionProgressBar(current: run.completedCount, target: 9, label: "Quests completed")
+                .padding(.trailing, boxWidth / 2)
         }
     }
+    private func itemPopup(_ run: ExpeditionRun, count: Int) -> some View {
+        let item = ExpeditionMilestoneItem(count: count)
+        let entitlement = run.rewards.first { $0.rewardKey == "milestone:\(count)" }
+        return JournalInspector(title: item.name, close: closePopup,
+            closeLabel: "Close reward details", identifier: "expedition.itemDetails",
+            maximumHeight: textSize.isAccessibilitySize ? nil : 490) {
+                ExpeditionRewardArtwork(reward: item.reward, size: 150).frame(maxWidth: .infinity)
+                Text(item.rarity.capitalized).font(.subheadline).foregroundStyle(JournalTheme.secondary)
+                Text(item.description).frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.skillName).font(.headline)
+                    Text(item.skillDescription).font(.callout)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                if let message = store.message { Text(message).font(.caption).foregroundStyle(JournalTheme.secondary) }
+            } footer: {
+                claimButton(entitlement, run: run, lockedTitle: "Complete \(count) quests")
+                    .padding(16).background(JournalTheme.sage.opacity(0.65))
+            }
+            .accessibilityAddTraits(.isModal)
+    }
+    private func claimButton(_ entitlement: ExpeditionEntitlement?, run: ExpeditionRun, lockedTitle: String) -> some View {
+        let claimed = entitlement?.claimed == true
+        let earned = entitlement != nil
+        let ready = earned && !claimed
+        return Button {
+            if let entitlement = entitlement { Task { await store.claim(entitlement, run: run) } }
+        } label: {
+            HStack(spacing: 6) {
+                if claimed { Image(systemName: "checkmark") }
+                Text(claimed ? "Claimed" : store.pendingClaim ? "Pending confirmation" : ready ? "Claim reward" : lockedTitle)
+                    .fixedSize(horizontal: false, vertical: true)
+            }.font(.headline).frame(maxWidth: .infinity, minHeight: 44).padding(8)
+                .foregroundStyle(ready ? JournalTheme.paper : JournalTheme.ink)
+                .background(ready ? JournalTheme.action : JournalTheme.sage, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(JournalTheme.vine,
+                    style: StrokeStyle(lineWidth: 1, dash: earned ? [] : [2, 3])))
+        }.buttonStyle(.plain).disabled(!ready || !store.canClaim)
+            .accessibilityIdentifier("expedition.claim")
+    }
     private func closePopup() {
-        let previous = selectedQuest; selectedQuest = nil; milestone = nil
-        focusedQuest = previous
+        let previous = selectedQuest, previousMilestone = milestone
+        selectedQuest = nil; milestone = nil
+        focusedQuest = previous; focusedMilestone = previousMilestone
     }
     private func questPopup(_ run: ExpeditionRun) -> some View {
         let quest = run.quests.first { $0.id == selectedQuest }
-        let count = milestone ?? 0
-        let entitlement = quest?.entitlement ?? run.rewards.first { $0.rewardKey == "milestone:\(count)" }
-        let reward = quest?.reward ?? ExpeditionReward(itemId: count == 4 ? "comet-basin" : "worldseed-orrery")
+        let entitlement = quest?.entitlement
+        let reward = quest?.reward ?? ExpeditionReward()
         return GeometryReader { geometry in
             ZStack {
                 Color.black.opacity(reduceTransparency ? 0.5 : 0.28).ignoresSafeArea()
@@ -202,43 +222,64 @@ struct ExpeditionScreen: View {
                         .buttonStyle(.journalIcon).accessibilityLabel("Close quest") }
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
-                            Text(quest?.description ?? "Complete \(count) quests to earn this reward.")
+                            Text(quest?.description ?? "Quest unavailable.")
                                 .font(.headline).fixedSize(horizontal: false, vertical: true)
-                            ExpeditionProgressBar(current: quest?.current ?? min(run.completedCount, count), target: quest?.target ?? max(1, count), label: "Quest progress")
+                            ExpeditionProgressBar(current: quest?.current ?? 0, target: quest?.target ?? 1, label: "Quest progress")
                             HStack(spacing: 6) {
-                                Text(reward.quantity).font(.headline.monospacedDigit())
                                 ExpeditionRewardArtwork(reward: reward, size: reward.itemId == nil ? 32 : 58)
-                                Spacer()
-                                if entitlement?.claimed == true { Label("Claimed", systemImage: "checkmark").font(.caption) }
-                            }.padding(12).background(JournalTheme.sage, in: RoundedRectangle(cornerRadius: 8))
+                                Text(reward.quantity).font(.headline.monospacedDigit())
+                            }.frame(maxWidth: .infinity).padding(.vertical, 8)
                                 .accessibilityElement(children: .ignore).accessibilityLabel(reward.accessibilityName)
                             if let message = store.message { Text(message).font(.caption).foregroundStyle(JournalTheme.secondary) }
                         }.padding(.horizontal, 20).padding(.bottom, 16)
                             .background(GeometryReader { measured in
                                 Color.clear.preference(key: ExpeditionPopupHeight.self, value: measured.size.height)
                             })
-                    }.frame(height: min(popupContentHeight, max(80, geometry.size.height - 180)))
+                    }.frame(height: min(popupContentHeight, max(1, geometry.size.height - popupFooterHeight - 76)))
                         .onPreferenceChange(ExpeditionPopupHeight.self) { popupContentHeight = max(80, $0) }
-                    Button {
-                        if let entitlement = entitlement { Task { await store.claim(entitlement, run: run) } }
-                    } label: {
-                        Text(entitlement?.claimed == true ? "Claimed" : store.pendingClaim ? "Pending confirmation" : quest != nil ? "Collect reward" : "Claim reward")
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                    }.buttonStyle(.journalPrimary)
-                        .disabled(entitlement == nil || entitlement?.claimed == true || !store.canClaim)
+                    claimButton(entitlement, run: run, lockedTitle: "Complete quest")
                         .padding(.horizontal, 20).padding(.bottom, 20)
+                        .background(GeometryReader { measured in
+                            Color.clear.preference(key: ExpeditionPopupFooterHeight.self, value: measured.size.height)
+                        })
+                        .onPreferenceChange(ExpeditionPopupFooterHeight.self) { popupFooterHeight = $0 }
                 }
-                .frame(maxWidth: min(380, geometry.size.width - 32), maxHeight: geometry.size.height - 32)
+                .frame(maxWidth: min(320, geometry.size.width - 32))
                 .background(JournalTheme.paper, in: RoundedRectangle(cornerRadius: 16))
                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(JournalTheme.vine.opacity(0.5), lineWidth: 1))
                 .accessibilityAddTraits(.isModal).accessibilityIdentifier("expedition.questPopup")
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .accessibilityAction(.escape, closePopup)
+    }
+}
+
+/// Display copy pinned to the two bundled v1 milestone rewards; no eligibility rules.
+private struct ExpeditionMilestoneItem {
+    let count: Int
+    var reward: ExpeditionReward { ExpeditionReward(itemId: count == 4 ? "comet-basin" : "worldseed-orrery", version: 1) }
+    var name: String { count == 4 ? "Comet-Catcher's Basin" : "Worldseed Orrery" }
+    var rarity: String { count == 4 ? "rare" : "legendary" }
+    var description: String {
+        count == 4
+            ? "Left outside to catch the rain. By morning, it had caught something considerably farther from home."
+            : "An ancient seed dreams at the center of three wandering moons. When their paths align, a springtime older than the forest stirs beneath every root."
+    }
+    var skillName: String { count == 4 ? "Guiding Glow" : "Alignment of Worlds" }
+    var skillDescription: String {
+        count == 4
+            ? "+3% water from steps while placed. Duplicate Basins apply once."
+            : "While placed, reach 2,000 / 4,000 / 6,000 eligible daily steps to give each planted plant +3 / +4 / +5 water, once per tier. Duplicate Orreries apply once."
     }
 }
 
 private struct ExpeditionPopupHeight: PreferenceKey {
     static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
+private struct ExpeditionPopupFooterHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 80
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
