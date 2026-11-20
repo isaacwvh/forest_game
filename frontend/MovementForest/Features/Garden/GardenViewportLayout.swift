@@ -7,25 +7,38 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
     let compact: Bool
     var editing = false
     @Environment(\.gardenBottomNavigationTop) private var navigationTop
+    @Environment(\.gardenHomeChrome) private var chrome
+    @Environment(\.dynamicTypeSize) private var textSize
+    @State private var metricsHeight: CGFloat = 44
+    @State private var navigationHeight: CGFloat = 44
+    @State private var shortcutsHeight: CGFloat = 240
     @ViewBuilder let scene: () -> Scene
     @ViewBuilder let status: () -> Status
     @ViewBuilder let controls: () -> Controls
 
     var body: some View {
+        GeometryReader { outer in
+            viewport(insets: chrome.enabled && !editing ? outer.safeAreaInsets : EdgeInsets())
+                .ignoresSafeArea(.container, edges: chrome.enabled && !editing ? .all : [])
+        }
+    }
+
+    private func viewport(insets: EdgeInsets) -> some View {
         GeometryReader { geometry in
             let top = editing && !compact ? min(190, geometry.size.height * 0.3) : 0
             // Bound editing overlays without subtracting space from the scene.
             let bottom = editing && !compact ? max(0, geometry.size.height - top - 44) : 0
             let side = editing && compact ? min(380, geometry.size.width * 0.48) : 0
             let browsingHeight = editing ? geometry.size.height : min(geometry.size.height,
-                max(0, (navigationTop ?? geometry.frame(in: .global).maxY) - geometry.frame(in: .global).minY))
+                max(0, (navigationTop ?? (geometry.frame(in: .global).maxY -
+                    (chrome.enabled ? insets.bottom + 54 : 0))) - geometry.frame(in: .global).minY))
             scene()
                 .frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
                 .overlay(alignment: .top) {
                     if !editing {
                         ViewThatFits(in: .vertical) {
-                            status()
-                            ScrollView { status() }
+                            browsingStatus(insets: insets)
+                            ScrollView { browsingStatus(insets: insets) }
                         }.frame(maxHeight: browsingHeight * 0.55, alignment: .top).clipped()
                             .transformPreference(GardenOverlayFrames.self) { frames in
                                 let visible = CGRect(x: 0, y: 0, width: geometry.size.width, height: browsingHeight * 0.55)
@@ -37,6 +50,28 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                             ScrollView { status() }
                         }.frame(maxHeight: top, alignment: .top).clipped()
                     }
+                }
+                .overlay(alignment: .topLeading) {
+                    if chrome.enabled && !editing {
+                        let start = insets.top + navigationHeight + metricsHeight + 8
+                        let available = max(0, browsingHeight - start - 8)
+                        Group {
+                            if shortcutsHeight <= available {
+                                measuredShortcuts
+                            } else {
+                                ScrollView(.vertical) { measuredShortcuts }.scrollIndicators(.hidden)
+                                    .frame(height: available).clipped()
+                            }
+                        }.frame(width: textSize.isAccessibilitySize ? 100 : 60, alignment: .top)
+                            .padding(.top, start)
+                            .transformPreference(GardenOverlayFrames.self) { frames in
+                                let visible = CGRect(x: 0, y: start, width: textSize.isAccessibilitySize ? 100 : 60, height: available)
+                                frames = frames.map { $0.intersection(visible) }.filter { !$0.isNull && !$0.isEmpty }
+                            }
+                    }
+                }
+                .overlay(alignment: .bottom) {
+                    if chrome.enabled && !editing { chrome.bottom.padding(.bottom, insets.bottom) }
                 }
                 .overlay(alignment: .bottom) {
                     if !editing {
@@ -67,7 +102,37 @@ struct GardenViewportLayout<Scene: View, Status: View, Controls: View>: View {
                     }
                 }
         }.coordinateSpace(name: "garden.viewport")
+            .onPreferenceChange(GardenMetricsHeight.self) { metricsHeight = $0 }
+            .onPreferenceChange(GardenHomeNavigationHeight.self) { navigationHeight = $0 }
+            .onPreferenceChange(GardenHomeShortcutsHeight.self) { shortcutsHeight = $0 }
     }
+
+    private var measuredShortcuts: some View {
+        chrome.shortcuts.background(GeometryReader { geometry in
+            Color.clear.preference(key: GardenHomeShortcutsHeight.self, value: geometry.size.height)
+        })
+    }
+
+    private func browsingStatus(insets: EdgeInsets) -> some View {
+        VStack(spacing: 0) {
+            if chrome.enabled {
+                chrome.navigation.background(GeometryReader { geometry in
+                    Color.clear.preference(key: GardenHomeNavigationHeight.self, value: geometry.size.height)
+                })
+            }
+            status()
+        }.padding(.top, insets.top)
+    }
+}
+
+private struct GardenHomeNavigationHeight: PreferenceKey {
+    static var defaultValue: CGFloat = 44
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
+private struct GardenHomeShortcutsHeight: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
 /// The custom navigation bar can overlap a NavigationStack's scene bounds.

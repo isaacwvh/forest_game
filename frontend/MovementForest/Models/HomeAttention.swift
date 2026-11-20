@@ -1,0 +1,22 @@
+import Foundation
+
+/// Presentation derives attention from server eligibility and confirmed receipts.
+enum HomeAttention {
+    static func milestoneCount(_ rows: [APIIntroMilestone], confirmed: Set<String>) -> Int {
+        Set(rows.filter { $0.eligible && !$0.claimed && !confirmed.contains($0.id) &&
+            $0.supersededBy == nil && $0.unavailableReason == nil }.map(\.id)).count
+    }
+
+    static func expeditionCount(_ run: ExpeditionRun?, confirmed: UUID?) -> Int {
+        // Only the current run has a reachable destination in the current UI.
+        Set((run?.rewards ?? []).filter { !$0.claimed && $0.id != confirmed }.map(\.id)).count
+    }
+
+    static func packCount(_ packs: [APIOwnedPack], opened: UUID?) -> Int {
+        Set(packs.filter { $0.id != opened }.map(\.id)).count
+    }
+
+    static func rewardDescription(_ count: Int) -> String {
+        count == 0 ? "" : count == 1 ? "1 unclaimed reward" : "\(count) unclaimed rewards"
+    }
+}

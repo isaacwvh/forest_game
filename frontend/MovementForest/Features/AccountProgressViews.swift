@@ -119,22 +119,21 @@ struct HomeNavigationBar<Level: View>: View {
     var body: some View {
         VStack(spacing: 4) {
             HStack(spacing: 4) {
-                navigationButton("Open collection menu", symbol: "line.3.horizontal", identifier: "collection.menu", action: openMenu)
                 if textSize.isAccessibilitySize { Spacer(minLength: 0) }
-                else { level().frame(maxWidth: .infinity, minHeight: 44) }
+                else { level().frame(maxWidth: .infinity, minHeight: 44).homeFloatingSurface().gardenOverlayTarget() }
                 navigationButton("Profile", symbol: "person.crop.circle", identifier: "account.profile", action: openProfile)
                 navigationButton("Settings", symbol: "gearshape", identifier: "account.settings", action: openSettings)
             }
-            if textSize.isAccessibilitySize { level().padding(.horizontal, 4) }
-        }.padding(.horizontal, 8).padding(.vertical, 4)
+            if textSize.isAccessibilitySize { level().padding(.horizontal, 4).homeFloatingSurface().gardenOverlayTarget() }
+        }.padding(.horizontal, 12)
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .background(JournalTheme.paper.ignoresSafeArea(edges: .top))
             .accessibilityIdentifier("home.navigation")
     }
 
     private func navigationButton(_ title: String, symbol: String, identifier: String, action: @escaping () -> Void) -> some View {
         Button(action: action) { Image(systemName: symbol).frame(width: 44, height: 44) }
             .buttonStyle(.journalIcon).accessibilityLabel(title).accessibilityIdentifier(identifier)
+            .homeFloatingSurface().gardenOverlayTarget()
     }
 }
 
@@ -167,6 +166,7 @@ struct HomeAccountHeader: View {
     var attraction: String? = nil
     var information: () -> Void = {}
     let openProfile: (ProfileSection) -> Void
+    @Environment(\.dynamicTypeSize) private var textSize
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let visitors = visitors {
@@ -181,7 +181,8 @@ struct HomeAccountHeader: View {
             }
             if store.failed || store.showsSavedProgress {
                 AccountSummaryNotice(store: store).padding(.horizontal, 12).padding(.vertical, 6)
-                    .background(JournalTheme.paper).gardenOverlayTarget()
+                    .homeFloatingSurface().gardenOverlayTarget()
+                    .padding(.leading, textSize.isAccessibilitySize ? 104 : 64).padding(.trailing, 56)
             }
         }
             .foregroundStyle(JournalTheme.ink).accessibilityIdentifier("home.accountProgress")

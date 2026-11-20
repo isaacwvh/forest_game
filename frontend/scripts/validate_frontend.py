@@ -70,6 +70,21 @@ def main():
     for folder in ["packs", "butterfly"]:
         require(f"../assets/{folder}" in project_text, f"Presentation resources missing: {folder}")
     validate_garden_environment(REPO, project_text)
+    require("../assets/home-navigation" in project_text, "Home navigation icons are not bundled")
+    home_folder = REPO / "assets/home-navigation/v1"
+    home_manifest = json.loads((home_folder / "manifest.json").read_text(encoding="utf-8"))
+    home_names = {"shop", "catalog", "packs", "milestones", "expedition"}
+    require(home_manifest["version"] == 1 and {x["id"] for x in home_manifest["icons"]} == home_names,
+            "Home navigation icon coverage mismatch")
+    require({p.name for p in home_folder.iterdir()} == {f"{name}.png" for name in home_names} | {"manifest.json"},
+            "Only runtime Home icons and manifest may be bundled")
+    for entry in home_manifest["icons"]:
+        require(entry["file"] == entry["id"] + ".png", "Unsafe Home icon path")
+        icon = (home_folder / entry["file"]).read_bytes()
+        require(len(icon) == entry["bytes"] and len(icon) < 65536, "Home icon exceeds its byte budget")
+        require(hashlib.sha256(icon).hexdigest() == entry["sha256"], "Home icon checksum mismatch")
+        require(icon[:8] == b"\x89PNG\r\n\x1a\n" and struct.unpack(">IIBB", icon[16:26]) == (128, 128, 8, 6),
+                "Home icon must be a 128px RGBA PNG")
     require("../assets/quantity-icons-v1/png-128" in project_text, "Quantity icon exports are not bundled")
     require("../assets/quantity-icons-v1/sources" not in project_text, "Original icon canvases must not be bundled")
     require("../assets/journal" in project_text, "Journal ornaments are not bundled")

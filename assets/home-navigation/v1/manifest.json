@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "icons": [
+    {
+      "id": "shop",
+      "file": "shop.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 18168,
+      "sha256": "a7546d600706d9ad80fedc3ac81423236f39ace1ef7e0ba039bf71943d8368a7",
+      "sourceSha256": "b3071f35e184b632722117922a62634a51f5dcc27280cec58b81fb5e9861e904"
+    },
+    {
+      "id": "catalog",
+      "file": "catalog.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 20674,
+      "sha256": "7aa45f74c30a4546ea90dc50aedbc52a5eda10d1921605f46fd4b77a760f9f74",
+      "sourceSha256": "7485c1d648a5955c04a9e46da91516d579668c6b8bd879494f186740fdd9bdc9"
+    },
+    {
+      "id": "packs",
+      "file": "packs.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 17722,
+      "sha256": "22ac61c00d9a9066e5f9084f1f242700eac1c1938c2ae1f5bcf3f64bfa5676ad",
+      "sourceSha256": "12db24845a282523b570c112fa8908fc6fdfe180a16013fd42c0894bee8c6e88"
+    },
+    {
+      "id": "milestones",
+      "file": "milestones.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 17223,
+      "sha256": "1856f7b4ecbafb2b5bb1c7113c33a8abae7e923a997be4d8ccd03d6cfc522a89",
+      "sourceSha256": "7cfdf2622c943b23be73661f2f43010d7297c8394fc514c2782ec1cad541abbd"
+    },
+    {
+      "id": "expedition",
+      "file": "expedition.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 17340,
+      "sha256": "d6fb60fc85a827babd15d7bbbe7a4e6af079b669c287e68f542a378c5c4dd8f3",
+      "sourceSha256": "5709293f3e635c65353136f6112fa71984b836aa44e417705f37a11e82b7831d"
+    }
+  ]
+}

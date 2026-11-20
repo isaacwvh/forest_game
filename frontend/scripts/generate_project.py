@@ -59,6 +59,7 @@ def generated_files():
                        ("milestones", "../assets/milestones"),
                        ("expeditions", "../assets/expeditions"),
                        ("garden-environment", "../assets/garden-environment"),
+                       ("home-navigation", "../assets/home-navigation"),
                        ("Fixtures", "MovementForest/Resources/Fixtures")]:
         resource_refs.append(add("resource-" + name, "PBXFileReference", lastKnownFileType="folder",
                                  name=name, path=path, sourceTree="SOURCE_ROOT"))

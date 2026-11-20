@@ -8,6 +8,7 @@ struct TokenRewardCounter: View {
     var finished: (UUID) -> Void = { _ in }
     var reduceMotionOverride = false
     var reservesRewardSpace = true
+    var compact = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var sweep: CGFloat = -1
@@ -15,8 +16,15 @@ struct TokenRewardCounter: View {
     @ScaledMetric(relativeTo: .subheadline) private var rewardSpace: CGFloat = 22
     private var motionReduced: Bool { reduceMotion || reduceMotionOverride }
 
-    private var counter: some View {
-        QuantityLabel(metric: "tokens", text: balance).font(.subheadline).monospacedDigit()
+    @ViewBuilder private var counter: some View {
+        if compact {
+            HStack(spacing: 3) {
+                HomeQuantityIcon(metric: "tokens")
+                Text(balance)
+            }.font(.caption2).monospacedDigit()
+        } else {
+            QuantityLabel(metric: "tokens", text: balance).font(.subheadline).monospacedDigit()
+        }
     }
 
     var body: some View {

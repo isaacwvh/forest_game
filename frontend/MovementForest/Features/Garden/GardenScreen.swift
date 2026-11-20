@@ -35,7 +35,7 @@ struct GardenScreen: View {
                                 Label("Some plants need attention", systemImage: "exclamationmark.triangle").frame(minHeight: 44)
                             }.buttonStyle(.journalSecondary).gardenOverlayTarget()
                         }
-                    }.padding(12).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action).background(JournalTheme.paper)
+                    }.padding(12).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
                 } controls: {
                     if let selected = garden.plants.first(where: { $0.id == renderer.selectedPlantID }) {
                         GardenSelectionPopup(name: selected.speciesId.capitalized, variant: selected.variantId.capitalized,

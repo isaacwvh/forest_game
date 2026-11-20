@@ -279,14 +279,14 @@ final class ForestUITests: XCTestCase {
         XCTAssertEqual(progress.value as? String, "22 / 150 XP, towards Level 6, 372 total XP")
     }
 
-    func testHomeToolbarAlignsItsActionsAndPreservesMenuAndSettingsRoutes() {
+    func testFloatingHomeAlignsActionsAndExposesDirectCollectionShortcuts() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-progression"]
         app.launch()
         let level = app.buttons["home.profile"]
         XCTAssertTrue(level.waitForExistence(timeout: 15))
-        let menu = app.buttons["collection.menu"], profile = app.buttons["account.profile"], settings = app.buttons["account.settings"]
-        let controls = [menu, level, profile, settings]
+        let profile = app.buttons["account.profile"], settings = app.buttons["account.settings"]
+        let controls = [level, profile, settings]
         for control in controls {
             XCTAssertTrue(control.isHittable)
             XCTAssertGreaterThanOrEqual(control.frame.height, 44)
@@ -294,15 +294,21 @@ final class ForestUITests: XCTestCase {
         }
         for index in 1..<controls.count { XCTAssertLessThanOrEqual(controls[index - 1].frame.maxX, controls[index].frame.minX) }
         let info = app.buttons["garden.info"], collect = app.buttons["visitors.claim"]
-        XCTAssertEqual(info.frame.midY, collect.frame.midY, accuracy: 2)
+        XCTAssertGreaterThan(info.frame.minY, collect.frame.minY)
         XCTAssertLessThanOrEqual(info.frame.width, 44.5)
-        XCTAssertLessThan(info.frame.maxX, collect.frame.minX)
+        XCTAssertEqual(info.frame.midX, collect.frame.midX, accuracy: 2)
+        XCTAssertFalse(app.buttons["collection.menu"].exists)
+        for destination in ["Shop", "Catalog", "Packs", "Milestones", "Expedition"] {
+            let shortcut = app.buttons["home.shortcut." + destination]
+            XCTAssertTrue(shortcut.isHittable)
+            XCTAssertGreaterThanOrEqual(shortcut.frame.height, 44)
+        }
         settings.tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         app.buttons["accountSheet.done"].tap()
-        menu.tap()
-        XCTAssertTrue(app.buttons["Close menu"].waitForExistence(timeout: 5))
-        app.buttons["Close menu"].tap()
+        app.buttons["home.shortcut.Shop"].tap()
+        XCTAssertTrue(app.navigationBars["Shop"].waitForExistence(timeout: 5))
+        app.buttons["navigation.Garden"].tap()
         XCTAssertTrue(app.buttons["navigation.Garden"].isSelected)
     }
 
@@ -859,14 +865,13 @@ final class ForestUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]
         app.launch()
-        for destination in ["Exchange", "Catalog", "Packs", "Milestones"] {
-            let menu = app.buttons["collection.menu"].firstMatch
-            XCTAssertTrue(menu.waitForExistence(timeout: 10))
-            menu.tap()
-            let row = app.buttons["menu.\(destination)"]
-            XCTAssertTrue(row.waitForExistence(timeout: 5))
-            row.tap()
+        for destination in ["Shop", "Catalog", "Packs", "Milestones", "Expedition"] {
+            let shortcut = app.buttons["home.shortcut.\(destination)"]
+            XCTAssertTrue(shortcut.waitForExistence(timeout: 10))
+            shortcut.tap()
             XCTAssertTrue(app.navigationBars[destination].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["collection.menu"].firstMatch.isHittable)
+            app.buttons["navigation.Garden"].tap()
         }
         app.buttons["Garden"].firstMatch.tap()
         XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 10))

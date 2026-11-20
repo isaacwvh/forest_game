@@ -1,3 +1,11 @@
+## Floating Home — 20 November 2026
+
+Implements the approved compact floating navigation: unframed botanical shortcuts,
+individual material HUD segments, floating bottom actions and right-aligned
+Collect above Garden info. Reward indicators use confirmed state/receipts, with
+shared refresh on earning revisions. Content-page navigation spacing remains.
+See [acceptance and Windows validation limits](HOME_FLOATING_ACCEPTANCE.md).
+
 ## Expedition — 19 November 2026
 
 A fifth native destination provides the Observatory puzzle, centred quest popups,

@@ -1,3 +1,30 @@
+## Floating Home navigation — 20 November 2026
+
+The approved v3 Home render supersedes the full-width Home bars and drawer entry
+described under 7 November. Retain the journal palette, mounted RealityKit scene,
+camera and current routes. The Home viewport extends behind the system safe areas;
+each level/Profile/Settings/metric segment has its own compact native material.
+Four independently backed Inventory/Garden/Edit/Activity controls float at the
+bottom. Content pages retain their reserved navigation row and existing menu.
+
+Shop, Catalog, Packs, Milestones and Expedition appear as small unframed botanical
+icons on the left, with overlapping caption labels. Use the approved transparent
+128px exports in home-navigation/v1; generation masters remain outside the bundle.
+Collect sits above Garden info at the right edge. Labels scale with Dynamic Type;
+long metrics reflow, and an overflowing shortcut lane scrolls within its bounds.
+
+Exclamation badges derive from confirmed eligible milestone/expedition rewards,
+unopened packs, stored visits and unfinished edits. Retained confirmed receipts
+suppress stale claim/opening snapshots. No Shop/Catalog event or reward is invented.
+Refresh shared reward state on foreground entry and confirmed earning revisions,
+never per-icon polling. Badges carry accessible reasons and are not separate actions.
+
+Register individual controls in viewport coordinates for visitor/camera exclusion;
+clear scenery remains interactive. Popups stay above the measured bottom controls.
+Focused Edit retains its own controls. Reduce Transparency uses parchment per
+control; Increase Contrast adds separation; no badge animation is introduced.
+See [acceptance and validation limits](HOME_FLOATING_ACCEPTANCE.md).
+
 ## Profile journal — 20 November 2026
 
 The approved two-scroll-position Profile concept supersedes the compact Profile

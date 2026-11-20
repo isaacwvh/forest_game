@@ -1,3 +1,31 @@
+## Floating Home navigation — 20 November 2026
+
+Implemented the approved v3 layout: full-display mounted garden, independent
+material HUD segments, small labelled botanical shortcuts, four floating bottom
+controls and Collect above Info at the right edge. Content-page navigation spacing
+and loading/recovery access remain. Confirmed reward/pack receipts suppress stale
+attention; shared foreground/earning reads update the badges without icon polling.
+
+Passed locally:
+
+- Portable project/resource/asset/contract/contrast validation, including all five
+  128px RGBA Home icons, hashes, budgets and bundle inclusion (91,127 bytes).
+- All **113 Swift files** syntax-parse. Generated project/schemes are current.
+- **20 real Swift attention/recovery/fixture assertions**, shared with native
+  HomeAttentionTests. The existing isolated Swift 6.0.3 runtime ran these through
+  WSL using the actual policy, domain records and wire decoder. The existing
+  Foundation SDK shim emits an SDKSettings.json warning; execution exits zero.
+- Python packaging/validation scripts compile; diff whitespace checks pass.
+- Scoped layout detector: no findings on the eight changed UI source files.
+
+Native regression sources now cover direct Home shortcut routes, retained menus
+on content pages, stacked right actions, bundled icons, full-safe-area scene bounds,
+clear visitor/camera regions and existing popup clearance. These UIKit/SwiftUI
+XCTest/UI tests were **not executed on Windows**. No Apple SDK build, simulator
+capture, RealityKit/HealthKit run or physical-device acceptance is claimed. Use
+[Home acceptance](HOME_FLOATING_ACCEPTANCE.md) and the existing Mac test script.
+Backend/gameplay paths are unchanged. No push or remote CI run occurred.
+
 ## Expedition layout follow-up — 20 November 2026
 
 Presentation-only changes: compact centred quest popup with artwork then quantity;

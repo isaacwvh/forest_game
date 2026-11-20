@@ -69,6 +69,7 @@ private enum RootAccountSheet: String, Identifiable {
 struct RootView: View {
     @ObservedObject var container: AppContainer
     @ObservedObject private var connection: GardenConnection
+    @ObservedObject private var sampleGarden: GardenStore
     @Environment(\.scenePhase) private var phase
     @State private var selectedTab = ForestDestination.garden
     @State private var accountSheet: RootAccountSheet?
@@ -83,9 +84,15 @@ struct RootView: View {
     init(container: AppContainer) {
         self.container = container
         self.connection = container.connection
+        self.sampleGarden = container.garden
     }
 
     private var focusedEditing: Bool { connection.editor?.editing == true }
+    private var floatingHome: Bool { selectedTab == .garden && collectionDestination == nil && !focusedEditing }
+    private var gardenViewportAvailable: Bool {
+        if let editor = connection.editor { return editor.editorRendered != nil }
+        return !connection.connecting && connection.savedURL.isEmpty && sampleGarden.garden != nil
+    }
 
     private var entryAllowed: Bool {
         resume.foreground && accountSheet == nil && !menuPresented && !packOpeningPresented && !childEntryBlocked && !focusedEditing && connection.levelUps?.presented == nil
@@ -154,8 +161,12 @@ struct RootView: View {
                             openProfile: presentProfile)
                             .toolbar(focusedEditing ? .visible : .hidden, for: .navigationBar)
                             .safeAreaInset(edge: .top, spacing: 0) {
-                                if !focusedEditing { homeNavigation }
+                                // Loading/recovery has no viewport to host its chrome.
+                                if !focusedEditing && !gardenViewportAvailable { homeNavigation }
                             }
+                            .environment(\.gardenHomeChrome, GardenHomeChrome(enabled: true,
+                                navigation: AnyView(homeNavigation), shortcuts: AnyView(homeShortcuts),
+                                bottom: AnyView(bottomNavigation)))
                             .background(JournalTheme.paper.ignoresSafeArea(edges: .top))
                     }
                     .opacity(selectedTab == .garden ? 1 : 0)
@@ -227,7 +238,7 @@ struct RootView: View {
                     }.accessibilityElement(children: .contain)
                 }
                 }
-                if !focusedEditing {
+                if !focusedEditing && (!floatingHome || !gardenViewportAvailable) {
                     bottomNavigation
                 }
                 }
@@ -241,6 +252,12 @@ struct RootView: View {
                     }
                 }
                 .task(id: connection.levelUps?.id) { connection.levelUps?.setEligible(levelUpAllowed) }
+                .task(id: homeAttentionRevision) {
+                    guard phase == .active else { return }
+                    await connection.collection?.refresh()
+                    guard !Task.isCancelled else { return }
+                    await connection.expeditions?.refresh()
+                }
                 .onChange(of: levelUpAllowed) { connection.levelUps?.setEligible($0) }
                 .sheet(item: $accountSheet) { destination in
                     NavigationStack {
@@ -318,20 +335,18 @@ struct RootView: View {
     }
 
     private var bottomNavigation: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: floatingHome ? 7 : 0) {
             ForEach(ForestDestination.allCases) { destination in
                 Button { navigate(to: destination) } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: floatingHome ? 1 : 4) {
                         Image(systemName: destination.symbol).font(.body)
-                        Text(destination.rawValue).font(.caption).lineLimit(2).minimumScaleFactor(0.8)
+                        Text(destination.rawValue).font(floatingHome ? .caption2 : .caption).lineLimit(2)
                             .multilineTextAlignment(.center)
                     }.frame(maxWidth: .infinity, minHeight: 50)
+                        .homeFloatingSurface(selected: selectedTab == destination, enabled: floatingHome)
                         .overlay(alignment: .topTrailing) {
                             if destination == .edit && hasUnfinishedGardenDraft {
-                                Image(systemName: "exclamationmark.circle.fill")
-                                    .symbolRenderingMode(.palette).foregroundStyle(.white, JournalTheme.danger)
-                                    .font(.system(size: 14, weight: .bold))
-                                    .background(Circle().fill(JournalTheme.paper).padding(-1))
+                                HomeAttentionBadge()
                                     .padding(.top, 1).padding(.trailing, 8)
                                     .allowsHitTesting(false).accessibilityHidden(true)
                             }
@@ -344,14 +359,16 @@ struct RootView: View {
                 .accessibilityLabel(destination.rawValue)
                 .accessibilityValue(destination == .edit && hasUnfinishedGardenDraft ? "Unsaved garden changes" : "")
                 .accessibilityAddTraits(selectedTab == destination && collectionDestination == nil ? .isSelected : [])
+                .gardenOverlayTarget()
             }
         }.padding(.horizontal, 8).padding(.top, 4)
             .background(GeometryReader { geometry in
                 Color.clear.preference(key: GardenBottomNavigationTop.self, value: geometry.frame(in: .global).minY)
             })
             .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
-            .background(JournalTheme.paper.ignoresSafeArea(edges: .bottom))
-            .overlay(alignment: .top) { JournalTheme.vine.opacity(0.25).frame(height: 0.5) }
+            .background {
+                if !floatingHome { JournalTheme.paper.ignoresSafeArea(edges: .bottom) }
+            }
     }
 
     private var hasUnfinishedGardenDraft: Bool {
@@ -367,6 +384,44 @@ struct RootView: View {
                 Text("Your forest").font(.system(.headline, design: .serif))
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
+        }
+    }
+
+    private var homeShortcuts: some View {
+        VStack(spacing: 3) {
+            ForEach(CollectionDestination.allCases) { destination in
+                HomeCollectionShortcut(destination: destination, attention: attention(for: destination)) {
+                    guard !focusedEditing, accountSheet == nil, !entryRecap.showing, !packOpeningPresented,
+                          !childEntryBlocked, connection.levelUps?.presented == nil else { return }
+                    collectionDestination = destination
+                }
+            }
+        }.accessibilityElement(children: .contain)
+            .accessibilityIdentifier("home.shortcuts")
+    }
+
+    private var homeAttentionRevision: String {
+        // Actual earning evidence and foreground entry trigger one shared read.
+        // Do not key this to balances/refresh timestamps: that would poll itself.
+        [phase == .active ? "active" : "inactive", connection.collection?.id.uuidString ?? "",
+         connection.expeditions?.id.uuidString ?? "",
+         String(connection.accountSummary?.snapshot?.progression.version ?? 0),
+         connection.visitors?.summary?.hostedTotal ?? ""].joined(separator: ":")
+    }
+
+    private func attention(for destination: CollectionDestination) -> String {
+        let collection = connection.collection
+        switch destination {
+        case .milestones:
+            return HomeAttention.rewardDescription(HomeAttention.milestoneCount(collection?.milestones ?? [],
+                confirmed: collection?.confirmedMilestoneIDs ?? []))
+        case .expedition:
+            return HomeAttention.rewardDescription(HomeAttention.expeditionCount(connection.expeditions?.status?.current,
+                confirmed: collection?.state.result?.entitlementId))
+        case .draws:
+            let count = HomeAttention.packCount(collection?.packs ?? [], opened: collection?.state.result?.ownedPackId)
+            return count == 0 ? "" : "\(count) unopened \(count == 1 ? "pack" : "packs")"
+        case .exchange, .catalog: return ""
         }
     }
 

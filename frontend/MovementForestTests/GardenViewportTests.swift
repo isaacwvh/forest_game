@@ -54,6 +54,52 @@ private struct ViewportTestScreen: View {
 
 @MainActor
 final class GardenViewportTests: XCTestCase {
+    func testFloatingHomeFillsSafeAreasAndKeepsClearGardenTargets() async throws {
+        var sceneFrame = CGRect.zero
+        var exclusions: [CGRect] = []
+        let navigation = HStack {
+            Button("Level") {}.frame(width: 120, height: 44).gardenOverlayTarget()
+            Spacer()
+            Button("Profile") {}.frame(width: 44, height: 44).gardenOverlayTarget()
+        }.padding(.horizontal, 12)
+        let shortcuts = HomeCollectionShortcut(destination: .exchange, attention: "", action: {})
+        let bottom = HStack(spacing: 7) {
+            ForEach(0..<4) { _ in
+                Button("Tab") {}.frame(maxWidth: .infinity, minHeight: 50).gardenOverlayTarget()
+            }
+        }.padding(.horizontal, 12)
+        let content = GardenViewportLayout(compact: false) {
+            Color.clear.background(GeometryReader { geometry in
+                Color.clear.preference(key: PopupTestBounds.self, value: ["scene": geometry.frame(in: .global)])
+            })
+        } status: {
+            HStack {
+                Color.clear.frame(width: 44, height: 44).gardenOverlayTarget()
+                Spacer()
+            }
+        } controls: { EmptyView() }
+        .environment(\.gardenHomeChrome, GardenHomeChrome(enabled: true,
+            navigation: AnyView(navigation), shortcuts: AnyView(shortcuts), bottom: AnyView(bottom)))
+        .onPreferenceChange(PopupTestBounds.self) { sceneFrame = $0["scene"] ?? .zero }
+        .onPreferenceChange(GardenOverlayFrames.self) { exclusions = $0 }
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = UIHostingController(rootView: content)
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil }
+        for _ in 0..<100 {
+            if sceneFrame.height > 0 && !exclusions.isEmpty { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertEqual(sceneFrame.height, window.bounds.height, accuracy: 1)
+        XCTAssertEqual(sceneFrame.width, window.bounds.width, accuracy: 1)
+        XCTAssertFalse(exclusions.isEmpty)
+        let middle = CGPoint(x: sceneFrame.width / 2, y: sceneFrame.height / 2)
+        XCTAssertFalse(exclusions.contains { $0.contains(middle) })
+        XCTAssertTrue(exclusions.allSatisfy { $0.width < sceneFrame.width - 1 },
+                      "Only individual controls may exclude visitor/camera targets")
+    }
+
     func testPopupStaysAboveNavigationWithoutReservingGardenSpace() async throws {
         var frames: [String: CGRect] = [:]
         let overlap: CGFloat = 64

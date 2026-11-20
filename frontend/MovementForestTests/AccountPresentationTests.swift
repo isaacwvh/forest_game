@@ -187,7 +187,7 @@ final class AccountPresentationTests: XCTestCase {
         }
     }
 
-    func testCompactHomeNavigationAndBalancesUseTwoFullWidthRows() async throws {
+    func testCompactHomeNavigationAndRightActionsUseIndependentSurfaces() async throws {
         let value = try fixture()
         let store = AccountSummaryStore(userID: value.profile.userId, service: PresentationTestService(value: value),
             cache: PresentationTestCache())
@@ -196,15 +196,15 @@ final class AccountPresentationTests: XCTestCase {
             HomeAccountHeader(store: store, attraction: "141.3", openProfile: { _ in })
                 .environment(\.dynamicTypeSize, .large))
         let size = header.sizeThatFits(in: CGSize(width: 320, height: 1000))
-        XCTAssertGreaterThanOrEqual(size.height, 88)
-        XCTAssertLessThanOrEqual(size.height, 96.5, "Balances use one row; the two corner controls share a clear second row")
+        XCTAssertGreaterThanOrEqual(size.height, 138)
+        XCTAssertLessThanOrEqual(size.height, 142.5, "Balances use one row; Collect and Info stack at the right edge")
         let navigation = UIHostingController(rootView:
             HomeNavigationBar(openMenu: {}, openProfile: {}, openSettings: {}) {
                 HomeLevelProgress(store: store, openProfile: {})
             }.environment(\.dynamicTypeSize, .large))
         let navigationSize = navigation.sizeThatFits(in: CGSize(width: 320, height: 1000))
         XCTAssertGreaterThanOrEqual(navigationSize.height, 44)
-        XCTAssertLessThanOrEqual(navigationSize.height, 52.5, "Menu, progress, Profile and Settings must fit one comfortable row")
+        XCTAssertLessThanOrEqual(navigationSize.height, 52.5, "Progress, Profile and Settings form one floating row")
         let metrics = UIHostingController(rootView:
             GardenSummaryHeader(tokens: "9,142", attraction: "141.3", stored: "106/1500", gems: "7",
                 information: {}, collect: {}).environment(\.dynamicTypeSize, .large))
@@ -232,9 +232,17 @@ final class AccountPresentationTests: XCTestCase {
             try await Task.sleep(nanoseconds: 10_000_000)
         }
         XCTAssertFalse(frames.isEmpty)
-        XCTAssertTrue(frames.contains { $0.contains(CGPoint(x: 34, y: 74)) }, "Garden info retains its real exclusion bounds")
-        XCTAssertTrue(frames.contains { $0.contains(CGPoint(x: 286, y: 74)) }, "Collect retains its real exclusion bounds")
+        XCTAssertTrue(frames.contains { $0.contains(CGPoint(x: 292, y: 116)) }, "Garden info retains its real exclusion bounds")
+        XCTAssertTrue(frames.contains { $0.contains(CGPoint(x: 292, y: 68)) }, "Collect retains its real exclusion bounds")
         XCTAssertFalse(frames.contains { $0.contains(CGPoint(x: 160, y: 74)) },
                        "No full-width header exclusion may bridge the two floating controls")
+    }
+
+    func testApprovedHomeIconsAreBundledAtRuntimeSize() {
+        XCTAssertEqual(Set(HomeNavigationArtwork.images.keys), Set(HomeNavigationArtwork.keys))
+        for image in HomeNavigationArtwork.images.values {
+            XCTAssertEqual(image.cgImage?.width, 128)
+            XCTAssertEqual(image.cgImage?.height, 128)
+        }
     }
 }

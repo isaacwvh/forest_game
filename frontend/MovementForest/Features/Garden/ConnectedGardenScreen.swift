@@ -223,12 +223,18 @@ struct ConnectedGardenScreen: View {
 
     private var browsingStatus: some View {
         VStack(spacing: 8) {
-            if let issue = store.draftPersistenceIssue { Text(issue).font(.caption).padding(10).background(JournalTheme.paper) }
+            if let issue = store.draftPersistenceIssue {
+                Text(issue).font(.caption).padding(10).homeFloatingSurface().gardenOverlayTarget()
+                    .padding(.leading, textSize.isAccessibilitySize ? 104 : 64).padding(.trailing, 56)
+            }
             if let accountSummary = accountSummary {
                 HomeAccountHeader(store: accountSummary, visitors: visitors,
                     attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
                     information: { sheet = .information }, openProfile: openProfile)
-                if let visitors = visitors { VisitorRecoveryNotice(store: visitors) }
+                if let visitors = visitors {
+                    VisitorRecoveryNotice(store: visitors)
+                        .padding(.leading, textSize.isAccessibilitySize ? 104 : 64).padding(.trailing, 56)
+                }
             } else {
                 visitorHeader
             }
@@ -261,7 +267,8 @@ struct ConnectedGardenScreen: View {
                         Button("Some plants couldn’t load") { sheet = .errors }.buttonStyle(.journalQuiet).frame(minHeight: 44)
                     }
                 }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                    .modifier(GardenOutline()).gardenOverlayTarget().padding(.horizontal, 12)
+                    .modifier(GardenOutline()).gardenOverlayTarget()
+                    .padding(.leading, textSize.isAccessibilitySize ? 104 : 64).padding(.trailing, 56)
             }
         }.padding(.bottom, accountSummary == nil ? 8 : 0)
     }
@@ -274,6 +281,7 @@ struct ConnectedGardenScreen: View {
                     showsTokens: accountSummary?.snapshot == nil,
                     floatingActions: true, information: { sheet = .information })
                 VisitorRecoveryNotice(store: visitors)
+                    .padding(.leading, textSize.isAccessibilitySize ? 104 : 64).padding(.trailing, 56)
             } else {
                 GardenSummaryHeader(attraction: (store.confirmed?.totalAttractionMicroUnits).map { JournalAmount.water($0) },
                     showsTokens: accountSummary?.snapshot == nil,
