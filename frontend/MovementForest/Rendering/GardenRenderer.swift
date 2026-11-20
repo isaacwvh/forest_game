@@ -101,6 +101,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var generation = UUID()
     private var needsAssetReload = false
     private var placements: [UUID: Entity] = [:]
+    private var selectionCycle = GardenSelectionCycle()
     private var plantPlaybacks: [UUID: [AnimationPlaybackController]] = [:]
     private var renderedPlants: [UUID: GardenPlant] = [:]
     private var renderedItems: [UUID: GardenItem] = [:]
@@ -209,6 +210,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         }
         snapshot = garden
         guard visualsChanged else { return }
+        selectionCycle.reset()
         needsAssetReload = false
         loadTask?.cancel()
         generation = UUID()
@@ -340,6 +342,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     private func installVisual(_ visual: PreparedVisual, plant: GardenPlant, garden: GardenSnapshot) {
+        selectionCycle.reset()
         diagnostics.removeAll { $0.id == plant.id }
         plantPlaybacks.removeValue(forKey: plant.id)?.forEach { $0.stop() }
         modelLoadCount += 1
@@ -470,6 +473,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         guard !disposed else { return }
         guard isActive != active else { return }
         isActive = active
+        if !active { selectionCycle.reset() }
         view.isHidden = !active
         visitorRoot.isEnabled = active
         frameTime = 0
@@ -539,12 +543,14 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
     func zoom(by factor: Float) { distance = min(max(distance * factor, 4), 60); updateCamera() }
     func dismissSelection() {
+        selectionCycle.reset()
         selectedPlantID = nil; onSelect?(nil)
         if UIAccessibility.isVoiceOverRunning {
             UIAccessibility.post(notification: .layoutChanged, argument: cameraAccessibility)
         }
     }
     private func updateCamera() {
+        selectionCycle.reset()
         let offset = SIMD3<Float>(sin(yaw) * cos(elevation), sin(elevation), cos(yaw) * cos(elevation)) * distance
         camera.look(at: target, from: target + offset, relativeTo: nil)
         updateAccessibility()
@@ -864,28 +870,43 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     @objc private func tapGesture(_ gesture: UITapGestureRecognizer) {
         let point = gesture.location(in: view)
         if preview?.movable == true || itemPreview?.movable == true {
+            selectionCycle.reset()
             let hit = groundPoint(point)
             onGroundDrag?(hit, .changed)
             onGroundDrag?(hit, .ended)
             return
         }
-        if welcomeVisitor(at: point) { return }
+        if welcomeVisitor(at: point) { selectionCycle.reset(); return }
         if groundPicking, let garden = snapshot, let ray = view.ray(through: point) {
+            selectionCycle.reset()
             lastGroundPoint = GardenCoordinates.groundIntersection(origin: ray.origin, direction: ray.direction,
                 width: garden.width, depth: garden.depth, unitMetres: garden.gardenUnitMetres)
             return
         }
-        var candidate = view.entity(at: point)
+        selectObject(at: point)
+    }
+
+    func selectObject(at point: CGPoint) {
+        guard !disposed else { return }
+        // One collision query per tap; no geometry generation or per-frame work.
+        let candidates = view.hitTest(point, query: .all, mask: .all)
+            .sorted { $0.distance < $1.distance }
+            .compactMap { selectionOwner(of: $0.entity) }
+        let id = selectionCycle.select(at: point, candidates: candidates,
+            currentSelection: selectedPlantID, time: ProcessInfo.processInfo.systemUptime)
+        selectedPlantID = id
+        onSelect?(id)
+    }
+
+    private func selectionOwner(of hit: Entity) -> UUID? {
+        var candidate: Entity? = hit
         while let entity = candidate {
             if let id = UUID(uuidString: entity.name), placements[id] != nil {
-                selectedPlantID = id
-                onSelect?(id)
-                return
+                return id
             }
             candidate = entity.parent
         }
-        selectedPlantID = nil
-        onSelect?(nil)
+        return nil
     }
 
     private func groundPoint(_ point: CGPoint) -> SIMD2<Double>? {

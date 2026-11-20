@@ -7,6 +7,71 @@ import UIKit
 
 @MainActor
 final class GardenRendererTests: XCTestCase {
+    func testOverlappingSelectionPolicy() throws {
+        XCTAssertGreaterThan(try GardenSelectionChecks.run(), 160)
+    }
+
+    func testCollisionSelectionCyclesOwnersAndResetsAfterCameraMovement() async throws {
+        let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        let controller = UIViewController()
+        window.rootViewController = controller
+        renderer.view.frame = window.bounds
+        controller.view.addSubview(renderer.view)
+        window.makeKeyAndVisible()
+        defer { renderer.stop(); window.isHidden = true }
+
+        var garden = DevelopmentScene.single.garden()
+        let frontID = garden.plants[0].id, backID = UUID()
+        let plant = garden.plants[0]
+        garden.plants.append(GardenPlant(id: backID, speciesId: plant.speciesId, variantId: plant.variantId,
+            assetVersion: plant.assetVersion, growthStage: plant.growthStage, x: 5, y: 5, rotationDegrees: 0))
+        renderer.display(garden, catalog: catalog); renderer.setActive(true)
+        try await waitUntil { renderer.modelLoadCount == 2 && !renderer.isLoading }
+        renderer.setMotionEnabled(false)
+        let root = try XCTUnwrap(renderer.view.scene.anchors.first)
+        let front = try XCTUnwrap(root.findEntity(named: frontID.uuidString))
+        let back = try XCTUnwrap(root.findEntity(named: backID.uuidString))
+        // Synthetic nested colliders isolate hit ownership and depth from asset geometry.
+        for (placement, z) in [(front, Float(1)), (back, Float(-1))] {
+            for child in Array(placement.children) { child.removeFromParent() }
+            placement.position = [0, 0, z]
+            placement.orientation = simd_quatf(angle: 0, axis: [0, 1, 0])
+            let nested = Entity(), proxy = Entity()
+            proxy.components.set(CollisionComponent(shapes: [.generateBox(size: [1, 1, 1])]))
+            nested.addChild(proxy); placement.addChild(nested)
+        }
+        let camera = try XCTUnwrap(renderer.view.scene.anchors.compactMap { $0.findEntity(named: "garden-camera") }.first)
+        camera.look(at: .zero, from: [0, 0, 6], relativeTo: nil)
+        let point = CGPoint(x: renderer.view.bounds.midX, y: renderer.view.bounds.midY)
+        try await waitUntil { renderer.view.hitTest(point, query: .all, mask: .all).count >= 2 }
+        var notifications: [UUID?] = []
+        renderer.onSelect = { notifications.append($0) }
+        renderer.selectObject(at: point)
+        XCTAssertEqual(renderer.selectedPlantID, frontID)
+        renderer.selectObject(at: point)
+        XCTAssertEqual(renderer.selectedPlantID, backID)
+        renderer.selectObject(at: point)
+        XCTAssertEqual(renderer.selectedPlantID, frontID)
+        renderer.zoom(by: 1)
+        camera.look(at: .zero, from: [0, 0, 6], relativeTo: nil)
+        renderer.selectObject(at: point)
+        XCTAssertEqual(renderer.selectedPlantID, frontID, "A camera gesture resets cycling")
+        renderer.dismissSelection()
+        renderer.selectObject(at: point)
+        XCTAssertEqual(renderer.selectedPlantID, frontID, "Dismissal resets cycling")
+        back.isEnabled = false
+        try await waitUntil { renderer.view.hitTest(point, query: .all, mask: .all).count == 1 }
+        renderer.selectObject(at: point)
+        renderer.selectObject(at: point)
+        XCTAssertEqual(renderer.selectedPlantID, frontID, "A distinct hit never cycles")
+        front.isEnabled = false
+        try await waitUntil { renderer.view.hitTest(point, query: .all, mask: .all).isEmpty }
+        renderer.selectObject(at: point)
+        XCTAssertNil(renderer.selectedPlantID)
+        XCTAssertEqual(notifications, [frontID, backID, frontID, frontID, nil, frontID, frontID, frontID, nil])
+    }
+
     func testRecapPreloadsStageAndInterruptedRevealPreservesAnchorAndCamera() async throws {
         let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
         let effects = GardenEffectsCoordinator(server: "test", user: UUID(), disk: nil)
