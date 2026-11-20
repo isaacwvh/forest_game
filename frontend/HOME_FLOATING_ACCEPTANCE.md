@@ -1,5 +1,17 @@
 # Floating Home — implementation and acceptance
 
+Follow-up, 20 November: shortcut gaps are 12 points, with bounded single-line
+labels at ordinary text sizes and wrapping at accessibility sizes. The drawer
+is removed. Inventory, Activity and collection root pages now provide Back to
+Garden; returning preserves the mounted scene. Native route coverage checks the
+back control and absence of the old menu. Backend quest resale values are covered
+separately in backend/EXPEDITIONS.md.
+
+Follow-up checks passed locally: 107 expedition/item backend regression tests,
+all 113 Swift syntax parses, portable project/resource/contract validation, backend
+lint, scoped layout detector and whitespace checks. Native Xcode/UI execution
+still requires a Mac. Tests used a separate disposable PostgreSQL cluster.
+
 20 November 2026. Implements the approved v3 concept. No backend, earning rules,
 claim mutation paths, editor save behavior, deployment or CI changes.
 
@@ -10,7 +22,7 @@ claim mutation paths, editor save behavior, deployment or CI changes.
 - Independent native material segments for level/XP, Profile, Settings and metrics.
   Compact icons/type; intrinsic metric fallback rows and Dynamic Type remain.
 - Five unframed botanical shortcuts with small overlapping text: Shop, Catalog,
-  Packs, Milestones, Expedition. Content pages retain menu access.
+  Packs, Milestones, Expedition. Content pages have a Back to Garden control.
 - Four floating bottom controls. Lists/detail pages still reserve their bottom
   navigation row, preserving the earlier page-overlap fix.
 - Collect above Garden info, aligned four points from the right edge.
@@ -49,7 +61,8 @@ Run `bash frontend/scripts/test-mac.sh` on a Mac. Exercise Debug with
 1. Check small/current portrait phones: scenery reaches every display edge while
    controls avoid the status bar, Dynamic Island, corners and home indicator.
    There is no continuous top/bottom panel or left background strip.
-2. Open every shortcut; use content-page menus; return via Garden. Open/close
+2. Open every shortcut; return using Back to Garden. Check Inventory and Activity
+   have the same back action and no drawer. Open/close
    Profile/Settings, selected plants/items and focused Edit. Camera and selection
    ownership must remain stable. Edit retains Save/Discard and draft warning.
 3. Pan, orbit, pinch and welcome butterflies through clear gaps and below the last

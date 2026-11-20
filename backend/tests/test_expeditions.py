@@ -9,7 +9,7 @@ from test_activity_launch import player as player
 from test_visitor_rescale import scene as scene
 from test_woodland import forest as forest
 
-from forest_api import expeditions, items, progression, recovery, services
+from forest_api import expedition_items, expeditions, items, progression, recovery, services
 from forest_api.activity_models import WorkoutImport
 from forest_api.expedition_models import (
     ExpeditionClaim,
@@ -18,7 +18,14 @@ from forest_api.expedition_models import (
     ItemStepGrant,
     ItemStepState,
 )
-from forest_api.item_models import ItemIdentity, ItemPlacement, OwnedItem
+from forest_api.item_models import (
+    ItemIdentity,
+    ItemPlacement,
+    ItemShopOffer,
+    ItemValuation,
+    ItemValueDefinition,
+    OwnedItem,
+)
 from forest_api.models import Garden, OwnedPlant, PlayerProgress
 from forest_api.visitor_models import VisitorWallet
 
@@ -49,6 +56,87 @@ def current(client, e):
     response = client.get("/v1/me/expeditions/current", headers=e["headers"])
     assert response.status_code == 200, response.text
     return response.json()["current"]
+
+
+@pytest.mark.parametrize("item_id,tokens", [("comet-basin", "312"), ("astronomers-satchel", "125")])
+def test_planned_reward_resale_is_pinned_and_sale_replays(expedition, app, client, item_id, tokens):
+    e = expedition
+    with app.state.database.sessions.begin() as session:
+        offers = session.scalar(select(func.count()).select_from(ItemShopOffer))
+        owned_id = items.grant(session, e["owner"], item_id, 1, source="test", reference="resale")[
+            0
+        ]
+        assert session.get(ItemValuation, owned_id) is not None
+    h = {**e["headers"], "X-Forest-Item-Commerce": "1"}
+    quote = client.get(f"/v1/me/items/{owned_id}/sale-quote", headers=h)
+    assert quote.status_code == 200, quote.text
+    assert quote.json()["tokens"] == tokens
+    body = {
+        "requestId": str(uuid4()),
+        "valuationVersion": "item-resale-v1",
+        "expectedTokens": tokens,
+    }
+    sold = client.post(f"/v1/me/items/{owned_id}/sell", headers=h, json=body)
+    assert sold.status_code == 200, sold.text
+    assert sold.json()["tokensEarned"] == tokens
+    repeated = client.post(f"/v1/me/items/{owned_id}/sell", headers=h, json=body)
+    assert repeated.status_code == 200 and repeated.json() == sold.json()
+    with app.state.database.sessions() as session:
+        assert session.scalar(select(func.count()).select_from(ItemShopOffer)) == offers
+
+
+@pytest.mark.parametrize("item_id,tokens", [("comet-basin", "312"), ("astronomers-satchel", "125")])
+def test_legacy_reward_quote_is_read_only_and_future_grants_pin_value(
+    forest, app, client, monkeypatch, item_id, tokens
+):
+    with monkeypatch.context() as legacy:
+        legacy.setattr(expedition_items, "approved_valuation", lambda *args: None)
+        with app.state.database.sessions.begin() as session:
+            expedition_items.publish_items(session)
+            owned_id = items.grant(
+                session, forest["owner"], item_id, 1, source="test", reference="legacy"
+            )[0]
+    h = {**forest["headers"], "X-Forest-Item-Commerce": "1"}
+    quote = client.get(f"/v1/me/items/{owned_id}/sale-quote", headers=h)
+    assert quote.status_code == 200 and quote.json()["tokens"] == tokens
+    with app.state.database.sessions.begin() as session:
+        assert session.get(ItemValueDefinition, (item_id, 1)) is None
+        assert session.get(ItemValuation, owned_id) is None
+        future_id = items.grant(
+            session, forest["owner"], item_id, 1, source="test", reference="future"
+        )[0]
+        assert session.get(ItemValuation, future_id) is not None
+        assert session.get(ItemValueDefinition, (item_id, 1)) is None
+    body = {
+        "requestId": str(uuid4()),
+        "valuationVersion": "item-resale-v1",
+        "expectedTokens": tokens,
+    }
+    sold = client.post(f"/v1/me/items/{owned_id}/sell", headers=h, json=body)
+    assert sold.status_code == 200 and sold.json()["tokensEarned"] == tokens
+
+
+def test_reward_resale_preserves_pinned_copy_and_leaves_orrery_unpriced(expedition, app, client):
+    e = expedition
+    with app.state.database.sessions.begin() as session:
+        pinned = items.grant(
+            session,
+            e["owner"],
+            "comet-basin",
+            1,
+            source="test",
+            reference="pinned",
+            token_value=800,
+        )[0]
+        orrery = items.grant(
+            session, e["owner"], "worldseed-orrery", 1, source="test", reference="unpriced"
+        )[0]
+    h = {**e["headers"], "X-Forest-Item-Commerce": "1"}
+    quote = client.get(f"/v1/me/items/{pinned}/sale-quote", headers=h)
+    assert quote.status_code == 200 and quote.json()["tokens"] == "200"
+    assert client.get(f"/v1/me/items/{orrery}/sale-quote", headers=h).status_code == 409
+    assert expedition_items.approved_valuation("comet-basin", 2) is None
+    assert expedition_items.approved_valuation("unknown-item", 1) is None
 
 
 def evidence(client, e, run, days, workouts=None, request=None, status=200):

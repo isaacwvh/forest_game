@@ -308,7 +308,8 @@ def publish(
                     if "itemId" in r
                 }
             ),
-            "resalePolicy": "unavailable",
+            "resalePolicy": "item-resale-v1",
+            "unpricedItems": ["worldseed-orrery"],
             "tokens": sum(
                 q["reward"].get("tokens", 0) for q in data["quests"] + data["milestones"]
             ),

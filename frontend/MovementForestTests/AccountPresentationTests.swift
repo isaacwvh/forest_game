@@ -199,7 +199,7 @@ final class AccountPresentationTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(size.height, 138)
         XCTAssertLessThanOrEqual(size.height, 142.5, "Balances use one row; Collect and Info stack at the right edge")
         let navigation = UIHostingController(rootView:
-            HomeNavigationBar(openMenu: {}, openProfile: {}, openSettings: {}) {
+            HomeNavigationBar(openProfile: {}, openSettings: {}) {
                 HomeLevelProgress(store: store, openProfile: {})
             }.environment(\.dynamicTypeSize, .large))
         let navigationSize = navigation.sizeThatFits(in: CGSize(width: 320, height: 1000))

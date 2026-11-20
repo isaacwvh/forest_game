@@ -861,7 +861,7 @@ final class ForestUITests: XCTestCase {
         }
     }
 
-    func testCollectionMenuRoutesAndReturnsToGarden() {
+    func testCollectionShortcutsReturnToGardenWithoutLegacyDrawer() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health"]
         app.launch()
@@ -870,8 +870,11 @@ final class ForestUITests: XCTestCase {
             XCTAssertTrue(shortcut.waitForExistence(timeout: 10))
             shortcut.tap()
             XCTAssertTrue(app.navigationBars[destination].waitForExistence(timeout: 5))
-            XCTAssertTrue(app.buttons["collection.menu"].firstMatch.isHittable)
-            app.buttons["navigation.Garden"].tap()
+            XCTAssertFalse(app.buttons["collection.menu"].exists)
+            let back = app.buttons["navigation.backToGarden"]
+            XCTAssertTrue(back.isHittable)
+            back.tap()
+            XCTAssertTrue(app.buttons["home.shortcut.Shop"].waitForExistence(timeout: 5))
         }
         app.buttons["Garden"].firstMatch.tap()
         XCTAssertTrue(app.buttons["garden.info"].waitForExistence(timeout: 10))

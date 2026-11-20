@@ -5,10 +5,13 @@ described under 7 November. Retain the journal palette, mounted RealityKit scene
 camera and current routes. The Home viewport extends behind the system safe areas;
 each level/Profile/Settings/metric segment has its own compact native material.
 Four independently backed Inventory/Garden/Edit/Activity controls float at the
-bottom. Content pages retain their reserved navigation row and existing menu.
+bottom. Content pages retain their reserved navigation row and provide Back to
+Garden. The former menu drawer and hamburger entry points are removed.
 
 Shop, Catalog, Packs, Milestones and Expedition appear as small unframed botanical
-icons on the left, with overlapping caption labels. Use the approved transparent
+icons on the left, with 12-point vertical gaps and overlapping caption labels.
+Ordinary-size labels fit one line, tightening/scaling if needed; accessibility
+sizes wrap within their lane. Use the approved transparent
 128px exports in home-navigation/v1; generation masters remain outside the bundle.
 Collect sits above Garden info at the right edge. Labels scale with Dynamic Type;
 long metrics reflow, and an overflowing shortcut lane scrolls within its bounds.

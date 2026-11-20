@@ -110,6 +110,10 @@ def grant(session, owner, item_id, version, *, source, reference, quantity=1, to
     session.add_all(identities)
     session.flush()
     value = session.get(ItemValueDefinition, (item_id, version))
+    if value is None:
+        from forest_api.expedition_items import approved_valuation
+
+        value = approved_valuation(item_id, version)
     if token_value is not None and value is None:
         raise ApiError(409, "sale_unavailable", "Item valuation is not published")
     if value is not None:

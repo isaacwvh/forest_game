@@ -107,11 +107,15 @@ struct HomeCollectionShortcut: View {
                     }
                 }.frame(width: iconSize, height: iconSize).accessibilityHidden(true)
                 Text(destination.rawValue).font(.caption2.weight(.bold))
+                    .lineLimit(textSize.isAccessibilitySize ? 2 : 1)
+                    .minimumScaleFactor(textSize.isAccessibilitySize ? 1 : 0.75)
+                    .allowsTightening(true)
                     .foregroundStyle(JournalTheme.paper)
                     .shadow(color: JournalTheme.ink, radius: 1, x: 1, y: 0)
                     .shadow(color: JournalTheme.ink, radius: 1, x: -1, y: 0)
                     .shadow(color: JournalTheme.ink, radius: 1, x: 0, y: 1)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
             }.frame(width: textSize.isAccessibilitySize ? 100 : 60).frame(minHeight: 44)
                 .contentShape(Rectangle())
                 .overlay(alignment: .topTrailing) {

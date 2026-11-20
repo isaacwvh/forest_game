@@ -110,7 +110,6 @@ struct AccountCollectionWallet: View {
 
 /// Replaces the browsing navigation chrome without changing its actions or the scene owner.
 struct HomeNavigationBar<Level: View>: View {
-    let openMenu: () -> Void
     let openProfile: () -> Void
     let openSettings: () -> Void
     @ViewBuilder let level: () -> Level

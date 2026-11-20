@@ -73,7 +73,6 @@ struct RootView: View {
     @Environment(\.scenePhase) private var phase
     @State private var selectedTab = ForestDestination.garden
     @State private var accountSheet: RootAccountSheet?
-    @State private var menuPresented = false
     @State private var collectionDestination: CollectionDestination?
     @State private var packOpeningPresented = false
     @State private var childEntryBlocked = false
@@ -95,11 +94,11 @@ struct RootView: View {
     }
 
     private var entryAllowed: Bool {
-        resume.foreground && accountSheet == nil && !menuPresented && !packOpeningPresented && !childEntryBlocked && !focusedEditing && connection.levelUps?.presented == nil
+        resume.foreground && accountSheet == nil && !packOpeningPresented && !childEntryBlocked && !focusedEditing && connection.levelUps?.presented == nil
     }
 
     private var levelUpAllowed: Bool {
-        resume.foreground && accountSheet == nil && !menuPresented && !packOpeningPresented &&
+        resume.foreground && accountSheet == nil && !packOpeningPresented &&
             !childEntryBlocked && !focusedEditing && !entryRecap.showing &&
             (connection.levelUps?.presented != nil ||
                 (connection.activitySync?.busy != true && connection.editor?.connectionBusy != true))
@@ -157,7 +156,7 @@ struct RootView: View {
                     // Always mounted: browsing and Edit use this same renderer/camera.
                     NavigationStack {
                         GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
-                            active: selectedTab == .garden && accountSheet == nil && !menuPresented && collectionDestination == nil && !entryRecap.showing && connection.levelUps?.presented == nil,
+                            active: selectedTab == .garden && accountSheet == nil && collectionDestination == nil && !entryRecap.showing && connection.levelUps?.presented == nil,
                             openProfile: presentProfile)
                             .toolbar(focusedEditing ? .visible : .hidden, for: .navigationBar)
                             .safeAreaInset(edge: .top, spacing: 0) {
@@ -175,68 +174,31 @@ struct RootView: View {
                     if selectedTab == .myPlants {
                         NavigationStack {
                             MyPlantsHostScreen(connection: connection, catalog: catalog)
-                                .toolbar { menuButton; accountButtons }
+                                .toolbar { gardenBackButton; accountButtons }
                         }
                     }
                     if selectedTab == .activity {
                         NavigationStack {
                             ConnectedActivityScreen(connection: connection, store: container.activity, assets: catalog)
-                                .toolbar { menuButton; accountButtons }
+                                .toolbar { gardenBackButton; accountButtons }
                         }
                     }
                 }
                 .opacity(collectionDestination == nil ? 1 : 0)
-                .allowsHitTesting(collectionDestination == nil && !menuPresented)
-                .accessibilityHidden(collectionDestination != nil || menuPresented)
+                .allowsHitTesting(collectionDestination == nil)
+                .accessibilityHidden(collectionDestination != nil)
                 if let destination = collectionDestination {
                     NavigationStack {
                         CollectionHostScreen(connection: container.connection, destination: destination, assets: catalog,
                                              navigate: { collectionDestination = $0; if $0 == nil { selectedTab = .garden } },
                                              openingChanged: { packOpeningPresented = $0 })
                             .toolbar {
-                                menuButton
+                                gardenBackButton
                                 accountButtons
                             }
                     }.id(destination)
-                        .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
                 }
-                if menuPresented {
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            Button { menuPresented = false } label: { Color.black.opacity(0.3).ignoresSafeArea() }
-                                .accessibilityLabel("Close collection menu")
-                            VStack(alignment: .leading, spacing: 0) {
-                                HStack {
-                                    Text("Your forest").font(.system(.title2, design: .serif).weight(.semibold))
-                                    Spacer()
-                                    Button { menuPresented = false } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                                        .buttonStyle(.journalIcon)
-                                        .accessibilityLabel("Close menu")
-                                }.padding()
-                                List(CollectionDestination.allCases) { destination in
-                                    Button {
-                                        collectionDestination = destination; menuPresented = false
-                                    } label: {
-                                        Label(destination.rawValue, systemImage: destination.symbol)
-                                            .font(.system(.headline, design: .serif))
-                                            .frame(minHeight: 44).padding(.vertical, 4)
-                                    }
-                                        .buttonStyle(.journalQuiet)
-                                        .listRowBackground(Color.clear)
-                                        .listRowSeparatorTint(JournalTheme.vine.opacity(0.35))
-                                        .accessibilityIdentifier("menu.\(destination.id)")
-                                }.listStyle(.plain).scrollContentBackground(.hidden)
-                                Button("Return to Garden") {
-                                    collectionDestination = nil; selectedTab = .garden; menuPresented = false
-                                }.buttonStyle(.journalSecondary).frame(maxWidth: .infinity, minHeight: 44).padding()
-                                    .background(JournalTheme.sage.opacity(0.65))
-                            }
-                            .frame(width: min(300, geometry.size.width * 0.85))
-                            .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-                            .background(JournalPageBackground().ignoresSafeArea())
-                        }
-                    }.accessibilityElement(children: .contain)
-                }
+
                 }
                 if !focusedEditing && (!floatingHome || !gardenViewportAvailable) {
                     bottomNavigation
@@ -290,7 +252,7 @@ struct RootView: View {
                 .onChange(of: connection.editor?.profile.userId) { user in
                     if user == nil { entryRecap.signOut() }
                     DiagnosticHistory.shared.setScope(connection.editor?.diagnosticScope)
-                    selectedTab = .garden; menuPresented = false; collectionDestination = nil
+                    selectedTab = .garden; collectionDestination = nil
                     if accountSheet != .settings { accountSheet = nil }
                 }
                 .onChange(of: entryAllowed) { _ in presentEntryIfReady() }
@@ -327,7 +289,7 @@ struct RootView: View {
     private func navigate(to destination: ForestDestination) {
         if destination == .edit {
             guard let editor = connection.editor, editor.canStartEditing else { return }
-            collectionDestination = nil; selectedTab = .garden; menuPresented = false
+            collectionDestination = nil; selectedTab = .garden
             editor.editing = true
         } else {
             collectionDestination = nil; selectedTab = destination
@@ -365,7 +327,6 @@ struct RootView: View {
             .background(GeometryReader { geometry in
                 Color.clear.preference(key: GardenBottomNavigationTop.self, value: geometry.frame(in: .global).minY)
             })
-            .allowsHitTesting(!menuPresented).accessibilityHidden(menuPresented)
             .background {
                 if !floatingHome { JournalTheme.paper.ignoresSafeArea(edges: .bottom) }
             }
@@ -376,7 +337,7 @@ struct RootView: View {
     }
 
     private var homeNavigation: some View {
-        HomeNavigationBar(openMenu: { menuPresented = true }, openProfile: { presentProfile(.overview) },
+        HomeNavigationBar(openProfile: { presentProfile(.overview) },
                           openSettings: { accountSheet = .settings }) {
             if let store = connection.accountSummary {
                 HomeLevelProgress(store: store, openProfile: { presentProfile(.overview) })
@@ -388,7 +349,7 @@ struct RootView: View {
     }
 
     private var homeShortcuts: some View {
-        VStack(spacing: 3) {
+        VStack(spacing: 12) {
             ForEach(CollectionDestination.allCases) { destination in
                 HomeCollectionShortcut(destination: destination, attention: attention(for: destination)) {
                     guard !focusedEditing, accountSheet == nil, !entryRecap.showing, !packOpeningPresented,
@@ -440,11 +401,12 @@ struct RootView: View {
         }
     }
 
-    private var menuButton: some ToolbarContent {
+    private var gardenBackButton: some ToolbarContent {
         ToolbarItem(placement: .navigationBarLeading) {
-            Button { menuPresented = true } label: { Image(systemName: "line.3.horizontal").frame(width: 44, height: 44) }
-                .buttonStyle(.journalIcon)
-                .accessibilityLabel("Open collection menu").accessibilityIdentifier("collection.menu")
+            Button { navigate(to: .garden) } label: {
+                Label("Garden", systemImage: "chevron.left").frame(minHeight: 44)
+            }.buttonStyle(.journalQuiet)
+                .accessibilityLabel("Back to Garden").accessibilityIdentifier("navigation.backToGarden")
         }
     }
 }

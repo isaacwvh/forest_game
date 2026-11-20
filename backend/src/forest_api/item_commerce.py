@@ -234,6 +234,13 @@ def quote(session, owner, owned_id):
         # Pre-commerce gifts use an immutable per-definition value. GET stays read-only.
         valuation = session.get(ItemValueDefinition, (identity.item_id, identity.item_version))
     if valuation is None:
+        # Existing expedition copies predate publication of their planned values.
+        # Resolve only approved v1 values; never write during a quote read or
+        # override an acquired-copy/published valuation above.
+        from forest_api.expedition_items import approved_valuation
+
+        valuation = approved_valuation(identity.item_id, identity.item_version)
+    if valuation is None:
         raise ApiError(
             409, "item_sale_unavailable", "This item does not have a published resale value"
         )

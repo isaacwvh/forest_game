@@ -57,9 +57,13 @@ is needed. Repeating the launch command preserves its original cutoff. An existi
 full-month assignment cannot be converted, and later months cannot use this flag.
 
 Preview rolls back all writes. Apply publishes the three reward-only item definitions,
-pinned skills and a recurring assignment, not shop offers. All three are explicitly
-sale-unavailable gifts: no token/resale value is invented. Existing shop pools and
-their prices are unchanged. Review gift resale/capacity and newcomer herb access
+pinned skills and a recurring assignment, not shop offers. Approved workbook v1
+values give the Satchel 125 tokens resale (500 at 25%) and Basin 312 (1,250 at 25%,
+rounded down). Existing copies without a valuation use the same read-only fallback;
+new copies pin it. Acquired-copy and published values take precedence. Orrery stays
+unpriced because its planning cells are blank. Existing shop pools are unchanged.
+The code update needs a backend rebuild/restart; no migration or republishing is
+needed for existing copies. Review gift capacity and newcomer herb access
 before production activation; repeated monthly copies consume normal item capacity.
 
 A replacement JSON file has `version` and `definition` fields. `definition` uses
