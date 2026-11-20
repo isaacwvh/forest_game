@@ -337,6 +337,64 @@ final class ForestUITests: XCTestCase {
         XCTAssertTrue(app.buttons["profile.accountAccess"].exists)
     }
 
+    func testProfileJournalPreservesCapacityAndNextLevelDetails() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-level-up"]
+        app.launch()
+        XCTAssertTrue(app.buttons["levelUp.continue"].waitForExistence(timeout: 15))
+        app.buttons["levelUp.continue"].tap()
+        XCTAssertTrue(app.buttons["account.profile"].waitForExistence(timeout: 5))
+        app.buttons["account.profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+        let details = app.buttons["profile.levelDetails"]
+        for _ in 0..<8 {
+            if details.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(details.isHittable)
+        XCTAssertGreaterThanOrEqual(details.frame.height, 44)
+        XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "profile.visitCapacity").firstMatch.label,
+            "Stored visits, 900")
+        XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "profile.plantCapacity").firstMatch.label,
+            "Plants, 60")
+        details.tap()
+        for label in ["Base stored visits, 900", "Next level, +60 stored visits", "Level 10, 75 plants"] {
+            XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch.exists)
+        }
+        details.tap()
+        XCTAssertFalse(app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Base stored visits, 900")).firstMatch.exists)
+    }
+
+    func testProfileJournalAtLargestTextPreservesZeroProgressAndAccountAccess() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-health", "--fixture-garden", "--fixture-progression", "--fixture-account-fresh",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        XCTAssertTrue(app.buttons["account.profile"].waitForExistence(timeout: 15))
+        app.buttons["account.profile"].tap()
+        let progress = app.descendants(matching: .any).matching(identifier: "profile.levelProgress").firstMatch
+        XCTAssertTrue(progress.waitForExistence(timeout: 5))
+        XCTAssertEqual(progress.label, "Account Level 1")
+        XCTAssertEqual(progress.value as? String, "0 / 50 XP, towards Level 2, 0 total XP")
+        let gems = app.descendants(matching: .any).matching(identifier: "profile.gems").firstMatch
+        for _ in 0..<12 {
+            if gems.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertEqual(gems.label, "Gems, 0")
+        let access = app.buttons["profile.accountAccess"]
+        for _ in 0..<12 {
+            if access.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(access.isHittable)
+        XCTAssertGreaterThanOrEqual(access.frame.height, 44)
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(access.frame))
+        access.tap()
+        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 5))
+    }
+
     func testMyPlantsSwipeRefreshDoesNotLeaveAConnectionFailure() {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-garden"]

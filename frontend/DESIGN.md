@@ -1,3 +1,31 @@
+## Profile journal — 20 November 2026
+
+The approved two-scroll-position Profile concept supersedes the compact Profile
+presentation described under 7 November. Retain the existing journal paper, sage,
+forest-green ink/actions, native body text, serif headings and corner ornaments.
+One default circular portrait uses the bundled Standard Oak sprout for every
+account, independently of ownership. Names and usernames remain account-derived.
+
+Order: identity and level, Wallet, Lifetime, Capacity when available, then Account.
+The profile-only XP track places its exact ratio inside a content-height capsule;
+paper text is masked to the green fill and ink remains on sage. Keep the existing
+level/fraction formatter and complete VoiceOver value, including lifetime XP.
+Home's shared progress controls are unchanged.
+
+Wallet and Capacity use quiet sage bands with existing coin, emerald, butterfly
+basket and Oak artwork. Capacity values are limits, never current occupancy.
+Lifetime pairs boot/butterfly/tree artwork with full recorded-step, hosted-visit
+and grown-adult totals. Native disclosures retain all supporting statistics,
+base/next capacities and account metadata. Highlight only the real next-capacity
+rows; Account and sign-in uses the existing secondary bookplate navigation style.
+
+Large text and long values stack rather than truncate or shrink. Decorative art
+is hidden from VoiceOver; disclosure/navigation targets remain at least 44 points.
+Refresh, saved/preparing/failure/Retry states, account scope, section anchors,
+navigation and visitor guards retain their existing behavior. No avatar editor,
+badges, earning rules or reward actions are added. See
+[Profile acceptance](PROFILE_JOURNAL_ACCEPTANCE.md) for executed and pending checks.
+
 ## Monthly expedition — 20 November 2026
 
 Expedition lives in the sidebar immediately below Milestones. The bottom navigation

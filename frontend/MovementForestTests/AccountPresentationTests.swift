@@ -91,6 +91,67 @@ final class AccountPresentationTests: XCTestCase {
         XCTAssertEqual(QuantityArtwork.symbol("xp"), "star.fill")
     }
 
+    func testProfileIllustrationsResolveFromExistingBundleWithBoundedDecoding() throws {
+        for illustration in ProfileIllustration.allCases {
+            XCTAssertNotNil(PresentationAssets.url(illustration.rawValue), "Missing profile artwork: \(illustration)")
+            let image = try XCTUnwrap(ProfileIllustration.images[illustration])
+            let pixels = try XCTUnwrap(image.cgImage)
+            let maximum = illustration == .portrait ? 256 : 128
+            XCTAssertGreaterThan(pixels.width, 0)
+            XCTAssertGreaterThan(pixels.height, 0)
+            XCTAssertLessThanOrEqual(max(pixels.width, pixels.height), maximum)
+        }
+    }
+
+    func testProfileIdentityReflowsLongNamesAtNarrowAndAccessibilityWidths() throws {
+        let source = try fixture()
+        let identity = APIAccountIdentity(userId: source.profile.userId,
+            username: "a_very_long_forest_keeper_username", displayName: "A very long forest keeper display name",
+            gameTimezone: source.profile.gameTimezone, createdAt: source.profile.createdAt)
+        let summary = APIAccountSummary(serverTime: source.serverTime, profile: identity,
+            progression: source.progression, wallet: source.wallet)
+        for width in [280.0, 350.0] {
+            let regular = UIHostingController(rootView: ProfileIdentityHeader(summary: summary)
+                .environment(\.dynamicTypeSize, .large))
+            let accessible = UIHostingController(rootView: ProfileIdentityHeader(summary: summary)
+                .environment(\.dynamicTypeSize, .accessibility5))
+            let proposal = CGSize(width: width, height: 3000)
+            let regularSize = regular.sizeThatFits(in: proposal)
+            let accessibleSize = accessible.sizeThatFits(in: proposal)
+            XCTAssertLessThanOrEqual(regularSize.width, width + 0.5)
+            XCTAssertLessThanOrEqual(accessibleSize.width, width + 0.5)
+            XCTAssertGreaterThan(accessibleSize.height, regularSize.height,
+                "Long names and progress must grow vertically with Dynamic Type")
+        }
+    }
+
+    func testProfileWalletAndRecordsStackLongValuesInsteadOfTruncating() throws {
+        let source = try fixture()
+        var large = source
+        let wallet = source.wallet
+        large.wallet = APIAccountWallet(economyVersion: wallet.economyVersion,
+            tokenBalance: "9223372036854775807", gemBalance: wallet.gemBalance,
+            lifetimeGemsEarned: wallet.lifetimeGemsEarned, initialized: wallet.initialized,
+            hostedActive: wallet.hostedActive, hostedOffline: wallet.hostedOffline, hostedTotal: wallet.hostedTotal)
+        let proposal = CGSize(width: 280, height: 3000)
+        let ordinary = UIHostingController(rootView: ProfileWalletSection(summary: source)
+            .environment(\.dynamicTypeSize, .large))
+        let overflowing = UIHostingController(rootView: ProfileWalletSection(summary: large)
+            .environment(\.dynamicTypeSize, .large))
+        let ordinarySize = ordinary.sizeThatFits(in: proposal)
+        let largeSize = overflowing.sizeThatFits(in: proposal)
+        XCTAssertLessThanOrEqual(largeSize.width, proposal.width + 0.5)
+        XCTAssertGreaterThan(largeSize.height, ordinarySize.height,
+            "A long wallet balance must switch the pair to a vertical arrangement")
+
+        let shortRecord = UIHostingController(rootView: ProfileRecordRow(title: "Stored visits collected", value: "764")
+            .environment(\.dynamicTypeSize, .large))
+        let longRecord = UIHostingController(rootView: ProfileRecordRow(title: "Stored visits collected",
+            value: "9,223,372,036,854,775,807").environment(\.dynamicTypeSize, .large))
+        XCTAssertGreaterThan(longRecord.sizeThatFits(in: proposal).height, shortRecord.sizeThatFits(in: proposal).height,
+            "Full record values must move beneath their labels when the row cannot fit")
+    }
+
     func testHomeHeaderKeepsTheFullSceneAndClipsItsExclusionFramesAtLargeText() async throws {
         let value = try fixture()
         let store = AccountSummaryStore(userID: value.profile.userId, service: PresentationTestService(value: value),

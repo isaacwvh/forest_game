@@ -122,6 +122,20 @@ def main():
         require(hashlib.sha256(path.read_bytes()).hexdigest() == item["sha256"], f"Approved progression icon changed: {path.name}")
         require(item["prompt"] and path.stat().st_size < 64 * 1024, "Progression icon prompt/budget mismatch")
     print("PASS: 16 runtime quantity icons, including approved emerald/XP artwork, RGBA budgets and provenance.")
+    profile_source = (ROOT / "MovementForest/Features/ProfileScreen.swift").read_text(encoding="utf-8")
+    profile_paths = re.findall(r'case \w+ = "([^"\n]+\.png)"', profile_source)
+    require(profile_paths, "Profile illustration resource references are missing")
+    for relative in profile_paths:
+        resource = Path(relative)
+        require(not resource.is_absolute() and ".." not in resource.parts and "\\" not in relative,
+                f"Unsafe profile artwork path: {relative}")
+        folder = "quantity-icons-v1/png-128" if resource.parts[0] == "png-128" else resource.parts[0]
+        require(f"../assets/{folder}" in project_text, f"Profile artwork is not bundled: {relative}")
+        path = icon_folder / resource.name if resource.parts[0] == "png-128" else REPO / "assets" / resource
+        png = path.read_bytes()
+        require(png[:8] == b"\x89PNG\r\n\x1a\n" and png[25] in [4, 6],
+                f"Profile artwork must be an existing PNG with alpha: {relative}")
+    print(f"PASS: {len(profile_paths)} profile illustration paths resolve to existing bundled alpha PNGs.")
     pack_bytes = 0
     for pack_id in ["woodland", "select-woodland", "premium-woodland"]:
         theme_bytes = 0
@@ -319,6 +333,8 @@ def main():
         for background in ["paper", "sage"]:
             low, high = sorted([luminance(theme[foreground]), luminance(theme[background])])
             require((high + 0.05) / (low + 0.05) >= 4.5, f"Journal {foreground} text contrast is too low")
+    low, high = sorted([luminance(theme["paper"]), luminance(theme["action"])])
+    require((high + 0.05) / (low + 0.05) >= 4.5, "Profile in-bar XP text contrast is too low")
     for background in ["paper", "sage"]:
         low, high = sorted([luminance(theme["vine"]), luminance(theme[background])])
         require((high + 0.05) / (low + 0.05) >= 3, "Journal button outline contrast is too low")
