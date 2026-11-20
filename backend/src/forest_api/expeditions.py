@@ -7,7 +7,7 @@ from uuid import NAMESPACE_URL, uuid5
 from sqlalchemy import func, select, text
 
 from forest_api import collection, services
-from forest_api.expedition_definitions import QUESTS, VERSION, definition
+from forest_api.expedition_definitions import ITEMS, QUESTS, VERSION, definition
 from forest_api.expedition_models import (
     ExpeditionClaim,
     ExpeditionEntitlement,
@@ -220,7 +220,7 @@ def publish(
     session, settings, month, *, apply=False, clock=None, replacement=None, start_now=False
 ):
     """Publish one recurring assignment; subsequent months need no manual operation."""
-    from forest_api.expedition_items import publish_items
+    from forest_api.expedition_items import TOKEN_VALUES, publish_items
     from forest_api.models import AttractionProfile, Species
 
     with session.begin():
@@ -309,7 +309,7 @@ def publish(
                 }
             ),
             "resalePolicy": "item-resale-v1",
-            "unpricedItems": ["worldseed-orrery"],
+            "unpricedItems": [key for key, *_ in ITEMS if (key, 1) not in TOKEN_VALUES],
             "tokens": sum(
                 q["reward"].get("tokens", 0) for q in data["quests"] + data["milestones"]
             ),

@@ -60,11 +60,26 @@ Preview rolls back all writes. Apply publishes the three reward-only item defini
 pinned skills and a recurring assignment, not shop offers. Approved workbook v1
 values give the Satchel 125 tokens resale (500 at 25%) and Basin 312 (1,250 at 25%,
 rounded down). Existing copies without a valuation use the same read-only fallback;
-new copies pin it. Acquired-copy and published values take precedence. Orrery stays
-unpriced because its planning cells are blank. Existing shop pools are unchanged.
+new copies pin it. Legendary items now use a 5,500-token planned value and 25%
+resale: Orrery sells for 1,375 tokens. This 20 November decision supersedes its
+blank workbook price. Acquired-copy and published values take precedence. Orrery
+is currently the only Legendary item; this rule does not add it to shop pools.
 The code update needs a backend rebuild/restart; no migration or republishing is
 needed for existing copies. Review gift capacity and newcomer herb access
 before production activation; repeated monthly copies consume normal item capacity.
+
+To explicitly publish all three current resale definitions, run
+`powershell -NoProfile -ExecutionPolicy Bypass -File backend/scripts/publish-reward-values.ps1`
+from the repository root after pulling the updated source. Docker Desktop must be
+running. The script backs up the database, rebuilds the backend images, serializes
+publication under the existing expedition lock, verifies committed values, then
+starts the full stack and checks readiness. It preserves previously pinned values
+and does not add shop offers, reset progress or grant any items.
+
+Legendary pricing follow-up validation: 113 item/expedition regression tests pass,
+including existing unvalued Orreries, future-copy value pinning, 1,375-token sales
+and repeat-safe sale recovery. Lint, portable asset/contracts and PowerShell
+syntax checks pass. The live backend must be updated separately.
 
 A replacement JSON file has `version` and `definition` fields. `definition` uses
 the same schema as the published template: nine unique supported quest IDs,

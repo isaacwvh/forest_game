@@ -9,10 +9,14 @@ from forest_api.item_models import (
     ItemSkillProfile,
     ItemValueDefinition,
 )
+from forest_api.item_pricing import LEGENDARY_TOKEN_VALUE
 
 # Item_Game_Data.xlsx Items!F23:H24: 25%, rounded down, for these v1 rewards.
-# Orrery's valuation cells are blank; it intentionally has no fallback.
+# Legendary items, including Orrery, are approved at 5,500 tokens as of 20 Nov 2026.
 TOKEN_VALUES = {("astronomers-satchel", 1): 500, ("comet-basin", 1): 1250}
+TOKEN_VALUES.update(
+    {(key, 1): LEGENDARY_TOKEN_VALUE for key, _, rarity, *_ in ITEMS if rarity == "legendary"}
+)
 
 
 def approved_valuation(item_id, version):

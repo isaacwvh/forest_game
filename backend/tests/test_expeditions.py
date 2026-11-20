@@ -26,6 +26,7 @@ from forest_api.item_models import (
     ItemValueDefinition,
     OwnedItem,
 )
+from forest_api.item_pricing import token_value_for_rarity
 from forest_api.models import Garden, OwnedPlant, PlayerProgress
 from forest_api.visitor_models import VisitorWallet
 
@@ -58,7 +59,10 @@ def current(client, e):
     return response.json()["current"]
 
 
-@pytest.mark.parametrize("item_id,tokens", [("comet-basin", "312"), ("astronomers-satchel", "125")])
+@pytest.mark.parametrize(
+    "item_id,tokens",
+    [("comet-basin", "312"), ("astronomers-satchel", "125"), ("worldseed-orrery", "1375")],
+)
 def test_planned_reward_resale_is_pinned_and_sale_replays(expedition, app, client, item_id, tokens):
     e = expedition
     with app.state.database.sessions.begin() as session:
@@ -85,7 +89,10 @@ def test_planned_reward_resale_is_pinned_and_sale_replays(expedition, app, clien
         assert session.scalar(select(func.count()).select_from(ItemShopOffer)) == offers
 
 
-@pytest.mark.parametrize("item_id,tokens", [("comet-basin", "312"), ("astronomers-satchel", "125")])
+@pytest.mark.parametrize(
+    "item_id,tokens",
+    [("comet-basin", "312"), ("astronomers-satchel", "125"), ("worldseed-orrery", "1375")],
+)
 def test_legacy_reward_quote_is_read_only_and_future_grants_pin_value(
     forest, app, client, monkeypatch, item_id, tokens
 ):
@@ -116,7 +123,7 @@ def test_legacy_reward_quote_is_read_only_and_future_grants_pin_value(
     assert sold.status_code == 200 and sold.json()["tokensEarned"] == tokens
 
 
-def test_reward_resale_preserves_pinned_copy_and_leaves_orrery_unpriced(expedition, app, client):
+def test_reward_resale_preserves_pinned_copy_and_prices_orrery(expedition, app, client):
     e = expedition
     with app.state.database.sessions.begin() as session:
         pinned = items.grant(
@@ -129,14 +136,26 @@ def test_reward_resale_preserves_pinned_copy_and_leaves_orrery_unpriced(expediti
             token_value=800,
         )[0]
         orrery = items.grant(
-            session, e["owner"], "worldseed-orrery", 1, source="test", reference="unpriced"
+            session, e["owner"], "worldseed-orrery", 1, source="test", reference="legendary"
         )[0]
     h = {**e["headers"], "X-Forest-Item-Commerce": "1"}
     quote = client.get(f"/v1/me/items/{pinned}/sale-quote", headers=h)
     assert quote.status_code == 200 and quote.json()["tokens"] == "200"
-    assert client.get(f"/v1/me/items/{orrery}/sale-quote", headers=h).status_code == 409
+    orrery_quote = client.get(f"/v1/me/items/{orrery}/sale-quote", headers=h)
+    assert orrery_quote.status_code == 200
+    assert orrery_quote.json()["tokenValue"] == "5500"
+    assert orrery_quote.json()["resaleBasisPoints"] == 2500
+    assert orrery_quote.json()["tokens"] == "1375"
     assert expedition_items.approved_valuation("comet-basin", 2) is None
     assert expedition_items.approved_valuation("unknown-item", 1) is None
+
+
+@pytest.mark.parametrize("planned_value", [None, 0, 5500, 8000])
+def test_legendary_item_price_rule_preserves_other_rarities(planned_value):
+    assert token_value_for_rarity("legendary", planned_value) == 5500
+    assert token_value_for_rarity("common", 500) == 500
+    assert token_value_for_rarity("rare", 1250) == 1250
+    assert token_value_for_rarity("epic", 3200) == 3200
 
 
 def evidence(client, e, run, days, workouts=None, request=None, status=200):

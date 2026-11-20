@@ -15,6 +15,7 @@ from forest_api.item_models import (
     ShopRelease,
     ShopWeek,
 )
+from forest_api.item_pricing import token_value_for_rarity
 from forest_api.skill_rules import SkillEffect
 
 VERSION = "garden-items-v1"
@@ -40,7 +41,10 @@ SKILLS = {
 
 
 def catalogue():
-    return json.loads(Path(__file__).with_name("data").joinpath("garden-items-v1.json").read_text())
+    rows = json.loads(Path(__file__).with_name("data").joinpath("garden-items-v1.json").read_text())
+    for row in rows:
+        row["tokenCost"] = token_value_for_rarity(row["rarity"], row["tokenCost"])
+    return rows
 
 
 def profile(skill_id):

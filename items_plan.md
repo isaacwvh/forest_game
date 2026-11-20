@@ -1,5 +1,11 @@
 # Garden items, inventory and rotating shop — proposal
 
+**Approved pricing, 20 November 2026:** all Legendary items use a planned value of
+**5,500 tokens** with **25% resale (1,375 tokens)** for now. This includes Worldseed
+Orrery and supersedes its earlier blank/undecided price. Orrery remains an
+expedition reward; this does not add a shop offer. Preserve existing pinned copy
+valuations. See [publication commands](backend/EXPEDITIONS.md).
+
 **Source update, 17 November 2026:** the user authorized implementation of the
 consolidated release. Fifteen selected items (6 Common / 5 Rare / 4 Epic), workbook
 prices, saved weekly rotations and all eight skills are source-implemented. See
