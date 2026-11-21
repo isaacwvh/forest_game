@@ -1,3 +1,20 @@
+## Guest + Google auth bootstrap — 22 November 2026
+
+- Full isolated PostgreSQL suite: **795 passed, 3 skipped**, 902.13 seconds.
+  Skips are the three explicit opt-in physical storage benchmarks.
+- All four real-HTTP walkthroughs passed: activity, visitors, Sleeping Dew skills
+  and nonfixture launch. The helper stopped its dedicated test cluster afterward.
+- Command: `backend/.venv/Scripts/python.exe backend/scripts/validate_visitors_local.py --smoke`.
+  Sandbox access to local PostgreSQL sockets required escalation. Fixtures created
+  and dropped only generated forest_test_* databases; no game database reset.
+- Bootstrap coverage includes atomic single-starter creation, existing-account
+  preservation, exact replay/changed-body and cross-operation conflicts, generated
+  username collision retry, catalogue rollback, disabled accounts, concurrent
+  bootstrap/manual registration, compact completion and anonymous-to-Google claims
+  retaining the same issuer/subject/game/garden identity.
+- Backend-wide Ruff lint/format and `pip check` passed. No new migration required.
+  No live Supabase/Google calls, API deployment, push or CI were performed.
+
 ## First expedition partial-month launch — 20 November 2026
 
 Added `0022_expedition_launch` and the explicit first-launch `--start-now` flag.

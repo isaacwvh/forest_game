@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "generator": "built-in image_gen",
+  "assets": [
+    {
+      "file": "title-background-v1.png",
+      "role": "runtime-background",
+      "width": 887,
+      "height": 1774,
+      "bytes": 1789540,
+      "sha256": "471a3fdde5271fc327ea8c8731623fead1c30dc5a44c95a13f0a422a0103aed1"
+    },
+    {
+      "file": "approved-concept-02.png",
+      "role": "approved-reference",
+      "width": 887,
+      "height": 1774,
+      "bytes": 1836792,
+      "sha256": "24f1eb820d69dd599de568bb032d0e2b1563dba064808dd79ed0e43db61bd32f"
+    }
+  ]
+}

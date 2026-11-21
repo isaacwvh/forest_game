@@ -18,8 +18,12 @@ enum GardenSaveState: Equatable {
 @MainActor
 final class GardenEditorStore: ObservableObject, Identifiable {
     let id = UUID()
-    let profile: APIProfile
+    @Published private(set) var profile: APIProfile
     let effects: GardenEffectsCoordinator
+    func applyProfile(_ value: APIProfile) {
+        guard value.userId == profile.userId, value.gameTimezone == profile.gameTimezone else { return }
+        profile = value
+    }
     private(set) var service: any GardenServing
     private let assets: any AssetCatalogProviding
     private let journal: any PendingEditPersisting

@@ -7,7 +7,10 @@ struct MovementForestApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(container: container).tint(.forestTint).preferredColorScheme(.light)
-                .onOpenURL { url in Task { await container.connection.authentication?.handleCallback(url) } }
+                .onOpenURL { url in
+                    guard let catalog = container.catalog else { return }
+                    Task { await container.connection.handleAuthCallback(url, assets: catalog) }
+                }
         }
     }
 }
@@ -94,11 +97,15 @@ struct RootView: View {
     }
 
     private var entryAllowed: Bool {
-        resume.foreground && accountSheet == nil && !packOpeningPresented && !childEntryBlocked && !focusedEditing && connection.levelUps?.presented == nil
+        resume.foreground && !authEntryBlocked && accountSheet == nil && !packOpeningPresented && !childEntryBlocked && !focusedEditing && connection.levelUps?.presented == nil
+    }
+
+    private var authEntryBlocked: Bool {
+        connection.authentication != nil && (connection.titleVisible || connection.switching || connection.authentication?.busy == true)
     }
 
     private var levelUpAllowed: Bool {
-        resume.foreground && accountSheet == nil && !packOpeningPresented &&
+        resume.foreground && !authEntryBlocked && accountSheet == nil && !packOpeningPresented &&
             !childEntryBlocked && !focusedEditing && !entryRecap.showing &&
             (connection.levelUps?.presented != nil ||
                 (connection.activitySync?.busy != true && connection.editor?.connectionBusy != true))
@@ -114,7 +121,7 @@ struct RootView: View {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--fixture-garden") { return }
         #endif
-        guard resume.foreground else { return }
+        guard resume.foreground, !authEntryBlocked else { return }
         guard let sync = connection.activitySync,
               let editor = connection.editor, sync.isAttached(to: editor) else {
             if !connection.connecting, let catalog = container.catalog {
@@ -156,7 +163,7 @@ struct RootView: View {
                     // Always mounted: browsing and Edit use this same renderer/camera.
                     NavigationStack {
                         GardenHostScreen(connection: container.connection, sample: container.garden, catalog: catalog,
-                            active: selectedTab == .garden && accountSheet == nil && collectionDestination == nil && !entryRecap.showing && connection.levelUps?.presented == nil,
+                            active: !authEntryBlocked && selectedTab == .garden && accountSheet == nil && collectionDestination == nil && !entryRecap.showing && connection.levelUps?.presented == nil,
                             openProfile: presentProfile)
                             .toolbar(focusedEditing ? .visible : .hidden, for: .navigationBar)
                             .safeAreaInset(edge: .top, spacing: 0) {
@@ -206,10 +213,12 @@ struct RootView: View {
                 }
                 .environment(\.gardenBottomNavigationTop, bottomNavigationTop)
                 .onPreferenceChange(GardenBottomNavigationTop.self) { bottomNavigationTop = $0 }
-                .allowsHitTesting(connection.levelUps?.presented == nil)
-                .accessibilityHidden(connection.levelUps?.presented != nil)
+                .allowsHitTesting(connection.levelUps?.presented == nil && !authEntryBlocked)
+                .accessibilityHidden(connection.levelUps?.presented != nil || authEntryBlocked)
                 .overlay {
-                    if let coordinator = connection.levelUps, let notice = coordinator.presented {
+                    if let auth = connection.authentication, connection.titleVisible {
+                        TitleScreen(connection: connection, auth: auth, catalog: catalog)
+                    } else if let coordinator = connection.levelUps, let notice = coordinator.presented {
                         LevelUpPopup(notice: notice, dismiss: coordinator.dismiss)
                     }
                 }
@@ -254,6 +263,10 @@ struct RootView: View {
                     DiagnosticHistory.shared.setScope(connection.editor?.diagnosticScope)
                     selectedTab = .garden; collectionDestination = nil
                     if accountSheet != .settings { accountSheet = nil }
+                }
+                .onChange(of: connection.titleVisible) { visible in
+                    if visible { accountSheet = nil; entryRecap.signOut() }
+                    else { presentEntryIfReady() }
                 }
                 .onChange(of: entryAllowed) { _ in presentEntryIfReady() }
                 .onPreferenceChange(EntryPresentationBlocker.self) { childEntryBlocked = $0 }

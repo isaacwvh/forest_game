@@ -4,6 +4,52 @@ import UIKit
 final class ForestUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
 
+    func testAuthTitleFollowsResolvedSessionAndHistory() {
+        for (scenario, label) in [("--auth-first", "Play"), ("--auth-guest", "Continue your garden"),
+                                  ("--auth-linked", "Continue your garden"), ("--auth-signed-out", "Sign back in")] {
+            let app = XCUIApplication()
+            app.launchArguments = ["--fixture-auth", scenario]
+            app.launch()
+            let action = app.buttons["title.primary"]
+            XCTAssertTrue(action.waitForExistence(timeout: 15))
+            XCTAssertEqual(action.label, label)
+            XCTAssertGreaterThanOrEqual(action.frame.height, 44)
+            if scenario == "--auth-signed-out" {
+                app.buttons["title.newGarden"].tap()
+                XCTAssertTrue(app.alerts["Start a new garden?"].waitForExistence(timeout: 5))
+                app.alerts.buttons["Cancel"].tap()
+                XCTAssertEqual(action.label, "Sign back in")
+            }
+            app.terminate()
+        }
+    }
+
+    func testUnresolvedAuthNeverOffersPlay() {
+        for scenario in ["--auth-restoring", "--auth-unavailable"] {
+            let app = XCUIApplication()
+            app.launchArguments = ["--fixture-auth", scenario]
+            app.launch()
+            XCTAssertTrue(app.staticTexts[scenario == "--auth-restoring" ? "Finding your garden…" : "Saved sign-in unavailable."].waitForExistence(timeout: 15))
+            XCTAssertFalse(app.buttons["title.primary"].exists)
+            app.terminate()
+        }
+    }
+
+    func testGuestSwitchWarningAndCancelAtLargestTextSize() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-auth", "--auth-guest", "-UIPreferredContentSizeCategoryName",
+                               "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let switchAccount = app.buttons["Sign in another way"]
+        XCTAssertTrue(switchAccount.waitForExistence(timeout: 15))
+        if !switchAccount.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        switchAccount.tap()
+        XCTAssertTrue(app.staticTexts["This guest garden may be lost after switching accounts."].waitForExistence(timeout: 5))
+        app.buttons["Keep this garden"].tap()
+        XCTAssertTrue(app.buttons["title.primary"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["title.primary"].label, "Continue your garden")
+    }
+
     func testMilestoneSelectorsAndScrollSurviveRepeatedCachedEntry() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--fixture-health", "--fixture-collection", "--fixture-milestones"]

@@ -1,3 +1,13 @@
+## Guest and Google auth — 22 November 2026
+
+The integrated auth source adds guest creation/restoration, repeat-safe backend
+bootstrap, the approved Concept 02 title, Account & save, Google linking and safe
+staged switching. Google/guest flags default YES; ignored Mac Local.xcconfig can
+override them. Apple remains NO. Keep the installed bundle/callback identity and
+existing project/key/API settings. Backend compatibility must precede guest use.
+See [delivery, prerequisites and device tests](GUEST_GOOGLE_ACCEPTANCE.md).
+Native Xcode/iPhone acceptance is pending; Windows checks do not establish it.
+
 ## Floating Home — 20 November 2026
 
 Implements the approved compact floating navigation: unframed botanical shortcuts,

@@ -1,3 +1,33 @@
+## Guest and Google account entry — 22 November 2026
+
+The auth surfaces extend the incumbent botanical journal system: warm paper,
+sage, forest-green ink/actions, serif headings and native body/input text. Settings
+opens Account & save; its native forms keep profile editing, recovery and linking
+in clear sections rather than introducing another visual system.
+
+The title uses approved Forestivity Concept 02: the original wordmark, sprout,
+caption Good things grow with you. and woodland composition. The bundled
+production backdrop removes only the painted Play button. A real native green
+capsule occupies that space; its label is Play, Continue your garden or Sign back
+in according to resolved session/history. Restore and unavailable states show
+progress or Retry instead of offering a fresh guest. I already have a garden,
+Sign in another way and confirmed Start a new garden remain secondary actions.
+
+Keep guest-loss, logout and switching copy short and specific. Link Google adds
+access to the current garden; Open this garden confirms a separately verified
+destination. A missing destination garden gets an explicit creation choice.
+Guest departure warnings explain possible lost access without implying deletion
+or merging. Native provider pages and system dialogs retain their own appearance.
+
+Controls use native semantics, secure input/autofill and at least 44-point touch
+targets. Title controls scroll and wrap at large text sizes, with paper backing
+for readability; the decorative backdrop is hidden from VoiceOver. Auth entry
+blocks the underlying garden and competing entry presentations.
+
+Evidence is source and approved-artwork inspection only. Xcode compilation,
+small-iPhone/large-text layout, hit testing, VoiceOver and real provider returns
+remain native acceptance checks; no visual or runtime pass is implied here.
+
 ## Floating Home navigation — 20 November 2026
 
 The approved v3 Home render supersedes the full-width Home bars and drawer entry

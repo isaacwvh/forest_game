@@ -8,7 +8,7 @@ struct SettingsScreen: View {
     var body: some View {
         List {
             Section {
-                NavigationLink("Account and sign-in") { AccountScreen(connection: connection, catalog: catalog) }
+                NavigationLink("Account & save") { AccountScreen(connection: connection, catalog: catalog) }
                     .accessibilityIdentifier("settings.account")
                 NavigationLink("Game help") {
                     GameHelpScreen(connection: connection, catalog: catalog, sampleGarden: sampleGarden)
@@ -21,7 +21,7 @@ struct SettingsScreen: View {
                     .accessibilityIdentifier("settings.developer")
             }
             #endif
-        }.tint(JournalTheme.action).navigationTitle("Settings")
+        }.journalAuthForm().navigationTitle("Settings")
     }
 
     private var dataInformation: some View {

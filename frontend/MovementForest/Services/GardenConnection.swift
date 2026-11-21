@@ -85,6 +85,11 @@ final class GardenConnection: ObservableObject {
     @Published private(set) var connecting = false
     @Published private(set) var status: String?
     @Published private(set) var savedURL: String
+    @Published private(set) var titleVisible = true
+    @Published private(set) var stagedProfile: APIProfile?
+    @Published private(set) var stagedMissingGarden = false
+    @Published private(set) var switching = false
+    @Published private(set) var updatingProfile = false
     private let defaults: UserDefaults
     private var restored = false
     private var health: ActivityStore?
@@ -106,6 +111,8 @@ final class GardenConnection: ObservableObject {
     private var managedProfileVerified = false
     private var managedGeneration = UUID()
     private var pendingIdentity: AuthIdentity?
+    private var openAfterConnection = false
+    private var committingAccount = false
     private static let urlKey = "development.gardenAPI.url.v1"
 
     init(defaults: UserDefaults = .standard) {
@@ -114,7 +121,14 @@ final class GardenConnection: ObservableObject {
         let issue: String?
         let initialURL: String
         do {
-            if let configuration = try AuthConfiguration.load() {
+            #if DEBUG
+            let fixture = AuthEntryFixture.authentication()
+            #else
+            let fixture: AuthenticationStore? = nil
+            #endif
+            if let fixture = fixture {
+                configuredAuth = fixture; initialURL = fixture.configuration.apiURL.absoluteString
+            } else if let configuration = try AuthConfiguration.load() {
                 configuredAuth = AuthenticationStore(configuration: configuration, service: SupabaseAuthService(configuration: configuration))
                 initialURL = configuration.apiURL.absoluteString
             } else { configuredAuth = nil; initialURL = "" }
@@ -127,7 +141,7 @@ final class GardenConnection: ObservableObject {
     }
 
     func configureHealth(_ health: ActivityStore) { self.health = health }
-    var busy: Bool { connecting || editor?.connectionBusy == true || activitySync?.busy == true }
+    var busy: Bool { connecting || switching || updatingProfile || editor?.connectionBusy == true || activitySync?.busy == true }
 
     func restore(assets: any AssetCatalogProviding) async {
         if let authentication = authentication {
@@ -139,6 +153,7 @@ final class GardenConnection: ObservableObject {
                     self.managedTokens?.identity != authentication.user?.identity {
                     self.detachManaged()
                 }
+                if authentication.user == nil || authentication.recoveringPassword { self.titleVisible = true }
                 guard authentication.user != nil, !authentication.recoveringPassword else { return }
                 Task { await self.connectManaged(assets: assets) }
             }
@@ -237,6 +252,192 @@ final class GardenConnection: ObservableObject {
         accountRequired = false; connecting = false
     }
 
+    func showTitle() { titleVisible = true }
+
+    func updateProfile(username: String, displayName: String) async {
+        guard !busy, let auth = authentication, !auth.busy, let editor = editor,
+              managedProfileVerified else { return }
+        updatingProfile = true
+        let generation = managedGeneration
+        defer { updatingProfile = false }
+        do {
+            let tokens = try auth.scopedTokens()
+            let client = APIClient(baseURL: auth.configuration.apiURL, tokens: tokens)
+            let server = client.baseURL.absoluteString
+            let saved: Data
+            if let pending = try disk.load(Data.self, kind: "profile-update", server: server, user: editor.profile.userId) {
+                _ = try ActivityWire.decoder().decode(UpdateAccountProfileRequest.self, from: pending)
+                saved = pending
+            } else {
+                saved = try ActivityWire.encoder().encode(UpdateAccountProfileRequest(requestId: UUID(),
+                    username: username, displayName: displayName))
+                try disk.save(saved, kind: "profile-update", server: server, user: editor.profile.userId)
+            }
+            let result: APIProfile = try await client.request("v1/me", method: "PATCH", body: saved)
+            try tokens.validate()
+            guard managedGeneration == generation, result.userId == editor.profile.userId else { return }
+            try disk.remove(kind: "profile-update", server: server, user: result.userId)
+            editor.applyProfile(result)
+            defaults.set(try JSONEncoder().encode(ManagedProfile(identity: tokens.identity, server: server, profile: result)),
+                         forKey: "supabase.gameProfile.v1")
+            accountSummary?.invalidate()
+            status = "Profile saved."
+        } catch {
+            guard managedGeneration == generation else { return }
+            if let error = error as? APIError, (400..<500).contains(error.status),
+               ![401, 408, 426, 429].contains(error.status), error.code != "idempotency_conflict" {
+                try? disk.remove(kind: "profile-update", server: auth.configuration.apiURL.absoluteString,
+                                 user: editor.profile.userId)
+            }
+            status = PlayerMessage.failure(error, fallback: "Profile save paused. Try again.")
+        }
+    }
+
+    func enterGarden(assets: any AssetCatalogProviding) async {
+        guard authentication?.restoring == false, authentication?.user != nil,
+              authentication?.recoveringPassword == false else { return }
+        await connectManaged(assets: assets, restoreCache: editor == nil)
+        if editor != nil { titleVisible = false }
+    }
+
+    private func candidateClient() throws -> (AuthenticationStore, APIClient) {
+        guard let target = authentication?.candidate else { throw AuthenticationStore.signInRequired }
+        return (target, APIClient(baseURL: target.configuration.apiURL, tokens: try target.scopedTokens()))
+    }
+
+    /// Start intent is explicit. Failed creation never removes the current account.
+    func startGuest(assets: any AssetCatalogProviding) async {
+        guard !switching, !connecting, let auth = authentication,
+              auth.configuration.guestEnabled, !auth.busy, !auth.restoring, !auth.restoreUnavailable else { return }
+        switching = true; status = "Preparing your garden…"
+        defer { switching = false }
+        guard await auth.createGuest() else { status = auth.message; return }
+        do {
+            let (target, client) = try candidateClient()
+            guard let identity = target.user?.identity else { throw AuthenticationStore.signInRequired }
+            let journal = AccountBootstrapJournal(disk: disk)
+            let profile: APIProfile
+            do { profile = try await APIGardenRepository(client: client).profile() }
+            catch let error as APIError where error.code == "account_required" {
+                let saved = try journal.pending(server: client.baseURL.absoluteString, identity: identity,
+                                                timezone: TimeZone.current.identifier)
+                let result: APIAccount = try await client.request("v1/accounts/bootstrap", method: "POST", body: saved.body)
+                profile = result.profile
+            }
+            try await verifyDestination(profile: profile, client: client)
+            try journal.clear(server: client.baseURL.absoluteString, identity: identity)
+            stagedProfile = profile
+            openAfterConnection = true
+            await commitStagedAccount(assets: assets)
+        } catch {
+            PlayerMessage.recordFailure("Guest setup", error)
+            status = PlayerMessage.failure(error, fallback: "Garden setup paused. Try again.")
+        }
+    }
+
+    func stageGoogle() async {
+        guard !switching, !connecting, authentication?.busy == false else { return }
+        switching = true; defer { switching = false }
+        do {
+            let target = try authentication!.prepareCandidate()
+            authentication?.markStagedCallback(true)
+            defer { authentication?.markStagedCallback(false) }
+            let confirmed = await target.google(link: false)
+            guard confirmed else { status = target.message; return }
+            try await resolveStagedAccount()
+        } catch { status = PlayerMessage.failure(error, fallback: "Sign-in paused. Try again.") }
+    }
+
+    func stageEmail(email: String, password: String) async {
+        guard !switching, !connecting, authentication?.busy == false else { return }
+        switching = true; defer { switching = false }
+        do {
+            let target = try authentication!.prepareCandidate()
+            let confirmed = await target.signIn(email: email, password: password)
+            guard confirmed, target.user != nil else { status = target.message; return }
+            try await resolveStagedAccount()
+        } catch { status = PlayerMessage.failure(error, fallback: "Sign-in paused. Try again.") }
+    }
+
+    private func verifyDestination(profile: APIProfile, client: APIClient) async throws {
+        let garden: APIGarden = try await client.request("v1/me/garden")
+        let verified = try await APIGardenRepository(client: client).profile()
+        guard garden.gardenId != UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)),
+              verified.userId == profile.userId else {
+            throw AuthenticationStore.signInRequired
+        }
+    }
+
+    private func resolveStagedAccount() async throws {
+        stagedProfile = nil; stagedMissingGarden = false
+        let (_, client) = try candidateClient()
+        do {
+            let profile = try await APIGardenRepository(client: client).profile()
+            try await verifyDestination(profile: profile, client: client)
+            stagedProfile = profile; status = nil
+        } catch let error as APIError where error.code == "account_required" {
+            stagedMissingGarden = true; status = "No garden on this account."
+        }
+    }
+
+    func createStagedGarden(assets: any AssetCatalogProviding) async {
+        guard stagedMissingGarden, !switching else { return }
+        switching = true; defer { switching = false }
+        do {
+            let (target, client) = try candidateClient()
+            guard let identity = target.user?.identity else { throw AuthenticationStore.signInRequired }
+            let journal = AccountBootstrapJournal(disk: disk)
+            let saved = try journal.pending(server: client.baseURL.absoluteString, identity: identity,
+                                            timezone: TimeZone.current.identifier)
+            let result: APIAccount = try await client.request("v1/accounts/bootstrap", method: "POST", body: saved.body)
+            try await verifyDestination(profile: result.profile, client: client)
+            try journal.clear(server: client.baseURL.absoluteString, identity: identity)
+            stagedProfile = result.profile; stagedMissingGarden = false
+            await commitStagedAccount(assets: assets)
+        } catch { status = PlayerMessage.failure(error, fallback: "Garden setup paused. Try again.") }
+    }
+
+    func commitStagedAccount(assets: any AssetCatalogProviding) async {
+        guard !committingAccount, let auth = authentication, stagedProfile != nil, !auth.busy else { return }
+        committingAccount = true
+        let wasSwitching = switching
+        switching = true
+        defer { committingAccount = false; switching = wasSwitching }
+        openAfterConnection = true
+        // Pause transmission during the short, local credential handoff. Journals stay intact.
+        await visitors?.pause()
+        do {
+            try await auth.commitCandidate()
+            stagedProfile = nil; stagedMissingGarden = false
+            await connectManaged(assets: assets)
+            if editor != nil { titleVisible = false }
+        } catch { openAfterConnection = false; status = "Switch couldn’t finish. Try again." }
+    }
+
+    func cancelStagedAccount() async {
+        guard !switching else { return }
+        await authentication?.cancelCandidate()
+        stagedProfile = nil; stagedMissingGarden = false; status = nil
+        authentication?.markStagedCallback(false)
+    }
+
+    func handleAuthCallback(_ url: URL, assets: any AssetCatalogProviding) async {
+        guard let auth = authentication, auth.configuration.accepts(url), !AuthCallbackReceipts.contains(url) else { return }
+        if auth.stagedCallbackPending, url.path == auth.configuration.callbackURL.path {
+            // ASWebAuthenticationSession owns a live browser return. On a cold
+            // callback, reopen the same isolated Keychain/PKCE context instead.
+            guard !switching, auth.candidate?.busy != true else { return }
+            do {
+                let target = try auth.prepareCandidate()
+                let confirmed = await target.handleCallback(url)
+                guard confirmed, target.user != nil else { status = target.message; return }
+                try await resolveStagedAccount()
+                titleVisible = true
+                auth.markStagedCallback(false)
+            } catch { status = "Sign-in link expired. Try again." }
+        } else { await auth.handleCallback(url) }
+    }
+
     func connectManaged(assets: any AssetCatalogProviding, restoreCache: Bool = false) async {
         guard let auth = authentication, auth.user != nil, !auth.recoveringPassword, !connecting else { return }
         if let tokens = managedTokens, (try? tokens.validate()) != nil,
@@ -294,6 +495,7 @@ final class GardenConnection: ObservableObject {
             installActivity(client: client, store: store)
             guard managedGeneration == operation else { return }
             status = "Signed in as \(profile.displayName)."
+            if openAfterConnection { titleVisible = false; openAfterConnection = false }
         } catch {
             guard managedGeneration == operation else { return }
             PlayerMessage.recordFailure("Connection", error)
@@ -302,12 +504,17 @@ final class GardenConnection: ObservableObject {
     }
 
     func signOut() async {
+        if authentication == nil { disconnect(); return }
+        guard !switching, authentication?.busy != true else { return }
+        switching = true
+        defer { switching = false }
         await visitors?.pause()
         if let authentication = authentication {
             guard !authentication.busy else { return }
             detachManaged()
             defaults.removeObject(forKey: "supabase.gameProfile.v1")
             await authentication.signOut()
+            titleVisible = true
         } else { disconnect() }
     }
 

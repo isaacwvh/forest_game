@@ -1,3 +1,20 @@
+## Guest + Google auth — 22 November 2026
+
+- Portable asset/project/plist validation passed, including approved title art,
+  resource references, guest flag and existing game contracts.
+- Tree-sitter parsed all **117 Swift files** without syntax errors. This is not
+  Apple SDK typechecking, a native build or XCTest execution.
+- New XCTest source covers restore-first title/history, staged guest reuse,
+  failed creation/adoption, cancellation, scope invalidation, lost-guest routing
+  and exact server/identity-scoped bootstrap journal bytes. New Debug UI fixtures
+  and UI test source cover first/guest/linked/signed-out/restoring/unavailable
+  title states, explicit new-start confirmation and largest-text guest warning.
+- Source/artwork finish review resolved the two listed token-refresh/guest-hint
+  findings. It did not establish native layout or provider acceptance.
+- Xcode Debug/Release/InternalRelease builds, XCTest/UI execution, physical Google/
+  guest/Health tests, VoiceOver and native captures remain **not run** on Windows.
+  No push or CI requested. See [device checklist](GUEST_GOOGLE_ACCEPTANCE.md).
+
 ## Floating Home navigation — 20 November 2026
 
 Implemented the approved v3 layout: full-display mounted garden, independent

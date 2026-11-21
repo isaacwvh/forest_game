@@ -8,6 +8,7 @@ struct AuthConfiguration {
     let recoveryURL: URL
     let googleEnabled: Bool
     let appleEnabled: Bool
+    var guestEnabled: Bool = false
     var issuer: String { projectURL.appendingPathComponent("auth/v1").absoluteString }
 
     static func load(bundle: Bundle = .main) throws -> AuthConfiguration? {
@@ -39,7 +40,8 @@ struct AuthConfiguration {
         }
         return AuthConfiguration(projectURL: projectURL, publishableKey: key, apiURL: apiURL,
                                  callbackURL: callback, recoveryURL: recovery,
-                                 googleEnabled: value("GoogleEnabled") == "YES", appleEnabled: value("AppleEnabled") == "YES")
+                                 googleEnabled: value("GoogleEnabled") == "YES", appleEnabled: value("AppleEnabled") == "YES",
+                                 guestEnabled: value("GuestEnabled") == "YES")
     }
 
     func accepts(_ url: URL) -> Bool {

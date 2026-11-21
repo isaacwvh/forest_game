@@ -265,6 +265,17 @@ struct APIRecapAcknowledgement: Codable {
 
 struct RequestIdentity: Codable { let requestId: UUID }
 
+struct BootstrapAccountRequest: Codable, Equatable {
+    let requestId: UUID
+    let gameTimezone: String
+}
+
+struct UpdateAccountProfileRequest: Codable {
+    let requestId: UUID
+    let username: String
+    let displayName: String
+}
+
 struct RegisterAccountRequest: Codable {
     let requestId: UUID
     let username: String

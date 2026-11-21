@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import func, select, text, tuple_
 from sqlalchemy.exc import IntegrityError
@@ -34,6 +34,7 @@ from forest_api.schemas import (
     AccountDTO,
     AttractionDefinition,
     BehaviourDefinition,
+    BootstrapAccount,
     CatalogueDTO,
     GardenDTO,
     GrowthDefinition,
@@ -233,6 +234,7 @@ def replay(
         raise ApiError(503, "recovery_unavailable", "The saved request needs recovery")
     if operation in {
         "register_account",
+        "bootstrap_account",
         "update_profile",
         "activity_enrolment",
     } or operation.startswith(
@@ -313,7 +315,33 @@ def username_conflict(error: IntegrityError) -> None:
 def register_account(
     session: Session, settings: Settings, identity: Identity, body: RegisterAccount
 ) -> AccountDTO:
-    operation = "register_account"
+    return _provision_account(session, settings, identity, body, "register_account")
+
+
+def generated_username() -> str:
+    return "gardener_" + uuid4().hex[:20]
+
+
+def bootstrap_account(
+    session: Session, settings: Settings, identity: Identity, body: BootstrapAccount
+) -> AccountDTO:
+    # Each collision rolls back the entire transaction before the next bounded attempt.
+    for attempt in range(4):
+        try:
+            return _provision_account(session, settings, identity, body, "bootstrap_account")
+        except ApiError as error:
+            if error.code != "username_unavailable" or attempt == 3:
+                raise
+    raise AssertionError("Unreachable")
+
+
+def _provision_account(
+    session: Session,
+    settings: Settings,
+    identity: Identity,
+    body: RegisterAccount | BootstrapAccount,
+    operation: str,
+) -> AccountDTO:
     payload_hash = request_hash(operation, body)
     try:
         with session.begin():
@@ -351,8 +379,12 @@ def register_account(
                 user = User(
                     auth_issuer=identity.issuer,
                     auth_subject=identity.subject,
-                    username=body.username,
-                    display_name=body.display_name,
+                    username=body.username
+                    if isinstance(body, RegisterAccount)
+                    else generated_username(),
+                    display_name=body.display_name
+                    if isinstance(body, RegisterAccount)
+                    else "New Gardener",
                     game_timezone=body.game_timezone,
                 )
                 session.add(user)
@@ -384,6 +416,8 @@ def register_account(
                     OwnedPlant.acquisition_reference == "initial-starter-v1",
                 )
             )
+            if garden is None or starter is None:
+                raise ApiError(503, "account_setup_incomplete", "Your garden needs recovery")
             result = AccountDTO(
                 profile=user_dto(user), garden_id=garden.id, starter_plant_id=starter.id
             )

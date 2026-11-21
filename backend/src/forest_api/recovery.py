@@ -13,6 +13,7 @@ ORDINARY = {
     "item_sell",
     "plant_sell",
     "register_account",
+    "bootstrap_account",
     "update_profile",
     "garden_edits",
     "visitor_welcome",
@@ -34,6 +35,7 @@ def retention(operation):
         "item_sell",
         "item_purchase",
         "register_account",
+        "bootstrap_account",
         "update_profile",
         "garden_edits",
         "visitor_welcome",
@@ -52,6 +54,7 @@ def completion(operation, response):
         return None
     if operation in {
         "register_account",
+        "bootstrap_account",
         "update_profile",
         "activity_enrolment",
     } or operation.startswith(

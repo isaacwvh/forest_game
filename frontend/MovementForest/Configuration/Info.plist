@@ -17,6 +17,7 @@
         <key>GameAPIURL</key><string>$(FOREST_GAME_API_URL)</string>
         <key>CallbackScheme</key><string>$(FOREST_AUTH_CALLBACK_SCHEME)</string>
         <key>GoogleEnabled</key><string>$(FOREST_AUTH_GOOGLE_ENABLED)</string>
+        <key>GuestEnabled</key><string>$(FOREST_AUTH_GUEST_ENABLED)</string>
         <key>AppleEnabled</key><string>$(FOREST_AUTH_APPLE_ENABLED)</string>
     </dict>
     <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>

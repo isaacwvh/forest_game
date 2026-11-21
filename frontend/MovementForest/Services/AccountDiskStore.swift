@@ -64,6 +64,37 @@ struct ConfirmedGardenCache: Codable {
     var itemCursor: UUID? = nil
 }
 
+struct PendingAccountBootstrap: Codable {
+    let version: Int
+    let requestId: UUID
+    let body: Data
+}
+
+/// Separate from legacy manual registration; exact bytes survive uncertain results.
+struct AccountBootstrapJournal {
+    let disk: AccountDiskStore
+    private let key = UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+    func pending(server: String, identity: AuthIdentity, timezone: String) throws -> PendingAccountBootstrap {
+        let kind = "bootstrap-" + identity.storageScope
+        if let saved = try disk.load(PendingAccountBootstrap.self, kind: kind, server: server, user: key) {
+            let decoded = try ActivityWire.decoder().decode(BootstrapAccountRequest.self, from: saved.body)
+            guard saved.version == 1, decoded.requestId == saved.requestId,
+                  TimeZone(identifier: decoded.gameTimezone) != nil else {
+                throw ForestError.invalidData("Saved setup needs recovery. Try again.")
+            }
+            return saved
+        }
+        let request = BootstrapAccountRequest(requestId: UUID(), gameTimezone: timezone)
+        let saved = PendingAccountBootstrap(version: 1, requestId: request.requestId,
+            body: try ActivityWire.encoder().encode(request))
+        try disk.save(saved, kind: kind, server: server, user: key)
+        return saved
+    }
+    func clear(server: String, identity: AuthIdentity) throws {
+        try disk.remove(kind: "bootstrap-" + identity.storageScope, server: server, user: key)
+    }
+}
+
 struct PendingActivityOperation: Codable, Identifiable {
     enum Kind: String, Codable { case enrolment, sync, acknowledgement }
     let id: UUID

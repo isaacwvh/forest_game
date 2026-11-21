@@ -1,3 +1,14 @@
+## Guest account bootstrap — 22 November 2026
+
+`POST /v1/accounts/bootstrap` takes a Supabase user access token and
+`{requestId, gameTimezone}`. It returns the existing AccountDTO or atomically
+creates a generated profile, garden and one starter. It shares the original
+registration identity lock/provisioning transaction and preserves existing
+accounts, request replay and compact completion. `GET /v1/me` stays read-only.
+No new migration, admin key or Google secret is required. Deploy this additive
+route before using the guest-enabled app; retain the current database/JWKS setup.
+See [integrated device acceptance](../frontend/GUEST_GOOGLE_ACCEPTANCE.md).
+
 ## Recurring UTC expeditions — 19 November 2026
 
 Source implementation adds nine-quest monthly Observatory runs, reward-only items,

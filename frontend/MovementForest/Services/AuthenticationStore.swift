@@ -14,6 +14,7 @@ struct AuthUserInfo: Equatable {
     let identity: AuthIdentity
     let email: String?
     let methods: [String]
+    var isAnonymous: Bool = false
 }
 
 struct AuthAccessToken {
@@ -21,7 +22,9 @@ struct AuthAccessToken {
     let value: String
 }
 
-enum AuthSessionEvent { case changed(AuthUserInfo?), passwordRecovery(AuthUserInfo) }
+enum AuthSessionEvent { case changed(AuthUserInfo?), passwordRecovery(AuthUserInfo), restoreFailed }
+
+enum AuthEntryAction: Equatable { case restoring, retry, play, continueGarden, signIn }
 
 @MainActor
 protocol AuthenticationServing: AnyObject {
@@ -39,6 +42,17 @@ protocol AuthenticationServing: AnyObject {
     func apple(idToken: String, nonce: String, link: Bool) async throws
     func handleCallback(_ url: URL) async throws
     func signOut() async throws
+    func signInAnonymously() async throws
+    func stagingService() throws -> any AuthenticationServing
+    func adopt(_ candidate: any AuthenticationServing) async throws
+    func discard() async throws
+}
+
+extension AuthenticationServing {
+    func signInAnonymously() async throws { throw AuthenticationStore.signInRequired }
+    func stagingService() throws -> any AuthenticationServing { throw AuthenticationStore.signInRequired }
+    func adopt(_ candidate: any AuthenticationServing) async throws { throw AuthenticationStore.signInRequired }
+    func discard() async throws { }
 }
 
 @MainActor
@@ -47,6 +61,11 @@ final class AuthenticationStore: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var recoveringPassword = false
     @Published private(set) var message: String?
+    @Published private(set) var restoring = true
+    @Published private(set) var restoreUnavailable = false
+    @Published private(set) var candidate: AuthenticationStore?
+    @Published private(set) var hasHistory: Bool
+    @Published private(set) var lastWasGuest: Bool
     private(set) var generation = UUID()
     var onSessionChange: (() -> Void)?
     let configuration: AuthConfiguration
@@ -54,10 +73,31 @@ final class AuthenticationStore: ObservableObject {
     private var started = false
     private var expectedLinkIdentity: AuthIdentity?
     private var acceptingSessionEvents = true
+    private let defaults: UserDefaults
+    private let historyKey: String
+    private var isolated = false
 
-    init(configuration: AuthConfiguration, service: any AuthenticationServing) {
+    var entryAction: AuthEntryAction {
+        if restoring { return .restoring }
+        if restoreUnavailable { return .retry }
+        if user != nil { return .continueGarden }
+        return !hasHistory && configuration.guestEnabled ? .play : .signIn
+    }
+
+    init(configuration: AuthConfiguration, service: any AuthenticationServing, defaults: UserDefaults = .standard,
+         isolated: Bool = false) {
         self.configuration = configuration; self.service = service
-        self.user = service.cachedUser
+        self.isolated = isolated
+        self.defaults = defaults
+        let entryKey = "auth.entry.v1." + (configuration.projectURL.host ?? "auth")
+        historyKey = entryKey
+        let loggedOut = !isolated && defaults.bool(forKey: entryKey + ".signedOut")
+        self.user = loggedOut ? nil : service.cachedUser
+        acceptingSessionEvents = !loggedOut
+        restoring = !loggedOut
+        recoveringPassword = !isolated && !loggedOut && service.cachedUser != nil && defaults.bool(forKey: entryKey + ".recovery")
+        hasHistory = defaults.bool(forKey: entryKey) || service.cachedUser != nil
+        lastWasGuest = service.cachedUser?.isAnonymous ?? defaults.bool(forKey: entryKey + ".guest")
     }
 
     func start() {
@@ -68,22 +108,104 @@ final class AuthenticationStore: ObservableObject {
 
     private func receive(_ event: AuthSessionEvent) {
         guard acceptingSessionEvents else { return }
+        if case .restoreFailed = event {
+            restoreUnavailable = true; restoring = false
+            message = "Saved sign-in unavailable. Try again."
+            return
+        }
+        restoring = false; restoreUnavailable = false
         let next: AuthUserInfo?
         switch event {
         case .changed(let value): next = value
         case .passwordRecovery(let value):
             recoveringPassword = true; next = value
+            if !isolated { defaults.set(true, forKey: historyKey + ".recovery") }
+        case .restoreFailed: return
         }
         if let expected = expectedLinkIdentity, let next = next, next.identity != expected {
             user = nil; generation = UUID(); onSessionChange?()
-            message = "That sign-in method belongs to another account. Gardens were not merged. Sign in again."
+            message = "That method belongs to another account. Sign in instead."
             return
         }
         let changed = user?.identity != next?.identity
         user = next
+        if next == nil {
+            recoveringPassword = false
+            if !isolated { defaults.set(false, forKey: historyKey + ".recovery") }
+        }
+        if let next = next {
+            lastWasGuest = next.isAnonymous
+            if !isolated { defaults.set(next.isAnonymous, forKey: historyKey + ".guest") }
+            rememberAccount()
+        }
         if changed { generation = UUID(); onSessionChange?() }
         if recoveringPassword { onSessionChange?() }
     }
+
+    private func rememberAccount() {
+        hasHistory = true
+        if !isolated {
+            defaults.set(true, forKey: historyKey)
+            defaults.set(false, forKey: historyKey + ".signedOut")
+        }
+    }
+
+    func retryRestore() {
+        guard !busy else { return }
+        restoring = true; restoreUnavailable = false
+        service.start()
+    }
+
+    /// Separate Keychain/PKCE context. The active account remains usable until adoption.
+    func prepareCandidate() throws -> AuthenticationStore {
+        if let candidate = candidate { return candidate }
+        let value = AuthenticationStore(configuration: configuration, service: try service.stagingService(), defaults: defaults,
+                                         isolated: true)
+        candidate = value; value.start()
+        return value
+    }
+
+    func createGuest() async -> Bool {
+        guard configuration.guestEnabled, !busy, !restoring, !restoreUnavailable else { return false }
+        var succeeded = false
+        await perform {
+            var target = try self.prepareCandidate()
+            guard !target.restoreUnavailable else { throw Self.signInRequired }
+            if target.user?.isAnonymous == false {
+                try await target.service.discard(); self.candidate = nil
+                target = try self.prepareCandidate()
+            }
+            if target.user == nil {
+                try await target.service.signInAnonymously()
+                target.user = target.service.cachedUser
+            }
+            guard target.user?.isAnonymous == true else { throw Self.signInRequired }
+            succeeded = true
+        }
+        return succeeded
+    }
+
+    func commitCandidate() async throws {
+        guard let target = candidate, let expected = target.user?.identity else { throw Self.signInRequired }
+        acceptingSessionEvents = false
+        defer { acceptingSessionEvents = true }
+        try await service.adopt(target.service)
+        guard service.cachedUser?.identity == expected else { throw Self.signInRequired }
+        candidate = nil
+        recoveringPassword = false
+        defaults.set(false, forKey: historyKey + ".recovery")
+        acceptingSessionEvents = true
+        receive(.changed(service.cachedUser))
+    }
+
+    func cancelCandidate() async {
+        guard let target = candidate, !target.busy, !busy else { return }
+        do { try await target.service.discard(); candidate = nil }
+        catch { message = "Sign-in couldn’t close. Try again." }
+    }
+
+    var stagedCallbackPending: Bool { defaults.bool(forKey: historyKey + ".stagedCallback") }
+    func markStagedCallback(_ pending: Bool) { defaults.set(pending, forKey: historyKey + ".stagedCallback") }
 
     func scopedTokens() throws -> ScopedAuthTokenProvider {
         guard let identity = user?.identity, !recoveringPassword else { throw Self.signInRequired }
@@ -107,53 +229,62 @@ final class AuthenticationStore: ObservableObject {
         guard !busy else { return }; busy = true; message = nil
         defer { busy = false; expectedLinkIdentity = nil }
         do { try await action(); if let success = success { message = success } }
-        catch is CancellationError { message = "Sign-in cancelled. Your saved garden is unchanged." }
+        catch is CancellationError { message = "Sign-in cancelled." }
         catch { message = error.localizedDescription }
     }
 
-    func signIn(email: String, password: String) async {
+    @discardableResult
+    func signIn(email: String, password: String) async -> Bool {
+        var succeeded = false
         await perform {
             self.acceptingSessionEvents = true
             try await self.service.signIn(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
+            succeeded = true
         }
+        return succeeded
     }
     func signUp(email: String, password: String) async {
         await perform {
             self.acceptingSessionEvents = true
             let signedIn = try await self.service.signUp(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-            self.message = signedIn ? "Signed in. Continue to your game account." : "Check your email to confirm your account, then return here and sign in."
+            self.message = signedIn ? "Signed in. Create your garden." : "Check your email, then sign in."
         }
     }
     func resetPassword(email: String) async {
         await perform({ try await self.service.resetPassword(email: email.trimmingCharacters(in: .whitespacesAndNewlines)) },
-                      success: "If this address has an account, a password-reset email will arrive shortly. Open it on this iPhone.")
+                      success: "Check your email for a reset link. Open it on this iPhone.")
     }
     func resendConfirmation(email: String) async {
         await perform({ try await self.service.resendConfirmation(email: email.trimmingCharacters(in: .whitespacesAndNewlines)) },
-                      success: "If confirmation is needed, check your email and open the link on this iPhone.")
+                      success: "Check your email. Open the link on this iPhone.")
     }
     func updatePassword(_ password: String) async {
         await perform {
             try await self.service.updatePassword(password)
             let wasRecovering = self.recoveringPassword
             self.recoveringPassword = false
-            self.message = "Password saved. You can use email and password to sign in."
+            self.defaults.set(false, forKey: self.historyKey + ".recovery")
+            self.message = "Password saved."
             if wasRecovering { self.onSessionChange?() }
         }
     }
     func updateEmail(_ email: String) async {
         await perform({ try await self.service.updateEmail(email.trimmingCharacters(in: .whitespacesAndNewlines)) },
-                      success: "Follow the verification emails to confirm the email change. Your game account stays the same.")
+                      success: "Check your new email to confirm the change.")
     }
-    func google(link: Bool) async {
-        guard configuration.googleEnabled, !link || user != nil else { return }
+    @discardableResult
+    func google(link: Bool) async -> Bool {
+        guard configuration.googleEnabled, !link || user != nil else { return false }
+        var succeeded = false
         await perform {
             if !link { self.acceptingSessionEvents = true }
             self.expectedLinkIdentity = link ? self.user?.identity : nil
             try await self.service.google(link: link)
             if link, self.user?.identity != self.expectedLinkIdentity { throw Self.signInRequired }
             self.message = link ? "Google linked to this account." : "Signed in with Google."
+            succeeded = true
         }
+        return succeeded
     }
     func apple(idToken: String, nonce: String, link: Bool) async {
         guard configuration.appleEnabled, !link || user != nil else { return }
@@ -167,8 +298,9 @@ final class AuthenticationStore: ObservableObject {
     }
     func report(_ message: String) { self.message = message }
 
-    func handleCallback(_ url: URL) async {
-        guard configuration.accepts(url), !busy else { return }
+    @discardableResult
+    func handleCallback(_ url: URL) async -> Bool {
+        guard configuration.accepts(url), !busy else { return false }
         start()
         acceptingSessionEvents = true
         busy = true; message = nil
@@ -176,25 +308,33 @@ final class AuthenticationStore: ObservableObject {
         let previousRecovery = recoveringPassword
         // Suspend game access before the SDK emits SIGNED_IN for recovery.
         if url.path == configuration.recoveryURL.path {
-            recoveringPassword = true; onSessionChange?()
+            recoveringPassword = true
+            if !isolated { defaults.set(true, forKey: historyKey + ".recovery") }
+            onSessionChange?()
         }
         do {
             try await service.handleCallback(url)
-            message = recoveringPassword ? "Choose your new password." : "Email confirmed. Continue to your garden."
+            message = recoveringPassword ? "Choose your new password." : "Sign-in confirmed."
+            return true
         } catch {
             recoveringPassword = previousRecovery
+            if !isolated { defaults.set(previousRecovery, forKey: historyKey + ".recovery") }
             onSessionChange?()
-            message = "This sign-in link could not be confirmed. Request a fresh email and open the newest link on this iPhone."
+            message = "Link expired or unavailable. Request a new email."
+            return false
         }
     }
 
     func signOut() async {
         guard !busy else { return }
+        rememberAccount()
+        defaults.set(true, forKey: historyKey + ".signedOut")
+        defaults.set(false, forKey: historyKey + ".recovery")
         busy = true; acceptingSessionEvents = false; generation = UUID(); user = nil; recoveringPassword = false
         onSessionChange?() // Revoke game access immediately, including offline/in-flight work.
         defer { busy = false }
-        do { try await service.signOut(); message = "Signed out. Saved requests stay with their original account." }
-        catch { message = "Signed out on this iPhone. The server could not confirm session revocation." }
+        do { try await service.signOut(); message = "Signed out." }
+        catch { message = "Signed out on this iPhone." }
     }
 }
 

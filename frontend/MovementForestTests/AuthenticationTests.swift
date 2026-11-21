@@ -14,6 +14,9 @@ private final class FakeAuthentication: AuthenticationServing {
     var confirmedSignup = false
     var linkedIdentity: AuthIdentity?
     var calls: [String] = []
+    var stage: FakeAuthentication?
+    var anonymousCalls = 0
+    var adoptionFailure = false
     func emit(_ user: AuthUserInfo?) { cachedUser = user; onEvent?(.changed(user)) }
     func start() { onEvent?(.changed(cachedUser)) }
     func accessToken(refresh: Bool) async throws -> AuthAccessToken {
@@ -37,6 +40,22 @@ private final class FakeAuthentication: AuthenticationServing {
     func apple(idToken: String, nonce: String, link: Bool) async throws { calls.append(link ? "link-apple" : "signin-apple") }
     func handleCallback(_ url: URL) async throws { calls.append("callback") }
     func signOut() async throws { emit(nil) }
+    func signInAnonymously() async throws {
+        anonymousCalls += 1
+        if let failure = failure { throw failure }
+        emit(AuthUserInfo(identity: AuthIdentity(issuer: "https://project.supabase.co/auth/v1", subject: UUID()),
+                          email: nil, methods: [], isAnonymous: true))
+    }
+    func stagingService() throws -> any AuthenticationServing {
+        if let stage = stage { return stage }
+        let value = FakeAuthentication(); stage = value; return value
+    }
+    func adopt(_ candidate: any AuthenticationServing) async throws {
+        if adoptionFailure { throw URLError(.cannotWriteToFile) }
+        guard let next = candidate.cachedUser else { throw AuthenticationStore.signInRequired }
+        emit(next)
+    }
+    func discard() async throws { emit(nil) }
 }
 
 @MainActor
@@ -61,7 +80,7 @@ final class AuthenticationTests: XCTestCase {
         try XCTUnwrap(AuthConfiguration.parse([
             "SupabaseURL": "https://project.supabase.co", "PublishableKey": "sb_publishable_test",
             "GameAPIURL": "https://game.test", "CallbackScheme": "com.test.forest",
-            "GoogleEnabled": "YES", "AppleEnabled": "YES"
+            "GoogleEnabled": "YES", "AppleEnabled": "YES", "GuestEnabled": "YES"
         ]))
     }
     private func user(_ id: UUID = UUID()) -> AuthUserInfo {
@@ -69,7 +88,8 @@ final class AuthenticationTests: XCTestCase {
                      email: "person@test.invalid", methods: ["email"])
     }
     private func store(_ service: FakeAuthentication) throws -> AuthenticationStore {
-        let store = AuthenticationStore(configuration: try configuration(), service: service)
+        let defaults = UserDefaults(suiteName: "auth-tests-" + UUID().uuidString)!
+        let store = AuthenticationStore(configuration: try configuration(), service: service, defaults: defaults)
         store.start(); return store
     }
 
@@ -190,5 +210,161 @@ final class AuthenticationTests: XCTestCase {
         let identity = user().identity
         XCTAssertNotEqual(identity.storageScope, user().identity.storageScope)
         XCTAssertNotEqual(identity.storageScope, AuthIdentity(issuer: "https://different.supabase.co/auth/v1", subject: identity.subject).storageScope)
+    }
+
+    func testFreshEntryWaitsForRestoreAndNeverCreatesGuestOnStart() throws {
+        let service = FakeAuthentication()
+        let auth = AuthenticationStore(configuration: try configuration(), service: service,
+            defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        XCTAssertEqual(auth.entryAction, .restoring)
+        auth.start()
+        XCTAssertEqual(auth.entryAction, .play)
+        XCTAssertNil(service.stage)
+        XCTAssertEqual(service.anonymousCalls, 0)
+    }
+
+    func testGuestCreationIsStagedAndReusesPendingGuest() async throws {
+        let service = FakeAuthentication(), auth = try store(service)
+        let guestResult1 = await auth.createGuest()
+        XCTAssertTrue(guestResult1)
+        let guest = try XCTUnwrap(auth.candidate?.user)
+        XCTAssertTrue(guest.isAnonymous)
+        XCTAssertNil(auth.user)
+        let guestResult2 = await auth.createGuest()
+        XCTAssertTrue(guestResult2)
+        XCTAssertEqual(auth.candidate?.user?.identity, guest.identity)
+        XCTAssertEqual(service.stage?.anonymousCalls, 1)
+        try await auth.commitCandidate()
+        XCTAssertEqual(auth.user?.identity, guest.identity)
+        XCTAssertEqual(auth.entryAction, .continueGarden)
+    }
+
+    func testFailedGuestCreationAndFailedAdoptionPreserveCurrentAccount() async throws {
+        let service = FakeAuthentication(); let original = user(); service.cachedUser = original
+        let auth = try store(service), tokens = try auth.scopedTokens()
+        let staged = try auth.prepareCandidate()
+        service.stage?.failure = URLError(.notConnectedToInternet)
+        let guestResult3 = await auth.createGuest()
+        XCTAssertFalse(guestResult3)
+        XCTAssertEqual(auth.user, original)
+        XCTAssertNoThrow(try tokens.validate())
+        service.stage?.failure = nil
+        let guestResult4 = await auth.createGuest()
+        XCTAssertTrue(guestResult4)
+        service.adoptionFailure = true
+        do { try await auth.commitCandidate(); XCTFail("Expected storage failure") } catch { }
+        XCTAssertEqual(auth.user, original)
+        XCTAssertNotNil(staged.user)
+        XCTAssertNoThrow(try tokens.validate())
+    }
+
+    func testCancellingStagedLoginPreservesGuestAndItsTokenScope() async throws {
+        let service = FakeAuthentication()
+        service.cachedUser = AuthUserInfo(identity: user().identity, email: nil, methods: [], isAnonymous: true)
+        let auth = try store(service), tokens = try auth.scopedTokens()
+        let original = auth.user
+        let candidate = try auth.prepareCandidate()
+        service.stage?.emit(user())
+        XCTAssertNotEqual(candidate.user?.identity, original?.identity)
+        XCTAssertEqual(auth.user, original)
+        await auth.cancelCandidate()
+        XCTAssertNil(auth.candidate)
+        XCTAssertEqual(auth.user, original)
+        XCTAssertNoThrow(try tokens.validate())
+    }
+
+    func testConfirmedSwitchRevokesOldScopeAndPreservesDestination() async throws {
+        let service = FakeAuthentication(); service.cachedUser = user()
+        let auth = try store(service), tokens = try auth.scopedTokens()
+        _ = try auth.prepareCandidate()
+        let target = user(); service.stage?.emit(target)
+        try await auth.commitCandidate()
+        XCTAssertEqual(auth.user, target)
+        XCTAssertThrowsError(try tokens.validate())
+        XCTAssertNil(auth.candidate)
+    }
+
+    func testLogoutPersistsAcrossLaunchAndStaleCachedSessionCannotRestore() async throws {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let service = FakeAuthentication(); let original = user(); service.cachedUser = original
+        let auth = AuthenticationStore(configuration: try configuration(), service: service, defaults: defaults)
+        auth.start(); await auth.signOut()
+        service.cachedUser = original // Simulate an unavailable Keychain deletion.
+        let reopened = AuthenticationStore(configuration: try configuration(), service: service, defaults: defaults)
+        reopened.start()
+        XCTAssertNil(reopened.user)
+        XCTAssertEqual(reopened.entryAction, .signIn)
+        XCTAssertTrue(reopened.hasHistory)
+    }
+
+    func testUnavailableRestoreCannotCreateGuest() async throws {
+        let service = FakeAuthentication(), auth = try store(service)
+        service.onEvent?(.restoreFailed)
+        XCTAssertEqual(auth.entryAction, .retry)
+        let guestResult5 = await auth.createGuest()
+        XCTAssertFalse(guestResult5)
+        XCTAssertNil(auth.candidate)
+    }
+
+    func testGuestRolloutDisabledStillRestoresExistingGuest() async throws {
+        var config = try configuration(); config.guestEnabled = false
+        let service = FakeAuthentication()
+        service.cachedUser = AuthUserInfo(identity: user().identity, email: nil, methods: [], isAnonymous: true)
+        let auth = AuthenticationStore(configuration: config, service: service,
+                                       defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        auth.start()
+        XCTAssertEqual(auth.entryAction, .continueGarden)
+        let guestResult6 = await auth.createGuest()
+        XCTAssertFalse(guestResult6)
+    }
+
+    func testBootstrapJournalRetainsExactBytesAcrossRetryAndPartitionsIdentities() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let journal = AccountBootstrapJournal(disk: AccountDiskStore(directory: folder))
+        let identity = user().identity
+        let first = try journal.pending(server: "https://game.test", identity: identity, timezone: "Asia/Singapore")
+        let retry = try journal.pending(server: "https://game.test", identity: identity, timezone: "Europe/London")
+        XCTAssertEqual(first.requestId, retry.requestId)
+        XCTAssertEqual(first.body, retry.body)
+        let otherIdentity = user().identity
+        let other = try journal.pending(server: "https://game.test", identity: otherIdentity, timezone: "UTC")
+        XCTAssertNotEqual(first.requestId, other.requestId)
+        try journal.clear(server: "https://game.test", identity: identity)
+        let again = try journal.pending(server: "https://game.test", identity: identity, timezone: "UTC")
+        XCTAssertNotEqual(first.requestId, again.requestId)
+        XCTAssertEqual(try journal.pending(server: "https://game.test", identity: otherIdentity, timezone: "UTC").requestId, other.requestId)
+    }
+
+    func testLostGuestHintSurvivesCredentialLossAndClearsWhenLinked() async throws {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let service = FakeAuthentication()
+        let identity = user().identity
+        service.cachedUser = AuthUserInfo(identity: identity, email: nil, methods: [], isAnonymous: true)
+        let auth = AuthenticationStore(configuration: try configuration(), service: service, defaults: defaults)
+        auth.start()
+        XCTAssertTrue(auth.lastWasGuest)
+        service.emit(nil)
+        let reopened = AuthenticationStore(configuration: try configuration(), service: service, defaults: defaults)
+        reopened.start()
+        XCTAssertEqual(reopened.entryAction, .signIn)
+        XCTAssertTrue(reopened.lastWasGuest)
+        service.emit(AuthUserInfo(identity: identity, email: "test@example.invalid", methods: ["google"]))
+        XCTAssertFalse(reopened.lastWasGuest)
+    }
+
+    func testPasswordRecoveryRemainsGatedAcrossColdLaunch() async throws {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let service = FakeAuthentication(); service.cachedUser = user()
+        let auth = AuthenticationStore(configuration: try configuration(), service: service, defaults: defaults)
+        auth.start()
+        await auth.handleCallback(try configuration().recoveryURL)
+        let reopened = AuthenticationStore(configuration: try configuration(), service: service, defaults: defaults)
+        reopened.start()
+        XCTAssertTrue(reopened.recoveringPassword)
+        XCTAssertThrowsError(try reopened.scopedTokens())
+        await reopened.updatePassword("new-example-password")
+        XCTAssertFalse(reopened.recoveringPassword)
+        XCTAssertNoThrow(try reopened.scopedTokens())
     }
 }

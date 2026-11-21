@@ -16,7 +16,7 @@ struct AccountScreen: View {
                     Text("Explore the sample garden, or install an updated build to sign in.").foregroundStyle(.secondary)
                 }
             }
-        }.navigationTitle("Account")
+        }.navigationTitle("Account & save")
     }
 }
 
@@ -32,6 +32,8 @@ private struct ManagedAccountScreen: View {
     @State private var username = ""
     @State private var displayName = ""
     @State private var newEmail = ""
+    @State private var signingIn = false
+    @State private var confirmingLogout = false
     private var validPassword: Bool { password.count >= 8 && password == confirmation }
 
     var body: some View {
@@ -45,8 +47,13 @@ private struct ManagedAccountScreen: View {
                 }
             } else if let user = auth.user {
                 Section("Signed in") {
-                    Text(user.email ?? "Your account").textSelection(.enabled)
-                    Text("Sign-in methods: \(user.methods.joined(separator: ", "))").font(.footnote).foregroundStyle(.secondary)
+                    Text(user.isAnonymous ? "Guest garden" : (user.email ?? "Your account"))
+                        .font(.system(.title2, design: .serif)).textSelection(.enabled)
+                    Text(user.isAnonymous ? "Recovery: Not linked" : "Sign-in methods: \(user.methods.joined(separator: ", "))")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    if user.isAnonymous {
+                        Text("Link Google to recover this garden on another phone.").font(.callout)
+                    }
                     if let status = connection.status { Text(status).font(.callout) }
                     if connection.connecting { ProgressView("Connecting to your garden…") }
                 }
@@ -70,20 +77,31 @@ private struct ManagedAccountScreen: View {
                             .buttonStyle(.journalSecondary)
                             .disabled(connection.busy || auth.busy).accessibilityIdentifier("account.reconnect")
                     }
+                    if let editor = connection.editor {
+                        Section("Profile") {
+                            DisclosureGroup("Edit name") {
+                                TextField("Username", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
+                                TextField("Display name", text: $displayName)
+                                Button("Save name") { Task { await connection.updateProfile(username: username, displayName: displayName) } }
+                                    .buttonStyle(.journalSecondary)
+                                    .disabled(connection.busy || auth.busy || username.count < 3 || displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            }.onAppear { username = editor.profile.username; displayName = editor.profile.displayName }
+                        }
+                    }
                 }
                 if auth.configuration.googleEnabled || auth.configuration.appleEnabled {
                     Section("Link another sign-in method") {
-                        Text("Linked methods open this same garden. A method already used for a different account cannot merge the two gardens.")
+                        Text("Linked methods open this garden.")
                             .font(.footnote).foregroundStyle(.secondary)
                         if auth.configuration.googleEnabled && !user.methods.contains("google") {
-                            Button("Link Google") { Task { await auth.google(link: true) } }.buttonStyle(.journalSecondary).disabled(auth.busy)
+                            Button("Link Google") { Task { await auth.google(link: true) } }.buttonStyle(.journalSecondary).disabled(auth.busy || connection.busy)
                         }
                         if auth.configuration.appleEnabled && !user.methods.contains("apple") {
                             AppleAccountButton(auth: auth, link: true)
                         }
                     }
                 }
-                Section("Email and password access") {
+                if !user.isAnonymous { Section("Email and password access") {
                     DisclosureGroup("Set or change password") {
                         Text("Use the verified account email shown above to sign in. Setting a password keeps your existing garden.")
                             .font(.footnote)
@@ -98,6 +116,11 @@ private struct ManagedAccountScreen: View {
                             .buttonStyle(.journalSecondary)
                             .disabled(auth.busy || newEmail.isEmpty)
                     }
+                } }
+                Section {
+                    Button("Sign in another way") { signingIn = true }.buttonStyle(.journalSecondary)
+                        .disabled(auth.busy || connection.switching)
+                        .accessibilityIdentifier("account.switch")
                 }
             } else {
                 Section(creating ? "Create your account" : "Welcome back") {
@@ -136,18 +159,33 @@ private struct ManagedAccountScreen: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
-            if auth.busy { Section { ProgressView("Please wait…") } }
+            if auth.busy || connection.switching { Section { ProgressView("Please wait…") } }
             if let message = auth.message { Section { Text(message).accessibilityIdentifier("account.status") } }
             if auth.user != nil {
                 Section {
-                    Button("Sign out", role: .destructive) { Task { await connection.signOut(); clearPasswords() } }
+                    Button("Sign out", role: .destructive) {
+                        if auth.user?.isAnonymous == true { confirmingLogout = true }
+                        else { Task { await connection.signOut(); clearPasswords() } }
+                    }
                         .buttonStyle(.journalQuiet)
-                        .disabled(auth.busy).accessibilityIdentifier("account.signOut")
-                    Text("Saved requests resume when you sign back into this account.")
+                        .disabled(auth.busy || connection.switching).accessibilityIdentifier("account.signOut")
+                    Text(auth.user?.isAnonymous == true ? "Link Google before signing out to keep access." : "Your garden stays with this account.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
         }
+        .journalAuthForm()
+        .sheet(isPresented: $signingIn, onDismiss: {
+            Task { await connection.cancelStagedAccount() }
+        }) {
+            NavigationStack {
+                AccountSignInScreen(connection: connection, auth: auth, catalog: catalog) { signingIn = false }
+            }
+        }
+        .alert("Leave this guest garden?", isPresented: $confirmingLogout) {
+            Button("Keep playing", role: .cancel) { }
+            Button("Sign out", role: .destructive) { Task { await connection.signOut(); clearPasswords() } }
+        } message: { Text("It may be lost unless you link Google first.") }
     }
 
     private var passwordFields: some View {

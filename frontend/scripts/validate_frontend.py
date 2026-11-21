@@ -33,6 +33,19 @@ def main():
     if not args.allow_local_project_settings:
         subprocess.run([sys.executable, str(ROOT / "scripts/generate_project.py"), "--check"], check=True)
     project_text = (ROOT / "MovementForest.xcodeproj/project.pbxproj").read_text(encoding="utf-8")
+    auth_art = REPO / "assets/auth"
+    auth_manifest = json.loads((auth_art / "manifest.json").read_text(encoding="utf-8"))
+    require(auth_manifest["schemaVersion"] == 1 and '"../assets/auth"' in project_text,
+            "Missing bundled auth artwork")
+    for entry in auth_manifest["assets"]:
+        data = (auth_art / entry["file"]).read_bytes()
+        require(data[:8] == b"\x89PNG\r\n\x1a\n" and len(data) == entry["bytes"] and
+                hashlib.sha256(data).hexdigest() == entry["sha256"] and
+                struct.unpack(">II", data[16:24]) == (entry["width"], entry["height"]),
+                "Auth artwork differs from its approved manifest")
+    require(any(a["file"] == "title-background-v1.png" and a["role"] == "runtime-background"
+                for a in auth_manifest["assets"]), "Missing production title backdrop")
+    print("PASS: approved auth title artwork, production backdrop, hashes and bundle inclusion.")
     subprocess.run([sys.executable, str(REPO / "tools/validate_items.py")], check=True)
     for folder in ["MovementForest", "MovementForestTests", "MovementForestUITests"]:
         for source in (ROOT / folder).rglob("*.swift"):
@@ -306,7 +319,7 @@ def main():
     require(info["CFBundleURLTypes"][0]["CFBundleURLSchemes"] == ["$(FOREST_AUTH_CALLBACK_SCHEME)"],
             "Auth callback scheme differs from configuration")
     require(set(info["ForestAuth"]) == {"SupabaseURL", "PublishableKey", "GameAPIURL", "CallbackScheme",
-                                       "GoogleEnabled", "AppleEnabled"}, "Missing auth configuration fields")
+                                       "GoogleEnabled", "AppleEnabled", "GuestEnabled"}, "Missing auth configuration fields")
     ET.parse(ROOT / "MovementForest.xcodeproj/xcshareddata/xcschemes/MovementForest.xcscheme")
     internal_scheme = ET.parse(ROOT / "MovementForest.xcodeproj/xcshareddata/xcschemes/MovementForest-Internal.xcscheme")
     for action in ["LaunchAction", "ProfileAction", "ArchiveAction"]:

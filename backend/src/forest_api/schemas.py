@@ -174,6 +174,16 @@ class RegisterAccount(DTO):
         return value
 
 
+class BootstrapAccount(DTO):
+    request_id: UUID
+    game_timezone: str = Field(min_length=1, max_length=64)
+
+    @field_validator("game_timezone")
+    @classmethod
+    def known_timezone(cls, value: str) -> str:
+        return RegisterAccount.known_timezone(value)
+
+
 class UpdateProfile(DTO):
     request_id: UUID
     username: str | None = Field(

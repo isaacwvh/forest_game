@@ -24,6 +24,7 @@ from forest_api.placement import edit_garden
 from forest_api.progression_schemas import AccountSummary, ClaimLevelUp, LevelUpClaimResult
 from forest_api.schemas import (
     AccountDTO,
+    BootstrapAccount,
     CatalogueDTO,
     GardenDTO,
     GardenEditRequest,
@@ -66,6 +67,16 @@ def register(
     session: Session = Depends(get_session),
 ) -> AccountDTO:
     return services.register_account(session, request.app.state.settings, identity, body)
+
+
+@router.post("/v1/accounts/bootstrap", response_model=AccountDTO, tags=["account"])
+def bootstrap(
+    body: BootstrapAccount,
+    request: Request,
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> AccountDTO:
+    return services.bootstrap_account(session, request.app.state.settings, identity, body)
 
 
 @router.get("/v1/me", response_model=UserDTO, tags=["account"])

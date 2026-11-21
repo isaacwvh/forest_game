@@ -110,6 +110,25 @@ def test_linked_providers_and_token_rotation_keep_one_account_and_starter(supaba
         assert (stored.auth_issuer, stored.auth_subject) == (ISSUER, str(subject))
 
 
+def test_anonymous_bootstrap_and_google_upgrade_keep_same_garden(supabase, client, app):
+    headers, _, rotate = supabase
+    subject = uuid4()
+    guest_headers = headers(subject, "anonymous", is_anonymous=True, email="")
+    payload = {"requestId": str(uuid4()), "gameTimezone": "Asia/Singapore"}
+    result = client.post("/v1/accounts/bootstrap", json=payload, headers=guest_headers)
+    assert result.status_code == 200, result.text
+    created = result.json()
+    rotate()
+    linked = headers(subject, "google", is_anonymous=False)
+    assert client.get("/v1/me", headers=linked).json() == created["profile"]
+    assert client.get("/v1/me/garden", headers=linked).json()["gardenId"] == created["gardenId"]
+    assert client.post("/v1/accounts/bootstrap", json=payload, headers=linked).json() == created
+    assert client.get("/v1/me", headers=headers(uuid4(), "google")).status_code == 403
+    with app.state.database.sessions() as session:
+        for model in (User, Garden, OwnedPlant):
+            assert session.scalar(select(func.count()).select_from(model)) == 1
+
+
 def test_activity_replay_survives_provider_and_signing_key_changes(supabase, client, app):
     headers, account, rotate = supabase
     subject = uuid4()
