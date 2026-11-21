@@ -42,14 +42,14 @@ protocol AuthenticationServing: AnyObject {
     func apple(idToken: String, nonce: String, link: Bool) async throws
     func handleCallback(_ url: URL) async throws
     func signOut() async throws
-    func signInAnonymously() async throws
+    func signInAnonymously() async throws -> AuthUserInfo
     func stagingService() throws -> any AuthenticationServing
     func adopt(_ candidate: any AuthenticationServing) async throws
     func discard() async throws
 }
 
 extension AuthenticationServing {
-    func signInAnonymously() async throws { throw AuthenticationStore.signInRequired }
+    func signInAnonymously() async throws -> AuthUserInfo { throw AuthenticationStore.signInRequired }
     func stagingService() throws -> any AuthenticationServing { throw AuthenticationStore.signInRequired }
     func adopt(_ candidate: any AuthenticationServing) async throws { throw AuthenticationStore.signInRequired }
     func discard() async throws { }
@@ -170,16 +170,22 @@ final class AuthenticationStore: ObservableObject {
         var succeeded = false
         await perform {
             var target = try self.prepareCandidate()
-            guard !target.restoreUnavailable else { throw Self.signInRequired }
+            guard !target.restoreUnavailable else {
+                throw ForestError.invalidData("Saved guest setup is unavailable. Try again.")
+            }
             if target.user?.isAnonymous == false {
                 try await target.service.discard(); self.candidate = nil
                 target = try self.prepareCandidate()
             }
             if target.user == nil {
-                try await target.service.signInAnonymously()
-                target.user = target.service.cachedUser
+                // Use the completed signup result, not an initial/cache snapshot
+                // that can still describe the signed-out session.
+                let guest = try await target.service.signInAnonymously()
+                target.receive(.changed(guest))
             }
-            guard target.user?.isAnonymous == true else { throw Self.signInRequired }
+            guard target.user?.isAnonymous == true else {
+                throw ForestError.invalidData("Guest sign-in wasn’t confirmed. Try again.")
+            }
             succeeded = true
         }
         return succeeded

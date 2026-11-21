@@ -17,6 +17,7 @@ private final class FakeAuthentication: AuthenticationServing {
     var stage: FakeAuthentication?
     var anonymousCalls = 0
     var adoptionFailure = false
+    var staleGuestCache = false
     func emit(_ user: AuthUserInfo?) { cachedUser = user; onEvent?(.changed(user)) }
     func start() { onEvent?(.changed(cachedUser)) }
     func accessToken(refresh: Bool) async throws -> AuthAccessToken {
@@ -40,11 +41,14 @@ private final class FakeAuthentication: AuthenticationServing {
     func apple(idToken: String, nonce: String, link: Bool) async throws { calls.append(link ? "link-apple" : "signin-apple") }
     func handleCallback(_ url: URL) async throws { calls.append("callback") }
     func signOut() async throws { emit(nil) }
-    func signInAnonymously() async throws {
+    func signInAnonymously() async throws -> AuthUserInfo {
         anonymousCalls += 1
         if let failure = failure { throw failure }
-        emit(AuthUserInfo(identity: AuthIdentity(issuer: "https://project.supabase.co/auth/v1", subject: UUID()),
-                          email: nil, methods: [], isAnonymous: true))
+        let guest = AuthUserInfo(identity: AuthIdentity(issuer: "https://project.supabase.co/auth/v1", subject: UUID()),
+                                 email: nil, methods: [], isAnonymous: true)
+        emit(guest)
+        if staleGuestCache { cachedUser = nil }
+        return guest
     }
     func stagingService() throws -> any AuthenticationServing {
         if let stage = stage { return stage }
@@ -237,6 +241,20 @@ final class AuthenticationTests: XCTestCase {
         try await auth.commitCandidate()
         XCTAssertEqual(auth.user?.identity, guest.identity)
         XCTAssertEqual(auth.entryAction, .continueGarden)
+    }
+
+    func testGuestSignupResultSurvivesStaleSignedOutCache() async throws {
+        let service = FakeAuthentication(), auth = try store(service)
+        _ = try auth.prepareCandidate()
+        service.stage?.staleGuestCache = true
+        let created = await auth.createGuest()
+        XCTAssertTrue(created)
+        XCTAssertTrue(auth.candidate?.user?.isAnonymous == true)
+        XCTAssertNil(auth.user)
+        XCTAssertNil(auth.message)
+        let tokens = try XCTUnwrap(auth.candidate).scopedTokens()
+        XCTAssertNoThrow(try tokens.validate())
+        XCTAssertEqual(service.stage?.anonymousCalls, 1)
     }
 
     func testFailedGuestCreationAndFailedAdoptionPreserveCurrentAccount() async throws {

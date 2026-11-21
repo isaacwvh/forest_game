@@ -14,6 +14,11 @@ final class ForestUITests: XCTestCase {
             XCTAssertTrue(action.waitForExistence(timeout: 15))
             XCTAssertEqual(action.label, label)
             XCTAssertGreaterThanOrEqual(action.frame.height, 44)
+            let title = app.descendants(matching: .any).matching(identifier: "auth.title").firstMatch
+            let window = app.windows.firstMatch
+            XCTAssertTrue(title.exists)
+            XCTAssertEqual(title.frame.minY, window.frame.minY, accuracy: 1)
+            XCTAssertEqual(title.frame.maxY, window.frame.maxY, accuracy: 1)
             if scenario == "--auth-signed-out" {
                 app.buttons["title.newGarden"].tap()
                 XCTAssertTrue(app.alerts["Start a new garden?"].waitForExistence(timeout: 5))

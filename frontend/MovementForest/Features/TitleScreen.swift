@@ -20,7 +20,7 @@ struct TitleScreen: View {
                 if let image = Self.artwork {
                     Image(uiImage: image).resizable().scaledToFill()
                         .frame(width: geometry.size.width, height: geometry.size.height).clipped()
-                        .ignoresSafeArea().accessibilityHidden(true)
+                        .accessibilityHidden(true)
                 }
                 ScrollView {
                     VStack(spacing: 12) {
@@ -73,6 +73,10 @@ struct TitleScreen: View {
             }.foregroundStyle(JournalTheme.ink)
                 .accessibilityLabel("Forestivity. Good things grow with you.")
         }
+        // Size the geometry to the whole screen before giving the artwork a
+        // fixed frame. Ignoring safe areas on the framed image left a bottom gap.
+        .ignoresSafeArea()
+        .accessibilityIdentifier("auth.title")
         .onChange(of: auth.recoveringPassword) { if $0 { signingIn = true } }
         .sheet(isPresented: $signingIn, onDismiss: { Task { await connection.cancelStagedAccount() } }) {
             NavigationStack {

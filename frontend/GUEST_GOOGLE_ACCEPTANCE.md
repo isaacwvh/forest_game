@@ -1,5 +1,16 @@
 # Guest and Google auth delivery
 
+## Immediate title/guest follow-up — 22 November 2026
+
+The title geometry now ignores safe areas before sizing its artwork, covering
+the screen bottom. Anonymous signup returns its confirmed AuthUserInfo directly;
+the store applies that result through its normal identity transition rather than
+overwriting it from a possibly signed-out cache snapshot. Guest setup failures
+use short guest-specific guidance instead of the saved-request sign-in message.
+Regression source covers stale signup cache and full-window title bounds.
+Portable frontend checks and all 117 Swift syntax parses pass. Native XCTest,
+screen bounds and real guest signup still require Mac/iPhone retesting.
+
 Implementation: 22 November 2026, Asia/Singapore. No push/CI or cloud changes.
 
 ## Implemented

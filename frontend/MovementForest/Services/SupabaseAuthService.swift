@@ -116,12 +116,14 @@ final class SupabaseAuthService: AuthenticationServing {
         }
     }
 
-    func signInAnonymously() async throws {
+    func signInAnonymously() async throws -> AuthUserInfo {
         guard staged else { throw AuthenticationStore.signInRequired }
         do {
             let session = try await client.signInAnonymously()
             try verifySaved(session)
-            onEvent?(.changed(info(session.user)))
+            let guest = info(session.user)
+            onEvent?(.changed(guest))
+            return guest
         } catch { throw publicError(error) }
     }
 
