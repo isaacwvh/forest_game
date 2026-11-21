@@ -495,7 +495,13 @@ final class GardenConnection: ObservableObject {
             installActivity(client: client, store: store)
             guard managedGeneration == operation else { return }
             status = "Signed in as \(profile.displayName)."
-            if openAfterConnection { titleVisible = false; openAfterConnection = false }
+            // A verified restored account can enter immediately. A separately
+            // staged destination still waits for its explicit switch confirmation.
+            let restoredGardenReady = store.confirmed != nil && !store.showingCached &&
+                store.state != .authenticationRequired
+            if openAfterConnection || (restoredGardenReady && stagedProfile == nil && !stagedMissingGarden) {
+                titleVisible = false; openAfterConnection = false
+            }
         } catch {
             guard managedGeneration == operation else { return }
             PlayerMessage.recordFailure("Connection", error)

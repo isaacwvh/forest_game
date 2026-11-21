@@ -1,5 +1,13 @@
 # Guest and Google auth delivery
 
+## Automatic return — 22 November 2026
+
+A restored guest/registered session now enters gameplay as soon as the existing
+profile and garden connection are verified. First use, explicit logout, missing
+profiles and failed restoration retain title/setup/recovery access. A separately
+staged account still requires Open this garden; ordinary token refresh does not
+rebuild the connection or repeat entry presentations.
+
 ## Immediate title/guest follow-up — 22 November 2026
 
 The next device report identified the actual pre-signup blocker: Supabase Swift
@@ -71,11 +79,11 @@ Switching removes its active access on this installation, not its server garden.
 | Settings -> Account & save -> Sign out | Title shows Sign back in; no guest is created. |
 | Start a new garden -> confirm | One guest identity, profile, garden and stored starter. |
 | Place the starter and let the save confirm | Record this guest's actual save/IDs. |
-| Fully close/reopen -> Continue your garden, twice | Same guest, placement and starter; no new identity/grant. |
+| Fully close/reopen, twice | Automatically open the same guest, placement and starter; no Continue tap or new identity/grant. |
 | Account & save -> Sign in another way | Short guest-access warning; current guest remains active. |
 | Continue to sign in -> Google -> original Google identity | Separate target login; original garden preview is shown. |
 | Open this garden | Original linked garden replaces the active guest. No merge/delete or inherited consent. |
-| Fully close/reopen -> Continue your garden | Same linked garden again. |
+| Fully close/reopen | Automatically open the same linked garden again. |
 | Sign out -> original email/password | Original email access still opens that same garden. |
 
 ## Additional native checks

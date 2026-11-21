@@ -5,6 +5,11 @@ sage, forest-green ink/actions, serif headings and native body/input text. Setti
 opens Account & save; its native forms keep profile editing, recovery and linking
 in clear sections rather than introducing another visual system.
 
+Restored guest/registered sessions enter gameplay after their existing garden
+connection is verified. The title remains for first use, sign-out and recovery;
+Continue your garden is a fallback rather than a required returning-player step.
+Staged account switching still requires explicit destination confirmation.
+
 The title uses approved Forestivity Concept 02: the original wordmark, sprout,
 caption Good things grow with you. and woodland composition. The bundled
 production backdrop removes only the painted Play button. A real native green
