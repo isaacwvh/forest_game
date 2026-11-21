@@ -65,7 +65,9 @@ First physical validation target: iPhone 14 Pro, iOS 26.6.2.
 For the detailed first-time Mac walkthrough, start with **[XCODE_SETUP.md](XCODE_SETUP.md)**.
 For the current connected test flow, use **[F5A_AUTH_ACCEPTANCE.md](F5A_AUTH_ACCEPTANCE.md)**:
 Supabase email/password → Windows backend → Tailscale HTTPS → iPhone → growth/recovery.
-Google/Apple can be configured later; both are hidden by default. The old
+Google controls are enabled by default for linking tests; a Mac `Local.xcconfig`
+override of `FOREST_AUTH_GOOGLE_ENABLED = NO` still hides them. Apple remains
+disabled by default. Live Google acceptance is still pending. The old
 [F5 guide](F5_ACCEPTANCE.md) remains the explicit development-token fixture path.
 
 **Status:** implemented on Windows. Portable checks and static review are recorded
