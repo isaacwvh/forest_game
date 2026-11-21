@@ -227,6 +227,20 @@ final class AuthenticationTests: XCTestCase {
         XCTAssertEqual(service.anonymousCalls, 0)
     }
 
+    func testEmptyGuestKeychainIsNotAnUnavailableSession() throws {
+        let storage = SessionKeychainStorage(service: "forest-auth-tests-" + UUID().uuidString)
+        let key = "test-session"
+        defer { try? storage.remove(key: key) }
+        XCTAssertNil(try storage.retrieve(key: key))
+        XCTAssertNoThrow(try storage.remove(key: key))
+        let session = Data("test-session-bytes".utf8)
+        try storage.store(key: key, value: session)
+        XCTAssertEqual(try storage.retrieve(key: key), session)
+        try storage.remove(key: key)
+        XCTAssertNil(try storage.retrieve(key: key))
+        XCTAssertNoThrow(try storage.remove(key: key))
+    }
+
     func testGuestCreationIsStagedAndReusesPendingGuest() async throws {
         let service = FakeAuthentication(), auth = try store(service)
         let guestResult1 = await auth.createGuest()

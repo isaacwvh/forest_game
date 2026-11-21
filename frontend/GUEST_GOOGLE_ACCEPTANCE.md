@@ -2,6 +2,14 @@
 
 ## Immediate title/guest follow-up — 22 November 2026
 
+The next device report identified the actual pre-signup blocker: Supabase Swift
+2.55.4's Keychain implementation throws on absent read/delete entries, despite
+its optional-read API. The app now normalizes only errSecItemNotFound to nil /
+successful deletion, retaining the same service names and SDK write format.
+Locked, failed and corrupt reads still fail closed. Native regression source
+tests an actually empty unique Keychain service, round-trip storage and repeated
+deletion. This also covers absent handoff/link backups; no backend changes.
+
 The title geometry now ignores safe areas before sizing its artwork, covering
 the screen bottom. Anonymous signup returns its confirmed AuthUserInfo directly;
 the store applies that result through its normal identity transition rather than

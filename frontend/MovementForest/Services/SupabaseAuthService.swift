@@ -3,6 +3,7 @@ import Auth
 import AuthenticationServices
 import UIKit
 import CryptoKit
+import Security
 
 /// Only this adapter depends on the SDK. Credentials/sessions remain in its
 /// Keychain store; game queues contain no access or refresh tokens.
@@ -10,7 +11,7 @@ import CryptoKit
 final class SupabaseAuthService: AuthenticationServing {
     private var client: AuthClient
     private let configuration: AuthConfiguration
-    private let storage: KeychainLocalStorage
+    private let storage: SessionKeychainStorage
     private var lease: AuthStorageLease
     private let storageKey: String
     private let staged: Bool
@@ -28,7 +29,7 @@ final class SupabaseAuthService: AuthenticationServing {
         self.configuration = configuration
         self.staged = staged
         let key = "movement-forest-\(configuration.projectURL.host ?? "auth")"
-        let localStorage = KeychainLocalStorage(service: "\(Bundle.main.bundleIdentifier ?? "MovementForest").SupabaseAuth" + (staged ? ".Staging" : ""))
+        let localStorage = SessionKeychainStorage(service: "\(Bundle.main.bundleIdentifier ?? "MovementForest").SupabaseAuth" + (staged ? ".Staging" : ""))
         let initialLease = AuthStorageLease(storage: localStorage)
         storageKey = key; storage = localStorage; lease = initialLease
         client = Self.makeClient(configuration, key: key, storage: initialLease, staged: staged)
@@ -328,10 +329,10 @@ final class SupabaseAuthService: AuthenticationServing {
 /// A retired SDK client can finish an in-flight request, but cannot overwrite the
 /// newly adopted account's Keychain session. Each auth context has its own lease.
 private final class AuthStorageLease: AuthLocalStorage, @unchecked Sendable {
-    private let storage: KeychainLocalStorage
+    private let storage: SessionKeychainStorage
     private let lock = NSLock()
     private var active = true
-    init(storage: KeychainLocalStorage) { self.storage = storage }
+    init(storage: SessionKeychainStorage) { self.storage = storage }
     func revoke() { lock.lock(); defer { lock.unlock() }; active = false }
     func snapshotAndRevoke(key: String) throws -> Data? {
         lock.lock(); defer { lock.unlock() }
@@ -353,6 +354,41 @@ private final class AuthStorageLease: AuthLocalStorage, @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         guard active else { throw CancellationError() }
         try storage.remove(key: key)
+    }
+}
+
+/// Keep the SDK's existing service/account names and write format. Its pinned
+/// Keychain reader/deleter throws for absent items; absence is normal for a fresh
+/// guest context, a consumed link backup and an already signed-out session.
+struct SessionKeychainStorage: AuthLocalStorage {
+    let service: String
+    func store(key: String, value: Data) throws {
+        try KeychainLocalStorage(service: service).store(key: key, value: value)
+    }
+    func retrieve(key: String) throws -> Data? {
+        var attributes = query(key: key)
+        attributes[kSecReturnData as String] = true
+        attributes[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(attributes as CFDictionary, &item)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+        }
+        guard let data = item as? Data else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(errSecDecode))
+        }
+        return data
+    }
+    func remove(key: String) throws {
+        let status = SecItemDelete(query(key: key) as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+        }
+    }
+    private func query(key: String) -> [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service, kSecAttrAccount as String: key]
     }
 }
 
