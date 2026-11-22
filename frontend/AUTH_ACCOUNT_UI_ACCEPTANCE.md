@@ -5,6 +5,11 @@ user's final minimal copy and **Link with email** wording. The user requested a
 follow-up push for Mac validation without waiting for CI, and reported completing
 Resend/Supabase setup. No account deletion or backend migration is required.
 
+Follow-up: the user confirmed the full email linking flow works on device.
+Routine auth notices are removed and form feedback clears on exit. In password
+recovery, retry with the current password: expect “Choose a different password
+from your current password.” once, then verify a different password succeeds.
+
 ## Behavior
 
 - Account & save uses Profile's journal, portrait, headings and sage status band.

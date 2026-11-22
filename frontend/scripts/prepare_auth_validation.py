@@ -43,7 +43,7 @@ config = (ROOT / "MovementForest/Services/AuthConfiguration.swift").read_text(en
 checks = (ROOT / "MovementForestTests/AuthLinkChecks.swift").read_text(encoding="utf-8")
 main = '''
 let count = try await AuthLinkChecks.run()
-precondition(count == 38)
+precondition(count == 44)
 print("PASS: \\(count) shared auth identity, verification, persistence and recovery checks.")
 '''
 (OUT / "AuthChecks.swift").write_text(interfaces + config + store + checks + main, encoding="utf-8")

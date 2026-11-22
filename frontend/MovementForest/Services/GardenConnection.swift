@@ -439,6 +439,12 @@ final class GardenConnection: ObservableObject {
         } catch { status = "Password reset couldn’t start. Try again." }
     }
 
+    func clearAuthFeedback() {
+        status = nil
+        authentication?.clearMessage()
+        authentication?.candidate?.clearMessage()
+    }
+
     func signInPresentationChanged(_ visible: Bool) { authPresentation.signInChanged(visible) }
 
     func finishStagedPasswordRecovery(password: String) async {
@@ -446,7 +452,8 @@ final class GardenConnection: ObservableObject {
         switching = true
         defer { switching = false }
         if target.recoveringPassword {
-            guard await target.updatePassword(password) else { status = target.message; return }
+            status = nil
+            guard await target.updatePassword(password) else { return }
         }
         do {
             try await resolveStagedAccount()
@@ -533,7 +540,7 @@ final class GardenConnection: ObservableObject {
             guard managedGeneration == operation else { store.deactivate(); return }
             installActivity(client: client, store: store)
             guard managedGeneration == operation else { return }
-            status = "Signed in as \(profile.displayName)."
+            status = nil
             // A verified restored account can enter immediately. A separately
             // staged destination still waits for its explicit switch confirmation.
             let restoredGardenReady = store.confirmed != nil && !store.showingCached &&
@@ -559,6 +566,7 @@ final class GardenConnection: ObservableObject {
             detachManaged()
             defaults.removeObject(forKey: "supabase.gameProfile.v1")
             await authentication.signOut()
+            status = nil
             titleVisible = true
         } else { disconnect() }
     }

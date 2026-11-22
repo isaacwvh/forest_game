@@ -203,13 +203,13 @@ struct AccountSignInScreen: View {
         .toolbar { ToolbarItem(placement: .cancellationAction) {
             Button(showingEmailEntry ? "Back" : "Cancel") {
                 password = ""
-                if showingEmailEntry { emailEntry = false }
+                if showingEmailEntry { emailEntry = false; connection.clearAuthFeedback() }
                 else { Task { await connection.cancelStagedAccount(); done() } }
             }.disabled(busy)
         } }
         .interactiveDismissDisabled(busy)
-        .onAppear { connection.signInPresentationChanged(true) }
-        .onDisappear { password = ""; connection.signInPresentationChanged(false) }
+        .onAppear { connection.clearAuthFeedback(); connection.signInPresentationChanged(true) }
+        .onDisappear { password = ""; auth.clearMessage(); connection.signInPresentationChanged(false) }
         .preference(key: EntryPresentationBlocker.self, value: true)
     }
 }

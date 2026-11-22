@@ -2212,7 +2212,7 @@
 			productName = "MovementForestTests";
 			productReference = "C7B5A4FB165F6036B8036CE3";
 			productType = "com.apple.product-type.bundle.unit-test";
-			packageProductDependencies = ();
+			packageProductDependencies = ("E1A81A6B51B913DF44F9C1B1",);
 		};
 		FF77D28F3590A2635DD35744 = {
 			isa = "PBXFileReference";

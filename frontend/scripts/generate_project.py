@@ -124,7 +124,7 @@ def generated_files():
         targets.append(add("target-" + name, "PBXNativeTarget", buildConfigurationList=config_list, buildPhases=phases,
                            buildRules=[], dependencies=dependencies, name=name, productName=name,
                            productReference=product, productType="com.apple.product-type." + product_type,
-                           packageProductDependencies=[auth_product] if name == "MovementForest" else []))
+                           packageProductDependencies=[auth_product] if name in ["MovementForest", "MovementForestTests"] else []))
     groups = [add("app-group", "PBXGroup", name="App", children=app_sources, sourceTree="<group>"),
               add("resources-group", "PBXGroup", name="Resources", children=resource_refs + config_refs, sourceTree="<group>"),
               add("unit-group", "PBXGroup", name="Unit tests", children=unit_sources + [geometry_fixture], sourceTree="<group>"),

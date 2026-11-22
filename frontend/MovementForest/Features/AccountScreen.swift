@@ -62,8 +62,7 @@ private struct ManagedAccountScreen: View {
                     else { Task { await connection.signOut() } }
                 }.buttonStyle(.journalQuiet).disabled(busy).accessibilityIdentifier("account.signOut")
                 if connection.connecting { ProgressView("Connecting…") }
-                if let status = connection.status, !connection.connecting,
-                   !status.hasPrefix("Signed in as ") { Text(status).font(.callout) }
+                if let status = connection.status, !connection.connecting { Text(status).font(.callout) }
                 AuthFeedback(auth: auth)
             } else {
                 AuthHeading(title: "Sign in")
@@ -78,6 +77,7 @@ private struct ManagedAccountScreen: View {
             Button("Sign out", role: .destructive) { Task { await connection.signOut() } }
         } message: { Text("Link an account first to keep access.") }
         .accessibilityIdentifier("account.page")
+        .onDisappear { auth.clearMessage() }
     }
 
     @ViewBuilder

@@ -1,3 +1,12 @@
+## Auth feedback cleanup — 22 November 2026
+
+- User confirmed the complete email linking flow works on device.
+- Removed routine sign-in/link/sign-out notices and clear form feedback on exit.
+- Password reuse maps Supabase `same_password` to a specific message; recovery
+  remains open for retry, with one copy of the error in the staged reset form.
+- Portable frontend validation, all 119 Swift syntax checks, and all 44 shared
+  auth checks pass. Native SDK error-mapping XCTest was added but requires Mac.
+
 ## Auth journal and email linking — 22 November 2026 follow-up
 
 - Pre-push refresh: portable frontend/project/assets validation and all 119 Swift

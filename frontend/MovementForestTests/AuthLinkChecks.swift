@@ -160,8 +160,17 @@ enum AuthLinkChecks {
         active.stage?.cachedUser = AuthUserInfo(identity: targetIdentity, email: "other@gmail.com", methods: ["email"], emailVerified: true)
         let callback = await target.handleCallback(config.recoveryURL)
         try check(callback && target.recoveringPassword, "Recovery belongs to staged account")
+        try check(target.message == nil, "Recovery heading needs no lingering sign-in confirmation")
         try check(activeAuth.user?.identity == identity, "Current guest remains active")
         try activeTokens.validate()
+        let reuseMessage = "Choose a different password from your current password."
+        active.stage?.failure = ForestError.invalidData(reuseMessage)
+        let rejected = await target.updatePassword("same-password")
+        try check(!rejected && target.recoveringPassword, "Rejected password keeps recovery open for retry")
+        try check(target.message == reuseMessage, "Password rejection retains its specific error")
+        target.clearMessage()
+        try check(target.message == nil && target.recoveringPassword, "Leaving a form clears feedback without changing recovery")
+        active.stage?.failure = nil
         let recovered = await target.updatePassword("recovered-password")
         try check(recovered && !target.recoveringPassword, "Destination password reset finishes separately")
         try check(activeAuth.user?.identity == identity, "Reset never adopts destination implicitly")
@@ -170,6 +179,11 @@ enum AuthLinkChecks {
         try check(restored.user?.identity == identity && restored.entryAction == .continueGarden, "Restored guest continues")
         try activeTokens.validate()
         try check(restored.user?.hasEmailPassword == false, "No leaked password capability from a different store")
+        await restored.google(link: true)
+        try check(restored.message == nil, "Google success needs no lingering confirmation")
+        restored.report("Old form feedback")
+        await restored.signOut()
+        try check(restored.message == nil && restored.user == nil, "Sign-out clears old feedback without another notice")
         return count
     }
 }

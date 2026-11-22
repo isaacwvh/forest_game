@@ -384,7 +384,7 @@ final class SupabaseAuthService: AuthenticationServing {
         try storage.remove(key: storageKey)
     }
 
-    private func publicError(_ error: Error) -> Error {
+    func publicError(_ error: Error) -> Error {
         if error is CancellationError { return error }
         if let error = error as? AuthError {
             DiagnosticHistory.shared.record("Authentication", "failed: \(error.errorCode.rawValue)")
@@ -393,6 +393,7 @@ final class SupabaseAuthService: AuthenticationServing {
             case "invalid_credentials": message = "Check your email and password and try again."
             case "email_not_confirmed": message = "Confirm your email before signing in. You can resend confirmation below."
             case "weak_password": message = "Choose a stronger password and try again."
+            case "same_password": message = "Choose a different password from your current password."
             case "over_email_send_rate_limit", "over_request_rate_limit": message = "Too many attempts. Wait a little and try again."
             case "identity_already_exists": message = "Already linked to another account."
             case "email_exists": message = "That email belongs to another account. Sign in instead."

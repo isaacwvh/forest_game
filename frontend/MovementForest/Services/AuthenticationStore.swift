@@ -258,7 +258,7 @@ final class AuthenticationStore: ObservableObject {
         guard !busy else { return }; busy = true; message = nil
         defer { busy = false; expectedLinkIdentity = nil }
         do { try await action(); if let success = success { message = success } }
-        catch is CancellationError { message = "Sign-in cancelled." }
+        catch is CancellationError { message = nil }
         catch { message = error.localizedDescription }
     }
 
@@ -276,7 +276,7 @@ final class AuthenticationStore: ObservableObject {
         await perform {
             self.acceptingSessionEvents = true
             let signedIn = try await self.service.signUp(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-            self.message = signedIn ? "Signed in. Create your garden." : "Check your email, then sign in."
+            self.message = signedIn ? nil : "Check your email, then sign in."
         }
     }
     func resetPassword(email: String) async {
@@ -380,7 +380,6 @@ final class AuthenticationStore: ObservableObject {
             self.expectedLinkIdentity = link ? self.user?.identity : nil
             try await self.service.google(link: link)
             if link, self.user?.identity != self.expectedLinkIdentity { throw Self.signInRequired }
-            self.message = link ? "Google linked to this account." : "Signed in with Google."
             succeeded = true
         }
         return succeeded
@@ -392,10 +391,10 @@ final class AuthenticationStore: ObservableObject {
             self.expectedLinkIdentity = link ? self.user?.identity : nil
             try await self.service.apple(idToken: idToken, nonce: nonce, link: link)
             if link, self.user?.identity != self.expectedLinkIdentity { throw Self.signInRequired }
-            self.message = link ? "Apple linked to this account." : "Signed in with Apple."
         }
     }
     func report(_ message: String) { self.message = message }
+    func clearMessage() { message = nil }
 
     @discardableResult
     func handleCallback(_ url: URL) async -> Bool {
@@ -413,7 +412,6 @@ final class AuthenticationStore: ObservableObject {
         }
         do {
             try await service.handleCallback(url)
-            message = recoveringPassword ? "Choose your new password." : "Sign-in confirmed."
             return true
         } catch {
             recoveringPassword = previousRecovery
@@ -429,11 +427,10 @@ final class AuthenticationStore: ObservableObject {
         rememberAccount()
         defaults.set(true, forKey: historyKey + ".signedOut")
         defaults.set(false, forKey: historyKey + ".recovery")
-        busy = true; acceptingSessionEvents = false; generation = UUID(); user = nil; recoveringPassword = false
+        busy = true; message = nil; acceptingSessionEvents = false; generation = UUID(); user = nil; recoveringPassword = false
         onSessionChange?() // Revoke game access immediately, including offline/in-flight work.
         defer { busy = false }
-        do { try await service.signOut(); message = "Signed out." }
-        catch { message = "Signed out on this iPhone." }
+        try? await service.signOut()
     }
 }
 

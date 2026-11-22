@@ -1,5 +1,6 @@
 import XCTest
 import Foundation
+import Auth
 @testable import MovementForest
 
 @MainActor
@@ -80,9 +81,18 @@ private final class AuthHTTPTransport: HTTPTransport {
 
 @MainActor
 final class AuthenticationTests: XCTestCase {
+    func testReusedPasswordHasSpecificMessage() throws {
+        let response = HTTPURLResponse(url: try configuration().projectURL,
+            statusCode: 422, httpVersion: nil, headerFields: nil)!
+        let error = AuthError.api(message: "New password should be different from the old password.",
+            errorCode: .samePassword, underlyingData: Data(), underlyingResponse: response)
+        let service = SupabaseAuthService(configuration: try configuration())
+        XCTAssertEqual(service.publicError(error).localizedDescription,
+            "Choose a different password from your current password.")
+    }
     func testSharedEmailLinkPersistenceAndIdentityChecks() async throws {
         let count = try await AuthLinkChecks.run()
-        XCTAssertEqual(count, 38)
+        XCTAssertEqual(count, 44)
     }
     private func configuration() throws -> AuthConfiguration {
         try XCTUnwrap(AuthConfiguration.parse([

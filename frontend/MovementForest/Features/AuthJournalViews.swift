@@ -201,7 +201,7 @@ struct EmailLinkScreen: View {
             AuthFeedback(auth: auth)
         }.navigationTitle("Link with email")
             .onAppear { email = auth.emailLinkAddress ?? auth.user?.email ?? "" }
-            .onDisappear { password = ""; confirmation = ""; code = "" }
+            .onDisappear { password = ""; confirmation = ""; code = ""; auth.clearMessage() }
             .onChange(of: scenePhase) { phase in
                 if phase == .active, auth.emailLinkAddress != nil, !auth.busy {
                     Task { await auth.refreshLinkedEmail() }
@@ -234,6 +234,6 @@ struct PasswordSettingsScreen: View {
             }
             AuthFeedback(auth: auth)
         }.navigationTitle("Email & password")
-            .onDisappear { password = ""; confirmation = "" }
+            .onDisappear { password = ""; confirmation = ""; auth.clearMessage() }
     }
 }
