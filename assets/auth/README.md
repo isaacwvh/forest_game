@@ -14,3 +14,9 @@ replacement controls, crop, move or restyle artwork.
 The app overlays native, state-aware accessible controls in the cleared region.
 The approved source is reference provenance, not another runtime screen.
 Native iPhone layout and large-text acceptance remain required.
+
+`google-g.png` is the unmodified official Google Identity G asset from
+https://developers.google.com/static/identity/images/g-logo.png, downloaded for
+the auth UI review and now bundled for native provider controls. Its provenance,
+dimensions and SHA-256 are recorded in the manifest. It is separate from the
+image-generated title artwork. Keep its original colors and aspect ratio.

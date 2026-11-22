@@ -80,6 +80,10 @@ private final class AuthHTTPTransport: HTTPTransport {
 
 @MainActor
 final class AuthenticationTests: XCTestCase {
+    func testSharedEmailLinkPersistenceAndIdentityChecks() async throws {
+        let count = try await AuthLinkChecks.run()
+        XCTAssertEqual(count, 38)
+    }
     private func configuration() throws -> AuthConfiguration {
         try XCTUnwrap(AuthConfiguration.parse([
             "SupabaseURL": "https://project.supabase.co", "PublishableKey": "sb_publishable_test",

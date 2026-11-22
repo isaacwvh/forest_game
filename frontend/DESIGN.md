@@ -1,3 +1,24 @@
+## Account access and launch states — 22 November 2026 follow-up
+
+The revised auth UI uses Profile’s portrait, journal sections and sage status
+band. Keep player copy minimal: “Link account to save progress”, “Link with
+Google”, and “Link with email”. Show confirmed methods with icons and state.
+Email/password settings appear only after password access is confirmed. Email
+verification and password setup upgrade the active guest; they never sign it out
+or create another garden. Returning-player sign-in offers Google and an envelope
+email action, with no new-account signup prompt.
+
+An established session’s title has only Continue your garden. Show quiet native
+loading after 250 ms without delaying automatic successful entry; connectivity
+failure keeps the session and Continue retries. Confirmed signed-out entry has
+Play and existing-garden sign-in. Unresolved restoration has progress/Retry,
+never fresh-guest actions. Prior-play new starts retain confirmation. These rules
+supersede the older title secondary-action and generic Form guidance below.
+
+See [acceptance and device tests](AUTH_ACCOUNT_UI_ACCEPTANCE.md) and
+[SMTP/email setup](AUTH_EMAIL_SETUP.md). Native Apple SDK and provider acceptance
+remain required; portable checks are not native render evidence.
+
 ## Guest and Google account entry — 22 November 2026
 
 The auth surfaces extend the incumbent botanical journal system: warm paper,

@@ -15,6 +15,10 @@ struct AuthUserInfo: Equatable {
     let email: String?
     let methods: [String]
     var isAnonymous: Bool = false
+    var emailVerified: Bool = false
+    // Presentation capability, confirmed by password setup/login. Never inferred
+    // from an OAuth email or used to authorize game/API access.
+    var hasEmailPassword: Bool = false
 }
 
 struct AuthAccessToken {
@@ -25,6 +29,14 @@ struct AuthAccessToken {
 enum AuthSessionEvent { case changed(AuthUserInfo?), passwordRecovery(AuthUserInfo), restoreFailed }
 
 enum AuthEntryAction: Equatable { case restoring, retry, play, continueGarden, signIn }
+
+struct AuthEntryPresentationState {
+    private var signInCount = 0
+    var hasSignIn: Bool { signInCount > 0 }
+    mutating func signInChanged(_ visible: Bool) {
+        signInCount = max(0, signInCount + (visible ? 1 : -1))
+    }
+}
 
 @MainActor
 protocol AuthenticationServing: AnyObject {
@@ -46,6 +58,8 @@ protocol AuthenticationServing: AnyObject {
     func stagingService() throws -> any AuthenticationServing
     func adopt(_ candidate: any AuthenticationServing) async throws
     func discard() async throws
+    func refreshUser() async throws -> AuthUserInfo
+    func verifyEmailChange(email: String, code: String) async throws -> AuthUserInfo
 }
 
 extension AuthenticationServing {
@@ -53,6 +67,8 @@ extension AuthenticationServing {
     func stagingService() throws -> any AuthenticationServing { throw AuthenticationStore.signInRequired }
     func adopt(_ candidate: any AuthenticationServing) async throws { throw AuthenticationStore.signInRequired }
     func discard() async throws { }
+    func refreshUser() async throws -> AuthUserInfo { throw AuthenticationStore.signInRequired }
+    func verifyEmailChange(email: String, code: String) async throws -> AuthUserInfo { throw AuthenticationStore.signInRequired }
 }
 
 @MainActor
@@ -66,6 +82,7 @@ final class AuthenticationStore: ObservableObject {
     @Published private(set) var candidate: AuthenticationStore?
     @Published private(set) var hasHistory: Bool
     @Published private(set) var lastWasGuest: Bool
+    @Published private(set) var emailLinkAddress: String? = nil
     private(set) var generation = UUID()
     var onSessionChange: (() -> Void)?
     let configuration: AuthConfiguration
@@ -98,6 +115,9 @@ final class AuthenticationStore: ObservableObject {
         recoveringPassword = !isolated && !loggedOut && service.cachedUser != nil && defaults.bool(forKey: entryKey + ".recovery")
         hasHistory = defaults.bool(forKey: entryKey) || service.cachedUser != nil
         lastWasGuest = service.cachedUser?.isAnonymous ?? defaults.bool(forKey: entryKey + ".guest")
+        if let identity = user?.identity {
+            emailLinkAddress = defaults.string(forKey: "auth.emailLink.v1." + identity.storageScope)
+        }
     }
 
     func start() {
@@ -129,6 +149,9 @@ final class AuthenticationStore: ObservableObject {
         }
         let changed = user?.identity != next?.identity
         user = next
+        if changed {
+            emailLinkAddress = next.flatMap { defaults.string(forKey: "auth.emailLink.v1." + $0.identity.storageScope) }
+        }
         if next == nil {
             recoveringPassword = false
             if !isolated { defaults.set(false, forKey: historyKey + ".recovery") }
@@ -264,14 +287,84 @@ final class AuthenticationStore: ObservableObject {
         await perform({ try await self.service.resendConfirmation(email: email.trimmingCharacters(in: .whitespacesAndNewlines)) },
                       success: "Check your email. Open the link on this iPhone.")
     }
-    func updatePassword(_ password: String) async {
+    @discardableResult
+    func updatePassword(_ password: String) async -> Bool {
+        guard let expected = user?.identity else { return false }
+        guard recoveringPassword || (user?.isAnonymous == false && user?.emailVerified == true) else {
+            message = "Verify your email first."; return false
+        }
+        guard recoveringPassword || emailLinkAddress == nil || emailLinkVerified else {
+            message = "Verify your email first."; return false
+        }
+        var succeeded = false
         await perform {
+            self.expectedLinkIdentity = expected
             try await self.service.updatePassword(password)
+            guard self.user?.identity == expected else { throw Self.signInRequired }
+            self.user?.hasEmailPassword = true
+            self.setEmailLinkAddress(nil, identity: expected)
             let wasRecovering = self.recoveringPassword
             self.recoveringPassword = false
             self.defaults.set(false, forKey: self.historyKey + ".recovery")
             self.message = "Password saved."
+            succeeded = true
             if wasRecovering { self.onSessionChange?() }
+        }
+        return succeeded
+    }
+
+    var emailLinkVerified: Bool {
+        guard let address = emailLinkAddress, let user = user else { return false }
+        return !user.isAnonymous && user.emailVerified && user.email?.lowercased() == address.lowercased()
+    }
+
+    var needsGuestExitWarning: Bool {
+        user?.isAnonymous == true || (emailLinkAddress != nil && user?.hasEmailPassword != true &&
+            user?.methods.allSatisfy { $0 == "email" } == true)
+    }
+
+    private func setEmailLinkAddress(_ address: String?, identity: AuthIdentity) {
+        defaults.set(address, forKey: "auth.emailLink.v1." + identity.storageScope)
+        if user?.identity == identity { emailLinkAddress = address }
+    }
+
+    func linkEmail(_ email: String) async {
+        let address = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let expected = user?.identity, !busy, !recoveringPassword,
+              address.contains("@"), address.count <= 254 else { return }
+        await perform {
+            self.expectedLinkIdentity = expected
+            // Retain non-secret intent even if delivery has an uncertain outcome.
+            self.setEmailLinkAddress(address, identity: expected)
+            if self.user?.email?.lowercased() != address.lowercased() || self.user?.emailVerified != true {
+                try await self.service.updateEmail(address)
+                let updated = try await self.service.refreshUser()
+                guard updated.identity == expected else { throw Self.signInRequired }
+                self.receive(.changed(updated))
+            }
+            self.message = self.emailLinkVerified ? nil : "Check your email."
+        }
+    }
+
+    func verifyLinkedEmail(code: String) async {
+        guard let expected = user?.identity, let address = emailLinkAddress else { return }
+        await perform {
+            self.expectedLinkIdentity = expected
+            let updated = try await self.service.verifyEmailChange(email: address, code: code.trimmingCharacters(in: .whitespacesAndNewlines))
+            guard updated.identity == expected else { throw Self.signInRequired }
+            self.receive(.changed(updated))
+            self.message = self.emailLinkVerified ? nil : "Email verification is still pending."
+        }
+    }
+
+    func refreshLinkedEmail() async {
+        guard emailLinkAddress != nil, let expected = user?.identity else { return }
+        await perform {
+            self.expectedLinkIdentity = expected
+            let updated = try await self.service.refreshUser()
+            guard updated.identity == expected else { throw Self.signInRequired }
+            self.receive(.changed(updated))
+            if !self.emailLinkVerified { self.message = "Email verification is still pending." }
         }
     }
     func updateEmail(_ email: String) async {

@@ -17,6 +17,15 @@
       "height": 1774,
       "bytes": 1836792,
       "sha256": "24f1eb820d69dd599de568bb032d0e2b1563dba064808dd79ed0e43db61bd32f"
+    },
+    {
+      "file": "google-g.png",
+      "role": "provider-logo",
+      "source": "https://developers.google.com/static/identity/images/g-logo.png",
+      "width": 200,
+      "height": 204,
+      "bytes": 33661,
+      "sha256": "d1ce9c2af0b10a7333abc99bc706f9a6a199e5b65bf3e3009624f076b8638e6a"
     }
   ]
 }

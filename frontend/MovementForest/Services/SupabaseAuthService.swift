@@ -47,9 +47,21 @@ final class SupabaseAuthService: AuthenticationServing {
     deinit { observer?.cancel() }
 
     var cachedUser: AuthUserInfo? { client.currentSession.map { info($0.user) } }
+    // Lowercase/no underscores also survives the pinned SDK's JSON key strategies.
+    private static let passwordMarker = "forestemailpasswordv1"
     private func info(_ user: Auth.User) -> AuthUserInfo {
-        AuthUserInfo(identity: AuthIdentity(issuer: configuration.issuer, subject: user.id), email: user.email,
-                     methods: Array(Set((user.identities ?? []).map(\.provider))).sorted(), isAnonymous: user.isAnonymous)
+        let identity = AuthIdentity(issuer: configuration.issuer, subject: user.id)
+        return AuthUserInfo(identity: identity, email: user.email,
+            methods: Array(Set((user.identities ?? []).map(\.provider))).sorted(), isAnonymous: user.isAnonymous,
+            emailVerified: user.emailConfirmedAt != nil,
+            hasEmailPassword: !user.isAnonymous && user.emailConfirmedAt != nil &&
+                (user.userMetadata[Self.passwordMarker] == .bool(true) ||
+                 UserDefaults.standard.bool(forKey: "auth.password.v1." + identity.storageScope)))
+    }
+
+    private func rememberPassword(_ user: Auth.User) {
+        let identity = AuthIdentity(issuer: configuration.issuer, subject: user.id)
+        UserDefaults.standard.set(true, forKey: "auth.password.v1." + identity.storageScope)
     }
     func start() {
         do {
@@ -187,7 +199,12 @@ final class SupabaseAuthService: AuthenticationServing {
     }
 
     func signIn(email: String, password: String) async throws {
-        do { let session = try await client.signIn(email: email, password: password); onEvent?(.changed(info(session.user))) }
+        do {
+            let session = try await client.signIn(email: email, password: password)
+            try verifySaved(session)
+            rememberPassword(session.user)
+            onEvent?(.changed(info(session.user)))
+        }
         catch { throw publicError(error) }
     }
     func signUp(email: String, password: String) async throws -> Bool {
@@ -206,12 +223,73 @@ final class SupabaseAuthService: AuthenticationServing {
         catch { throw publicError(error) }
     }
     func updatePassword(_ password: String) async throws {
-        do { _ = try await client.update(user: UserAttributes(password: password)) }
+        if let pending = tokenOperation { _ = try await pending.value }
+        let expected = client.currentSession?.user.id
+        linking = true
+        defer { linking = false }
+        do {
+            let current = try await client.user()
+            guard current.id == expected, !current.isAnonymous, current.emailConfirmedAt != nil else {
+                throw ForestError.invalidData("Verify your email first.")
+            }
+            // This flag is presentation-only. Commit it with the password, never
+            // infer password readiness merely from an email/OAuth identity.
+            let updated = try await client.update(user: UserAttributes(password: password,
+                data: [Self.passwordMarker: .bool(true)]))
+            guard updated.id == current.id else { throw AuthenticationStore.signInRequired }
+            try verifySaved(try await client.session)
+            rememberPassword(updated)
+            onEvent?(.changed(info(updated)))
+        }
         catch { throw publicError(error) }
     }
     func updateEmail(_ email: String) async throws {
-        do { _ = try await client.update(user: UserAttributes(email: email), redirectTo: configuration.callbackURL) }
+        if let pending = tokenOperation { _ = try await pending.value }
+        let expected = client.currentSession?.user.id
+        linking = true
+        defer { linking = false }
+        do {
+            let updated = try await client.update(user: UserAttributes(email: email), redirectTo: configuration.callbackURL)
+            guard updated.id == expected else { throw AuthenticationStore.signInRequired }
+            try verifySaved(try await client.session)
+            onEvent?(.changed(info(updated)))
+        }
         catch { throw publicError(error) }
+    }
+
+    func refreshUser() async throws -> AuthUserInfo {
+        let expected = cachedUser?.identity
+        _ = try await accessToken(refresh: true)
+        let updated = info(try await client.user())
+        guard updated.identity == expected else { throw AuthenticationStore.signInRequired }
+        return updated
+    }
+
+    func verifyEmailChange(email: String, code: String) async throws -> AuthUserInfo {
+        if let pending = tokenOperation { _ = try await pending.value }
+        guard let original = try storage.retrieve(key: storageKey), let expected = client.currentSession?.user.id else {
+            throw AuthenticationStore.signInRequired
+        }
+        linking = true
+        defer { linking = false }
+        do {
+            _ = try await client.verifyOTP(email: email, token: code, type: .emailChange)
+            guard client.currentSession?.user.id == expected else { throw AuthenticationStore.signInRequired }
+            // Persist the updated user and anonymous claim too, so queued SDK
+            // events or a cold launch cannot restore a pre-verification snapshot.
+            let session = try await client.refreshSession()
+            guard session.user.id == expected else { throw AuthenticationStore.signInRequired }
+            try verifySaved(session)
+            return info(session.user)
+        } catch {
+            // A code for another account must never replace this guest's session.
+            if let actual = client.currentSession?.user.id, actual != expected {
+                await client.stopAutoRefresh(); lease.revoke()
+                observer?.cancel(); observer = nil; epoch = UUID()
+                try storage.store(key: storageKey, value: original); resetClient()
+            }
+            throw publicError(error)
+        }
     }
 
     func google(link: Bool) async throws {
@@ -277,7 +355,11 @@ final class SupabaseAuthService: AuthenticationServing {
     func handleCallback(_ url: URL) async throws {
         guard configuration.accepts(url), !browser.active else { return }
         do {
-            let backup = try storage.retrieve(key: storageKey + ".link-backup")
+            if let pending = tokenOperation { _ = try? await pending.value }
+            // Another account's recovery also belongs in a staged context;
+            // no direct callback may silently replace the current guest.
+            let current = !staged ? try storage.retrieve(key: storageKey) : nil
+            let backup = try storage.retrieve(key: storageKey + ".link-backup") ?? current
             let expected = backup.flatMap { try? JSONDecoder().decode(Session.self, from: $0).user.id }
             linking = expected != nil
             defer { linking = false }
@@ -312,8 +394,10 @@ final class SupabaseAuthService: AuthenticationServing {
             case "email_not_confirmed": message = "Confirm your email before signing in. You can resend confirmation below."
             case "weak_password": message = "Choose a stronger password and try again."
             case "over_email_send_rate_limit", "over_request_rate_limit": message = "Too many attempts. Wait a little and try again."
-            case "identity_already_exists": message = "That sign-in belongs to another account. Use Sign in another way."
+            case "identity_already_exists": message = "Already linked to another account."
             case "email_exists": message = "That email belongs to another account. Sign in instead."
+            case "otp_expired": message = "Code expired. Request a new email."
+            case "reauthentication_needed", "reauthentication_not_valid": message = "Sign in again before changing your password."
             case "anonymous_provider_disabled": message = "Guest play is unavailable. Try signing in."
             case "manual_linking_disabled": message = "Linking another sign-in method is unavailable in this version."
             default: message = "Sign-in couldn’t finish. Check your connection and try again."

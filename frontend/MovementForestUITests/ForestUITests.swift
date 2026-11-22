@@ -6,7 +6,7 @@ final class ForestUITests: XCTestCase {
 
     func testAuthTitleFollowsResolvedSessionAndHistory() {
         for (scenario, label) in [("--auth-first", "Play"), ("--auth-guest", "Continue your garden"),
-                                  ("--auth-linked", "Continue your garden"), ("--auth-signed-out", "Sign back in")] {
+                                  ("--auth-linked", "Continue your garden"), ("--auth-signed-out", "Play")] {
             let app = XCUIApplication()
             app.launchArguments = ["--fixture-auth", scenario]
             app.launch()
@@ -20,10 +20,15 @@ final class ForestUITests: XCTestCase {
             XCTAssertEqual(title.frame.minY, window.frame.minY, accuracy: 1)
             XCTAssertEqual(title.frame.maxY, window.frame.maxY, accuracy: 1)
             if scenario == "--auth-signed-out" {
-                app.buttons["title.newGarden"].tap()
+                XCTAssertTrue(app.buttons["title.signIn"].exists)
+                action.tap()
                 XCTAssertTrue(app.alerts["Start a new garden?"].waitForExistence(timeout: 5))
                 app.alerts.buttons["Cancel"].tap()
-                XCTAssertEqual(action.label, "Sign back in")
+                XCTAssertEqual(action.label, "Play")
+            } else if scenario != "--auth-first" {
+                XCTAssertFalse(app.buttons["title.signIn"].exists)
+                XCTAssertFalse(app.buttons["Sign in another way"].exists)
+                XCTAssertFalse(app.buttons["Start a new garden"].exists)
             }
             app.terminate()
         }
@@ -40,19 +45,70 @@ final class ForestUITests: XCTestCase {
         }
     }
 
+    func testReturningGuestCanRetryWithoutNewGardenOrSignInActions() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-auth", "--auth-guest"]
+        app.launch()
+        let retry = app.staticTexts["title.connectionRetry"]
+        XCTAssertTrue(retry.waitForExistence(timeout: 15))
+        let action = app.buttons["title.primary"]
+        action.tap()
+        XCTAssertTrue(retry.waitForExistence(timeout: 15))
+        XCTAssertEqual(action.label, "Continue your garden")
+        XCTAssertFalse(app.buttons["title.signIn"].exists)
+        XCTAssertFalse(app.buttons["Play"].exists)
+    }
+
     func testGuestSwitchWarningAndCancelAtLargestTextSize() {
         let app = XCUIApplication()
-        app.launchArguments = ["--fixture-auth", "--auth-guest", "-UIPreferredContentSizeCategoryName",
+        app.launchArguments = ["--fixture-auth", "--auth-guest", "--auth-account", "-UIPreferredContentSizeCategoryName",
                                "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
-        let switchAccount = app.buttons["Sign in another way"]
+        let switchAccount = app.buttons["account.switch"]
         XCTAssertTrue(switchAccount.waitForExistence(timeout: 15))
         if !switchAccount.isHittable { app.scrollViews.firstMatch.swipeUp() }
         switchAccount.tap()
         XCTAssertTrue(app.staticTexts["This guest garden may be lost after switching accounts."].waitForExistence(timeout: 5))
         app.buttons["Keep this garden"].tap()
-        XCTAssertTrue(app.buttons["title.primary"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.buttons["title.primary"].label, "Continue your garden")
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "account.page").firstMatch.waitForExistence(timeout: 5))
+    }
+
+    func testPasswordSettingsAppearOnlyAfterEmailAccessIsSetUp() {
+        for scenario in ["--auth-guest", "--auth-google-only", "--auth-email-only", "--auth-linked"] {
+            let app = XCUIApplication()
+            app.launchArguments = ["--fixture-auth", scenario, "--auth-account"]
+            app.launch()
+            let page = app.descendants(matching: .any).matching(identifier: "account.page").firstMatch
+            XCTAssertTrue(page.waitForExistence(timeout: 15))
+            let hasPassword = scenario == "--auth-email-only" || scenario == "--auth-linked"
+            XCTAssertEqual(app.buttons["account.emailSettings"].exists, hasPassword)
+            XCTAssertEqual(app.buttons["account.emailLink"].exists, !hasPassword)
+            app.terminate()
+        }
+    }
+
+    func testGuestEmailLinkKeepsAccountAndExposesSettingsAfterPassword() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--fixture-auth", "--auth-guest", "--auth-account"]
+        app.launch()
+        let link = app.buttons["account.emailLink"]
+        XCTAssertTrue(link.waitForExistence(timeout: 15)); link.tap()
+        let email = app.textFields["account.linkEmailAddress"]
+        XCTAssertTrue(email.waitForExistence(timeout: 5)); email.tap(); email.typeText("player@example.invalid")
+        app.buttons["Continue"].tap()
+        let code = app.textFields["account.emailCode"]
+        XCTAssertTrue(code.waitForExistence(timeout: 5)); code.tap(); code.typeText("123456")
+        app.buttons["Verify email"].tap()
+        let password = app.secureTextFields["account.newPassword"]
+        XCTAssertTrue(password.waitForExistence(timeout: 5)); password.tap(); password.typeText("fixture-password")
+        let confirmation = app.secureTextFields["account.confirmPassword"]
+        confirmation.tap(); confirmation.typeText("fixture-password")
+        let finish = app.buttons["account.finishEmailLink"]
+        if !finish.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        finish.tap()
+        XCTAssertTrue(app.buttons["account.emailSettings"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["account.emailLink"].exists)
+        XCTAssertTrue(app.buttons["account.googleLink"].exists)
     }
 
     func testMilestoneSelectorsAndScrollSurviveRepeatedCachedEntry() throws {

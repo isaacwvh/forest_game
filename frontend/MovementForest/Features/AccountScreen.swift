@@ -9,12 +9,13 @@ struct AccountScreen: View {
     var body: some View {
         Group {
             if let auth = connection.authentication {
-                ManagedAccountScreen(auth: auth, connection: connection, catalog: catalog)
-            } else {
-                List {
-                    Text("Sign-in is unavailable in this build.").font(.headline)
-                    Text("Explore the sample garden, or install an updated build to sign in.").foregroundStyle(.secondary)
+                if auth.recoveringPassword {
+                    PasswordSettingsScreen(auth: auth)
+                } else {
+                    ManagedAccountScreen(auth: auth, connection: connection, catalog: catalog)
                 }
+            } else {
+                AuthJournalPage { AuthHeading(title: "Sign-in unavailable") }
             }
         }.navigationTitle("Account & save")
     }
@@ -25,176 +26,117 @@ private struct ManagedAccountScreen: View {
     @ObservedObject var auth: AuthenticationStore
     @ObservedObject var connection: GardenConnection
     let catalog: any AssetCatalogProviding
-    @State private var email = ""
-    @State private var password = ""
-    @State private var confirmation = ""
-    @State private var creating = false
     @State private var username = ""
     @State private var displayName = ""
-    @State private var newEmail = ""
     @State private var signingIn = false
     @State private var confirmingLogout = false
-    private var validPassword: Bool { password.count >= 8 && password == confirmation }
+    private var busy: Bool { auth.busy || connection.busy }
+    private var needsGuestWarning: Bool {
+        auth.needsGuestExitWarning
+    }
+    private var statusTitle: String {
+        if auth.emailLinkAddress != nil, auth.user?.hasEmailPassword != true {
+            return auth.emailLinkVerified ? "Finish email setup" : "Email verification pending"
+        }
+        return auth.user?.isAnonymous == true ? "Playing as guest" : "Account linked"
+    }
 
     var body: some View {
-        Form {
-            if auth.recoveringPassword {
-                Section("Choose a new password") {
-                    passwordFields
-                    Button("Save new password") { Task { await auth.updatePassword(password); clearPasswords() } }
-                        .buttonStyle(.journalPrimary)
-                        .disabled(!validPassword || auth.busy)
+        AuthJournalPage {
+            if let user = auth.user {
+                AuthIdentityHeader(name: connection.editor?.profile.displayName ?? (user.isAnonymous ? "Guest garden" : "Your account"),
+                    username: connection.editor?.profile.username)
+                AuthStatusBand(title: statusTitle, symbol: needsGuestWarning ? "exclamationmark.triangle" : "checkmark.circle.fill")
+                signInMethods(user)
+                if connection.accountRequired { profileSetup }
+                else if connection.editor != nil { profileEditing }
+                if connection.editor == nil, !connection.accountRequired, !connection.connecting {
+                    Button("Reconnect") { Task { await connection.connectManaged(assets: catalog) } }
+                        .buttonStyle(.journalSecondary).disabled(busy).accessibilityIdentifier("account.reconnect")
                 }
-            } else if let user = auth.user {
-                Section("Signed in") {
-                    Text(user.isAnonymous ? "Guest garden" : (user.email ?? "Your account"))
-                        .font(.system(.title2, design: .serif)).textSelection(.enabled)
-                    Text(user.isAnonymous ? "Recovery: Not linked" : "Sign-in methods: \(user.methods.joined(separator: ", "))")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    if user.isAnonymous {
-                        Text("Link Google to recover this garden on another phone.").font(.callout)
-                    }
-                    if let status = connection.status { Text(status).font(.callout) }
-                    if connection.connecting { ProgressView("Connecting to your garden…") }
-                }
-                if connection.accountRequired {
-                    Section("Create your game profile") {
-                        TextField("Game username", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
-                            .accessibilityIdentifier("account.username")
-                        TextField("Display name", text: $displayName).accessibilityIdentifier("account.displayName")
-                        Text("Your username is for your profile and friends. Use your email to sign in with a password.")
-                            .font(.footnote).foregroundStyle(.secondary)
-                        Button("Create account and starter") { Task {
-                            await connection.createAccount(username: username, displayName: displayName, assets: catalog)
-                        } }.disabled(connection.busy || auth.busy || username.count < 3 || displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            .buttonStyle(.journalPrimary)
-                            .accessibilityIdentifier("account.createProfile")
-                    }
-                } else {
-                    Section("Your garden") {
-                        if let editor = connection.editor { Text("Playing as \(editor.profile.displayName)") }
-                        Button("Reconnect to game") { Task { await connection.connectManaged(assets: catalog) } }
-                            .buttonStyle(.journalSecondary)
-                            .disabled(connection.busy || auth.busy).accessibilityIdentifier("account.reconnect")
-                    }
-                    if let editor = connection.editor {
-                        Section("Profile") {
-                            DisclosureGroup("Edit name") {
-                                TextField("Username", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
-                                TextField("Display name", text: $displayName)
-                                Button("Save name") { Task { await connection.updateProfile(username: username, displayName: displayName) } }
-                                    .buttonStyle(.journalSecondary)
-                                    .disabled(connection.busy || auth.busy || username.count < 3 || displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            }.onAppear { username = editor.profile.username; displayName = editor.profile.displayName }
-                        }
-                    }
-                }
-                if auth.configuration.googleEnabled || auth.configuration.appleEnabled {
-                    Section("Link another sign-in method") {
-                        Text("Linked methods open this garden.")
-                            .font(.footnote).foregroundStyle(.secondary)
-                        if auth.configuration.googleEnabled && !user.methods.contains("google") {
-                            Button("Link Google") { Task { await auth.google(link: true) } }.buttonStyle(.journalSecondary).disabled(auth.busy || connection.busy)
-                        }
-                        if auth.configuration.appleEnabled && !user.methods.contains("apple") {
-                            AppleAccountButton(auth: auth, link: true)
-                        }
-                    }
-                }
-                if !user.isAnonymous { Section("Email and password access") {
-                    DisclosureGroup("Set or change password") {
-                        Text("Use the verified account email shown above to sign in. Setting a password keeps your existing garden.")
-                            .font(.footnote)
-                        passwordFields
-                        Button("Save password") { Task { await auth.updatePassword(password); clearPasswords() } }
-                            .buttonStyle(.journalPrimary)
-                            .disabled(auth.busy || !validPassword)
-                    }
-                    DisclosureGroup("Change account email") {
-                        TextField("New email", text: $newEmail).keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
-                        Button("Send email verification") { Task { await auth.updateEmail(newEmail) } }
-                            .buttonStyle(.journalSecondary)
-                            .disabled(auth.busy || newEmail.isEmpty)
-                    }
-                } }
-                Section {
-                    Button("Sign in another way") { signingIn = true }.buttonStyle(.journalSecondary)
-                        .disabled(auth.busy || connection.switching)
-                        .accessibilityIdentifier("account.switch")
-                }
+                JournalSectionHeading(title: "Account access")
+                Button("Open another garden") { signingIn = true }
+                    .buttonStyle(.journalSecondary).disabled(busy).accessibilityIdentifier("account.switch")
+                Button("Sign out", role: .destructive) {
+                    if needsGuestWarning { confirmingLogout = true }
+                    else { Task { await connection.signOut() } }
+                }.buttonStyle(.journalQuiet).disabled(busy).accessibilityIdentifier("account.signOut")
+                if connection.connecting { ProgressView("Connecting…") }
+                if let status = connection.status, !connection.connecting,
+                   !status.hasPrefix("Signed in as ") { Text(status).font(.callout) }
+                AuthFeedback(auth: auth)
             } else {
-                Section(creating ? "Create your account" : "Welcome back") {
-                    TextField("Email", text: $email).textContentType(.username).keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("account.email")
-                    SecureField("Password", text: $password).textContentType(creating ? .newPassword : .password)
-                        .accessibilityIdentifier("account.password")
-                    if creating {
-                        SecureField("Confirm password", text: $confirmation).textContentType(.newPassword)
-                        Text("Use at least eight characters and follow the password requirements shown here.")
-                            .font(.footnote).foregroundStyle(.secondary)
-                    }
-                    Button(creating ? "Create account" : "Sign in") { Task {
-                        if creating { await auth.signUp(email: email, password: password) }
-                        else { await auth.signIn(email: email, password: password) }
-                        clearPasswords()
-                    } }.disabled(auth.busy || email.isEmpty || password.isEmpty || (creating && !validPassword))
-                        .buttonStyle(.journalFeatured)
-                        .accessibilityIdentifier("account.submit")
-                    Button(creating ? "Already have an account? Sign in" : "New here? Create an account") {
-                        creating.toggle(); clearPasswords()
-                    }.buttonStyle(.journalQuiet).disabled(auth.busy)
-                }
-                if auth.configuration.googleEnabled || auth.configuration.appleEnabled {
-                    Section("Or continue with") {
-                        if auth.configuration.googleEnabled {
-                            Button("Continue with Google") { Task { await auth.google(link: false) } }.buttonStyle(.journalSecondary).disabled(auth.busy)
-                        }
-                        if auth.configuration.appleEnabled { AppleAccountButton(auth: auth, link: false) }
-                    }
-                }
-                Section("Account help") {
-                    Button("Forgot password?") { Task { await auth.resetPassword(email: email) } }.buttonStyle(.journalQuiet).disabled(auth.busy || email.isEmpty)
-                    Button("Resend confirmation email") { Task { await auth.resendConfirmation(email: email) } }.buttonStyle(.journalQuiet).disabled(auth.busy || email.isEmpty)
-                    Text("Open email links on this iPhone. Health uploads are a separate choice after sign-in.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-            }
-            if auth.busy || connection.switching { Section { ProgressView("Please wait…") } }
-            if let message = auth.message { Section { Text(message).accessibilityIdentifier("account.status") } }
-            if auth.user != nil {
-                Section {
-                    Button("Sign out", role: .destructive) {
-                        if auth.user?.isAnonymous == true { confirmingLogout = true }
-                        else { Task { await connection.signOut(); clearPasswords() } }
-                    }
-                        .buttonStyle(.journalQuiet)
-                        .disabled(auth.busy || connection.switching).accessibilityIdentifier("account.signOut")
-                    Text(auth.user?.isAnonymous == true ? "Link Google before signing out to keep access." : "Your garden stays with this account.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
+                AuthHeading(title: "Sign in")
+                Button("Sign in to an existing garden") { signingIn = true }.buttonStyle(.journalPrimary)
             }
         }
-        .journalAuthForm()
-        .sheet(isPresented: $signingIn, onDismiss: {
-            Task { await connection.cancelStagedAccount() }
-        }) {
-            NavigationStack {
-                AccountSignInScreen(connection: connection, auth: auth, catalog: catalog) { signingIn = false }
-            }
+        .sheet(isPresented: $signingIn, onDismiss: { Task { await connection.cancelStagedAccount() } }) {
+            NavigationStack { AccountSignInScreen(connection: connection, auth: auth, catalog: catalog) { signingIn = false } }
         }
         .alert("Leave this guest garden?", isPresented: $confirmingLogout) {
             Button("Keep playing", role: .cancel) { }
-            Button("Sign out", role: .destructive) { Task { await connection.signOut(); clearPasswords() } }
-        } message: { Text("It may be lost unless you link Google first.") }
+            Button("Sign out", role: .destructive) { Task { await connection.signOut() } }
+        } message: { Text("Link an account first to keep access.") }
+        .accessibilityIdentifier("account.page")
     }
 
-    private var passwordFields: some View {
-        Group {
-            SecureField("New password", text: $password).textContentType(.newPassword)
-            SecureField("Confirm password", text: $confirmation).textContentType(.newPassword)
+    @ViewBuilder
+    private func signInMethods(_ user: AuthUserInfo) -> some View {
+        JournalSectionHeading(title: "Sign-in methods")
+        if user.isAnonymous { Text("Link account to save progress").font(.callout).foregroundStyle(JournalTheme.secondary) }
+        if user.methods.contains("google") {
+            AuthMethodRow(title: "Google", google: true).accessibilityIdentifier("account.googleLinked")
+        } else if auth.configuration.googleEnabled {
+            AuthProviderButton(title: "Link with Google", google: true) { Task { await auth.google(link: true) } }
+                .disabled(busy).accessibilityIdentifier("account.googleLink")
+        }
+        if user.hasEmailPassword {
+            AuthMethodRow(title: "Email & password", detail: user.email, state: "Set up")
+                .accessibilityIdentifier("account.emailLinked")
+            NavigationLink("Email & password settings") { PasswordSettingsScreen(auth: auth) }
+                .buttonStyle(.journalSecondary).disabled(busy).accessibilityIdentifier("account.emailSettings")
+        } else {
+            NavigationLink { EmailLinkScreen(auth: auth) } label: {
+                Label(auth.emailLinkAddress == nil ? "Link with email" : "Finish email setup", systemImage: "envelope")
+                    .frame(maxWidth: .infinity)
+            }.buttonStyle(.journalSecondary).disabled(busy).accessibilityIdentifier("account.emailLink")
+        }
+        if user.methods.contains("apple") { AuthMethodRow(title: "Apple") }
+        else if auth.configuration.appleEnabled { AppleAccountButton(auth: auth, link: true).disabled(connection.busy) }
+        ForEach(user.methods.filter { !["google", "email", "apple"].contains($0) }, id: \.self) { method in
+            AuthMethodRow(title: method.capitalized)
         }
     }
-    private func clearPasswords() { password = ""; confirmation = "" }
+
+    private var profileSetup: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            JournalSectionHeading(title: "Your profile")
+            profileFields
+            Button("Create garden") {
+                Task { await connection.createAccount(username: username, displayName: displayName, assets: catalog) }
+            }.buttonStyle(.journalPrimary).disabled(busy || !validName).accessibilityIdentifier("account.createProfile")
+        }
+    }
+    private var profileEditing: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            JournalSectionHeading(title: "Your profile")
+            DisclosureGroup("Edit name") {
+                profileFields.padding(.top, 12)
+                Button("Save name") { Task { await connection.updateProfile(username: username, displayName: displayName) } }
+                    .buttonStyle(.journalSecondary).disabled(busy || !validName).padding(.top, 12)
+            }.onAppear {
+                if let profile = connection.editor?.profile { username = profile.username; displayName = profile.displayName }
+            }
+        }
+    }
+    private var validName: Bool { username.count >= 3 && !displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    private var profileFields: some View {
+        VStack(spacing: 12) {
+            TextField("Username", text: $username).textInputAutocapitalization(.never).autocorrectionDisabled()
+                .journalAuthInput().accessibilityIdentifier("account.username")
+            TextField("Display name", text: $displayName).journalAuthInput().accessibilityIdentifier("account.displayName")
+        }
+    }
 }
 
 @MainActor

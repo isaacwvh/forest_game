@@ -7,9 +7,20 @@ the companion [sync and onboarding plan](sync_and_onboarding_plan.md).
 The targeted source review for that companion plan does not revalidate the
 6 November provider/configuration evidence below.
 Status: guest + Google source implementation added on 22 November; native acceptance pending.
-Current priority: validate the integrated auth build; no push or CI requested yet.
+Current priority: push the auth update for Mac/iPhone validation; do not wait for CI.
 Active milestone: guest entry/restoration, Google linking/recovery, and finished auth UI.
 Deferred provider: Apple, until the user decides to enroll in the Apple Developer Program.
+
+Account UI follow-up (22 November): guest email verification/password linking,
+explicit method states, icon-led email sign-in and the simplified returning-player
+loading title are implemented in source. No signup endpoint is used for linking.
+The latest [acceptance flow](frontend/AUTH_ACCOUNT_UI_ACCEPTANCE.md) and
+[custom SMTP instructions](frontend/AUTH_EMAIL_SETUP.md) supersede older UI
+composition notes below. The user subsequently reported verifying the Resend
+domain and completing Supabase SMTP/auth setup, and requested this auth update
+be pushed for a Mac pull without waiting for CI. Dashboard settings were not
+independently inspected. Native Mac/iPhone and real-provider acceptance remain
+pending.
 
 Current delivery details and the device test flow are in
 [GUEST_GOOGLE_ACCEPTANCE.md](frontend/GUEST_GOOGLE_ACCEPTANCE.md).

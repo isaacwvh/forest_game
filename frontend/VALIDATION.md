@@ -1,3 +1,35 @@
+## Auth journal and email linking — 22 November 2026 follow-up
+
+- Pre-push refresh: portable frontend/project/assets validation and all 119 Swift
+  syntax checks pass. The optional shared Swift rerun could not start because
+  WSL returned `Wsl/Service/E_UNEXPECTED`; the earlier 38-check pass below remains
+  the last executed result. Native validation remains pending on Mac.
+- Portable source/project/assets/plists/contracts/contrast validation passes.
+- All **119 Swift files** syntax-parse; generated project/schemes are current.
+- **38 shared real Swift checks pass** for same-identity email verification,
+  password gating, pending intent and cold restoration, failure/foreign-response
+  preservation, Google plus the same email, separate password recovery and
+  ownership of recovery presentations.
+  The portable Foundation runner substitutes Combine observation and a SHA-256
+  interface only; the store/configuration/shared check source is unchanged.
+- Focused isolated PostgreSQL auth/account tests: **48 passed**.
+- Scoped UI detector: no findings. This is source review, not native rendering.
+- Native tests/fixtures cover the updated title, guest warning, email setup and
+  password-settings visibility. XCTest/UI execution and Apple SDK builds are
+  still not run on Windows. Real SMTP/Google/iPhone checks remain pending.
+- Full isolated backend regression: **795 passed, 3 existing opt-in benchmark
+  skips**, plus **all four HTTP walkthroughs passed**. The dedicated validation
+  database cluster was stopped afterward. The Windows stack overflow in the first
+  broad attempt was avoided with a 16 MiB test-worker stack; application/backend
+  source was unchanged. The helper’s final log read needed tolerant decoding for
+  Windows-encoded output; completion markers and stopped-cluster status were
+  verified separately.
+- Backend Ruff lint/format, dependency consistency, Python script compilation
+  and scoped whitespace validation pass. No push or CI was performed.
+
+Details: [device acceptance](AUTH_ACCOUNT_UI_ACCEPTANCE.md),
+[external SMTP setup](AUTH_EMAIL_SETUP.md).
+
 ## Guest + Google auth — 22 November 2026
 
 - Portable asset/project/plist validation passed, including approved title art,

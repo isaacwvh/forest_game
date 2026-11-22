@@ -88,6 +88,7 @@ final class GardenConnection: ObservableObject {
     @Published private(set) var titleVisible = true
     @Published private(set) var stagedProfile: APIProfile?
     @Published private(set) var stagedMissingGarden = false
+    @Published private(set) var stagedPasswordRecovery = false
     @Published private(set) var switching = false
     @Published private(set) var updatingProfile = false
     private let defaults: UserDefaults
@@ -109,10 +110,15 @@ final class GardenConnection: ObservableObject {
     private var authUpdates: AnyCancellable?
     private var managedTokens: ScopedAuthTokenProvider?
     private var managedProfileVerified = false
+    private var managedGardenReady: Bool {
+        managedProfileVerified && editor?.isActive == true && editor?.confirmed != nil &&
+            editor?.showingCached == false && editor?.state != .authenticationRequired
+    }
     private var managedGeneration = UUID()
     private var pendingIdentity: AuthIdentity?
     private var openAfterConnection = false
     private var committingAccount = false
+    private var authPresentation = AuthEntryPresentationState()
     private static let urlKey = "development.gardenAPI.url.v1"
 
     init(defaults: UserDefaults = .standard) {
@@ -297,7 +303,7 @@ final class GardenConnection: ObservableObject {
         guard authentication?.restoring == false, authentication?.user != nil,
               authentication?.recoveringPassword == false else { return }
         await connectManaged(assets: assets, restoreCache: editor == nil)
-        if editor != nil { titleVisible = false }
+        if managedGardenReady { titleVisible = false }
     }
 
     private func candidateClient() throws -> (AuthenticationStore, APIClient) {
@@ -417,13 +423,40 @@ final class GardenConnection: ObservableObject {
     func cancelStagedAccount() async {
         guard !switching else { return }
         await authentication?.cancelCandidate()
-        stagedProfile = nil; stagedMissingGarden = false; status = nil
+        stagedProfile = nil; stagedMissingGarden = false; stagedPasswordRecovery = false; status = nil
         authentication?.markStagedCallback(false)
+    }
+
+    func requestStagedPasswordReset(email: String) async {
+        guard !switching, let auth = authentication, !auth.busy else { return }
+        switching = true
+        defer { switching = false }
+        do {
+            let target = try auth.prepareCandidate()
+            auth.markStagedCallback(true)
+            await target.resetPassword(email: email)
+            status = target.message
+        } catch { status = "Password reset couldn’t start. Try again." }
+    }
+
+    func signInPresentationChanged(_ visible: Bool) { authPresentation.signInChanged(visible) }
+
+    func finishStagedPasswordRecovery(password: String) async {
+        guard !switching, let target = authentication?.candidate, target.user != nil else { return }
+        switching = true
+        defer { switching = false }
+        if target.recoveringPassword {
+            guard await target.updatePassword(password) else { status = target.message; return }
+        }
+        do {
+            try await resolveStagedAccount()
+            stagedPasswordRecovery = false
+        } catch { status = "Garden verification paused. Try again." }
     }
 
     func handleAuthCallback(_ url: URL, assets: any AssetCatalogProviding) async {
         guard let auth = authentication, auth.configuration.accepts(url), !AuthCallbackReceipts.contains(url) else { return }
-        if auth.stagedCallbackPending, url.path == auth.configuration.callbackURL.path {
+        if auth.stagedCallbackPending {
             // ASWebAuthenticationSession owns a live browser return. On a cold
             // callback, reopen the same isolated Keychain/PKCE context instead.
             guard !switching, auth.candidate?.busy != true else { return }
@@ -431,6 +464,13 @@ final class GardenConnection: ObservableObject {
                 let target = try auth.prepareCandidate()
                 let confirmed = await target.handleCallback(url)
                 guard confirmed, target.user != nil else { status = target.message; return }
+                if target.recoveringPassword {
+                    stagedPasswordRecovery = true
+                    // An already presented sign-in shows recovery in place.
+                    // Replacing its root would dismiss/cancel the staged session.
+                    if !authPresentation.hasSignIn { titleVisible = true }
+                    return
+                }
                 try await resolveStagedAccount()
                 titleVisible = true
                 auth.markStagedCallback(false)
@@ -441,8 +481,7 @@ final class GardenConnection: ObservableObject {
     func connectManaged(assets: any AssetCatalogProviding, restoreCache: Bool = false) async {
         guard let auth = authentication, auth.user != nil, !auth.recoveringPassword, !connecting else { return }
         if let tokens = managedTokens, (try? tokens.validate()) != nil,
-           tokens.identity == auth.user?.identity, editor?.isActive == true,
-           managedProfileVerified, !restoreCache { return }
+           tokens.identity == auth.user?.identity, managedGardenReady, !restoreCache { return }
         let operation = UUID(); managedGeneration = operation
         LifecycleDiagnostics.event("connection started id=\(operation)")
         connecting = true; status = "Loading your account…"
@@ -499,7 +538,7 @@ final class GardenConnection: ObservableObject {
             // staged destination still waits for its explicit switch confirmation.
             let restoredGardenReady = store.confirmed != nil && !store.showingCached &&
                 store.state != .authenticationRequired
-            if openAfterConnection || (restoredGardenReady && stagedProfile == nil && !stagedMissingGarden) {
+            if !stagedPasswordRecovery && (openAfterConnection || (restoredGardenReady && stagedProfile == nil && !stagedMissingGarden)) {
                 titleVisible = false; openAfterConnection = false
             }
         } catch {
