@@ -391,7 +391,7 @@ final class SupabaseAuthService: AuthenticationServing {
             let message: String
             switch error.errorCode.rawValue {
             case "invalid_credentials": message = "Check your email and password and try again."
-            case "email_not_confirmed": message = "Confirm your email before signing in. You can resend confirmation below."
+            case "email_not_confirmed": message = "Confirm your email before signing in."
             case "weak_password": message = "Choose a stronger password and try again."
             case "same_password": message = "Choose a different password from your current password."
             case "over_email_send_rate_limit", "over_request_rate_limit": message = "Too many attempts. Wait a little and try again."

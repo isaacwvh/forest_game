@@ -184,8 +184,6 @@ struct AccountSignInScreen: View {
                     .buttonStyle(.journalPrimary).disabled(email.isEmpty || password.isEmpty).accessibilityIdentifier("account.submit")
                 Button("Forgot password?") { Task { await connection.requestStagedPasswordReset(email: email) } }
                     .buttonStyle(.journalQuiet).disabled(email.isEmpty)
-                Button("Resend confirmation email") { Task { await auth.resendConfirmation(email: email) } }
-                    .buttonStyle(.journalQuiet).disabled(email.isEmpty)
             } else {
                 AuthHeading(title: "Welcome back")
                 if auth.configuration.googleEnabled {
