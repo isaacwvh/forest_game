@@ -1,5 +1,10 @@
 # Forestivity auth setup and implementation workfile
 
+**Singapore cutover — 24 November 2026:** the imported Singapore Auth project is
+`wqtzzjkyepawuuvsaijk`. Use [the cutover record and device test flow](SUPABASE_SINGAPORE_MIGRATION.md)
+for the active public configuration and existing game-user issuer migration.
+The dated Tokyo setup evidence below remains historical.
+
 Created: 6 November 2026, Asia/Singapore.
 Initial source inspection: 6 November 2026. Implementation review: 22 November 2026.
 Planning update: 21 November 2026, Asia/Singapore; state-aware title entry and

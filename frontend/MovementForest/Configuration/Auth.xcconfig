@@ -1,6 +1,4 @@
-// Public client configuration. Override these values in ignored Local.xcconfig.
-FOREST_SUPABASE_URL =
-FOREST_SUPABASE_PUBLISHABLE_KEY =
+// Installation-specific API, callback and signing configuration.
 FOREST_GAME_API_URL =
 FOREST_AUTH_CALLBACK_SCHEME = $(PRODUCT_BUNDLE_IDENTIFIER)
 FOREST_AUTH_GOOGLE_ENABLED = YES
@@ -8,3 +6,8 @@ FOREST_AUTH_GUEST_ENABLED = YES
 FOREST_AUTH_APPLE_ENABLED = NO
 CODE_SIGN_ENTITLEMENTS = MovementForest/Configuration/MovementForest.entitlements
 #include? "Local.xcconfig"
+
+// Shared Singapore Auth project. Apply after Local.xcconfig so an existing Mac
+// checkout cannot keep using Tokyo's URL/key. Publishable keys are public values.
+FOREST_SUPABASE_URL = https:/$()/wqtzzjkyepawuuvsaijk.supabase.co
+FOREST_SUPABASE_PUBLISHABLE_KEY = sb_publishable_FsRkKuBv6scRtMSlXcLchA_S7Q25cdr

@@ -1,6 +1,6 @@
 // Copy to Local.xcconfig beside this file. $() prevents // becoming a comment.
-FOREST_SUPABASE_URL = https:/$()/YOUR_PROJECT_REF.supabase.co
-FOREST_SUPABASE_PUBLISHABLE_KEY = sb_publishable_REPLACE_ME
+// Auth.xcconfig supplies the shared Singapore URL and public publishable key.
+// Old local Supabase URL/key entries are superseded by that tracked configuration.
 FOREST_GAME_API_URL = https:/$()/YOUR_PRIVATE_API_HOST
 // Choose your own bundle identifier/team in Xcode before enabling Apple.
 FOREST_AUTH_GOOGLE_ENABLED = YES
