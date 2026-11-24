@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(MovementForest)
+@testable import MovementForest
+#endif
 
 /// Shared by native XCTest and the portable Swift runner. The actual store,
 /// identity scoping and persistence execute unchanged; only the auth server is fake.

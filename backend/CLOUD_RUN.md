@@ -217,8 +217,8 @@ a candidate tag URL as the permanent iPhone server address.
 ## Subsequent releases and failure handling
 
 For initial operation, use a short maintenance window for backend releases:
-`jobs â†’ pause â†’ gate-on â†’ [backup â†’ migrate for schema changes] â†’ deploy â†’
-prepare-shop â†’ verify â†’ promote â†’ open â†’ resume`. Use the same commit/digest
+`jobs → pause → gate-on → [backup → migrate for schema changes] → deploy →
+prepare-shop → verify → promote → open → resume`. Use the same commit/digest
 arguments throughout. A schema release requires the backup receipt; a code-only
 release skips backup/migrate. The migration job rejects an open gate or a different
 release identifier. Releasing without a maintenance window can be added later for
