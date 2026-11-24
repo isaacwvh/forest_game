@@ -261,7 +261,8 @@ final class GardenEditorTests: XCTestCase {
         let window = UIWindow(windowScene: scene)
         window.rootViewController = UIHostingController(rootView:
             ConnectedGardenScreen(store: store, catalog: catalog, active: true)
-                .environment(\.dynamicTypeSize, .large).environment(\.accessibilityReduceMotion, true)
+                .environment(\.dynamicTypeSize, .large)
+                .transaction { $0.disablesAnimations = true }
                 .environment(\.scenePhase, .active))
         window.makeKeyAndVisible()
         defer { window.isHidden = true; window.rootViewController = nil }
