@@ -13,7 +13,7 @@ from sqlalchemy.engine import make_url
 from forest_api.auth import issue_development_token
 from forest_api.config import Settings
 from forest_api.main import create_app
-from forest_api.models import Base
+from forest_api.models import Base, RuntimeControl
 from forest_api.seed import seed_development_catalogue
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -83,6 +83,7 @@ def settings(migrated_url):
         database_url=migrated_url,
         auth_mode="development",
         dev_auth_secret=TEST_SECRET,
+        maintenance_gate_enabled=False,
     )
 
 
@@ -93,6 +94,7 @@ def app(settings):
     with database.engine.begin() as connection:
         names = ", ".join(f'"{table}"' for table in Base.metadata.tables)
         connection.execute(text(f"TRUNCATE {names} CASCADE"))
+        connection.execute(RuntimeControl.__table__.insert().values(id=1))
     with database.sessions() as session:
         seed_development_catalogue(session, settings)
     yield application

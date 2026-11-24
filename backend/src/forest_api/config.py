@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     auth_algorithm: Literal["RS256", "ES256"] = "RS256"
     db_pool_size: int = Field(default=5, ge=1, le=50)
     db_max_overflow: int = Field(default=5, ge=0, le=50)
+    db_pool_timeout_seconds: float = Field(default=3, gt=0, le=10)
+    db_statement_timeout_ms: int = Field(default=15000, ge=100, le=60000)
+    db_lock_timeout_ms: int = Field(default=3000, ge=100, le=10000)
+    maintenance_gate_enabled: bool = True
+    worker_budget_seconds: float = Field(default=40, ge=1, le=45)
     operation_metrics_enabled: bool = False
     plant_capacity: int = Field(default=50, ge=1, le=10000)
     item_capacity: int = Field(default=50, ge=1, le=10000)
@@ -33,6 +38,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_configuration(self) -> "Settings":
+        if self.environment in {"staging", "production"} and not self.maintenance_gate_enabled:
+            raise ValueError("Hosted environments require the global maintenance gate")
         if make_url(self.database_url.get_secret_value()).drivername != "postgresql+psycopg":
             raise ValueError("Use a postgresql+psycopg database URL")
         if self.auth_mode == "development":

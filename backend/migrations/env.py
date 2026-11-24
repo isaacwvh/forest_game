@@ -41,9 +41,17 @@ if context.is_offline_mode():
     with context.begin_transaction():
         context.run_migrations()
 else:
-    engine = create_engine(url, poolclass=pool.NullPool, hide_parameters=True)
-    with engine.connect() as connection:
+
+    def run_migrations(connection):
         context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
         with context.begin_transaction():
             context.run_migrations()
-    engine.dispose()
+
+    supplied = context.config.attributes.get("connection")
+    if supplied is not None:
+        run_migrations(supplied)
+    else:
+        engine = create_engine(url, poolclass=pool.NullPool, hide_parameters=True)
+        with engine.connect() as connection:
+            run_migrations(connection)
+        engine.dispose()

@@ -1,0 +1,20 @@
+{
+  "project": "forest-game-prod",
+  "region": "asia-southeast1",
+  "api_service": "forest-api",
+  "worker_service": "forest-worker",
+  "api_account": "forest-api@forest-game-prod.iam.gserviceaccount.com",
+  "worker_account": "forest-worker@forest-game-prod.iam.gserviceaccount.com",
+  "migration_account": "forest-migrator@forest-game-prod.iam.gserviceaccount.com",
+  "scheduler_account": "forest-scheduler@forest-game-prod.iam.gserviceaccount.com",
+  "runtime_secret": "forest-runtime-database-url",
+  "runtime_version": "1",
+  "migration_secret": "forest-migration-database-url",
+  "migration_version": "1",
+  "ca_secret": "forest-db-ca",
+  "ca_version": "1",
+  "history_schedule": "forest-history",
+  "shop_schedule": "forest-shop",
+  "auth_issuer": "https://wqtzzjkyepawuuvsaijk.supabase.co/auth/v1",
+  "auth_jwks_url": "https://wqtzzjkyepawuuvsaijk.supabase.co/auth/v1/.well-known/jwks.json"
+}

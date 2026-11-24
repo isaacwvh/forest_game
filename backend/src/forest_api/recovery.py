@@ -111,6 +111,8 @@ def envelope(record, *, status="completed"):
 
 def maintain(session, *, apply=False, limit=500, now=None):
     """One bounded batch. Lock account before requests, matching mutation writers."""
+    from forest_api.execution_budget import checkpoint
+
     if not 1 <= limit <= 5000:
         raise ValueError("limit must be 1..5000")
     now = now or datetime.now(UTC)
@@ -133,6 +135,7 @@ def maintain(session, *, apply=False, limit=500, now=None):
             .limit(limit)
         ).all()
         for owner, request_id in candidates:
+            checkpoint()
             # Never hold request-row locks while waiting for the account lock.
             if (
                 session.scalar(

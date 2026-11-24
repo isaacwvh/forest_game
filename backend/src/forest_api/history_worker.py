@@ -4,35 +4,22 @@ import json
 import time
 
 from forest_api.history import maintain
+from forest_api.worker_execution import run_pass
 
 
 def tick(database, settings):
-    started = time.monotonic()
-    try:
-        with database.sessions() as session:
-            result = maintain(
-                session,
-                apply=True,
-                responses=settings.maintenance_responses_enabled,
-                visitor_detail=settings.maintenance_visitors_enabled,
-                growth_detail=settings.maintenance_growth_enabled,
-                limit=settings.maintenance_batch_limit,
-            )
-        return {"status": "ok", "elapsedSeconds": time.monotonic() - started, **result}
-    except ValueError as error:
-        return {
-            "status": "reconciliation_failed",
-            "reason": str(error),
-            "elapsedSeconds": time.monotonic() - started,
-            "action": "Failed account transaction rolled back; inspect before retry",
-        }
-    except Exception:
-        # No Health inputs or receipt/account details in infrastructure logs.
-        return {
-            "status": "failed",
-            "elapsedSeconds": time.monotonic() - started,
-            "action": "Inspect reconciliation and database health; failed transaction rolled back",
-        }
+    def operation(session):
+        result = maintain(
+            session,
+            apply=True,
+            responses=settings.maintenance_responses_enabled,
+            visitor_detail=settings.maintenance_visitors_enabled,
+            growth_detail=settings.maintenance_growth_enabled,
+            limit=settings.maintenance_batch_limit,
+        )
+        return {"status": "ok", **result}
+
+    return run_pass(database, operation)
 
 
 def run(database, settings):

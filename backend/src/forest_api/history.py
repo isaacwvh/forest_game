@@ -9,6 +9,7 @@ from sqlalchemy import func, select, text
 
 from forest_api import growth_history, recovery, services
 from forest_api.errors import ApiError
+from forest_api.execution_budget import checkpoint
 from forest_api.history_models import GrowthDaySummary, GrowthProvenance, VisitorDaySummary
 from forest_api.models import (
     ActivityCredit,
@@ -106,6 +107,7 @@ def roll_settlement(session, row, context):
         row.detail.get("before", {})
     )
     while start < end_at:
+        checkpoint()
         end = min(
             end_at,
             datetime.combine(start.date() + timedelta(days=1), datetime.min.time(), tzinfo=UTC),
@@ -638,6 +640,7 @@ def maintain(
             )
     remaining = limit
     for owner in sorted(owners):
+        checkpoint()
         if remaining <= 0:
             break
         with session.begin():

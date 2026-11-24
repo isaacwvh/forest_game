@@ -12,6 +12,10 @@ bearer = HTTPBearer(auto_error=False)
 
 def get_session(request: Request) -> Iterator[Session]:
     with request.app.state.database.sessions() as session:
+        session.info["maintenance_guard"] = (
+            request.app.state.settings.maintenance_gate_enabled
+            and request.url.path.startswith("/v1/")
+        )
         session.info["recovery_version"] = (
             1 if request.headers.get("X-Forest-Recovery") == "1" else 0
         )

@@ -31,7 +31,13 @@ def install_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=error.status,
             content={"error": payload},
-            headers={"WWW-Authenticate": "Bearer"} if error.status == 401 else None,
+            headers=(
+                {"WWW-Authenticate": "Bearer"}
+                if error.status == 401
+                else {"Retry-After": "30", "Cache-Control": "no-store"}
+                if error.status == 503
+                else None
+            ),
         )
 
     @app.exception_handler(RequestValidationError)

@@ -1,3 +1,19 @@
+## Cloud Run release support — 24 November 2026
+
+See [Cloud Run deployment and release guide](CLOUD_RUN.md) for the private HTTP
+worker, global maintenance/drain gate, production preflight, real-token smoke,
+verified backups and versioned release commands. This source requires migration
+`0023_cloud_runtime`. The initial migration must run with the old local writers
+stopped. Preparing this support does not migrate or deploy the live game.
+
+## Supabase game database — 24 November 2026
+
+This machine now runs local FastAPI/shop/maintenance containers against the
+Singapore Supabase PostgreSQL database. Its ignored `.env` selects
+`compose.supabase.yaml`; the original Docker database volume is preserved and
+stopped. See [startup, migrations, permissions and backups](SUPABASE_DATABASE.md).
+Cloud Run and official CI/CD remain separate pending work.
+
 ## Guest account bootstrap — 22 November 2026
 
 `POST /v1/accounts/bootstrap` takes a Supabase user access token and
@@ -51,15 +67,14 @@ increments. Native acceptance: [B8 skills](../frontend/B8_SKILLS_ACCEPTANCE.md).
 
 Python 3.12, FastAPI, synchronous SQLAlchemy 2, psycopg 3, PostgreSQL 17 and Alembic.
 
-Scaling S1–S3 is source implemented locally: read-only storage reports, optional
-payload-free operation metrics, compact replay and sequenced visitor controls.
-Migration `0010_compact_recovery` is explicit; no automatic maintenance is enabled.
-See [SCALING_S1_S3.md](SCALING_S1_S3.md) for commands, compatibility and acceptance.
-
-S1–S3 are functionally user accepted. S4–S6 add compact visitor/growth history and
-an opt-in bounded maintenance worker at migration `0011_compact_history`. See
-[SCALING_S4_S6.md](SCALING_S4_S6.md) for retention, measured scenarios, explicit
-upgrade/enablement and the device checklist. No live cleanup is enabled by default.
+**Scaling S1–S6 is completed and user accepted.** The existing local backend is
+on `0011_compact_history`; manual cleanup and the scheduled worker are accepted
+and enabled. Read-only measurements, compact recovery/sequenced controls, recent
+diagnostics and reconciled visitor/growth summaries preserve gameplay and reward
+uniqueness. See [SCALING_S4_S6.md](SCALING_S4_S6.md) for the current retention,
+startup, evidence and future-change contract, and [S1–S3](SCALING_S1_S3.md) for
+the native recovery protocol. New installations still default to cleanup off;
+the enabled settings below are local deployment configuration, not a source default.
 This foundation implements accounts, catalogue/profile records, owned plants,
 owner-only garden/storage reads, atomic B3 placement edits, exact B4 growth/attraction
 calculations, B5 steps synchronisation, B6 visitors and B7 token exchange/pack draws.
@@ -72,6 +87,35 @@ are in [frontend/F5A_AUTH_ACCEPTANCE.md](../frontend/F5A_AUTH_ACCEPTANCE.md).
 The original [F5 guide](../frontend/F5_ACCEPTANCE.md) remains for local token fixtures.
 
 ## Start locally with Docker
+
+For the already configured backend, with Docker Desktop running, use from
+`backend/`:
+
+```powershell
+docker compose up -d --wait --wait-timeout 90
+docker compose ps
+docker compose logs --tail 10 maintenance
+```
+
+The local ignored `.env` contains `COMPOSE_PROFILES=maintenance`, all three
+`FOREST_MAINTENANCE_*_ENABLED=true` family flags, interval 60 seconds and batch
+setting 500. Full-stack startup includes the worker, which then runs on its own;
+an `api`-only startup does not include it after a full shutdown. Restarting Docker
+or the computer still requires this Compose startup; no OS-start automation is
+configured. No periodic manual cleanup or routine migration/seed is required.
+Git does not copy ignored `.env` settings to another machine. Keep the existing
+game database/volume on its host and configure any new backend separately.
+
+For a source/schema update, back up first, then run:
+
+```powershell
+docker compose build api migrate maintenance
+docker compose run --rm migrate
+docker compose up -d --wait --wait-timeout 90
+```
+
+The following bootstrap is for a **new development installation**, not a routine
+restart of the accepted backend. It starts the API with cleanup still opt-in:
 
 From `backend/` in PowerShell, with Docker Desktop's Linux engine running:
 
