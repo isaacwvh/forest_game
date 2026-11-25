@@ -174,9 +174,9 @@ def commands(config, image, commit, action, *, first_deploy=False, bootstrap_sto
             execute_job(
                 config,
                 "migrate",
+                "migrate",
                 "--release",
                 commit,
-                "migrate",
                 *(["--bootstrap-stopped"] if bootstrap_stopped else []),
             )
         ]

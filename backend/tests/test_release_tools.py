@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import json
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -78,6 +79,34 @@ def test_release_commands_use_the_installed_windows_launcher(monkeypatch):
     config = cloud.configuration(ROOT / "backend/deploy/production.example.json")
     commands = cloud.commands(config, "example@sha256:" + "b" * 64, "a" * 40, "jobs")
     assert all(command[0] == launcher for command in commands)
+
+
+def test_migration_job_arguments_are_accepted_by_the_real_operator_parser(monkeypatch):
+    cloud = load("backend/deploy/cloud_run.py")
+    operator = load("backend/scripts/cloud.py")
+    config = cloud.configuration(ROOT / "backend/deploy/production.example.json")
+    command = cloud.commands(
+        config, "example@sha256:" + "b" * 64, "a" * 40, "migrate", bootstrap_stopped=True
+    )[0]
+    arguments = next(
+        value.removeprefix("--args=").split(",") for value in command if value.startswith("--args=")
+    )
+    observed = {}
+
+    class OperatorEngine:
+        def dispose(self):
+            pass
+
+    def migrate(engine, *, bootstrap_stopped, expected_release):
+        observed.update(bootstrap_stopped=bootstrap_stopped, release=expected_release)
+        return {"status": "tested"}
+
+    monkeypatch.setenv("FOREST_DATABASE_URL", "postgresql+psycopg://unused/unused")
+    monkeypatch.setattr(operator, "create_engine", lambda *args, **kwargs: OperatorEngine())
+    monkeypatch.setattr(operator, "migrate", migrate)
+    monkeypatch.setattr(sys, "argv", arguments)
+    operator.main()
+    assert observed == {"bootstrap_stopped": True, "release": "a" * 40}
 
 
 @pytest.mark.parametrize(
