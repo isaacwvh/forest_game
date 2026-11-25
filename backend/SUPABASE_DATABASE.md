@@ -1,5 +1,14 @@
 # Local API with Supabase PostgreSQL
 
+**Historical local bridge, 24 November 2026.** The API and workers are now hosted
+on Cloud Run. Use [the current hosted deployment flow](CLOUD_RUN.md), rather than
+the local Compose startup/release commands below, for the live game. Do not
+restart old local production writers. The performance release completed on
+26 November 2026 without a database schema migration; the hosted schema remained
+`0023_cloud_runtime`. A future hosted schema change requires an explicit Cloud Run
+migration job targeting Supabase. Migrating a separate local Docker database
+does not update Supabase.
+
 The game database was migrated to the existing Singapore Supabase project on
 24 November 2026. FastAPI and both workers still run locally. Cloud Run and the
 official CI/CD release workflow are separate, pending work.

@@ -1,4 +1,18 @@
-## Cloud Run release support — 24 November 2026
+## Current hosted deployment — 26 November 2026
+
+The API and private scheduled worker are deployed on Singapore Cloud Run against
+the existing Singapore Supabase database. The performance release completed at
+00:05 Asia/Singapore: backend `9cc8a74`, companion frontend `7a8d926` on
+`codex/request-latency`. **It required and executed no database schema migration;
+Alembic remained at `0023_cloud_runtime`.**
+
+Use the [current deployment flow and completed release record](CLOUD_RUN.md) for
+code-only updates, the separate schema-migration path, budget checks, authenticated
+acceptance and old-image cleanup. See [performance measurements](PERFORMANCE.md)
+for the remaining latency/device acceptance work. The updated iOS app requires a
+Mac/Xcode rebuild; the stable API URL and Supabase settings remain unchanged.
+
+## Historical Cloud Run release support — 24 November 2026
 
 See [Cloud Run deployment and release guide](CLOUD_RUN.md) for the private HTTP
 worker, global maintenance/drain gate, production preflight, real-token smoke,
@@ -6,13 +20,14 @@ verified backups and versioned release commands. This source requires migration
 `0023_cloud_runtime`. The initial migration must run with the old local writers
 stopped. Preparing this support does not migrate or deploy the live game.
 
-## Supabase game database — 24 November 2026
+## Historical Supabase local bridge — 24 November 2026
 
-This machine now runs local FastAPI/shop/maintenance containers against the
+At this stage the machine ran local FastAPI/shop/maintenance containers against the
 Singapore Supabase PostgreSQL database. Its ignored `.env` selects
 `compose.supabase.yaml`; the original Docker database volume is preserved and
 stopped. See [startup, migrations, permissions and backups](SUPABASE_DATABASE.md).
-Cloud Run and official CI/CD remain separate pending work.
+Cloud Run has since replaced these local production writers; use the current
+hosted release flow above. The bridge notes are retained as migration history.
 
 ## Guest account bootstrap — 22 November 2026
 

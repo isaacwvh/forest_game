@@ -1,7 +1,10 @@
 # Hosted request performance
 
-25 November 2026. Code changes only; no Supabase migration, registry upload or
-Cloud Run deployment is required during implementation/validation.
+Implemented 25 November 2026; deployed at 00:05 Asia/Singapore on 26 November
+2026. This was a **code-only deployment with no database schema migration**;
+Alembic stayed at `0023_cloud_runtime`. The API and worker use backend commit
+`9cc8a74`; the companion iOS changes are on `codex/request-latency` at `7a8d926`.
+See the [completed release record and deployment flow](CLOUD_RUN.md).
 
 ## Request contracts
 
@@ -85,15 +88,25 @@ explicit device/network/percentile measurement after deployment; cold starts,
 provider sign-in, offline recovery and activity reconciliation can exceed it.
 The new request counts remove the main previously observed sequential overhead.
 
-The release helper enables existing payload-free operation metrics for the next
-release, without changing any live settings. iOS diagnostics separate HTTP and
+The deployed release enables existing payload-free operation metrics. iOS
+diagnostics separate HTTP and
 initial token-acquisition time. Compare warm p50/p95/p99 request and user-action
 timings, query counts, SQL time and transaction time after release.
+
+Hosted acceptance on the existing real garden measured snapshot round trips of
+1,019.9–1,127.8 ms from the deployment computer, with server processing of
+950.6–1,029.1 ms and 106–113 SQL statements. These observations supersede any
+assumption that the small local synthetic timings establish production latency.
+The strict sub-second target remains unproven/unmet in these checks; the larger
+real garden and activity recap path need further profiling and device acceptance.
+Authenticated hosted checks and scheduled worker passes succeeded. Full backend
+CI passed 856 tests, with three opt-in storage benchmarks skipped; HTTP and image
+checks passed. Native iOS CI was cancelled as requested because of its known stall.
 
 ## Release boundary
 
 This change requires no database schema migration and does not raise Cloud Run
-CPU, instance limits or connection pools. Follow the code-only release procedure
-in `CLOUD_RUN.md` when deployment is separately authorized. Deploy the backend
-before distributing the new iOS build. Preserve compatible backend support for
+CPU, instance limits or connection pools. The code-only release procedure is in
+`CLOUD_RUN.md`. The backend is deployed; rebuild/install the updated iOS app to
+use the reduced client request sequence. Preserve compatible backend support for
 any queued requests containing the new strategy expectation during rollback.

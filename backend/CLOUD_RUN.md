@@ -5,6 +5,52 @@ and explicit operator jobs against the existing Singapore Supabase database.
 No database move, restore, seeding or publication happens on normal startup.
 Provisioning Google resources and running a production release are separate actions.
 
+## Current hosted release — 26 November 2026
+
+The performance release completed at **00:05 Asia/Singapore on 26 November
+2026**. The API and worker are hosted on Cloud Run; the game database remains
+in Singapore Supabase. Older local-bridge and first-cutover notes below describe
+earlier stages of the deployment.
+
+**This was a code-only release. No database schema migration was needed or
+executed. Alembic remained at `0023_cloud_runtime`.** No database move, restore,
+reseed or new content publication was part of this release. Updating the
+`forest-migrate` job definition to the new image did **not** execute that job.
+Maintenance control and ordinary gameplay/worker writes are separate from a
+schema migration.
+
+| Recorded release fact | Value |
+| --- | --- |
+| Google project / region | `movementforest` / `asia-southeast1` |
+| Backend commit, full CI passed | `9cc8a74d33d1b7b113f4663ce7712cb11fe6bab2` |
+| Frontend commit / branch | `7a8d926be877ef293bb2ffd2a8333f43c13bb941` / `codex/request-latency` |
+| API revision | `forest-api-00003-gix` |
+| Worker revision | `forest-worker-00003-rir` |
+| Image digest | `sha256:1db967125adcedd4774aa0739c26a9ab6490c966ea7284aa29ad5d1492b482f0` |
+| Schema before and after | `0023_cloud_runtime` |
+| Backend validation | 856 passed; three opt-in storage benchmarks skipped; HTTP walkthroughs and image/runtime checks passed |
+| Hosted acceptance | Authenticated profile/catalogue/inventory and new snapshot checks passed; private worker invocation enforced; both scheduled worker families succeeded |
+| Traffic / schedules | Both services at 100% new revision; `forest-history` and `forest-shop` enabled |
+| Budget controls | S$10 Cloud Run spend cap and S$15 project budget alert preserved |
+| Registry cleanup | Previous image and two orphaned child manifests deleted after acceptance; new image tagged `production`; old image retained locally |
+| Native iOS CI | Cancelled at the user's request because of the known stall; not a backend deployment gate |
+
+The repository is `asia-southeast1-docker.pkg.dev/movementforest/forest-backend/api`.
+The stable app API URL remains
+`https://forest-api-482382863751.asia-southeast1.run.app`.
+Full operator receipts, configuration and private acceptance credentials stay
+in ignored `backend/.local-cloud/`; they are not repository dependencies or
+credentials to commit. The completion receipt is
+`backend/.local-cloud/performance-release/completed.json` on the deployment
+computer, with the latest summary at `backend/.local-cloud/deployment-completed.json`.
+
+Pull the frontend branch on the Mac, rebuild in Xcode and install over the existing
+iPhone app to enable the reduced request sequence. Keep the stable API URL and
+Supabase settings. Login, loading/saving, activity recap and relaunch/recovery
+still require device acceptance. Hosted snapshot checks from the operator computer
+took approximately 1.0–1.1 seconds; this release does not establish that every user
+action is below one second. See [performance contracts and measurements](PERFORMANCE.md).
+
 ## Important first-release change
 
 This version adds Alembic `0023_cloud_runtime` after `0022_expedition_launch`.
@@ -282,6 +328,108 @@ arguments throughout. A schema release requires the backup receipt; a code-only
 release skips backup/migrate. The migration job rejects an open gate or a different
 release identifier. Releasing without a maintenance window can be added later for
 proven schema-compatible changes.
+
+### Code-only release: the flow used for the performance deployment
+
+Choose the release path before touching production:
+
+| Change | Database migration? | Release steps |
+| --- | --- | --- |
+| Application logic, query batching, in-process caching, additive response/route handling with unchanged database schema | No | Publish image, then `jobs → pause → gate-on → deploy → prepare-shop → verify → promote → open → resume → acceptance → registry cleanup` |
+| Tables, columns, constraints, indexes or another required schema change | Yes | Add/review an Alembic revision; insert verified `backup → migrate` after `gate-on` and before `deploy` |
+
+For a code-only release, skip the migration-specific backup and `migrate` stages.
+This does not replace the independent backup policy. Do not run `alembic upgrade`
+or the `forest-migrate` execution merely because an application image changed.
+Check the target schema in preflight and confirm compatibility with the previous
+release before relying on rollback.
+
+1. **Prepare and check costs.** Verify the Google login, project/region, Secret
+   Manager version bindings, current service/job configuration, previous digest
+   and traffic. Confirm the configured spend cap, project alert, resource limits
+   and recent worker activity. Obtain a fresh real Supabase user session and verify
+   its internal game user UUID **before maintenance starts**. A magic link must be
+   unused and valid; keep it and the resulting token private. No new database
+   password or Supabase service-role key is normally needed because the runtime
+   and operator jobs already use Secret Manager.
+2. **Validate, build and publish.** Use an isolated clean checkout of the exact
+   backend commit with passing full backend CI. Build Linux amd64 locally with
+   `FOREST_RELEASE_COMMIT` set to that SHA, verify the image label/architecture,
+   and push once to the existing Singapore registry. Record its immutable digest.
+   Image publication does not deploy it. Keep the previous image until acceptance.
+3. **Update operator definitions (`jobs`).** Point all four job definitions at
+   the same new digest. Definitions alone do not execute workloads; this includes
+   the migration definition, which remains unused for this release path.
+4. **Pause and drain (`pause`, `gate-on`).** Pause both Scheduler jobs, close the
+   global gameplay gate and allow its transaction fence to drain active writers.
+   Verify the actual gate and schedule states. Health endpoints remain available.
+5. **Create candidates (`deploy`).** Deploy API and worker with `--no-traffic`,
+   using the existing identities, secrets, request billing and limits. Do not use
+   `--first-deploy` for a subsequent release. Leave the stable app URL unchanged.
+6. **Check candidates (`prepare-shop`, `verify`).** Run bounded shop preparation
+   and production preflight, then check candidate health and gated responses.
+   These stages do not substitute for a schema migration or seed development data.
+7. **Promote and open (`promote`, `open`).** Preflight again, route both services
+   to the accepted revisions, then open the gate and run real-token hosted smoke.
+   `open` requires `FOREST_SMOKE_ACCESS_TOKEN` and `--expected-user-id` for the
+   internal game UUID. Failed acceptance must leave/reclose maintenance and pause
+   schedules; inspect the state before proceeding.
+8. **Resume and accept (`resume`).** Preflight with maintenance off, resume the
+   two schedules and force one attempt per family. Scheduler dispatch is
+   asynchronous: confirm successful new-revision history and shop results in
+   Cloud Logging, private worker IAM, enabled schedules, traffic, limits and the
+   spend cap. Use only bounded production contract checks; keep load/regression
+   tests on disposable databases. Snapshot reads can perform legitimate settlement.
+9. **Clean the previous registry release.** Only after acceptance, confirm API,
+   worker and all operator job definitions use the new digest. Move the
+   `production` registry tag to it. Remove the previous release's service tag URLs,
+   then delete the old image index and orphaned child manifests after verifying
+   that no retained image index references them. Let Artifact Registry manage
+   shared layers. Preserve the current image/provenance and the recorded/local
+   rollback image. Removing one tag alone does not delete an old image, and
+   deleting an index alone can leave child manifests. Report observed storage
+   separately from successful artifact deletion.
+10. **Record and hand off.** Save commit, digest, schema, revisions, acceptance,
+    cost-control and cleanup evidence privately. Rebuild/install iOS when the
+    release includes client changes; do not uninstall or reset the existing save
+    as a deployment step. Do not restart native iOS CI while its known stall
+    applies; use manual Mac/iPhone acceptance. The workflow files remain enabled:
+    if a necessary code push starts native CI automatically, cancel that run and
+    leave applicable backend CI running. Documentation-only commits can use
+    `[skip ci]` to avoid unnecessary runs. No push is required merely to deploy
+    an already-pushed, tested commit.
+
+Use the common arguments from **Configure and review a release**, with a unique
+`--record` path per stage. Review a stage without `--execute` first, then execute
+one stage at a time. Check the native command exit status and stop on failure;
+do not paste a chain that continues after a failed command. In PowerShell, a
+typical individual stage is:
+
+```powershell
+& $taskPython backend/deploy/cloud_run.py jobs @taskCommon --execute --record <private-receipt-path>
+if ($LASTEXITCODE -ne 0) { throw 'Release stage failed; inspect state before continuing.' }
+```
+
+Change `jobs` to the next stage only after its prerequisite succeeds. For `open`,
+also supply `--expected-user-id <verified-internal-game-user-uuid>` and the private
+token environment variable. Migration-only options (`--bootstrap-stopped`,
+`--backup-receipt`, `--allow-local-backup`) do not belong in this code-only flow.
+
+**If a future change needs a migration:** the migration file is packaged in the
+new image, and an explicit `forest-migrate` Cloud Run Job execution applies it to
+the hosted Supabase database through the privileged operator secret. The release
+tool also applies the required runtime grants/RLS. Running `migrate` against a
+local Docker database updates that local database only; it does not propagate
+schema changes to Supabase. See **Backups** and the migration stage above.
+
+Preserve the S$10 Cloud Run cap, S$15 project alert, minimum zero instances,
+maximum one instance per service, 1 CPU/512 MiB, API/worker concurrency 4/1 and
+database pools 2/1 with no overflow unless a separate capacity change is approved.
+If abnormal execution growth, retries, durations or spending appear, stop
+starting deployment work, pause schedules and cancel identified runaway job
+executions. Inspect the cause and verify the cap; do not increase limits to get
+a failing release through. The project budget alert is not a project-wide hard
+cap, and the Cloud Run cap does not cover registry or other provider charges.
 
 If a stage fails, inspect it before proceeding. Migration/deployment/verification
 failure never automatically reopens gameplay or resumes schedules. The helper
