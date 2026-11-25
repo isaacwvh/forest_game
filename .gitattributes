@@ -3,3 +3,4 @@
 *.usdz binary
 *.png binary
 *.zip binary
+assets/journal/v1/catalog-descriptions.json text eol=lf
