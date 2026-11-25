@@ -34,8 +34,14 @@ private final class MemoryVisitorJournal: VisitorJournalPersisting {
     }
     var failSave = false
     var failRemoval = false
-    func load(server: String, user: UUID) throws -> VisitorJournalState? { state }
-    func save(_ value: VisitorJournalState, server: String, user: UUID) throws {
+    var beforeLoad: (() async throws -> Void)?
+    var beforeSave: ((VisitorJournalState) async throws -> Void)?
+    func load(server: String, user: UUID) async throws -> VisitorJournalState? {
+        try await beforeLoad?()
+        return state
+    }
+    func save(_ value: VisitorJournalState, server: String, user: UUID) async throws {
+        try await beforeSave?(value)
         if failSave || (value.pending == nil && failRemoval) { throw URLError(.cannotWriteToFile) }
         self.state = value
     }
@@ -193,6 +199,7 @@ final class VisitorTests: XCTestCase {
     func testCollectionRequiresKnownPositiveWholeVisits() async throws {
         let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
         let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service, journal: MemoryVisitorJournal())
+        await store.prepare()
         XCTAssertFalse(store.canCollect)
         for amount in ["0", "-1", "0.5", "unknown", "9223372036854775808"] {
             store.apply(try changed(fixture.initial, ["claimableVisits": amount]))
@@ -211,6 +218,7 @@ final class VisitorTests: XCTestCase {
         let installation = try XCTUnwrap(fixture.active.session?.installationId)
         let store = VisitorCoordinator(userID: UUID(), installationID: installation, service: service,
                                       journal: MemoryVisitorJournal(), uptime: { 0 })
+        await store.prepare()
         store.apply(fixture.active); store.setEligible(true, reconcile: false)
         let library = VisitorModelLibrary(importer: {
             // Offset mesh exercises visible bounds rather than the entity origin.
@@ -371,7 +379,9 @@ final class VisitorTests: XCTestCase {
         let renderer = RealityGardenRenderer(visitorModels: library)
         renderer.setVisitors(store)
         var states: [VisitorArtworkState] = []
+        var fallbackFrames = 0
         VisitorVisualDiagnostics.onArtwork = { _, state in states.append(state) }
+        VisitorVisualDiagnostics.onFrame = { _, _ in fallbackFrames += 1 }
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
         window.rootViewController = UIHostingController(rootView: VisitorGardenOverlay(store: store, renderer: renderer))
@@ -379,7 +389,7 @@ final class VisitorTests: XCTestCase {
         defer {
             importGate?.resume(returning: Entity())
             window.isHidden = true; window.rootViewController = nil
-            VisitorVisualDiagnostics.onArtwork = nil; renderer.stop()
+            VisitorVisualDiagnostics.onArtwork = nil; VisitorVisualDiagnostics.onFrame = nil; renderer.stop()
         }
         try await waitUntil { importGate != nil && states.contains(.loading) }
         XCTAssertFalse(states.contains(where: { $0.usesFallback }))
@@ -391,6 +401,42 @@ final class VisitorTests: XCTestCase {
         XCTAssertEqual(window.frame, frame)
         XCTAssertFalse(states.contains(where: { $0.usesFallback }))
         XCTAssertEqual(library.loadCount, 1)
+        try await Task.sleep(nanoseconds: 250_000_000)
+        XCTAssertEqual(fallbackFrames, 0, "Model artwork must not retain invisible SwiftUI flight clocks")
+    }
+
+    func testAccessibilityMotionIsBoundedAndQueriesStayCurrent() async throws {
+        let f = try VisitorContract.load()
+        let store = VisitorCoordinator(userID: UUID(), installationID: try XCTUnwrap(f.active.session?.installationId),
+                                      service: FakeVisitors(f), journal: MemoryVisitorJournal(), uptime: { 0 })
+        await store.prepare()
+        store.apply(f.active); store.setEligible(true, reconcile: false)
+        var movingAccessibility = false
+        let renderer = RealityGardenRenderer(visitorModels: VisitorModelLibrary(importer: {
+            ModelEntity(mesh: .generateBox(size: 0.5), materials: [UnlitMaterial(color: .yellow)])
+        }), accessibilityMotionEnabled: { movingAccessibility })
+        defer { renderer.stop() }
+        renderer.view.frame = CGRect(x: 0, y: 0, width: 390, height: 600)
+        renderer.display(DevelopmentScene.single.garden(), catalog: try BundleAssetCatalog())
+        renderer.setActive(true); renderer.setVisitors(store)
+        try await waitUntil { renderer.visitorAssetReady && !renderer.isLoading && renderer.modelLoadCount == 1 }
+        renderer.recordFrame(1.0 / 60)
+        let idleCount = renderer.accessibilityUpdateCount
+        for _ in 0..<60 { renderer.recordFrame(1.0 / 60) }
+        XCTAssertEqual(renderer.accessibilityUpdateCount, idleCount)
+        _ = renderer.view.accessibilityElements
+        XCTAssertEqual(renderer.accessibilityUpdateCount, idleCount + 1, "Queries refresh current geometry even with VoiceOver off")
+        movingAccessibility = true
+        let activeCount = renderer.accessibilityUpdateCount
+        for _ in 0..<60 { renderer.recordFrame(1.0 / 60) }
+        XCTAssertGreaterThan(renderer.accessibilityUpdateCount, activeCount)
+        XCTAssertLessThanOrEqual(renderer.accessibilityUpdateCount - activeCount, 10)
+        let beforeCamera = renderer.accessibilityUpdateCount
+        renderer.zoom(by: 0.9)
+        XCTAssertEqual(renderer.accessibilityUpdateCount, beforeCamera + 1)
+        store.setEligible(false, reconcile: false)
+        renderer.recordFrame(1.0 / 60)
+        XCTAssertGreaterThan(renderer.accessibilityUpdateCount, beforeCamera + 1, "Eligibility changes refresh immediately")
     }
     #endif
 
@@ -485,6 +531,116 @@ final class VisitorTests: XCTestCase {
     private func releaseHeartbeat(_ service: FakeVisitors) {
         service.blockHeartbeat = false
         service.heartbeatContinuation?.resume(); service.heartbeatContinuation = nil
+    }
+
+    func testRestorationCoalescesAndBlocksRequestsUntilJournalIsRead() async throws {
+        let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let journal = MemoryVisitorJournal()
+        var loadGate: CheckedContinuation<Void, Never>?, loads = 0
+        journal.beforeLoad = {
+            loads += 1
+            await withCheckedContinuation { loadGate = $0 }
+        }
+        let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: service, journal: journal)
+        store.apply(f.stored)
+        let first = Task { await store.prepare() }
+        try await waitUntil { loadGate != nil }
+        let second = Task { await store.prepare() }
+        let claim = Task { await store.claim() }
+        await Task.yield()
+        XCTAssertFalse(store.canCollect)
+        XCTAssertTrue(service.operations.isEmpty)
+        XCTAssertEqual(loads, 1)
+        loadGate?.resume(); loadGate = nil
+        await first.value; await second.value; await claim.value
+        XCTAssertTrue(store.journalReady)
+        XCTAssertEqual(loads, 1)
+        XCTAssertEqual(service.operations.map(\.kind), [.claim])
+    }
+
+    func testSuspendedWriteMustFinishBeforeSendingAndDetachmentRetainsIt() async throws {
+        let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let journal = MemoryVisitorJournal()
+        var saveGate: CheckedContinuation<Void, Never>?
+        journal.beforeSave = { _ in await withCheckedContinuation { saveGate = $0 } }
+        let store = VisitorCoordinator(userID: UUID(), installationID: try XCTUnwrap(f.active.session?.installationId),
+                                      service: service, journal: journal)
+        store.setEligible(true, reconcile: false)
+        let tick = Task { await store.tick(force: true) }
+        try await waitUntil { saveGate != nil }
+        XCTAssertTrue(service.operations.isEmpty)
+        XCTAssertNil(journal.value)
+        XCTAssertTrue(store.savingJournal)
+        store.deactivate()
+        saveGate?.resume(); saveGate = nil
+        await tick.value
+        XCTAssertEqual(journal.value?.kind, .start)
+        XCTAssertTrue(service.operations.isEmpty)
+        XCTAssertNil(store.pending, "A detached account cannot publish a completed disk result")
+        XCTAssertFalse(store.savingJournal)
+    }
+
+    func testHeartbeatCompletionWaitsForSuspendedQueuedRewardWrite() async throws {
+        let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let journal = MemoryVisitorJournal()
+        let store = VisitorCoordinator(userID: UUID(), installationID: try XCTUnwrap(f.active.session?.installationId),
+                                      service: service, journal: journal)
+        store.setEligible(true, reconcile: false); await store.tick(force: true)
+        let visitor = try XCTUnwrap(store.visibleOpportunity)
+        service.blockHeartbeat = true
+        defer { releaseHeartbeat(service) }
+        let heartbeat = Task { await store.tick(force: true) }
+        try await waitUntil { service.heartbeatContinuation != nil }
+        var saveGate: CheckedContinuation<Void, Never>?
+        var savedReward: PendingVisitorOperation?
+        journal.beforeSave = { state in
+            if let reward = state.queuedReward {
+                savedReward = reward
+                await withCheckedContinuation { saveGate = $0 }
+            }
+        }
+        let tap = Task { await store.welcome(visitor) }
+        try await waitUntil { saveGate != nil }
+        releaseHeartbeat(service)
+        await Task.yield()
+        await store.welcome(visitor)
+        XCTAssertEqual(service.operations.map(\.kind), [.start, .heartbeat])
+        XCTAssertFalse(store.canRequestReward)
+        saveGate?.resume(); saveGate = nil
+        await tap.value; await heartbeat.value
+        XCTAssertEqual(service.operations.map(\.kind), [.start, .heartbeat, .welcome])
+        XCTAssertEqual(service.operations.last, savedReward)
+        XCTAssertEqual(store.tokenRewards.map(\.id), [try XCTUnwrap(savedReward).id])
+        XCTAssertNil(journal.state.pending); XCTAssertNil(journal.state.queuedReward)
+    }
+
+    func testFailedSuspendedQueueWriteDoesNotReplaceHeartbeatOrSendReward() async throws {
+        let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        let journal = MemoryVisitorJournal()
+        let store = VisitorCoordinator(userID: UUID(), installationID: try XCTUnwrap(f.active.session?.installationId),
+                                      service: service, journal: journal)
+        store.setEligible(true, reconcile: false); await store.tick(force: true)
+        let visitor = try XCTUnwrap(store.visibleOpportunity)
+        service.blockHeartbeat = true
+        defer { releaseHeartbeat(service) }
+        let heartbeat = Task { await store.tick(force: true) }
+        try await waitUntil { service.heartbeatContinuation != nil }
+        var saveGate: CheckedContinuation<Void, Never>?
+        journal.beforeSave = { state in
+            if state.queuedReward != nil {
+                await withCheckedContinuation { saveGate = $0 }
+                throw URLError(.cannotWriteToFile)
+            }
+        }
+        let tap = Task { await store.welcome(visitor) }
+        try await waitUntil { saveGate != nil }
+        releaseHeartbeat(service)
+        saveGate?.resume(); saveGate = nil
+        await tap.value; await heartbeat.value
+        XCTAssertFalse(service.operations.contains { $0.kind == .welcome })
+        XCTAssertEqual(store.visibleOpportunity?.id, visitor.id)
+        XCTAssertNil(journal.state.pending); XCTAssertNil(journal.state.queuedReward)
+        XCTAssertTrue(store.tokenRewards.isEmpty)
     }
 
     func testHeartbeatKeepsVisitorVisibleAndQueuesOneDurableTap() async throws {
@@ -626,7 +782,7 @@ final class VisitorTests: XCTestCase {
         XCTAssertNil(store.visibleOpportunity)
     }
 
-    func testLegacyJournalLoadsAndQueuedStateRoundTripsAtomically() throws {
+    func testLegacyJournalLoadsAndQueuedStateRoundTripsAtomically() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         let disk = AccountDiskStore(directory: directory), user = UUID(), id = UUID()
@@ -634,13 +790,15 @@ final class VisitorTests: XCTestCase {
             body: try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: UUID())))
         try disk.save(legacy, kind: "visitor-request", server: "test", user: user)
         let journal = VisitorJournalStore(disk: disk)
-        XCTAssertEqual(try journal.load(server: "test", user: user)?.pending, legacy)
+        let restoredLegacy = try await journal.load(server: "test", user: user)
+        XCTAssertEqual(restoredLegacy?.pending, legacy)
         let rewardID = UUID()
         let reward = PendingVisitorOperation(id: rewardID, kind: .welcome, target: UUID(),
             body: try ActivityWire.encoder().encode(VisitorMutationBody(requestId: rewardID, installationId: nil)))
         let state = VisitorJournalState(pending: legacy, queuedReward: reward)
-        try journal.save(state, server: "test", user: user)
-        XCTAssertEqual(try journal.load(server: "test", user: user), state)
+        try await journal.save(state, server: "test", user: user)
+        let restored = try await journal.load(server: "test", user: user)
+        XCTAssertEqual(restored, state)
         XCTAssertThrowsError(try VisitorJournalState(pending: reward, queuedReward: reward).validate())
     }
 
@@ -705,15 +863,19 @@ final class VisitorTests: XCTestCase {
     }
     #endif
 
-    func testDefaultJournalIsConstructedInsideMainActorInitializer() throws {
+    func testDefaultJournalConstructionDefersIOUntilPreparation() async throws {
         let fixture = try VisitorContract.load()
         // Exercise the same omitted-journal call used by GardenConnection.
-        // A unique user only reads a missing journal; no account files are written.
+        // Construction does no disk I/O. Preparation reads a missing journal for
+        // this unique user; no account files are written.
         let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: FakeVisitors(fixture))
         XCTAssertFalse(store.recoveryLocked)
         XCTAssertFalse(store.busy)
         XCTAssertNil(store.pending)
         XCTAssertNil(store.summary)
+        XCTAssertFalse(store.journalReady)
+        await store.prepare()
+        XCTAssertTrue(store.journalReady)
     }
 
     func testActualHTTPWireContractAndFractions() throws {
@@ -833,23 +995,26 @@ final class VisitorTests: XCTestCase {
         XCTAssertTrue(service.operations.isEmpty)
     }
 
-    func testJournalIsPartitionedByServerAndAccount() throws {
+    func testJournalIsPartitionedByServerAndAccount() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         let journal = VisitorJournalStore(disk: AccountDiskStore(directory: directory))
         let user = UUID(); let id = UUID()
         let op = PendingVisitorOperation(id: id, kind: .claim, target: nil,
             body: try ActivityWire.encoder().encode(VisitorMutationBody(requestId: id, installationId: nil)))
-        try journal.save(VisitorJournalState(pending: op), server: "https://a.invalid/", user: user)
-        XCTAssertNil(try journal.load(server: "https://a.invalid/", user: UUID()))
-        XCTAssertNil(try journal.load(server: "https://b.invalid/", user: user))
-        XCTAssertEqual(try journal.load(server: "https://a.invalid/", user: user)?.pending, op)
+        try await journal.save(VisitorJournalState(pending: op), server: "https://a.invalid/", user: user)
+        let otherUser = try await journal.load(server: "https://a.invalid/", user: UUID())
+        let otherServer = try await journal.load(server: "https://b.invalid/", user: user)
+        let restored = try await journal.load(server: "https://a.invalid/", user: user)
+        XCTAssertNil(otherUser); XCTAssertNil(otherServer)
+        XCTAssertEqual(restored?.pending, op)
     }
 
-    func testInvalidJournalPausesWithoutDeletingIt() throws {
+    func testInvalidJournalPausesWithoutDeletingIt() async throws {
         let f = try VisitorContract.load(); let journal = MemoryVisitorJournal()
         journal.value = PendingVisitorOperation(id: UUID(), kind: .welcome, target: nil, body: Data())
         let store = VisitorCoordinator(userID: UUID(), installationID: UUID(), service: FakeVisitors(f), journal: journal)
+        await store.prepare()
         XCTAssertTrue(store.recoveryLocked)
         XCTAssertNotNil(journal.value)
     }

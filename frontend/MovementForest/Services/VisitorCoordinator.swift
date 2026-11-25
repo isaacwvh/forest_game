@@ -23,6 +23,10 @@ final class VisitorCoordinator: ObservableObject {
     let installationID: UUID
     private let service: any VisitorServing
     private let journal: any VisitorJournalPersisting
+    @Published private(set) var journalReady = false
+    @Published private(set) var savingJournal = false
+    private var journalLoad: Task<VisitorJournalState?, Error>?
+    private var journalWaiters: [CheckedContinuation<Void, Never>] = []
     private let uptime: () -> TimeInterval
     private var receivedUptime: TimeInterval = 0
     private var receivedServerTime: Date?
@@ -51,17 +55,32 @@ final class VisitorCoordinator: ObservableObject {
         // toolchain. Construct the actor-isolated store inside the initializer.
         let resolvedJournal = journal ?? VisitorJournalStore()
         self.service = service; self.journal = resolvedJournal; self.uptime = uptime
+    }
+
+    /// Coalesce restoration before any mutation; constructing a connection does
+    /// not synchronously read protected account files on the main thread.
+    func prepare() async {
+        guard attached, !journalReady, !recoveryLocked else { return }
+        if journalLoad == nil {
+            let journal = journal, server = service.serverID, user = userID
+            journalLoad = Task { try await journal.load(server: server, user: user) }
+        }
         do {
-            let saved = try resolvedJournal.load(server: service.serverID, user: userID)
+            let saved = try await journalLoad?.value
+            guard attached, !journalReady, !recoveryLocked else { return }
             try saved?.validate()
             pending = saved?.pending; queuedReward = saved?.queuedReward
+            journalReady = true; journalLoad = nil
+        } catch {
+            guard attached, !recoveryLocked else { return }
+            recoveryLocked = true; journalLoad = nil
+            report("The saved visitor request needs attention. It has been retained.", kind: .locked)
         }
-        catch { recoveryLocked = true; report("The saved visitor request needs attention. It has been retained.", kind: .locked) }
     }
 
     var serverNow: Date? { receivedServerTime.map { $0.addingTimeInterval(max(0, uptime() - receivedUptime)) } }
     var canRequestReward: Bool {
-        attached && connected && !recoveryLocked && queuedReward == nil &&
+        attached && journalReady && connected && !recoveryLocked && !savingJournal && queuedReward == nil &&
             ((!busy && pending == nil) || pending?.kind == .heartbeat)
     }
     var canCollect: Bool {
@@ -130,7 +149,7 @@ final class VisitorCoordinator: ObservableObject {
                 guard attached else { return }
                 apply(value)
                 DiagnosticHistory.shared.record("Visitors", "confirmed \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: scope)
-                try persist(VisitorJournalState(pending: queuedReward))
+                try await persist { VisitorJournalState(pending: self.queuedReward) }
                 if let reward = reward {
                     // Only operations initiated in this visible session may celebrate.
                     // Recovered journal entries and ordinary wallet refreshes stay quiet.
@@ -153,13 +172,13 @@ final class VisitorCoordinator: ObservableObject {
                 apply(value)
                 // Clear only the verified operation; a reward queued behind it
                 // remains durable and is drained with its original UUID/body.
-                try persist(VisitorJournalState(pending: queuedReward))
+                try await persist { VisitorJournalState(pending: self.queuedReward) }
                 liveRewardIDs.remove(operation.id)
                 needsRead = false
             } catch let error as APIError where (400..<500).contains(error.status) &&
                         ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
                 guard attached else { return }
-                try persist(VisitorJournalState(pending: queuedReward))
+                try await persist { VisitorJournalState(pending: self.queuedReward) }
                 liveRewardIDs.remove(operation.id)
                 needsRead = true; connected = false
                 throw error
@@ -179,15 +198,29 @@ final class VisitorCoordinator: ObservableObject {
         return PendingVisitorOperation(id: id, kind: kind, target: target, body: body)
     }
 
-    private func persist(_ state: VisitorJournalState) throws {
-        try journal.save(state, server: service.serverID, user: userID)
+    /// Keep read-modify-write transitions serialized across disk suspension.
+    /// Build the state only after acquiring the slot so heartbeat completion
+    /// cannot discard a reward whose queue write was already in progress.
+    private func persist(_ makeState: () throws -> VisitorJournalState) async throws {
+        if savingJournal {
+            await withCheckedContinuation { journalWaiters.append($0) }
+        } else { savingJournal = true }
+        defer {
+            if journalWaiters.isEmpty { savingJournal = false }
+            else { journalWaiters.removeFirst().resume() }
+        }
+        guard attached else { throw CancellationError() }
+        let state = try makeState()
+        try await journal.save(state, server: service.serverID, user: userID)
+        // A detached account keeps its durable state, without publishing or sending.
+        guard attached else { throw CancellationError() }
         pending = state.pending; queuedReward = state.queuedReward
     }
 
     private func submit(_ kind: PendingVisitorOperation.Kind, target: UUID? = nil) async throws {
         guard pending == nil, attached else { return }
         let request = try operation(kind, target: target)
-        try persist(VisitorJournalState(pending: request))
+        try await persist { VisitorJournalState(pending: request) }
         if eligible && (kind == .welcome || kind == .claim) { liveRewardIDs.insert(request.id) }
         try await recover()
     }
@@ -205,6 +238,8 @@ final class VisitorCoordinator: ObservableObject {
         busy = true
         defer { busy = false; nextPoll = uptime() + Double(summary?.heartbeatSeconds ?? 10) }
         do {
+            await prepare()
+            guard attached, journalReady, !recoveryLocked else { return }
             try await recover()
             guard attached, pending == nil else { return }
             if needsRead || summary == nil {
@@ -243,11 +278,13 @@ final class VisitorCoordinator: ObservableObject {
     }
 
     func welcome(_ opportunity: APIVisitorOpportunity) async {
+        await prepare()
         guard canRequestReward, visibleOpportunities.contains(where: { $0.id == opportunity.id }) else { return }
         await reward(.welcome, target: opportunity.id)
     }
 
     func claim() async {
+        await prepare()
         guard canCollect else { return }
         await reward(.claim)
     }
@@ -256,10 +293,19 @@ final class VisitorCoordinator: ObservableObject {
         if pending?.kind == .heartbeat {
             do {
                 let request = try operation(kind, target: target)
-                try persist(VisitorJournalState(pending: pending, queuedReward: request))
+                try await persist {
+                    // A heartbeat may finish before this write acquires its slot.
+                    guard self.queuedReward == nil,
+                          self.pending == nil || self.pending?.kind == .heartbeat else {
+                        throw ForestError.invalidData("A visitor request is already saved.")
+                    }
+                    return self.pending == nil ? VisitorJournalState(pending: request) :
+                        VisitorJournalState(pending: self.pending, queuedReward: request)
+                }
                 if eligible { liveRewardIDs.insert(request.id) }
                 if !busy { await tick(force: true) }
             } catch {
+                guard attached else { return }
                 PlayerMessage.recordFailure("Visitors", error,
                     scope: DiagnosticHistory.scope(server: service.serverID, user: userID))
                 report("The visitor tap could not be saved. Please try again.")

@@ -3,6 +3,43 @@ import RealityKit
 import Combine
 import UIKit
 
+/// Timing observations never invalidate the gameplay renderer or its SwiftUI owner.
+@MainActor
+final class GardenFrameMetrics: ObservableObject {
+    @Published private(set) var sceneUpdateMilliseconds: Double = 0
+    private var elapsed: TimeInterval = 0
+    private var frames = 0
+
+    func record(_ delta: TimeInterval) {
+        elapsed += delta; frames += 1
+        if elapsed >= 1 {
+            sceneUpdateMilliseconds = elapsed / Double(frames) * 1000
+            reset()
+        }
+    }
+
+    func reset() { elapsed = 0; frames = 0 }
+}
+
+/// Accessibility clients (including UI automation) get current geometry on demand.
+/// Ordinary gameplay does not need to project moving accessibility frames at 60 Hz.
+@MainActor
+private final class GardenARView: ARView {
+    var onAccessibilityRead: (() -> Void)?
+    private var readingAccessibility = false
+    override var accessibilityElements: [Any]? {
+        get {
+            if !readingAccessibility {
+                readingAccessibility = true
+                onAccessibilityRead?()
+                readingAccessibility = false
+            }
+            return super.accessibilityElements
+        }
+        set { super.accessibilityElements = newValue }
+    }
+}
+
 /// SwiftUI owns this session. Its destruction schedules terminal cleanup even if
 /// a renderer is temporarily retained by a model import or a UIKit callback.
 @MainActor
@@ -69,8 +106,12 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     @Published private(set) var isLoading = false
     @Published private(set) var loadedCount = 0
     @Published private(set) var errors: [String] = []
-    @Published private(set) var diagnostics: [PlantRenderDiagnostic] = []
-    @Published private(set) var sceneUpdateMilliseconds: Double = 0
+    @Published private(set) var diagnostics: [PlantRenderDiagnostic] = [] {
+        didSet { visitorFlightHeight = max(1.6, (diagnostics.map { $0.minimumY + $0.bounds.y }.max() ?? 1) + 0.25) }
+    }
+    let frameMetrics = GardenFrameMetrics()
+    var sceneUpdateMilliseconds: Double { frameMetrics.sceneUpdateMilliseconds }
+    private(set) var visitorFlightHeight: Float = 1.6
     @Published private(set) var loadSeconds: Double = 0
     @Published private(set) var modelLoadCount = 0
     @Published private(set) var lastGroundPoint: SIMD2<Double>?
@@ -95,6 +136,14 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var visitorAccessibility: [UUID: GardenAccessibilityElement] = [:]
     private var accessibilityIDs: [UUID]?
     private var cameraAccessibility: UIAccessibilityElement?
+    private var accessibilityElapsed: TimeInterval = 0
+    private var accessibilityVisitors: [APIVisitorOpportunity] = []
+    private var accessibilityRewardEnabled = false
+    private var accessibilityViewport = CGRect.zero
+    private let accessibilityMotionEnabled: () -> Bool
+    #if DEBUG
+    private(set) var accessibilityUpdateCount = 0
+    #endif
     private var visitorPlaybacks: [UUID: [AnimationPlaybackController]] = [:]
     private var snapshot: GardenSnapshot?
     private var loadTask: Task<Void, Never>?
@@ -143,14 +192,16 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private var elevation: Float = 0.65
     private var distance: Float = 21
     private var target = SIMD3<Float>(5, 1, 5)
-    private var frameTime: Double = 0
-    private var frameCount = 0
 
     override convenience init() { self.init(visitorModels: VisitorModelLibrary.shared) }
 
-    init(visitorModels: VisitorModelLibrary) {
+    init(visitorModels: VisitorModelLibrary,
+         accessibilityMotionEnabled: (() -> Bool)? = nil) {
         self.visitorModels = visitorModels
-        view = ARView(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
+        self.accessibilityMotionEnabled = accessibilityMotionEnabled ?? {
+            UIAccessibility.isVoiceOverRunning || UIAccessibility.isSwitchControlRunning
+        }
+        view = GardenARView(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
         super.init()
         view.isHidden = true
         LifecycleDiagnostics.event("renderer created id=\(diagnosticID)")
@@ -177,6 +228,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         rig.addChild(fill)
         configureGestures()
         configureAccessibility()
+        (view as? GardenARView)?.onAccessibilityRead = { [weak self] in self?.updateAccessibility() }
         updateCamera()
     }
 
@@ -476,8 +528,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         if !active { selectionCycle.reset() }
         view.isHidden = !active
         visitorRoot.isEnabled = active
-        frameTime = 0
-        frameCount = 0
+        frameMetrics.reset()
+        accessibilityElapsed = 0
         if active { subscribeToUpdates(); presentGrowthEffectsIfReady() }
         else {
             updateSubscription?.cancel(); updateSubscription = nil
@@ -505,6 +557,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         visitorPlaybacks.values.flatMap { $0 }.forEach { $0.stop() }
         visitorPlaybacks.removeAll(); visitorEntities.removeAll()
         visitorAccessibility.removeAll(); view.accessibilityElements = []; cameraAccessibility = nil
+        (view as? GardenARView)?.onAccessibilityRead = nil
+        accessibilityVisitors = []
         for child in Array(visitorRoot.children) { child.removeFromParent() }
         visitorTemplate = nil; visitorStore = nil; visitorAssetReady = false
         loadTask?.cancel()
@@ -596,21 +650,30 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         return true
     }
 
-    private func updateAccessibility() {
+    private func updateAccessibility(visitors: [APIVisitorOpportunity]? = nil) {
+        accessibilityElapsed = 0
+        #if DEBUG
+        accessibilityUpdateCount += 1
+        #endif
         guard isActive, !disposed, let cameraElement = cameraAccessibility else {
             view.accessibilityElements = []; accessibilityIDs = nil
             visitorAccessibility.removeAll()
+            accessibilityVisitors = []
             return
         }
+        let visitors = visitors ?? visitorStore?.visibleOpportunities ?? []
+        accessibilityVisitors = visitors
+        accessibilityRewardEnabled = visitorStore?.canRequestReward == true
+        accessibilityViewport = view.bounds
         cameraElement.accessibilityFrameInContainerSpace = view.bounds
         var ids: [UUID] = []
-        for visitor in visitorStore?.visibleOpportunities ?? [] {
+        for visitor in visitors {
             guard let rect = visitorHitTarget(visitor.id)?.accessibleRect(excluding: overlayFrames) else { continue }
             let element = visitorAccessibility[visitor.id] ?? GardenAccessibilityElement(accessibilityContainer: view)
             element.accessibilityLabel = "Welcome visitor"
             element.accessibilityHint = "Earn \(visitor.tokens) visitor tokens after server confirmation"
             element.accessibilityIdentifier = "visitors.butterfly.\(visitor.id.uuidString)"
-            element.accessibilityTraits = visitorStore?.canRequestReward == true ? .button : [.button, .notEnabled]
+            element.accessibilityTraits = accessibilityRewardEnabled ? .button : [.button, .notEnabled]
             element.accessibilityFrameInContainerSpace = rect
             let id = visitor.id
             element.activate = { [weak self] in self?.activateVisitor(id) ?? false }
@@ -673,18 +736,13 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         debugGeometry = container
     }
 
-    private func recordFrame(_ delta: TimeInterval) {
+    func recordFrame(_ delta: TimeInterval) {
         guard isActive, delta > 0, delta < 1 else { return }
         environment.updateBackdrop(in: view, camera: camera)
         sharedEffects.tick(delta)
+        accessibilityElapsed += delta
         updateVisitors()
-        frameTime += delta
-        frameCount += 1
-        if frameTime >= 1 {
-            sceneUpdateMilliseconds = frameTime / Double(frameCount) * 1000
-            frameTime = 0
-            frameCount = 0
-        }
+        frameMetrics.record(delta)
     }
 
     func setVisitors(_ store: VisitorCoordinator?) {
@@ -769,15 +827,22 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
 
     private func updateVisitors() {
-        defer { updateAccessibility() }
-        guard let store = visitorStore, let garden = snapshot, let now = store.serverNow else { return }
-        let visitors = store.eligible ? store.visibleOpportunities : []
+        let visitors = visitorStore?.visibleOpportunities ?? []
+        defer {
+            // Identity/state changes refresh immediately. Motion alone needs only
+            // a bounded 10 Hz refresh while a moving accessibility client is active.
+            if visitors != accessibilityVisitors || (visitorStore?.canRequestReward == true) != accessibilityRewardEnabled ||
+                view.bounds != accessibilityViewport ||
+                (!visitors.isEmpty && wantsMotion && accessibilityMotionEnabled() && accessibilityElapsed >= 0.1) {
+                updateAccessibility(visitors: visitors)
+            }
+        }
         let wanted = Set(visitors.map(\.id))
         for id in Array(visitorEntities.keys) where !wanted.contains(id) {
             visitorPlaybacks.removeValue(forKey: id)?.forEach { $0.stop() }
             visitorEntities.removeValue(forKey: id)?.removeFromParent()
         }
-        guard let template = visitorTemplate else { return }
+        guard let template = visitorTemplate, let garden = snapshot, let now = visitorStore?.serverNow else { return }
         for visitor in visitors {
             if visitorEntities[visitor.id] == nil {
                 let entity = Entity()
@@ -793,10 +858,9 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
                 }
                 play(model)
             }
-            let height = max(1.6, (diagnostics.map { $0.minimumY + $0.bounds.y }.max() ?? 1) + 0.25)
             let pose = VisitorWorldPose(elapsed: now.timeIntervalSince(visitor.issuedAt), remaining: visitor.expiresAt.timeIntervalSince(now),
                 lane: visitor.lane ?? 1, width: Float(garden.width * garden.gardenUnitMetres),
-                depth: Float(garden.depth * garden.gardenUnitMetres), height: height, reduceMotion: !wantsMotion)
+                depth: Float(garden.depth * garden.gardenUnitMetres), height: visitorFlightHeight, reduceMotion: !wantsMotion)
             visitorEntities[visitor.id]?.position = pose.position
             visitorEntities[visitor.id]?.orientation = simd_quatf(angle: pose.heading, axis: [0, 1, 0])
         }

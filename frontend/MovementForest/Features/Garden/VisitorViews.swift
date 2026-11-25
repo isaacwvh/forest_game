@@ -30,7 +30,7 @@ struct VisitorGardenOverlay: View {
         if let renderer = renderer {
             RenderedVisitorGardenOverlay(store: store, renderer: renderer, reduceMotion: reduceMotionOverride ?? reduceMotion)
         } else {
-            VisitorOverlayContent(store: store, renderer: nil, artwork: .screenSpace, reduceMotion: reduceMotionOverride ?? reduceMotion)
+            VisitorOverlayContent(store: store, artwork: .screenSpace, reduceMotion: reduceMotionOverride ?? reduceMotion)
         }
     }
 }
@@ -49,28 +49,35 @@ private struct RenderedVisitorGardenOverlay: View {
         // Observe readiness here, outside GeometryReader's cached layout closure.
         let artwork: VisitorArtworkState = renderer.visitorAssetReady ? .model :
             (renderer.visitorAssetIssue == nil ? .loading : .failure)
-        VisitorOverlayContent(store: store, renderer: renderer, artwork: artwork, reduceMotion: reduceMotion)
+        VisitorOverlayContent(store: store, artwork: artwork, reduceMotion: reduceMotion)
     }
 }
 
 @MainActor
 private struct VisitorOverlayContent: View {
     @ObservedObject var store: VisitorCoordinator
-    let renderer: RealityGardenRenderer?
     let artwork: VisitorArtworkState
     let reduceMotion: Bool
     var body: some View {
-        TimelineView(.animation(minimumInterval: 0.2, paused: !store.eligible)) { _ in
-            ZStack {
-                if artwork == .loading {
-                    if !store.visibleOpportunities.isEmpty {
-                        ProgressView("Loading butterfly…").font(.caption)
-                            .allowsHitTesting(false).accessibilityIdentifier("visitors.artworkLoading")
-                    }
-                } else {
-                    ForEach(store.visibleOpportunities) { visitor in
-                        VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion, renderer: renderer, artwork: artwork)
-                            .id(visitor.id)
+        Group {
+            if artwork == .model {
+                // RealityKit owns flight, current-frame taps and native accessibility.
+                // No invisible SwiftUI flights or animation clocks for model artwork.
+                Color.clear.allowsHitTesting(false).accessibilityHidden(true)
+            } else {
+                TimelineView(.animation(minimumInterval: 0.2, paused: !store.eligible)) { _ in
+                    ZStack {
+                        if artwork == .loading {
+                            if !store.visibleOpportunities.isEmpty {
+                                ProgressView("Loading butterfly…").font(.caption)
+                                    .allowsHitTesting(false).accessibilityIdentifier("visitors.artworkLoading")
+                            }
+                        } else {
+                            ForEach(store.visibleOpportunities) { visitor in
+                                VisitorFlightView(store: store, visitor: visitor, reduceMotion: reduceMotion, artwork: artwork)
+                                    .id(visitor.id)
+                            }
+                        }
                     }
                 }
             }
@@ -121,7 +128,6 @@ private struct VisitorFlightView: View {
     @ObservedObject var store: VisitorCoordinator
     let visitor: APIVisitorOpportunity
     let reduceMotion: Bool
-    var renderer: RealityGardenRenderer? = nil
     let artwork: VisitorArtworkState
     // Identity is the opportunity, so heartbeats do not restart its flight.
     @State private var appearedAt = Date()
@@ -133,25 +139,14 @@ private struct VisitorFlightView: View {
                 let pose = VisitorFlightPose(elapsed: context.date.timeIntervalSince(appearedAt),
                                             remaining: visitor.expiresAt.timeIntervalSince(now), reduceMotion: reduceMotion,
                                             lane: min(12, max(0, visitor.lane ?? 0)))
-                let projection = renderer?.projectedVisitor(visitor.id)
-                let fallback = artwork.usesFallback
                 GeometryReader { geometry in
                     Button { Task { await store.welcome(visitor) } } label: {
-                        Group {
-                            if fallback { ForestButterfly(flap: pose.flap) }
-                            else { Color.clear.frame(width: 64, height: 64) }
-                        }.contentShape(Rectangle())
+                        ForestButterfly(flap: pose.flap).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .disabled(!store.canRequestReward)
-                    .position(x: projection?.x ?? max(36, min(geometry.size.width - 36, geometry.size.width * pose.x)),
-                              y: projection?.y ?? max(36, min(geometry.size.height - 36, geometry.size.height * pose.y)))
-                    .opacity(fallback || projection != nil ? 1 : 0)
-                    // Model taps are resolved by the ARView's existing tap recognizer
-                    // against the current camera frame. An invisible SwiftUI button
-                    // must not intercept orbit/pan/pinch or lag behind the artwork.
-                    .allowsHitTesting(fallback)
-                    .accessibilityHidden(!fallback)
+                    .position(x: max(36, min(geometry.size.width - 36, geometry.size.width * pose.x)),
+                              y: max(36, min(geometry.size.height - 36, geometry.size.height * pose.y)))
                     .accessibilityLabel("Welcome visitor")
                     .accessibilityHint("Earn \(visitor.tokens) visitor tokens after server confirmation")
                     .accessibilityIdentifier("visitors.butterfly")

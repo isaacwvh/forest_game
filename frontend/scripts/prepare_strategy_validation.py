@@ -36,7 +36,9 @@ if args.typecheck_store:
     journal = (ROOT / "MovementForest/Services/PendingGardenEditStore.swift").read_text(encoding="utf-8")
     parts.append(journal[journal.index("struct PendingGardenEdit"):journal.index("struct PendingGardenEditStore")])
     cache = (ROOT / "MovementForest/Services/AccountDiskStore.swift").read_text(encoding="utf-8")
-    parts.append(cache[cache.index("struct ConfirmedGardenCache"):cache.index("struct PendingActivityOperation")])
+    # Only the garden cache is needed here; account bootstrap has separate auth
+    # dependencies and its own portable validation suite.
+    parts.append(cache[cache.index("struct ConfirmedGardenCache"):cache.index("struct PendingAccountBootstrap")])
     parts.append((ROOT / "scripts/strategy_store_stubs.swift").read_text(encoding="utf-8"))
     parts.append((ROOT / "MovementForest/Services/GardenEditorStore.swift").read_text(encoding="utf-8").replace("import Combine", ""))
 parts.append((ROOT / "scripts/strategy_validation_main.swift").read_text(encoding="utf-8"))

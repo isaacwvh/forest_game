@@ -7,6 +7,34 @@ import UIKit
 
 @MainActor
 final class GardenRendererTests: XCTestCase {
+    func testFrameTimingPublishesOnlyToItsDiagnosticObserver() {
+        let renderer = RealityGardenRenderer()
+        defer { renderer.stop() }
+        renderer.setActive(true)
+        var gameplayChanges = 0, timingChanges = 0
+        let gameplay = renderer.objectWillChange.sink { gameplayChanges += 1 }
+        let timing = renderer.frameMetrics.objectWillChange.sink { timingChanges += 1 }
+        for _ in 0..<120 { renderer.recordFrame(1.0 / 60) }
+        XCTAssertEqual(gameplayChanges, 0)
+        XCTAssertGreaterThan(timingChanges, 0)
+        XCTAssertEqual(renderer.sceneUpdateMilliseconds, 1000.0 / 60, accuracy: 0.001)
+        withExtendedLifetime((gameplay, timing)) {}
+    }
+
+    func testVisitorHeightCacheFollowsInstalledAndRemovedModels() async throws {
+        let renderer = RealityGardenRenderer(), catalog = try BundleAssetCatalog()
+        defer { renderer.stop() }
+        var garden = DevelopmentScene.single.garden()
+        renderer.display(garden, catalog: catalog)
+        try await waitUntil { renderer.modelLoadCount == 1 && !renderer.isLoading }
+        let expected = max(Float(1.6), (renderer.diagnostics.map { $0.minimumY + $0.bounds.y }.max() ?? 1) + 0.25)
+        XCTAssertEqual(renderer.visitorFlightHeight, expected)
+        garden.plants = []
+        renderer.display(garden, catalog: catalog)
+        try await waitUntil { renderer.diagnostics.isEmpty }
+        XCTAssertEqual(renderer.visitorFlightHeight, 1.6)
+    }
+
     func testOverlappingSelectionPolicy() throws {
         XCTAssertGreaterThan(try GardenSelectionChecks.run(), 160)
     }

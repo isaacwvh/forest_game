@@ -124,8 +124,8 @@ struct APIVisitorRepository: VisitorServing {
 
 @MainActor
 protocol VisitorJournalPersisting {
-    func load(server: String, user: UUID) throws -> VisitorJournalState?
-    func save(_ value: VisitorJournalState, server: String, user: UUID) throws
+    func load(server: String, user: UUID) async throws -> VisitorJournalState?
+    func save(_ value: VisitorJournalState, server: String, user: UUID) async throws
 }
 
 /// A tap made during a heartbeat is saved atomically with that heartbeat. Only
@@ -171,14 +171,30 @@ struct VisitorJournalState: Codable, Equatable {
 
 struct VisitorJournalStore: VisitorJournalPersisting {
     var disk = AccountDiskStore()
-    func load(server: String, user: UUID) throws -> VisitorJournalState? {
-        let value = try disk.load(VisitorJournalState.self, kind: "visitor-request", server: server, user: user)
-        try value?.validate()
-        return value
+    private static let queue = DispatchQueue(label: "MovementForest.VisitorJournal", qos: .utility)
+
+    func load(server: String, user: UUID) async throws -> VisitorJournalState? {
+        let disk = disk
+        return try await withCheckedThrowingContinuation { continuation in
+            Self.queue.async {
+                continuation.resume(with: Result {
+                    let value = try disk.load(VisitorJournalState.self, kind: "visitor-request", server: server, user: user)
+                    try value?.validate()
+                    return value
+                })
+            }
+        }
     }
-    func save(_ value: VisitorJournalState, server: String, user: UUID) throws {
-        try value.validate()
-        if value.pending != nil { try disk.save(value, kind: "visitor-request", server: server, user: user) }
-        else { try disk.remove(kind: "visitor-request", server: server, user: user) }
+    func save(_ value: VisitorJournalState, server: String, user: UUID) async throws {
+        let disk = disk
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            Self.queue.async {
+                continuation.resume(with: Result {
+                    try value.validate()
+                    if value.pending != nil { try disk.save(value, kind: "visitor-request", server: server, user: user) }
+                    else { try disk.remove(kind: "visitor-request", server: server, user: user) }
+                })
+            }
+        }
     }
 }

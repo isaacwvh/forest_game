@@ -50,7 +50,7 @@ struct RenderDiagnostics: View {
         Section("Renderer") {
             DetailRow(title: "Models loaded", value: "\(renderer.loadedCount)")
             DetailRow(title: "Scene load", value: String(format: "%.2f s", renderer.loadSeconds))
-            DetailRow(title: "Mean scene-update interval", value: String(format: "%.1f ms", renderer.sceneUpdateMilliseconds))
+            RenderFrameInterval(metrics: renderer.frameMetrics)
             Text("Scene updates are not a GPU frame-time measurement. Use Instruments on the iPhone for rendering and memory profiling.")
                 .font(.caption).foregroundStyle(.secondary)
             if let point = renderer.lastGroundPoint {
@@ -70,6 +70,14 @@ struct RenderDiagnostics: View {
                 }.font(.caption).textSelection(.enabled)
             }
         }
+    }
+}
+
+@MainActor
+private struct RenderFrameInterval: View {
+    @ObservedObject var metrics: GardenFrameMetrics
+    var body: some View {
+        DetailRow(title: "Mean scene-update interval", value: String(format: "%.1f ms", metrics.sceneUpdateMilliseconds))
     }
 }
 
