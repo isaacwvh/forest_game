@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import UTC, datetime, timedelta
@@ -60,7 +61,7 @@ def configuration(path):
 
 
 def base(config):
-    return ["gcloud", "--project=" + config["project"], "--quiet"]
+    return [shutil.which("gcloud") or "gcloud", "--project=" + config["project"], "--quiet"]
 
 
 def secrets(config, privileged=False):

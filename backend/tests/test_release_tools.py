@@ -69,6 +69,17 @@ def test_cloud_commands_separate_identities_and_pin_secrets():
     assert all("forest-migration-database-url" not in value for value in jobs[2])
 
 
+def test_release_commands_use_the_installed_windows_launcher(monkeypatch):
+    cloud = load("backend/deploy/cloud_run.py")
+    launcher = "C:/Program Files/Google/Cloud SDK/bin/gcloud.cmd"
+    monkeypatch.setattr(
+        cloud.shutil, "which", lambda command: launcher if command == "gcloud" else None
+    )
+    config = cloud.configuration(ROOT / "backend/deploy/production.example.json")
+    commands = cloud.commands(config, "example@sha256:" + "b" * 64, "a" * 40, "jobs")
+    assert all(command[0] == launcher for command in commands)
+
+
 @pytest.mark.parametrize(
     "field,value",
     [
