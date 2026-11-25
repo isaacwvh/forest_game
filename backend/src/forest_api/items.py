@@ -42,12 +42,18 @@ def publish_bench(session):
 
 def capacity(session, owner):
     settings = session.info["settings"]
-    count = session.scalar(
-        select(func.count()).select_from(OwnedItem).where(OwnedItem.owner_id == owner)
-    )
-    placed = session.scalar(
-        select(func.count()).select_from(ItemPlacement).where(ItemPlacement.owner_id == owner)
-    )
+    count, placed = session.execute(
+        select(
+            select(func.count())
+            .select_from(OwnedItem)
+            .where(OwnedItem.owner_id == owner)
+            .scalar_subquery(),
+            select(func.count())
+            .select_from(ItemPlacement)
+            .where(ItemPlacement.owner_id == owner)
+            .scalar_subquery(),
+        )
+    ).one()
     return {
         "ownedItems": count,
         "placedItems": placed,
@@ -188,29 +194,30 @@ def read(session, identity, limit, after):
     with session.begin():
         user = services.get_user(session, identity, lock=True)
         services.lock_garden(session, user.id)
-        values = rows(session, user.id)
-        if any(
-            row[2].id in {"astronomers-satchel", "comet-basin", "worldseed-orrery"}
-            for row in values
-        ) and not session.info.get("expeditions_client"):
-            raise ApiError(
-                426, "expedition_update_required", "Update the app for expedition rewards"
-            )
-        if any(row[2].id != "wooden-bench" for row in values) and not session.info.get(
-            "item_rotations_client"
-        ):
-            raise ApiError(
-                426, "item_content_update_required", "Update the app for the new garden items"
-            )
-        if after is not None:
-            if after not in {r[0].id for r in values}:
-                raise ApiError(400, "invalid_cursor", "Refresh the item inventory")
-            values = [r for r in values if r[0].id > after]
-        return {
-            "items": [present(r) for r in values[:limit]],
-            "capacity": capacity(session, user.id),
-            "nextCursor": str(values[limit - 1][0].id) if len(values) > limit else None,
-        }
+        return present_inventory(session, user.id, limit, after)
+
+
+def present_inventory(session, owner, limit=100, after=None):
+    values = rows(session, owner)
+    if any(
+        row[2].id in {"astronomers-satchel", "comet-basin", "worldseed-orrery"} for row in values
+    ) and not session.info.get("expeditions_client"):
+        raise ApiError(426, "expedition_update_required", "Update the app for expedition rewards")
+    if any(row[2].id != "wooden-bench" for row in values) and not session.info.get(
+        "item_rotations_client"
+    ):
+        raise ApiError(
+            426, "item_content_update_required", "Update the app for the new garden items"
+        )
+    if after is not None:
+        if after not in {r[0].id for r in values}:
+            raise ApiError(400, "invalid_cursor", "Refresh the item inventory")
+        values = [r for r in values if r[0].id > after]
+    return {
+        "items": [present(r) for r in values[:limit]],
+        "capacity": capacity(session, owner),
+        "nextCursor": str(values[limit - 1][0].id) if len(values) > limit else None,
+    }
 
 
 def grant_bench(session, username, *, apply=False):

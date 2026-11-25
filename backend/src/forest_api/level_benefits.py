@@ -13,6 +13,7 @@ from forest_api.progression_schemas import (
     LevelUpClaimResult,
     LevelUpNoticeDTO,
 )
+from forest_api.reference_data import definition
 
 POLICY_VERSION = "level-benefits-v1"
 PLANT_TIERS = ((1, 50), (5, 60), (10, 75), (15, 90), (20, 100))
@@ -30,7 +31,7 @@ def plant_limit(level):
 
 
 def active(session, boundary=None):
-    policy = session.get(LevelBenefitsPolicy, POLICY_VERSION)
+    policy = definition(session, LevelBenefitsPolicy, POLICY_VERSION)
     return policy is not None and (boundary is None or policy.effective_at <= boundary)
 
 

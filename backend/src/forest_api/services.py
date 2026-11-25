@@ -28,6 +28,7 @@ from forest_api.models import (
     User,
     Variant,
 )
+from forest_api.reference_data import definition as reference_definition
 from forest_api.schemas import (
     DTO,
     STAGES,
@@ -37,6 +38,7 @@ from forest_api.schemas import (
     BootstrapAccount,
     CatalogueDTO,
     GardenDTO,
+    GardenSnapshotDTO,
     GrowthDefinition,
     GrowthProgressDTO,
     InventoryDTO,
@@ -187,6 +189,8 @@ def request_hash(operation: str, body: DTO) -> str:
     # Keep historical plant-only edit hashes byte-for-byte compatible.
     if operation == "garden_edits" and payload.get("expectedStrategyFingerprint") is None:
         payload.pop("expectedStrategyFingerprint", None)
+    if operation == "garden_edits" and payload.get("expectedStrategySignature") is None:
+        payload.pop("expectedStrategySignature", None)
     if operation == "garden_edits" and not payload.get("itemActions"):
         payload.pop("itemActions", None)
     if operation.startswith("visitor_") and payload.get("arrivalProtocol") == 1:
@@ -451,9 +455,11 @@ def update_profile(session: Session, identity: Identity, body: UpdateProfile) ->
 class PlantPresenter:
     def __init__(self, session: Session):
         self.session = session
-        self.profiles = {}
-        self.stages = {}
-        self.behaviours = {}
+        definitions = session.info.setdefault("plant_definitions", {})
+        self.profiles = definitions.setdefault("profiles", {})
+        self.stages = definitions.setdefault("stages", {})
+        self.behaviours = definitions.setdefault("behaviours", {})
+        self.preloaded_variants = definitions.setdefault("preloaded_variants", set())
 
     def preload(self, plants):
         for kind, model in PROFILE_MODELS.items():
@@ -467,7 +473,7 @@ class PlantPresenter:
                     select(model).where(tuple_(model.id, model.version).in_(keys))
                 ):
                     self.profiles[(kind, row.id, row.version)] = row
-        keys = {(p.species_id, p.variant_id) for p in plants}
+        keys = {(p.species_id, p.variant_id) for p in plants} - self.preloaded_variants
         if keys:
             for row in self.session.scalars(
                 select(PlantStage).where(
@@ -475,6 +481,7 @@ class PlantPresenter:
                 )
             ):
                 self.stages[(row.species_id, row.variant_id, row.stage)] = row
+            self.preloaded_variants.update(keys)
 
     def behaviour(self, plant):
         key = (plant.behaviour_profile_id, plant.behaviour_profile_version)
@@ -550,23 +557,27 @@ def read_inventory(
     with session.begin():
         user = get_user(session, identity)
         lock_garden(session, user.id)
-        query = select(OwnedPlant).where(
-            OwnedPlant.owner_id == user.id,
-            ~select(GardenPlacement.plant_id)
-            .where(GardenPlacement.plant_id == OwnedPlant.id)
-            .exists(),
-        )
-        if after is not None:
-            query = query.where(OwnedPlant.id > after)
-        plants = session.scalars(query.order_by(OwnedPlant.id).limit(limit + 1)).all()
-        presenter = PlantPresenter(session)
-        from forest_api.inventory_management import capacity
+        return present_inventory(session, user.id, limit, after)
 
-        return InventoryDTO(
-            plants=[presenter.plant(plant, None) for plant in plants[:limit]],
-            next_cursor=plants[limit - 1].id if len(plants) > limit else None,
-            capacity=capacity(session, user.id, session.info["settings"]),
-        )
+
+def present_inventory(session, owner, limit=30, after=None, *, presenter=None):
+    """Caller holds the account/garden lock; also used by atomic snapshots."""
+    query = select(OwnedPlant).where(
+        OwnedPlant.owner_id == owner,
+        ~select(GardenPlacement.plant_id).where(GardenPlacement.plant_id == OwnedPlant.id).exists(),
+    )
+    if after is not None:
+        query = query.where(OwnedPlant.id > after)
+    plants = session.scalars(query.order_by(OwnedPlant.id).limit(limit + 1)).all()
+    presenter = presenter or PlantPresenter(session)
+    presenter.preload(plants[:limit])
+    from forest_api.inventory_management import capacity
+
+    return InventoryDTO(
+        plants=[presenter.plant(plant, None) for plant in plants[:limit]],
+        next_cursor=plants[limit - 1].id if len(plants) > limit else None,
+        capacity=capacity(session, owner, session.info["settings"]),
+    )
 
 
 def present_garden(
@@ -585,6 +596,7 @@ def present_garden(
         .order_by(OwnedPlant.id)
     ).all()
     presenter = presenter or PlantPresenter(session)
+    presenter.preload([plant for plant, _ in rows])
     skills = skill_snapshot(session, garden, presenter=presenter, rows=rows, boundary=boundary)
     presented = [presenter.plant(plant, placement) for plant, placement in rows]
     from forest_api import daily_items, item_step_grants, items
@@ -663,7 +675,7 @@ def skill_snapshot(session, garden, *, presenter=None, rows=None, boundary=None)
         .limit(1)
     )
     version = rule.rules.get("skill_policy_version", CAPS_VERSION) if rule else CAPS_VERSION
-    policy = session.get(SkillPolicy, version)
+    policy = reference_definition(session, SkillPolicy, version)
     if policy is None:
         raise ApiError(503, "skill_policy_unavailable", "Skill rules require maintenance")
     try:
@@ -746,101 +758,155 @@ def read_plant(session: Session, identity: Identity, plant_id: UUID) -> PlantDTO
         return PlantPresenter(session).plant(plant, placement)
 
 
+def read_garden_snapshot(session, settings, identity, catalog_version=None):
+    """One coherent account snapshot under the same locks as a garden read."""
+    from forest_api import daily_items, expeditions, items
+
+    with session.begin():
+        user = get_user(session, identity, lock=True)
+        garden = lock_garden(session, user.id, write=True)
+        boundary = session.info["clock"]()
+        daily_items.settle_due(session, settings, garden, boundary)
+        expeditions.observe_garden(session, garden, boundary)
+        catalogue = get_catalogue_state(session, settings, lock=True)
+        presenter = PlantPresenter(session)
+        result = present_garden(session, garden, catalogue, presenter, boundary=boundary)
+        return GardenSnapshotDTO(
+            profile=user_dto(user),
+            garden=result,
+            catalogue=(
+                present_catalogue(session, settings, catalogue)
+                if catalog_version != catalogue.version
+                else None
+            ),
+            inventory=present_inventory(session, user.id, presenter=presenter),
+            item_inventory=items.present_inventory(session, user.id),
+        )
+
+
 def read_catalogue(session: Session, settings: Settings) -> CatalogueDTO:
     with session.begin():
-        catalogue = get_catalogue_state(session, settings)
-        species_rows = session.scalars(select(Species).where(Species.enabled).order_by(Species.id))
-        result = []
-        referenced = {kind: set() for kind in PROFILE_MODELS}
-        for species in species_rows:
-            defaults = profile_refs(species)
+        # The share lock also prevents a concurrent publication mixing versions.
+        catalogue = get_catalogue_state(session, settings, lock=True)
+        return present_catalogue(session, settings, catalogue)
+
+
+def present_catalogue(session, settings, catalogue):
+    cache = session.info.get("catalogue_cache")
+    key = (catalogue.version, catalogue.is_fixture, catalogue.unit_metres)
+    if cache is not None and settings.catalogue_cache_seconds > 0:
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+    species_rows = list(
+        session.scalars(select(Species).where(Species.enabled).order_by(Species.id))
+    )
+    species_ids = [row.id for row in species_rows]
+    variants_by_species = {}
+    for variant in session.scalars(
+        select(Variant)
+        .where(Variant.species_id.in_(species_ids), Variant.enabled)
+        .order_by(Variant.species_id, Variant.variant_id)
+    ):
+        variants_by_species.setdefault(variant.species_id, []).append(variant)
+    stages_by_variant = {}
+    for stage in session.scalars(select(PlantStage).where(PlantStage.species_id.in_(species_ids))):
+        stages_by_variant.setdefault((stage.species_id, stage.variant_id), []).append(stage)
+    result = []
+    referenced = {kind: set() for kind in PROFILE_MODELS}
+    for species in species_rows:
+        defaults = profile_refs(species)
+        for kind in referenced:
+            ref = getattr(defaults, kind)
+            referenced[kind].add((ref.id, ref.version))
+        variants = []
+        for variant in variants_by_species.get(species.id, []):
+            overrides = {}
             for kind in referenced:
-                ref = getattr(defaults, kind)
-                referenced[kind].add((ref.id, ref.version))
-            variants = []
-            for variant in session.scalars(
-                select(Variant)
-                .where(Variant.species_id == species.id, Variant.enabled)
-                .order_by(Variant.variant_id)
-            ):
-                overrides = {}
-                for kind in referenced:
-                    profile_id = getattr(variant, f"{kind}_profile_id")
-                    version = getattr(variant, f"{kind}_profile_version")
-                    overrides[kind] = (
-                        ProfileRef(id=profile_id, version=version) if profile_id else None
-                    )
-                    if profile_id:
-                        referenced[kind].add((profile_id, version))
-                variants.append(
-                    VariantDTO(
-                        variant_id=variant.variant_id,
-                        display_name=variant.display_name,
-                        description=variant.description,
-                        rarity=variant.rarity,
-                        asset_catalog_key=variant.asset_catalog_key,
-                        asset_catalog_version=variant.asset_catalog_version,
-                        profile_overrides=overrides,
-                        stages={
-                            row.stage: StageAssetDTO(
-                                model_key=row.model_key, thumbnail_key=row.thumbnail_key
-                            )
-                            for row in session.scalars(
-                                select(PlantStage).where(
-                                    PlantStage.species_id == species.id,
-                                    PlantStage.variant_id == variant.variant_id,
-                                )
-                            )
-                        },
-                    )
-                )
-            result.append(
-                SpeciesDTO(
-                    species_id=species.id,
-                    display_name=species.display_name,
-                    rarity=species.rarity,
-                    description=species.description,
-                    clearance_radius=species.clearance_radius,
-                    is_fixture=species.is_fixture,
-                    default_profiles=defaults,
-                    variants=variants,
+                profile_id = getattr(variant, f"{kind}_profile_id")
+                version = getattr(variant, f"{kind}_profile_version")
+                overrides[kind] = ProfileRef(id=profile_id, version=version) if profile_id else None
+                if profile_id:
+                    referenced[kind].add((profile_id, version))
+            variants.append(
+                VariantDTO(
+                    variant_id=variant.variant_id,
+                    display_name=variant.display_name,
+                    description=variant.description,
+                    rarity=variant.rarity,
+                    asset_catalog_key=variant.asset_catalog_key,
+                    asset_catalog_version=variant.asset_catalog_version,
+                    profile_overrides=overrides,
+                    stages={
+                        row.stage: StageAssetDTO(
+                            model_key=row.model_key, thumbnail_key=row.thumbnail_key
+                        )
+                        for row in stages_by_variant.get((species.id, variant.variant_id), [])
+                    },
                 )
             )
-        profiles = {}
-        for kind, keys in referenced.items():
-            profiles[kind] = []
-            for profile_id, version in sorted(keys):
-                row = session.get(PROFILE_MODELS[kind], (profile_id, version))
-                if kind == "growth":
-                    definition = GrowthDefinition(
-                        thresholds=row.thresholds,
-                        maximum_growth_micro_units=row.maximum_growth_micro_units,
-                    )
-                    values = {
-                        "thresholdsMicroUnits": {
-                            stage: str(value)
-                            for stage, value in definition.thresholds.model_dump().items()
-                        },
-                        "maximumGrowthMicroUnits": str(definition.maximum_growth_micro_units),
-                    }
-                elif kind == "behaviour":
-                    values = BehaviourDefinition.model_validate(row.rules).model_dump(by_alias=True)
-                else:
-                    definition = AttractionDefinition(
-                        stage_attraction=row.stage_attraction, gameplay_tags=row.gameplay_tags
-                    )
-                    values = {
-                        "stageAttractionMicroUnits": {
-                            stage: str(value)
-                            for stage, value in definition.stage_attraction.model_dump().items()
-                        },
-                        "gameplayTags": definition.gameplay_tags,
-                    }
-                profiles[kind].append({"id": profile_id, "version": version, **values})
-        return CatalogueDTO(
-            catalog_version=catalogue.version,
-            is_fixture=catalogue.is_fixture,
-            garden_unit_metres=catalogue.unit_metres,
-            species=result,
-            profiles=profiles,
+        result.append(
+            SpeciesDTO(
+                species_id=species.id,
+                display_name=species.display_name,
+                rarity=species.rarity,
+                description=species.description,
+                clearance_radius=species.clearance_radius,
+                is_fixture=species.is_fixture,
+                default_profiles=defaults,
+                variants=variants,
+            )
         )
+    profiles = {}
+    for kind, keys in referenced.items():
+        profiles[kind] = []
+        definitions = (
+            {
+                (row.id, row.version): row
+                for row in session.scalars(
+                    select(PROFILE_MODELS[kind]).where(
+                        tuple_(PROFILE_MODELS[kind].id, PROFILE_MODELS[kind].version).in_(keys)
+                    )
+                )
+            }
+            if keys
+            else {}
+        )
+        for profile_id, version in sorted(keys):
+            row = definitions[(profile_id, version)]
+            if kind == "growth":
+                definition = GrowthDefinition(
+                    thresholds=row.thresholds,
+                    maximum_growth_micro_units=row.maximum_growth_micro_units,
+                )
+                values = {
+                    "thresholdsMicroUnits": {
+                        stage: str(value)
+                        for stage, value in definition.thresholds.model_dump().items()
+                    },
+                    "maximumGrowthMicroUnits": str(definition.maximum_growth_micro_units),
+                }
+            elif kind == "behaviour":
+                values = BehaviourDefinition.model_validate(row.rules).model_dump(by_alias=True)
+            else:
+                definition = AttractionDefinition(
+                    stage_attraction=row.stage_attraction, gameplay_tags=row.gameplay_tags
+                )
+                values = {
+                    "stageAttractionMicroUnits": {
+                        stage: str(value)
+                        for stage, value in definition.stage_attraction.model_dump().items()
+                    },
+                    "gameplayTags": definition.gameplay_tags,
+                }
+            profiles[kind].append({"id": profile_id, "version": version, **values})
+    result = CatalogueDTO(
+        catalog_version=catalogue.version,
+        is_fixture=catalogue.is_fixture,
+        garden_unit_metres=catalogue.unit_metres,
+        species=result,
+        profiles=profiles,
+    )
+    if cache is not None:
+        cache.put(key, result, settings.catalogue_cache_seconds)
+    return result

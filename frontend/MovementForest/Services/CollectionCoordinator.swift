@@ -242,9 +242,11 @@ final class CollectionCoordinator: ObservableObject {
         cached.milestonesConfirmedAt = milestonesConfirmedAt
         try persist(cached)
         for offer in offers { definitions[offer.pack.id] = offer.pack }
-        let catalogue = try await service.catalogue()
-        guard attached else { return }
-        self.catalogue = catalogue
+        if catalogue == nil || summary.catalogVersion == nil || catalogue?.catalogVersion != summary.catalogVersion {
+            let catalogue = try await service.catalogue()
+            guard attached else { return }
+            self.catalogue = catalogue
+        }
         let page = try await service.packs(after: nil)
         guard attached else { return }
         try await loadDefinitions(page.packs)

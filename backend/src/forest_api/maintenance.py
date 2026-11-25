@@ -17,10 +17,14 @@ def unavailable(code="maintenance"):
     return ApiError(503, code, MESSAGE)
 
 
-def guard(connection):
+def guard(connection, *, acquired=None):
     # Try rather than wait behind the operator's exclusive lock. The shared
     # transaction lock is held until commit/rollback, across all game SQL.
-    if not connection.scalar(text("SELECT pg_try_advisory_xact_lock_shared(:key)"), {"key": LOCK}):
+    if acquired is None:
+        acquired = connection.scalar(
+            text("SELECT pg_try_advisory_xact_lock_shared(:key)"), {"key": LOCK}
+        )
+    if not acquired:
         raise unavailable()
     state = connection.execute(
         text("SELECT maintenance FROM runtime_control WHERE id=1")
@@ -37,7 +41,7 @@ def check_gameplay(request: Request):
         return
     try:
         with database.sessions(info={"maintenance_guard": True}) as session, session.begin():
-            session.execute(text("SELECT 1"))
+            session.connection()  # after_begin performs the guarded admission.
     except SQLAlchemyError as exc:
         raise unavailable("maintenance_state_unavailable") from exc
 

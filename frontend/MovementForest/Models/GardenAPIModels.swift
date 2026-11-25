@@ -350,6 +350,7 @@ struct GardenEditRequest: Codable, Equatable {
     let actions: [GardenEditAction]
     var itemActions: [ItemEditAction]? = nil
     var expectedStrategyFingerprint: String? = nil
+    var expectedStrategySignature: String? = nil
 
     func encoded() throws -> Data {
         let encoder = JSONEncoder()
@@ -362,6 +363,17 @@ struct GardenEditResult: Codable {
     let requestId: UUID
     let garden: APIGarden
     let updatedPlants: [APIOwnedPlant]
+    var inventory: APIInventory? = nil
+    var itemInventory: APIItemInventory? = nil
+    var replayed: Bool? = nil
+}
+
+struct APIGardenSnapshot: Codable {
+    let profile: APIProfile
+    let garden: APIGarden
+    let catalogue: APICatalogue?
+    let inventory: APIInventory
+    let itemInventory: APIItemInventory
 }
 
 

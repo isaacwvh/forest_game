@@ -24,26 +24,32 @@ class SellPlant(DTO):
 
 
 def capacity(session, owner, settings):
-    owned = session.scalar(
-        select(func.count()).select_from(OwnedPlant).where(OwnedPlant.owner_id == owner)
-    )
-    planted = session.scalar(
-        select(func.count()).select_from(GardenPlacement).where(GardenPlacement.owner_id == owner)
-    )
-    packs = session.scalar(
-        select(func.count())
-        .select_from(OwnedPack)
-        .where(
-            OwnedPack.owner_id == owner,
-            ~select(PackOpening.id).where(PackOpening.pack_id == OwnedPack.id).exists(),
+    owned, planted, packs = session.execute(
+        select(
+            select(func.count())
+            .select_from(OwnedPlant)
+            .where(OwnedPlant.owner_id == owner)
+            .scalar_subquery(),
+            select(func.count())
+            .select_from(GardenPlacement)
+            .where(GardenPlacement.owner_id == owner)
+            .scalar_subquery(),
+            select(func.count())
+            .select_from(OwnedPack)
+            .where(
+                OwnedPack.owner_id == owner,
+                ~select(PackOpening.id).where(PackOpening.pack_id == OwnedPack.id).exists(),
+            )
+            .scalar_subquery(),
         )
-    )
+    ).one()
+    limit = owned_limit(session, owner, settings.plant_capacity)
     return {
         "ownedPlants": owned,
         "plantedPlants": planted,
         "storedPlants": owned - planted,
-        "plantLimit": owned_limit(session, owner, settings.plant_capacity),
-        "plantedLimit": owned_limit(session, owner, settings.plant_capacity),
+        "plantLimit": limit,
+        "plantedLimit": limit,
         "unopenedPacks": packs,
         "packLimit": settings.pack_capacity,
     }

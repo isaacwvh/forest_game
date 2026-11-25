@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     maintenance_gate_enabled: bool = True
     worker_budget_seconds: float = Field(default=40, ge=1, le=45)
     operation_metrics_enabled: bool = False
+    catalogue_cache_seconds: float = Field(default=60, ge=0, le=300)
     plant_capacity: int = Field(default=50, ge=1, le=10000)
     item_capacity: int = Field(default=50, ge=1, le=10000)
     # Accepted for existing deployments; placement now follows the owned-plant limit.

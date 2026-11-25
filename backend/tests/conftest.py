@@ -84,6 +84,7 @@ def settings(migrated_url):
         auth_mode="development",
         dev_auth_secret=TEST_SECRET,
         maintenance_gate_enabled=False,
+        catalogue_cache_seconds=0,
     )
 
 

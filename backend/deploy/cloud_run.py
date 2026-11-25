@@ -94,6 +94,7 @@ def environment(config, commit, worker=False):
         "FOREST_MAINTENANCE_GATE_ENABLED": "true",
         "FOREST_RELEASE_COMMIT": commit,
         "FOREST_WORKER_BUDGET_SECONDS": "40",
+        "FOREST_OPERATION_METRICS_ENABLED": "true",
     }
     if worker:
         values.update(

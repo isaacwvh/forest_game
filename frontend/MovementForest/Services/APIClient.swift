@@ -134,11 +134,15 @@ struct APIClient {
         request.setValue("1", forHTTPHeaderField: "X-Forest-Items")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Item-Commerce")
         request.setValue("1", forHTTPHeaderField: "X-Forest-Item-Rotations")
+        request.setValue("1", forHTTPHeaderField: "X-Forest-Snapshot")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
+        let tokenStarted = Date.timeIntervalSinceReferenceDate
         if authenticated {
             request.setValue("Bearer \(try await tokens.token())", forHTTPHeaderField: "Authorization")
             try tokens.validate()
         }
+        let tokenMs = Int((Date.timeIntervalSinceReferenceDate - tokenStarted) * 1000)
+        let started = Date.timeIntervalSinceReferenceDate
         var (data, response) = try await transport.send(request)
         if authenticated {
             try tokens.validate() // An old account's response cannot reach a new account.
@@ -156,7 +160,8 @@ struct APIClient {
             throw APIError(status: response.statusCode, code: detail?.error.code ?? "http_error",
                            message: detail?.error.message ?? "The server could not complete this request (\(response.statusCode)).")
         }
-        DiagnosticHistory.shared.record("HTTP", "\(method) \(path) response: \(response.statusCode)", scope: diagnosticScope)
+        let elapsed = Int((Date.timeIntervalSinceReferenceDate - started) * 1000)
+        DiagnosticHistory.shared.record("HTTP", "\(method) \(path) response: \(response.statusCode), \(elapsed) ms, token \(tokenMs) ms", scope: diagnosticScope)
         if let envelope = try? ActivityWire.decoder().decode(RequestRecoveryEnvelope.self, from: data) {
             throw envelope.recovery
         }
@@ -204,9 +209,11 @@ protocol GardenServing {
     func edit(body: Data) async throws -> GardenEditResult
     func preview(body: Data) async throws -> GardenStrategyEvaluation
     func items(after: UUID?) async throws -> APIItemInventory
+    func snapshot(catalogVersion: String?) async throws -> APIGardenSnapshot?
 }
 
 extension GardenServing {
+    func snapshot(catalogVersion: String?) async throws -> APIGardenSnapshot? { nil }
     func preview(body: Data) async throws -> GardenStrategyEvaluation {
         throw ForestError.invalidData("Garden preview is unavailable. Update the server.")
     }
@@ -221,6 +228,11 @@ struct APIGardenRepository: GardenServing {
     func profile() async throws -> APIProfile { try await client.request("v1/me") }
     func catalogue() async throws -> APICatalogue { try await client.request("v1/catalog") }
     func garden() async throws -> APIGarden { try await client.request("v1/me/garden") }
+    func snapshot(catalogVersion: String?) async throws -> APIGardenSnapshot? {
+        let query = catalogVersion.map { [URLQueryItem(name: "catalogVersion", value: $0)] } ?? []
+        do { return try await client.request("v1/me/garden/snapshot", query: query) }
+        catch let error as APIError where error.status == 404 { return nil }
+    }
     func inventory(after: UUID?) async throws -> APIInventory {
         var query = [URLQueryItem(name: "limit", value: "30")]
         if let after = after { query.append(URLQueryItem(name: "after", value: after.uuidString)) }

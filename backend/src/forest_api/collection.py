@@ -276,17 +276,17 @@ def _read_once(session, settings, identity, *, kind="summary", limit=30, after=N
 
             now = clock()
             rotation = shop.current(session, user.id, now)
+            catalogue = services.get_catalogue_state(session, settings)
 
             return {
                 **wallet_dto(wallet),
+                "catalogVersion": catalogue.version,
                 "capacity": capacity(session, user.id, settings),
                 "offers": offers,
                 "itemOffers": item_commerce.offers(session, user.id, now),
                 "shop": rotation,
                 "itemCapacity": items.capacity(session, user.id),
-                "milestones": milestones.summary(
-                    session, user.id, services.get_catalogue_state(session, settings), wallet
-                ),
+                "milestones": milestones.summary(session, user.id, catalogue, wallet),
             }
         if kind == "packs":
             query = select(OwnedPack).where(

@@ -62,15 +62,18 @@ private final class FakeCollection: CollectionServing {
     var openingContinuation: CheckedContinuation<Void, Never>?
     var capacity: APIInventoryCapacity?
     var saleReceiptCapacity: APIInventoryCapacity?
+    var catalogVersion: String?
+    var catalogueCalls = 0
     init(_ contract: CollectionContract) { self.contract = contract }
     func summary() async throws -> APICollectionSummary {
         if checkRefreshCancellation { try Task.checkCancellation() }
         if let summaryError = summaryError { throw summaryError }
         if failSummary { throw URLError(.notConnectedToInternet) }
         if failSummaryAfterMutation && !operations.isEmpty { throw URLError(.networkConnectionLost) }
-        var value = contract.summary; value.milestones = milestones; value.capacity = capacity; return value
+        var value = contract.summary; value.milestones = milestones; value.capacity = capacity
+        value.catalogVersion = catalogVersion; return value
     }
-    func catalogue() async throws -> APICatalogue { contract.catalogue }
+    func catalogue() async throws -> APICatalogue { catalogueCalls += 1; return contract.catalogue }
     func packs(after: UUID?) async throws -> APIPackPage { contract.packs }
     func openings(after: UUID?) async throws -> APIOpeningPage { APIOpeningPage(openings: [contract.opening], nextCursor: nil) }
     func definition(pack: String, version: Int) async throws -> APIPackDefinition {
@@ -111,6 +114,20 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testVerifiedCatalogueVersionReusesGardenCatalogueAndReloadsOnChange() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        service.catalogVersion = service.contract.catalogue.catalogVersion
+        let store = CollectionCoordinator(userID: UUID(), service: service,
+            journal: MemoryCollectionJournal(), initialCatalogue: service.contract.catalogue)
+        await store.refresh()
+        XCTAssertEqual(service.catalogueCalls, 0)
+        service.catalogVersion = "new-publication"
+        await store.refresh()
+        XCTAssertEqual(service.catalogueCalls, 1)
+        service.catalogVersion = nil
+        await store.refresh()
+        XCTAssertEqual(service.catalogueCalls, 2, "Older servers still require an explicit catalogue read")
+    }
     func testGemAffordabilityUsesConfirmedGemWalletAndRejectsStaleVersions() async throws {
         let service = FakeCollection(try CollectionContract.load())
         let store = CollectionCoordinator(userID: UUID(), service: service, journal: MemoryCollectionJournal())

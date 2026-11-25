@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from forest_api.catalogue_cache import CatalogueCache
 from forest_api.config import Settings
 
 
@@ -19,7 +20,10 @@ class Database:
             hide_parameters=True,
         )
         self.sessions = sessionmaker(
-            self.engine, expire_on_commit=False, autoflush=False, info={"settings": settings}
+            self.engine,
+            expire_on_commit=False,
+            autoflush=False,
+            info={"settings": settings, "catalogue_cache": CatalogueCache()},
         )
         from forest_api.operation_metrics import instrument
 
@@ -32,18 +36,21 @@ class Database:
         def admit(session, transaction, connection):
             if not session.info.get("maintenance_guard") and execution_budget.current.get() is None:
                 return
-            connection.execute(
+            guarded = bool(session.info.get("maintenance_guard"))
+            admission = connection.execute(
                 text(
                     "SELECT set_config('statement_timeout', :statement, true), "
                     "set_config('lock_timeout', :lock, true)"
+                    + (", pg_try_advisory_xact_lock_shared(:key) AS acquired" if guarded else "")
                 ),
                 {
                     "statement": str(settings.db_statement_timeout_ms),
                     "lock": str(settings.db_lock_timeout_ms),
+                    "key": maintenance.LOCK,
                 },
             )
-            if session.info.get("maintenance_guard"):
-                maintenance.guard(connection)
+            if guarded:
+                maintenance.guard(connection, acquired=admission.one().acquired)
 
         @event.listens_for(self.engine, "before_cursor_execute")
         def constrain(connection, cursor, statement, parameters, context, many):
@@ -70,6 +77,12 @@ class Database:
             budget = execution_budget.current.get()
             if budget is not None:
                 budget.committed_transactions += 1
+
+        @event.listens_for(self.sessions, "after_transaction_end")
+        def release_references(session, transaction):
+            if transaction.parent is None:
+                session.info.pop("reference_definitions", None)
+                session.info.pop("plant_definitions", None)
 
     @contextmanager
     def worker_session(self):
