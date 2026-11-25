@@ -23,7 +23,8 @@ from forest_api import main as api_main  # noqa: F401 - complete model registry
 from forest_api.maintenance import operator_connection
 from forest_api.models import Base
 
-CLIENT_IMAGE = "postgres:17-bookworm"
+# 17.12 understands internal column-version metadata from patched hosted servers.
+CLIENT_IMAGE = "postgres:17.12-bookworm"
 
 
 def command(args, **kwargs):

@@ -238,18 +238,24 @@ def commands(config, image, commit, action, *, first_deploy=False, bootstrap_sto
     raise ValueError("Unknown release action")
 
 
-def backup_receipt(path, commit):
+def backup_receipt(path, commit, *, allow_local_backup=False):
     receipt = json.loads(Path(path).read_text())
     created = datetime.fromisoformat(receipt["createdAt"])
     now = datetime.now(UTC)
     if (
         receipt.get("verifiedRestore") is not True
         or receipt.get("release") != commit
-        or not str(receipt.get("offsite", "")).startswith("gs://")
+        or not (
+            str(receipt.get("offsite", "")).startswith("gs://")
+            or (allow_local_backup and receipt.get("offsite") is None)
+        )
         or not re.fullmatch(r"[a-f0-9]{64}", receipt.get("sha256", ""))
         or not timedelta(0) <= now - created <= timedelta(hours=6)
     ):
-        raise ValueError("Require a recent, restored and off-site verified backup for this release")
+        raise ValueError(
+            "Require a recent, restored backup for this release and either verified off-site "
+            "storage or explicit --allow-local-backup"
+        )
     archive = Path(path).with_name(receipt["archive"])
     import hashlib
 
@@ -317,6 +323,11 @@ def main():
     parser.add_argument("--first-deploy", action="store_true")
     parser.add_argument("--bootstrap-stopped", action="store_true")
     parser.add_argument("--backup-receipt")
+    parser.add_argument(
+        "--allow-local-backup",
+        action="store_true",
+        help="Accept a restore-verified local receipt for migration without a cloud backup copy",
+    )
     parser.add_argument("--expected-user-id")
     parser.add_argument("--record", type=Path)
     args = parser.parse_args()
@@ -370,10 +381,13 @@ def main():
     if not args.execute:
         return
     verify_image(args.image, args.commit)
+    verified_backup = None
     if args.action == "migrate":
         if not args.backup_receipt:
             parser.error("Migration requires --backup-receipt")
-        backup_receipt(args.backup_receipt, args.commit)
+        verified_backup = backup_receipt(
+            args.backup_receipt, args.commit, allow_local_backup=args.allow_local_backup
+        )
     if args.action in {"promote", "open", "resume"}:
         invoke(
             execute_job(
@@ -443,6 +457,12 @@ def main():
                 "schema": SCHEMA,
                 "completedAt": datetime.now(UTC).isoformat(),
             }
+            if verified_backup is not None:
+                record["backup"] = {
+                    "receipt": str(Path(args.backup_receipt).resolve()),
+                    "storage": "gcs" if verified_backup.get("offsite") else "local-only",
+                    "sha256": verified_backup["sha256"],
+                }
             if args.action in {"deploy", "promote", "open"}:
                 record["services"] = {
                     k: service(config, k)["status"] for k in ("api_service", "worker_service")

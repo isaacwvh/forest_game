@@ -21,9 +21,11 @@ is compatible. Prefer a corrective migration after an incompatible schema change
 
 - Commit the reviewed source, including the new scripts, migration and Supabase
   permission tool. Build from a clean checkout of that commit.
-- Require `Backend gate` and `Frontend gate` in branch protection. Both workflows
-  start for every push/PR, classify paths, and skip expensive jobs when irrelevant.
-  Swift-only changes skip backend validation. Shared contracts trigger both jobs.
+- Backend deployment requires the passing `Backend gate`. Frontend acceptance may
+  be performed manually on Mac, as selected for this first release; frontend CI
+  is not a backend deployment prerequisite. Both validation workflows remain
+  enabled and classify paths. Swift-only changes skip backend validation; shared
+  contracts trigger the appropriate jobs.
 - Backend CI uses disposable PostgreSQL 17, full regressions, four HTTP
   walkthroughs, image checks and a full application backup/restore rehearsal.
 - Frontend CI verifies canonical working-tree/Git catalogue bytes, resources,
@@ -109,6 +111,42 @@ Allow connection headroom for candidate/old revisions, probes and operator jobs.
 Do not interpret the nominal 2+1 pools or Cloud Run maximum as an absolute
 database-connection limit during rollout. Keep capacity low and measure it.
 
+## Preparation and validation costs
+
+The current preference is to keep backup archives on the operator computer and
+build the release image locally. Preparation does not authorize an image upload,
+Cloud Run deployment, cloud job execution, database migration or scheduled work.
+The existing local API and workers were stopped at the preparation check.
+
+CPU usage is billed by the provider running that CPU. Local tests, local Docker
+builds and a restore into a temporary local PostgreSQL container use the computer's
+CPU and disk, not Google Cloud compute. A Supabase export still reads the hosted
+database and consumes Supabase resources/egress under that provider's plan.
+
+| Activity | Where it runs | Cost implications |
+| --- | --- | --- |
+| Lint, unit/regression tests, disposable database tests | Operator computer, or GitHub Actions if explicitly triggered | Local execution has no Google compute charge. GitHub runner/artifact allowances and charges are separate from Google billing. |
+| Build Linux amd64 release image | Local Docker | Uses local CPU/disk. Cloud Build is not needed; do not use source-based deployment or `gcloud builds submit` for this flow. |
+| Google vulnerability scanning | Optional Artifact Analysis service | Separate per-image scan fee, not a local test or a Cloud Run CPU charge. The scanning APIs were not enabled during setup. Google's published standard price checked 2026-11-25 is US$0.26 per initial automatic scan of a distinct image digest; on-demand scans are also priced per scanned image. SGD billing uses Google's applicable local-currency SKU. |
+| Local database backup and restore check | Supabase source, local PostgreSQL client/restore container | No GCS upload, storage or download. The archive and JSON receipt stay in ignored local storage. |
+| Upload image later | Artifact Registry | Registry storage and applicable data transfer are separate from the Cloud Run cap. Keep the repository in Singapore; preserve production/rollback tags before cleanup. |
+| Create operator job definitions later | Cloud Run control plane | A definition does not execute its workload. Running a job allocates billable CPU/memory, including validation jobs. |
+| Migration, preflight, control and shop-preparation executions later | Cloud Run Jobs | Each uses 1 vCPU/512 MiB, one task, no automatic retries, 300-second timeout. Jobs have a one-minute billing minimum per started instance; repeated successful or failed executions consume resources. |
+| API/worker startup, hosted health/auth checks and scheduled passes later | Cloud Run services | Startups, request handling and shutdowns consume billable resources under request billing. Minimum instances is zero. Scheduler's recurring worker calls are ongoing usage, not just a one-time deployment check. |
+
+Cloud Run's free allowance can offset eligible usage, but the S$10 cap uses gross
+estimated spend before credits/discounts. Local preparation does not consume this
+cap. The project-wide S$15 budget is an alert, not a cap on supporting services.
+Keep production acceptance bounded: configuration/permission reads, health checks,
+real-token profile/catalogue/inventory reads, and one forced pass per scheduler.
+Full regression tests and load tests belong on disposable local/CI databases.
+
+Pricing references: [Artifact Analysis](https://cloud.google.com/artifact-analysis/pricing),
+[Cloud Run](https://cloud.google.com/run/pricing),
+[Cloud Build](https://cloud.google.com/build/pricing),
+[GitHub Actions](https://docs.github.com/en/billing/concepts/product-billing/github-actions),
+[spend caps](https://docs.cloud.google.com/billing/docs/how-to/budgets-spend-caps).
+
 ## Configure and review a release
 
 From the repository root, copy `backend/deploy/production.example.json` to
@@ -140,23 +178,29 @@ privileged operations. No job runs merely because its definition is deployed.
 
 ## Backups
 
-`backend/scripts/backup.py` uses a PostgreSQL 17 client container, not the API
+`backend/scripts/backup.py` uses a patched PostgreSQL 17.12 client container, not the API
 image. Run it on a trusted operator machine with Docker, the backend Python
 environment and gcloud. Supply the operator URL privately through
 `FOREST_DATABASE_URL`; its `sslrootcert` must be an absolute path readable on
 that machine. The dump client mounts the CA read-only and requires verify-full.
+Use this patched client for both dump and restore verification. The previously
+cached 17.11 client cannot restore the internal column-version metadata emitted
+from the patched hosted database. See the [PostgreSQL 17.12 release notes](https://www.postgresql.org/docs/17/release-17-12.html).
 
-Provision a dedicated private bucket with public access prevention, uniform
+For an optional off-site copy, provision a dedicated private bucket with public access prevention, uniform
 bucket access, versioning disabled and bounded retention. An example 14-day
 lifecycle is in `deploy/backup-lifecycle.json`. Grant the backup operator bucket
 metadata read and object create/read access. The script checks enforced public
 access prevention and an unconditional age-based delete rule within 90 days.
 Google-managed encryption protects stored objects; keep the local copies private
-as well. `--local-only` is useful for rehearsal but cannot authorize migration
-through the release helper, which requires verified off-site storage.
+as well. The initial release will instead use `--local-only`, with no bucket
+argument or Google Storage calls. The empty existing bucket can remain unused.
+Local backups protect against a failed database migration but do not protect
+against loss of the computer or its disk. Application backups contain private
+game data; keep the ignored backup directory private.
 
 ```powershell
-& $taskPython backend/scripts/backup.py --output backend/.local-cloud/backups --release $taskCommit --bucket gs://<private-backup-bucket>
+& $taskPython backend/scripts/backup.py --output backend/.local-cloud/backups --release $taskCommit --local-only --bootstrap-stopped
 ```
 
 Backup requires the gate closed for that release. Only the first pre-control
@@ -167,23 +211,38 @@ Auth, Storage and other Supabase schemas are outside this backup's scope.
 
 It restores into a newly generated local container with an empty public schema,
 then compares every table's row count and deterministic SHA-256 row fingerprints.
-It uploads and downloads the archive to check its SHA-256 again. Only then does
-it write a verified JSON receipt. No retention deletion is performed by this script.
+With `--bucket`, it additionally uploads and downloads the archive to check its
+SHA-256 again. Local-only mode skips those cloud operations and writes a verified
+JSON receipt after the same local restore check. No retention deletion is performed by this script.
 The release helper requires a matching receipt and archive less than six hours
-old, for the exact release commit, with successful restore and off-site verification.
-Rehearse restores periodically; the original cutover backup is not an ongoing policy.
+old, for the exact release commit, with successful restore. Off-site verification
+remains the default requirement; the selected local-only policy must be explicit:
+
+```powershell
+& $taskPython backend/deploy/cloud_run.py migrate @taskCommon --bootstrap-stopped --backup-receipt <local-receipt.json> --allow-local-backup
+```
+
+This prints a plan only. Adding `--execute` later would run the cloud migration
+job; do not add it during preparation. The local option preserves the release,
+freshness, verified-restore and on-disk checksum checks. A migration record includes
+whether the accepted backup was local-only or in GCS. A preparation backup uses a
+preparation identifier and does not replace the fresh exact-commit release backup.
+Rehearse restores periodically; a manual backup is not an ongoing backup schedule.
 
 ## First Cloud Run cutover
 
 Run each step only after the previous succeeds. These stages are deliberately
 separate so a failure leaves a reviewable stopped/maintenance state.
 
-1. Pass both CI gates on the committed candidate. Provision Google prerequisites,
+1. Pass backend CI on the committed candidate. Frontend validation may be done
+   manually on Mac. Provision Google prerequisites,
    publish its image, and run the `jobs` stage with `--execute`.
 2. Resolve the iPhone's pending activity/purchase/edit requests through the old API.
    Stop the old API, shop and maintenance containers. Keep them stopped.
-3. Take the first backup with `--bootstrap-stopped`, verify its off-site receipt.
-4. Run `migrate` with `--bootstrap-stopped --backup-receipt <receipt> --execute`.
+3. Take the first backup with `--bootstrap-stopped --local-only`, verify its local
+   restore receipt. Keep all writers stopped through migration. No backup is uploaded.
+4. Run `migrate` with `--bootstrap-stopped --backup-receipt <receipt>
+   --allow-local-backup --execute`.
    It upgrades Alembic, commits maintenance ON, then applies runtime grants/RLS.
    A permissions failure leaves the new gate closed and can be retried.
 5. Run `deploy --first-deploy --execute`. New services initially receive traffic,

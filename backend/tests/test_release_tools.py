@@ -1,7 +1,9 @@
 """Release configuration, backup validation and CI selection regression checks."""
 
+import hashlib
 import importlib.util
 import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -92,3 +94,64 @@ def test_backup_receipt_rejects_unverified_or_old_exports(tmp_path):
     path.write_text(json.dumps({"createdAt": "2020-01-01T00:00:00+00:00"}))
     with pytest.raises(ValueError):
         cloud.backup_receipt(path, "a" * 40)
+
+
+def make_backup_receipt(tmp_path, **overrides):
+    archive = tmp_path / "application.dump"
+    archive.write_bytes(b"restore-tested export fixture")
+    receipt = {
+        "verifiedRestore": True,
+        "release": "a" * 40,
+        "createdAt": datetime.now(UTC).isoformat(),
+        "archive": archive.name,
+        "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+        "offsite": None,
+    }
+    receipt.update(overrides)
+    path = tmp_path / "receipt.json"
+    path.write_text(json.dumps(receipt))
+    return path
+
+
+def test_local_backup_requires_explicit_acceptance(tmp_path):
+    cloud = load("backend/deploy/cloud_run.py")
+    path = make_backup_receipt(tmp_path)
+    with pytest.raises(ValueError, match="allow-local-backup"):
+        cloud.backup_receipt(path, "a" * 40)
+    assert cloud.backup_receipt(path, "a" * 40, allow_local_backup=True)["offsite"] is None
+
+
+def test_offsite_receipt_still_works_without_local_option(tmp_path):
+    cloud = load("backend/deploy/cloud_run.py")
+    path = make_backup_receipt(tmp_path, offsite="gs://private-backups/releases/application.dump")
+    assert cloud.backup_receipt(path, "a" * 40)["verifiedRestore"] is True
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"verifiedRestore": False},
+        {"release": "b" * 40},
+        {"createdAt": (datetime.now(UTC) - timedelta(hours=7)).isoformat()},
+        {"createdAt": (datetime.now(UTC) + timedelta(hours=1)).isoformat()},
+        {"sha256": "bad-checksum"},
+        {"offsite": "https://unverified.example/backup.dump"},
+    ],
+)
+def test_local_option_preserves_backup_safety_checks(tmp_path, overrides):
+    cloud = load("backend/deploy/cloud_run.py")
+    path = make_backup_receipt(tmp_path, **overrides)
+    with pytest.raises(ValueError):
+        cloud.backup_receipt(path, "a" * 40, allow_local_backup=True)
+
+
+def test_local_receipt_rejects_missing_or_changed_archive(tmp_path):
+    cloud = load("backend/deploy/cloud_run.py")
+    path = make_backup_receipt(tmp_path)
+    archive = tmp_path / "application.dump"
+    archive.write_bytes(b"modified after verification")
+    with pytest.raises(ValueError, match="differs"):
+        cloud.backup_receipt(path, "a" * 40, allow_local_backup=True)
+    archive.unlink()
+    with pytest.raises(FileNotFoundError):
+        cloud.backup_receipt(path, "a" * 40, allow_local_backup=True)
