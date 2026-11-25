@@ -606,7 +606,9 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 try applyConfirmed(result.garden, updatedPlants: result.updatedPlants)
             }
             var currentSnapshot = false
-            if result.replayed == false, let inventory = result.inventory, let items = result.itemInventory {
+            if result.replayed == false, catalogue?.catalogVersion == result.garden.catalogVersion,
+               result.garden.stateVersion >= (confirmed?.stateVersion ?? 0),
+               let inventory = result.inventory, let items = result.itemInventory {
                 try acceptSnapshot(APIGardenSnapshot(profile: profile, garden: result.garden,
                     catalogue: nil, inventory: inventory, itemInventory: items))
                 currentSnapshot = true

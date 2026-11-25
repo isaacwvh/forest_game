@@ -229,6 +229,9 @@ final class GardenEditorTests: XCTestCase {
         let service = EditorTestService(try EditorContract.load())
         service.supportsSnapshots = true
         service.current.strategyContext = try XCTUnwrap(GardenStrategyContract.load().cases.first).context
+        var plant = try XCTUnwrap(service.fixture.inventory.plants.first)
+        plant.gardenSkills = []; plant.gameplayTags = []
+        service.pages["first"] = APIInventory(plants: [plant], nextCursor: nil)
         let store = try makeStore(service)
         await store.start(); store.editing = true
         store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
@@ -252,6 +255,24 @@ final class GardenEditorTests: XCTestCase {
         await store.start(snapshot: initial)
         XCTAssertEqual(service.snapshotCalls, 1); XCTAssertEqual(service.catalogueCalls, 0)
         XCTAssertEqual(store.state, .ready); XCTAssertFalse(store.showingCached)
+    }
+
+    func testUnsentJournalAtRelaunchLoadsCatalogueAfterFreshCommit() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        service.supportsSnapshots = true
+        let journal = MemoryEditJournal()
+        let plant = try XCTUnwrap(fixture.inventory.plants.first)
+        let request = GardenEditRequest(requestId: UUID(), expectedLayoutVersion: 0,
+            catalogVersion: fixture.catalogue.catalogVersion,
+            actions: [GardenEditAction(action: .plant, plantId: plant.id, x: 2, y: 2, rotationDegrees: 0)])
+        try journal.save(PendingGardenEdit(serverID: service.serverID, userID: fixture.profile.userId,
+            gardenID: fixture.emptyGarden.gardenId, body: request.encoded()))
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        XCTAssertEqual(service.bodies.count, 1, "An unsent journal should commit in one attempt")
+        XCTAssertEqual(service.snapshotCalls, 1, "Missing catalogue requires one current snapshot")
+        XCTAssertNil(store.pending); XCTAssertEqual(store.state, .ready)
+        XCTAssertEqual(store.confirmed?.plants.map(\.id), [plant.id])
     }
 
     func testConfirmedLevelCapacitySurvivesLaterStaleInventory() async throws {
