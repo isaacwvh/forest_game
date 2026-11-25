@@ -1,3 +1,26 @@
+## Cloud Run testing — 25 November 2026
+
+The hosted backend is `https://forest-api-482382863751.asia-southeast1.run.app`.
+Pull `codex/cloud-run-deploy-20261125` on the Mac. The shared `Auth.xcconfig`
+and local example now use this URL. An existing ignored
+`MovementForest/Configuration/Local.xcconfig` overrides the shared default:
+remove its old `FOREST_GAME_API_URL` entry or set it to:
+
+```xcconfig
+FOREST_GAME_API_URL = https:/$()/forest-api-482382863751.asia-southeast1.run.app
+```
+
+**Rebuild and install from Xcode:** the API URL is compiled into `Info.plist`;
+the already-installed binary does not change when the backend is deployed.
+Keep the existing bundle identifier, callback scheme and Supabase configuration.
+Install over the existing app rather than deleting it. Check for pending requests
+associated with the old server URL before switching; preserve those journals and
+resolve them deliberately rather than clearing app data.
+
+Manually accept sign-in, profile/catalogue/inventory loading, activity sync, shop
+purchases, garden placement and retry/relaunch behavior. Frontend native CI is
+not a gate for this backend deployment; Mac/iPhone acceptance remains required.
+
 ## Guest and Google auth — 22 November 2026
 
 The integrated auth source adds guest creation/restoration, repeat-safe backend
