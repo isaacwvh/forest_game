@@ -25,6 +25,7 @@ from forest_api.milestone_models import (
     MilestoneState,
 )
 from forest_api.models import ApiRequest, PlayerProgress
+from forest_api.operation_metrics import measure
 from forest_api.visitor_models import VisitorWallet, VisitorWalletEntry
 
 
@@ -77,6 +78,56 @@ def test_definitions_and_opening_are_finite(journey, client, app):
     assert receipt["tokensEarned"] == receipt["gemsEarned"] == "0"
     assert len(receipt["packs"]) == 1 and receipt["packs"][0]["version"] == 20
     assert receipt["capacity"]["unopenedPacks"] == 1
+
+
+def test_policy_cache_reads_active_version_and_only_keeps_committed_definitions(journey, app):
+    app.state.settings.catalogue_cache_seconds = 60
+    sessions = app.state.database.sessions
+
+    def read():
+        with measure() as sample, sessions.begin() as session:
+            policy = tracks.policy(session)
+            return (policy.version, policy.definition), sample["dbResultValueBytes"]
+
+    (version, definition), cold_bytes = read()
+    assert len(definition["quests"]) == 62
+    with sessions.begin() as session:
+        policy = tracks.policy(session)
+        policy.definition["quests"].clear()
+    (warm_version, warm_definition), warm_bytes = read()
+    assert (warm_version, warm_definition) == (version, definition)
+    assert warm_bytes < cold_bytes // 10
+
+    with sessions.begin() as session:
+        session.get(MilestonePolicy, version).active = False
+    with sessions.begin() as session:
+        assert tracks.policy(session) is None
+
+    replacement = "milestones-replacement"
+    with sessions() as session:
+        session.add(
+            MilestonePolicy(
+                version=replacement,
+                effective_at=journey["now"][0],
+                active=True,
+                definition={"quests": [], "publication": "rolled back"},
+            )
+        )
+        session.flush()
+        assert tracks.policy(session).definition["publication"] == "rolled back"
+        session.rollback()
+
+    new_definition = {"quests": [], "publication": "committed"}
+    with sessions.begin() as session:
+        session.add(
+            MilestonePolicy(
+                version=replacement,
+                effective_at=journey["now"][0],
+                active=True,
+                definition=new_definition,
+            )
+        )
+    assert read()[0] == (replacement, new_definition)
 
 
 def test_later_reward_does_not_require_claiming_earlier(journey, client, app):

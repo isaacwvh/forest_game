@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from sqlalchemy import select
 
+from forest_api import reference_data
 from forest_api.calculations import read_remainder
 from forest_api.visitor_models import VisitorContext, VisitorOpportunity, VisitorSchedule
 
@@ -41,7 +42,7 @@ def pause(session, garden_id, boundary):
     row = session.get(VisitorSchedule, garden_id)
     if row is None or row.next_at is None:
         return
-    context = session.get(VisitorContext, row.context_id)
+    context = reference_data.definition(session, VisitorContext, row.context_id)
     future = session.scalars(
         select(VisitorOpportunity)
         .where(
@@ -70,7 +71,7 @@ def pause(session, garden_id, boundary):
 
 
 def plan(session, garden, state, active, boundary):
-    context = session.get(VisitorContext, state.context_id)
+    context = reference_data.definition(session, VisitorContext, state.context_id)
     if context.snapshot["rules"].get("arrival_protocol", 1) != 2 or active.arrival_protocol != 2:
         return
     arrival_rate = rate(context)

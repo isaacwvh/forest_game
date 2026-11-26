@@ -25,12 +25,13 @@ class CatalogueCache:
                 self.entry = key, monotonic() + seconds, value.model_copy(deep=True)
 
 
-class PackPresentationCache:
+class PublishedDefinitionCache:
     """Contained in one database instance; keys identify published immutable rows."""
 
-    def __init__(self):
+    def __init__(self, capacity=32):
         self.lock = Lock()
         self.entries = OrderedDict()
+        self.capacity = capacity
 
     def get(self, key):
         with self.lock:
@@ -45,5 +46,5 @@ class PackPresentationCache:
         with self.lock:
             self.entries[key] = (monotonic() + seconds, deepcopy(value))
             self.entries.move_to_end(key)
-            if len(self.entries) > 32:
+            if len(self.entries) > self.capacity:
                 self.entries.popitem(last=False)

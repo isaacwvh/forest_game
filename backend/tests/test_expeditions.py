@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import event, func, select
 from test_activity_launch import player as player
 from test_visitor_rescale import scene as scene
 from test_woodland import forest as forest
@@ -27,7 +27,7 @@ from forest_api.item_models import (
     OwnedItem,
 )
 from forest_api.item_pricing import token_value_for_rarity
-from forest_api.models import Garden, OwnedPlant, PlayerProgress
+from forest_api.models import Garden, GardenPlacement, OwnedPlant, PlayerProgress, Variant
 from forest_api.visitor_models import VisitorWallet
 
 
@@ -386,6 +386,93 @@ def test_snapshot_completion_and_independent_four_nine_rewards(expedition, app, 
     with app.state.database.sessions() as session:
         recovery.maintain(session, apply=True, now=e["now"][0] + timedelta(days=40))
     assert claim(client, e, run, gem)["gemsEarned"] == "1"
+
+
+def test_welcome_uses_pinned_placed_species_and_reads_each_definition_once(expedition, app, client):
+    e = expedition
+    run = current(client, e)
+    with app.state.database.sessions.begin() as session:
+        garden = session.scalar(select(Garden).where(Garden.owner_id == e["owner"]))
+        pinned = expeditions.content(session, session.get(ExpeditionRun, UUID(run["runId"])))
+        tags = pinned["tags"]
+        herb = session.scalars(
+            select(Variant)
+            .where(
+                Variant.species_id.in_(
+                    [species for species, values in tags.items() if "herb" in values]
+                ),
+                Variant.enabled,
+            )
+            .order_by(Variant.species_id, Variant.variant_id)
+        ).first()
+        plant = services.award_plant(
+            session, e["owner"], herb.species_id, herb.variant_id, "fixture", "welcome-herb"
+        )
+        herb_id = plant.id
+        assert not expeditions.has_tree_and_herb(session, garden, {"oak": ["tree", "herb"]})
+
+    def post(path, **body):
+        response = client.post(
+            f"/v1/me/{path}", headers=e["headers"], json={"requestId": str(uuid4()), **body}
+        )
+        assert response.status_code == 200, response.text
+        return response.json()
+
+    started = post("visitor-sessions", installationId=e["installation"], arrivalProtocol=2)
+    session_id = started["session"]["sessionId"]
+
+    def welcome():
+        for _ in range(8):
+            e["now"][0] += timedelta(seconds=10)
+            state = post(
+                f"visitor-sessions/{session_id}/heartbeat", installationId=e["installation"]
+            )
+            available = [
+                visitor
+                for visitor in state["opportunities"]
+                if datetime.fromisoformat(visitor["issuedAt"]) <= e["now"][0]
+            ]
+            if available:
+                break
+        else:
+            pytest.fail("No welcome opportunity arrived")
+        path = f"visitor-opportunities/{available[0]['opportunityId']}/welcome"
+        request_id = str(uuid4())
+        statements = []
+        engine = app.state.database.engine
+
+        def record(connection, cursor, statement, parameters, context, many):
+            statements.append(statement)
+
+        event.listen(engine, "before_cursor_execute", record)
+        try:
+            receipt = post(path, requestId=request_id)
+        finally:
+            event.remove(engine, "before_cursor_execute", record)
+        assert receipt["tokens"] == "1"
+        for table in ("visitor_contexts", "expedition_templates"):
+            assert sum(f"FROM {table}" in sql for sql in statements) == 1
+        assert post(path, requestId=request_id) == receipt
+
+    welcome()
+    progress = current(client, e)
+    assert quest(progress, "active_butterflies_100")["current"] == 1
+    assert quest(progress, "tree_herb_butterflies_50")["current"] == 0
+    with app.state.database.sessions.begin() as session:
+        session.add(
+            GardenPlacement(
+                plant_id=herb_id,
+                owner_id=e["owner"],
+                garden_id=garden.id,
+                x=4,
+                y=4,
+                rotation_degrees=0,
+            )
+        )
+    welcome()
+    progress = current(client, e)
+    assert quest(progress, "active_butterflies_100")["current"] == 2
+    assert quest(progress, "tree_herb_butterflies_50")["current"] == 1
 
 
 def test_item_capacity_preserves_entitlement_and_same_request_retry(expedition, app, client):

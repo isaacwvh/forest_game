@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from forest_api.catalogue_cache import CatalogueCache, PackPresentationCache
+from forest_api.catalogue_cache import CatalogueCache, PublishedDefinitionCache
 from forest_api.config import Settings
 
 
@@ -26,7 +26,8 @@ class Database:
             info={
                 "settings": settings,
                 "catalogue_cache": CatalogueCache(),
-                "pack_presentation_cache": PackPresentationCache(),
+                "pack_presentation_cache": PublishedDefinitionCache(),
+                "milestone_policy_cache": PublishedDefinitionCache(capacity=1),
             },
         )
         from forest_api.operation_metrics import instrument
@@ -81,12 +82,19 @@ class Database:
             budget = execution_budget.current.get()
             if budget is not None:
                 budget.committed_transactions += 1
+            pending_policy = session.info.get("milestone_policy_to_cache")
+            if pending_policy is not None and session.get_nested_transaction() is None:
+                version, definition = pending_policy
+                session.info["milestone_policy_cache"].put(
+                    version, definition, settings.catalogue_cache_seconds
+                )
 
         @event.listens_for(self.sessions, "after_transaction_end")
         def release_references(session, transaction):
             if transaction.parent is None:
                 session.info.pop("reference_definitions", None)
                 session.info.pop("plant_definitions", None)
+                session.info.pop("milestone_policy_to_cache", None)
 
     @contextmanager
     def worker_session(self):

@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import NAMESPACE_URL, uuid5
 
 from sqlalchemy import func, select, text
+from sqlalchemy.orm import aliased
 
 from forest_api import collection, services
 from forest_api.expedition_definitions import ITEMS, QUESTS, VERSION, definition
@@ -16,6 +17,7 @@ from forest_api.expedition_models import (
     ExpeditionSchedule,
     ExpeditionTemplate,
 )
+from forest_api.reference_data import definition as reference_definition
 
 
 def month_start(now):
@@ -63,7 +65,7 @@ def run_for(session, owner, boundary):
 
 
 def content(session, run):
-    return session.get(ExpeditionTemplate, run.template_version).definition
+    return reference_definition(session, ExpeditionTemplate, run.template_version).definition
 
 
 def set_progress(session, run, key, value, boundary):
@@ -117,7 +119,7 @@ def contribution(session, run, key, identity, boundary):
     set_progress(session, run, key, len(seen), boundary)
 
 
-def garden_facts(session, garden, run):
+def garden_facts(session, garden):
     from forest_api.item_models import ItemPlacement
     from forest_api.models import GardenPlacement, OwnedPlant
 
@@ -132,20 +134,41 @@ def garden_facts(session, garden, run):
     presenter = services.PlantPresenter(session)
     presenter.preload(plants)
     stages = {p.id: presenter.plant(p, None).growth_stage for p in plants}
-    tags = content(session, run)["tags"]
-    trees = {p.id for p in plants if "tree" in tags.get(p.species_id, [])}
-    herbs = {p.id for p in plants if "herb" in tags.get(p.species_id, [])}
     items = list(
         session.scalars(select(ItemPlacement.item_id).where(ItemPlacement.garden_id == garden.id))
     )
-    return stages, items, any(t != h for t in trees for h in herbs)
+    return stages, items
+
+
+def has_tree_and_herb(session, garden, tags):
+    from forest_api.models import GardenPlacement, OwnedPlant
+
+    tree_species = [species for species, kinds in tags.items() if "tree" in kinds]
+    herb_species = [species for species, kinds in tags.items() if "herb" in kinds]
+    herb_placement, herb = aliased(GardenPlacement), aliased(OwnedPlant)
+    pair = (
+        select(GardenPlacement.plant_id)
+        .join(OwnedPlant, OwnedPlant.id == GardenPlacement.plant_id)
+        .join(
+            herb_placement,
+            (herb_placement.garden_id == GardenPlacement.garden_id)
+            & (herb_placement.plant_id != GardenPlacement.plant_id),
+        )
+        .join(herb, herb.id == herb_placement.plant_id)
+        .where(
+            GardenPlacement.garden_id == garden.id,
+            OwnedPlant.species_id.in_(tree_species),
+            herb.species_id.in_(herb_species),
+        )
+    )
+    return session.scalar(select(pair.exists()))
 
 
 def observe_garden(session, garden, boundary, *, before=None):
     run = run_for(session, garden.owner_id, boundary)
     if run is None or not run.starts_at <= boundary < run.ends_at:
         return
-    stages, items, _ = garden_facts(session, garden, run)
+    stages, items = garden_facts(session, garden)
     set_progress(session, run, "items_together_4", len(items), boundary)
     set_progress(session, run, "all_stages_together", len(set(stages.values())), boundary)
     order = {s: i for i, s in enumerate(("sprout", "seedling", "young", "adult"))}
@@ -159,7 +182,7 @@ def observe_welcome(session, garden, boundary, identity):
     if run is None:
         return
     contribution(session, run, "active_butterflies_100", identity, boundary)
-    if garden_facts(session, garden, run)[2]:
+    if has_tree_and_herb(session, garden, content(session, run)["tags"]):
         contribution(session, run, "tree_herb_butterflies_50", identity, boundary)
 
 

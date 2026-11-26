@@ -13,7 +13,7 @@ from uuid import uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from forest_api import services, visitor_schedule
+from forest_api import reference_data, services, visitor_schedule
 from forest_api.calculations import (
     MAX_INTEGER,
     MICRO,
@@ -184,7 +184,9 @@ def create_context(session, settings, garden, boundary):
         },
     )
     current = session.get(VisitorState, garden.id)
-    previous = session.get(VisitorContext, current.context_id) if current else None
+    previous = (
+        reference_data.definition(session, VisitorContext, current.context_id) if current else None
+    )
     if (
         previous
         and previous.rule_version == context.rule_version
@@ -358,7 +360,7 @@ def settle(session, settings, garden, boundary, *, can_issue=False, draw=random_
         .order_by(VisitorRules.effective_at)
     ).all()
     change_times = {row.effective_at for row in changes}
-    daily_context = session.get(VisitorContext, state.context_id)
+    daily_context = reference_data.definition(session, VisitorContext, state.context_id)
     expiry = daily_context.snapshot.get("dailySkillExpiresAt")
     if expiry and state.settled_at < datetime.fromisoformat(expiry) <= boundary:
         change_times.add(datetime.fromisoformat(expiry))
@@ -367,7 +369,7 @@ def settle(session, settings, garden, boundary, *, can_issue=False, draw=random_
         cuts.add(active.lease_expires_at)
     for end in sorted(cuts):
         start = state.settled_at
-        context = session.get(VisitorContext, state.context_id)
+        context = reference_data.definition(session, VisitorContext, state.context_id)
         if end > start:
             is_active = active is not None and start < active.lease_expires_at
             detail = (
@@ -415,7 +417,7 @@ def settle(session, settings, garden, boundary, *, can_issue=False, draw=random_
         and boundary < active.lease_expires_at
         and state.last_slot < current_slot
     ):
-        context = session.get(VisitorContext, state.context_id)
+        context = reference_data.definition(session, VisitorContext, state.context_id)
         active_interval(
             session,
             state,
@@ -485,7 +487,7 @@ def summary(session, garden, state, boundary):
     from forest_api.visitor_models import VisitorControl
 
     control = session.get(VisitorControl, garden.owner_id)
-    context = session.get(VisitorContext, state.context_id)
+    context = reference_data.definition(session, VisitorContext, state.context_id)
     rule = session.get(VisitorRules, context.rule_version)
     wallet = session.get(VisitorWallet, garden.owner_id)
     active = active_session(session, garden)
@@ -643,7 +645,7 @@ def mutate(session, settings, identity, body, operation, clock, *, target=None, 
             draw=draw,
         )
         active = active_session(session, garden)
-        context = session.get(VisitorContext, state.context_id)
+        context = reference_data.definition(session, VisitorContext, state.context_id)
         rules = context.snapshot["rules"]
         event_id, visits, tokens = None, 0, 0
         reward_detail = []

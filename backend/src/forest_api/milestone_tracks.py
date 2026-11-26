@@ -10,6 +10,8 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import load_only
+from sqlalchemy.orm.attributes import set_committed_value
 
 from forest_api import collection, services
 from forest_api import milestone_definitions as config
@@ -39,7 +41,27 @@ LEGACY = {
 
 
 def policy(session):
-    return session.scalar(select(MilestonePolicy).where(MilestonePolicy.active))
+    query = select(MilestonePolicy).where(MilestonePolicy.active)
+    cache = session.info.get("milestone_policy_cache")
+    if cache is None or session.info["settings"].catalogue_cache_seconds <= 0:
+        return session.scalar(query)
+    # Check the active version in SQL. The schema makes the definition immutable
+    # for that version, even when the active flag changes.
+    published = session.scalar(
+        query.options(
+            load_only(MilestonePolicy.version, MilestonePolicy.effective_at, MilestonePolicy.active)
+        )
+    )
+    if published is None:
+        return None
+    cached = cache.get(published.version)
+    if cached is not None:
+        set_committed_value(published, "definition", cached)
+    elif session.get_nested_transaction() is None:
+        # Promote only after the transaction commits, so a rolled-back version
+        # can never supply the definition for a later publication.
+        session.info["milestone_policy_to_cache"] = (published.version, published.definition)
+    return published
 
 
 def enroll(session, owner, published, boundary):
