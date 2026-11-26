@@ -14,6 +14,8 @@ wire = activity[activity.index("enum ActivityWire"):activity.index("    static f
 workouts = activity[activity.index("struct WorkoutSegmentUpload"):activity.index("struct APIActivityDevice")]
 models = (ROOT / "MovementForest/Models/ExpeditionModels.swift").read_text()
 coordinator = (ROOT / "MovementForest/Services/ExpeditionCoordinator.swift").read_text().replace("import Combine", "")
+collection = (ROOT / "MovementForest/Models/CollectionModels.swift").read_text(encoding="utf-8")
+scope = collection[collection.index("enum CollectionReadScope:"):collection.index("@MainActor\nprotocol CollectionServing")]
 stubs = r'''
 import Foundation
 protocol ObservableObject: AnyObject { }
@@ -49,7 +51,7 @@ struct Receipt { let entitlementId: UUID }
 struct State { var pending: Pending?; var result: Receipt? }
 @MainActor final class CollectionCoordinator {
     var canMutate = true; var state = State(); var message: String?; var tokenBalance: String?
-    func refresh() async { }
+    func refresh(scope: CollectionReadScope = .full) async { }
     func claimExpedition(run: UUID, entitlement: UUID) async { }
 }
 '''
@@ -82,5 +84,5 @@ do {
 } catch { }
 print("PASS: real expedition models and coordinator typecheck with platform interfaces; HTTP fixture, UTC, independent claims, exact pending bytes and invalid-count rejection.")
 '''
-(OUT / "main.swift").write_text(f"{stubs}\n{wire}\n{workouts}\n{models}\n{coordinator}\n{checks}", encoding="utf-8", newline="\n")
+(OUT / "main.swift").write_text(f"{scope}\n{stubs}\n{wire}\n{workouts}\n{models}\n{coordinator}\n{checks}", encoding="utf-8", newline="\n")
 print(OUT / "main.swift")
