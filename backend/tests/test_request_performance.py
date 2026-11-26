@@ -310,3 +310,105 @@ def test_published_content_snapshot_uses_less_sql_than_separate_reads(rotating):
             }
         )
     )
+
+
+def test_transform_receipt_reuses_inventory_only_at_the_matching_version(
+    client, headers, garden_setup
+):
+    from hashlib import sha256
+
+    _, _, first, _ = garden_setup
+    credentials = capable(headers)
+    initial = client.get(SNAPSHOT, headers=credentials).json()
+    assert initial["supportsStrategyDigest"] is True
+    planted = client.post(
+        EDITS,
+        headers=credentials,
+        params={"knownInventoryStateVersion": initial["garden"]["stateVersion"]},
+        json=edit_body(plant_action(first)),
+    ).json()
+    assert planted["inventory"] is not None
+    assert planted["inventoryBaseStateVersion"] is None
+    base = planted["garden"]["stateVersion"]
+
+    body = edit_body({"action": "rotate", "plantId": str(first), "rotationDegrees": 45}, version=1)
+    preview = client.post("/v1/me/garden/preview", headers=credentials, json=body)
+    assert preview.status_code == 200, preview.text
+    digest = "sha256:" + sha256(strategy_signature(preview.json()).encode()).hexdigest()
+    wrong = {**body, "expectedStrategySignature": "sha256:" + "0" * 64}
+    assert (
+        client.post(EDITS, headers=credentials, json=wrong).json()["error"]["code"]
+        == "strategy_changed"
+    )
+    body["expectedStrategySignature"] = digest
+    compact = client.post(
+        EDITS,
+        headers=credentials,
+        params={"knownInventoryStateVersion": base},
+        json=body,
+    ).json()
+    assert compact["inventoryBaseStateVersion"] == base
+    assert compact["inventory"] is None and compact["itemInventory"] is None
+    assert compact["capacity"]["plantedPlants"] == 1
+    assert client.post(EDITS, headers=credentials, json=body).json()["replayed"] is True
+
+    fallback = client.post(
+        EDITS,
+        headers=credentials,
+        params={"knownInventoryStateVersion": base},
+        json=edit_body(
+            {"action": "rotate", "plantId": str(first), "rotationDegrees": 90}, version=2
+        ),
+    ).json()
+    assert fallback["inventoryBaseStateVersion"] is None
+    assert fallback["inventory"] is not None and fallback["itemInventory"] is not None
+
+
+def test_focused_shop_and_home_measure_both_links(economy):
+    app, client, headers = economy["app"], economy["client"], economy["headers"]
+    app.state.metrics.enabled = True
+    headers = {**headers, "Accept-Encoding": "identity"}
+    route = "/v1/me/collection"
+    full = client.get(route, headers=headers)
+    assert full.status_code == 200
+    full_metrics = dict(app.state.metrics.samples[-1])
+    shop = client.get(route, params={"view": "shop"}, headers=headers)
+    assert shop.status_code == 200
+    assert "milestones" not in shop.json()
+    assert shop.json()["offers"] == full.json()["offers"]
+    shop_metrics = dict(app.state.metrics.samples[-1])
+    assert client.get(route, params={"view": "shop"}, headers=headers).json() == shop.json()
+    warm_shop_metrics = dict(app.state.metrics.samples[-1])
+    assert warm_shop_metrics["queries"] <= shop_metrics["queries"]
+    assert warm_shop_metrics["dbResultValueBytes"] <= shop_metrics["dbResultValueBytes"]
+    home = client.get(route, params={"view": "home"}, headers=headers)
+    assert home.status_code == 200
+    assert home.json()["offers"] == []
+    assert home.json()["capacity"] == full.json()["capacity"]
+    assert home.json()["milestones"] == full.json()["milestones"]
+    home_metrics = dict(app.state.metrics.samples[-1])
+    assert home_metrics["queries"] < full_metrics["queries"]
+    assert 0 < home_metrics["dbResultValueBytes"] < full_metrics["dbResultValueBytes"]
+    assert home_metrics["responseBytes"] < full_metrics["responseBytes"]
+    assert shop_metrics["queries"] < full_metrics["queries"]
+    plain = client.get("/v1/catalog", headers=headers)
+    plain_metrics = dict(app.state.metrics.samples[-1])
+    zipped = client.get("/v1/catalog", headers={**headers, "Accept-Encoding": "gzip"})
+    assert zipped.headers["content-encoding"] == "gzip"
+    assert zipped.json() == plain.json()
+    gzip_metrics = dict(app.state.metrics.samples[-1])
+    assert gzip_metrics["responseBytes"] < plain_metrics["responseBytes"]
+    print(
+        "EGRESS",
+        {
+            name: (row["queries"], row["dbResultValueBytes"], row["responseBytes"])
+            for name, row in [
+                ("full", full_metrics),
+                ("shop", shop_metrics),
+                ("warm-shop", warm_shop_metrics),
+                ("home", home_metrics),
+                ("catalog", plain_metrics),
+                ("gzip", gzip_metrics),
+            ]
+        },
+    )

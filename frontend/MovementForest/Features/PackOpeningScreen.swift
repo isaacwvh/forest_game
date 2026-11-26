@@ -97,13 +97,13 @@ struct PackOpeningScreen: View {
                     .contentShape(Rectangle())
                     .onTapGesture { advance() }
                     .accessibilityHidden(true)
-                    if step == .waiting, submitted, !store.busy {
+                    if receipt == nil, submitted, !store.busy {
                         Text(store.message ?? "Awaiting confirmation.").font(.callout)
                         if store.state.pending == nil {
                             Text("Return to Packs to try again.").font(.callout).foregroundStyle(JournalTheme.secondary)
                         }
                     }
-                    if step == .opened { Text(PackRevealStep.rarityName(receipt?.rarity)).font(.headline) }
+                    if step == .opened, let receipt = receipt { Text(PackRevealStep.rarityName(receipt.rarity)).font(.headline) }
                     if step == .result, let result = receipt, let plant = result.plant {
                         PlantNameText("\(plant.speciesId.capitalized) · \(plant.variantId.capitalized)",
                                       rarity: result.rarity, announcesRarity: false)
@@ -125,6 +125,7 @@ struct PackOpeningScreen: View {
                 submitted = true; acceptResult(recovered: true); return
             }
             let recovering = store.state.pending != nil
+            if !recovering { step = .sealed; actionFocused = true }
             if let path = PresentationAssets.packPath(packID: pack.packId, part: "sealed") { sealed = PresentationAssets.image(path) }
             if let path = PresentationAssets.packPath(packID: pack.packId, part: "opened") { opened = PresentationAssets.image(path) }
             if let path = PresentationAssets.packPath(packID: pack.packId, part: "top-strip") { strip = PresentationAssets.image(path) }
@@ -144,13 +145,13 @@ struct PackOpeningScreen: View {
 
     @ViewBuilder private var openingActions: some View {
         VStack(spacing: 10) {
-            if step == .waiting {
-                if !submitted || store.busy { ProgressView("Confirming…") }
-                else {
-                    if store.state.pending != nil {
-                        Button("Retry saved opening") { Task { await store.refresh(); acceptResult(recovered: true) } }
-                            .buttonStyle(.journalSecondary).frame(minHeight: 44)
-                    }
+            if step == .waiting || (receipt == nil && (step == .opened || (submitted && !store.busy))) {
+                if !submitted || store.busy {
+                    ProgressView("Confirming…")
+                } else if store.state.pending != nil {
+                    Button("Retry saved opening") {
+                        Task { await store.refresh(scope: .packs); acceptResult(recovered: true) }
+                    }.buttonStyle(.journalSecondary).frame(minHeight: 44)
                 }
                 Button("Return to Packs") { interrupt() }.buttonStyle(.journalQuiet).frame(minHeight: 44)
             } else if step == .sealed || step == .opened {
@@ -175,11 +176,11 @@ struct PackOpeningScreen: View {
         guard !interrupted, let result = store.confirmedOpening(for: pack.id) else { return }
         receipt = result
         if recovered { lifted = true; torn = true; step = .result }
-        else { step = .sealed }
+        else if step == .waiting { step = .sealed }
         actionFocused = true
     }
     private func advance() {
-        guard !interrupted, phase != .background, receipt != nil else { return }
+        guard !interrupted, phase != .background, receipt != nil || !submitted else { return }
         if step.canTear {
             actionFocused = false
             step = .tearing
@@ -192,7 +193,7 @@ struct PackOpeningScreen: View {
                 step = .opened
                 actionFocused = true
             }
-        } else if step.canReveal {
+        } else if step.canReveal, receipt != nil {
             actionFocused = false
             step = .revealing
             transition = Task { @MainActor in

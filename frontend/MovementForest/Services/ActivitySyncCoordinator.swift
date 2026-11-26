@@ -112,6 +112,13 @@ final class ActivitySyncCoordinator: ObservableObject {
             if !beforeMembershipChange { return result }
             guard result, active, !Task.isCancelled else { return false }
         }
+        // A locally disabled uploader has no observations to flush before a
+        // membership edit. The edit transaction still checks ownership, layout,
+        // current strategy and settlement under the account lock.
+        if beforeMembershipChange, !enabled, saved.operations.isEmpty,
+           editor.state == .ready, !editor.showingCached, editor.pending == nil {
+            return true
+        }
         let id = UUID(); runID = id
         LifecycleDiagnostics.event("sync started run=\(id)")
         running = Task {

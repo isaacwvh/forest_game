@@ -37,7 +37,7 @@ final class RootPresentationObserver: ObservableObject {
             attention = [
                 HomeAttention.milestoneCount(collection?.milestones ?? [], confirmed: collection?.confirmedMilestoneIDs ?? []),
                 HomeAttention.expeditionCount(connection.expeditions?.status?.current, confirmed: collection?.state.result?.entitlementId),
-                HomeAttention.packCount(collection?.packs ?? [], opened: collection?.state.result?.ownedPackId)
+                collection?.unopenedPackCount ?? 0
             ]
         }
     }

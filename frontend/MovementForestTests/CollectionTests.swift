@@ -64,6 +64,14 @@ private final class FakeCollection: CollectionServing {
     var saleReceiptCapacity: APIInventoryCapacity?
     var catalogVersion: String?
     var catalogueCalls = 0
+    var supportsFocusedReads = false
+    var scopes: [CollectionReadScope] = []
+    var packReads = 0
+    var openingReads = 0
+    func summary(scope: CollectionReadScope) async throws -> APICollectionSummary {
+        scopes.append(scope)
+        return try await summary()
+    }
     init(_ contract: CollectionContract) { self.contract = contract }
     func summary() async throws -> APICollectionSummary {
         if checkRefreshCancellation { try Task.checkCancellation() }
@@ -74,8 +82,11 @@ private final class FakeCollection: CollectionServing {
         value.catalogVersion = catalogVersion; return value
     }
     func catalogue() async throws -> APICatalogue { catalogueCalls += 1; return contract.catalogue }
-    func packs(after: UUID?) async throws -> APIPackPage { contract.packs }
-    func openings(after: UUID?) async throws -> APIOpeningPage { APIOpeningPage(openings: [contract.opening], nextCursor: nil) }
+    func packs(after: UUID?) async throws -> APIPackPage { packReads += 1; return contract.packs }
+    func openings(after: UUID?) async throws -> APIOpeningPage {
+        openingReads += 1
+        return APIOpeningPage(openings: [contract.opening], nextCursor: nil)
+    }
     func definition(pack: String, version: Int) async throws -> APIPackDefinition {
         try XCTUnwrap(contract.summary.offers.first { $0.pack.packId == pack && $0.pack.version == version }?.pack)
     }
@@ -114,6 +125,28 @@ private final class FakeCollection: CollectionServing {
 
 @MainActor
 final class CollectionTests: XCTestCase {
+    func testFocusedShopAndOpeningDoNotWaitForUnrelatedReads() async throws {
+        let service = FakeCollection(try CollectionContract.load())
+        service.supportsFocusedReads = true
+        service.catalogVersion = service.contract.catalogue.catalogVersion
+        let store = CollectionCoordinator(userID: UUID(), service: service,
+            journal: MemoryCollectionJournal(), initialCatalogue: service.contract.catalogue)
+        await store.refresh(scope: .shop)
+        XCTAssertEqual(service.scopes, [.shop])
+        XCTAssertEqual(service.catalogueCalls, 0)
+        XCTAssertEqual(service.packReads, 0)
+        XCTAssertEqual(service.openingReads, 0)
+        await store.refresh(scope: .packs)
+        XCTAssertEqual(service.packReads, 1)
+        XCTAssertEqual(service.openingReads, 1)
+        let pack = try XCTUnwrap(store.packs.first { store.confirmedOpening(for: $0.id) == nil })
+        await store.open(pack)
+        XCTAssertNotNil(store.confirmedOpening(for: pack.id))
+        XCTAssertFalse(store.busy)
+        XCTAssertEqual(service.packReads, 1)
+        XCTAssertEqual(service.openingReads, 1)
+    }
+
     func testVerifiedCatalogueVersionReusesGardenCatalogueAndReloadsOnChange() async throws {
         let service = FakeCollection(try CollectionContract.load())
         service.catalogVersion = service.contract.catalogue.catalogVersion

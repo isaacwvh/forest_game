@@ -2,6 +2,7 @@
 
 from sqlalchemy import select
 
+from forest_api import reference_data
 from forest_api.item_models import ItemIdentity, ItemPlacement, ItemSkillBinding, ItemSkillProfile
 from forest_api.skill_rules import SkillEffect
 from forest_api.skills import ItemFacts
@@ -57,10 +58,14 @@ def facts(session, garden):
 
 
 def descriptions(session, definition):
-    binding = session.get(ItemSkillBinding, (definition.id, definition.version))
+    binding = reference_data.definition(
+        session, ItemSkillBinding, (definition.id, definition.version)
+    )
     if binding is None:
         return []
-    profile = session.get(ItemSkillProfile, (binding.profile_id, binding.profile_version))
+    profile = reference_data.definition(
+        session, ItemSkillProfile, (binding.profile_id, binding.profile_version)
+    )
     if profile.rules.get("triggeredGrants"):
         return [
             {
@@ -92,7 +97,9 @@ def descriptions(session, definition):
 
 def rules_for_definition(session, definition):
     """Complete pinned rules for prediction; no attachment to current catalogue defaults."""
-    binding = session.get(ItemSkillBinding, (definition.id, definition.version))
+    binding = reference_data.definition(
+        session, ItemSkillBinding, (definition.id, definition.version)
+    )
     if binding is None:
         return {
             "profileId": definition.id,
@@ -100,7 +107,9 @@ def rules_for_definition(session, definition):
             "effects": [],
             "dailyGrant": None,
         }
-    profile = session.get(ItemSkillProfile, (binding.profile_id, binding.profile_version))
+    profile = reference_data.definition(
+        session, ItemSkillProfile, (binding.profile_id, binding.profile_version)
+    )
     from forest_api.activity_inputs import WORKOUT_TYPES
 
     effects = []

@@ -121,7 +121,7 @@ struct APICollectionSummary: Codable {
     var shop: APIShopRotation? = nil
 }
 
-struct APIIntroMilestone: Codable, Identifiable {
+struct APIIntroMilestone: Codable, Equatable, Identifiable {
     let milestoneId: String
     let title: String
     let description: String
@@ -212,6 +212,12 @@ struct APICollectionReceipt: Codable, Identifiable {
     var ownedItemId: UUID? = nil
     var ownedItemIds: [UUID]? = nil
     var itemCapacity: APIItemCapacity? = nil
+    var inventoryBaseStateVersion: Int64? = nil
+    var gardenStateVersion: Int64? = nil
+    var ownedItems: [APIOwnedItem]? = nil
+    var remainingAllowance: Int? = nil
+    var offerId: String? = nil
+    var offerVersion: Int? = nil
     var id: UUID { openingId ?? exchangeId ?? requestId }
 }
 
@@ -327,10 +333,17 @@ struct CollectionJournalState: Codable {
     var milestonesConfirmedAt: Date? = nil
 }
 
+enum CollectionReadScope: Hashable {
+    case full, home, shop, packs, catalog
+}
+
 @MainActor
 protocol CollectionServing {
     var serverID: String { get }
+    var supportsFocusedReads: Bool { get }
     func summary() async throws -> APICollectionSummary
+    func summary(scope: CollectionReadScope) async throws -> APICollectionSummary
+    func latestOpening() async throws -> APIOpeningPage
     func catalogue() async throws -> APICatalogue
     func packs(after: UUID?) async throws -> APIPackPage
     func openings(after: UUID?) async throws -> APIOpeningPage
@@ -341,6 +354,10 @@ protocol CollectionServing {
 }
 
 extension CollectionServing {
+    var supportsFocusedReads: Bool { false }
+    func summary(scope: CollectionReadScope) async throws -> APICollectionSummary { try await summary() }
+    func latestOpening() async throws -> APIOpeningPage { try await openings(after: nil) }
+
     func itemSaleQuote(item: UUID) async throws -> APIItemSaleQuote {
         throw ForestError.invalidData("Connect to refresh this item's resale value.")
     }
@@ -352,7 +369,21 @@ extension CollectionServing {
 struct APICollectionRepository: CollectionServing {
     let client: APIClient
     var serverID: String { client.baseURL.absoluteString }
-    func summary() async throws -> APICollectionSummary { try await client.request("v1/me/collection") }
+    var supportsFocusedReads: Bool { true }
+    func summary() async throws -> APICollectionSummary { try await summary(scope: .full) }
+    func summary(scope: CollectionReadScope) async throws -> APICollectionSummary {
+        let view: String
+        switch scope {
+        case .full: view = "full"
+        case .home: view = "home"
+        case .shop: view = "shop"
+        case .packs, .catalog: view = "packs"
+        }
+        return try await client.request("v1/me/collection", query: [URLQueryItem(name: "view", value: view)])
+    }
+    func latestOpening() async throws -> APIOpeningPage {
+        try await client.request("v1/me/pack-openings", query: [URLQueryItem(name: "latest", value: "true")])
+    }
     func saleQuote(plant: UUID) async throws -> APIPlantSaleQuote {
         try await client.request("v1/me/plants/\(plant.uuidString)/sale-quote")
     }

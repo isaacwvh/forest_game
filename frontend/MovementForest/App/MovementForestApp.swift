@@ -229,7 +229,7 @@ struct RootView: View {
                 .task(id: connection.levelUps?.id) { connection.levelUps?.setEligible(levelUpAllowed) }
                 .task(id: homeAttentionRevision) {
                     guard phase == .active else { return }
-                    await connection.collection?.refresh()
+                    await connection.collection?.refresh(scope: .home)
                     guard !Task.isCancelled else { return }
                     await connection.expeditions?.refresh()
                 }
@@ -397,7 +397,7 @@ struct RootView: View {
             return HomeAttention.rewardDescription(HomeAttention.expeditionCount(connection.expeditions?.status?.current,
                 confirmed: collection?.state.result?.entitlementId))
         case .draws:
-            let count = HomeAttention.packCount(collection?.packs ?? [], opened: collection?.state.result?.ownedPackId)
+            let count = collection?.unopenedPackCount ?? 0
             return count == 0 ? "" : "\(count) unopened \(count == 1 ? "pack" : "packs")"
         case .exchange, .catalog: return ""
         }

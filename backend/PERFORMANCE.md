@@ -110,3 +110,48 @@ CPU, instance limits or connection pools. The code-only release procedure is in
 `CLOUD_RUN.md`. The backend is deployed; rebuild/install the updated iOS app to
 use the reduced client request sequence. Preserve compatible backend support for
 any queued requests containing the new strategy expectation during rollback.
+
+## Focused synchronization and bandwidth
+
+The phone keeps reversible layout work in the garden draft and saves the resulting
+actions as one transaction. Drafts store individual placement differences in their
+undo/redo history and can still restore earlier full-layout journals. A successful
+edit applies its receipt once. Transform-only saves can supply the version of their
+cached inventory and reuse it when the server verifies the matching base state.
+The server still validates versions, ownership, geometry, garden effects and
+settlement. A negotiated SHA-256 digest replaces the full strategy signature on the
+wire. Membership changes and stale bases continue receiving current inventory
+pages. Historical receipts still reconcile with a current snapshot.
+
+Shop, Home and Packs scope their collection reads to the information each screen
+uses. Shop can reuse a read for ten seconds when revisited and still refreshes on
+foreground entry, expiry or a manual refresh. Packs requests only the latest
+opening. Purchase and opening receipts update the wallet and pack list, and an
+inventory receipt can update a complete, version-matched local page. A partial or
+stale page is refreshed independently of the confirmation UI. The pack animation
+can start while the opening is pending. The reveal and butterfly rewards still
+depend on a confirmed receipt. A butterfly is reserved as soon as its tap is
+accepted locally while its durable request is being saved.
+
+Pack validation batches reference lookups into six projected queries regardless
+of the number of outcomes. Shop summaries cache up to 32 immutable pack
+presentations per process using the existing catalogue cache duration. Current
+offers, quantities and allowances are read authoritatively. Opening history uses
+a single joined query, and a ready Shop week is checked without reading its plan.
+The API negotiates gzip for responses of at least 2 KiB.
+
+When operation metrics are enabled, the API records request and response body
+bytes. It also records PostgreSQL result value bytes, sampled for at most 4,096
+cells per request or worker pass. This is a lower bound on database transfer.
+It excludes protocol framing, connection and pool probes, backups and other
+traffic outside the API/worker process. Use it alongside Supabase usage totals
+to distinguish API reads, scheduled work and exports. Compare bytes per action,
+active session and idle day after an authorized release.
+
+In the local collection fixture, switching from the full summary to Home reduced
+queries from 17 to 6, database result values from 1,918 to 257 bytes, and HTTP
+response bodies from 1,919 to 255 bytes. Negotiated gzip reduced the fixture
+catalogue response from 3,318 to 790 bytes. A draft with 50 single-object edits
+used less than half the prior serialized draft size and preserved all undo and
+redo steps. These results use disposable fixtures and do not establish live
+Supabase usage or iPhone latency.

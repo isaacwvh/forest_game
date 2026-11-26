@@ -109,6 +109,20 @@ private final class EditorTestService: GardenServing {
     var includesCapacity = false
     var supportsSnapshots = false
     var snapshotCalls = 0
+    var compactTransforms = false
+    var sentInventoryVersions: [Int64?] = []
+    func edit(body: Data, knownInventoryStateVersion: Int64?) async throws -> GardenEditResult {
+        sentInventoryVersions.append(knownInventoryStateVersion)
+        let before = current.stateVersion
+        var result = try await edit(body: body)
+        if compactTransforms, before == knownInventoryStateVersion, result.replayed == false {
+            result.inventoryBaseStateVersion = before
+            result.capacity = result.inventory?.capacity
+            result.inventory = nil
+            result.itemInventory = nil
+        }
+        return result
+    }
     var catalogueCalls = 0
 
     init(_ fixture: EditorContract) {
@@ -230,6 +244,30 @@ final class GardenEditorTests: XCTestCase {
         await store.refresh()
         XCTAssertEqual(service.snapshotCalls, 2); XCTAssertEqual(service.catalogueCalls, 0)
         XCTAssertNotNil(store.catalogue, "A matching catalogue may be omitted on refresh")
+    }
+
+    func testCompactTransformKeepsStoredCopiesAndAvoidsRefreshing() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        service.supportsSnapshots = true
+        service.includesCapacity = true
+        let store = try makeStore(service)
+        await store.start()
+        let plant = try XCTUnwrap(store.inventory.first)
+        store.begin(plant, kind: .plant)
+        store.updatePosition(x: 2, y: 2)
+        await store.releaseCandidate()
+        let stored = store.inventory
+        let previousVersion = try XCTUnwrap(store.confirmed?.stateVersion)
+        service.compactTransforms = true
+        store.begin(try XCTUnwrap(store.confirmed?.plants.first), kind: .move)
+        store.updatePosition(x: 3, y: 3)
+        await store.releaseCandidate()
+        XCTAssertEqual(service.sentInventoryVersions.last, .some(previousVersion))
+        XCTAssertEqual(service.snapshotCalls, 1)
+        XCTAssertEqual(store.inventory, stored)
+        XCTAssertEqual(store.confirmed?.stateVersion, previousVersion + 1)
+        XCTAssertEqual(store.confirmed?.plants.first?.placement?.x, 3)
+        XCTAssertEqual(store.state, .ready)
     }
 
     func testLostFreshResponseReplaysThenReadsCurrentSnapshot() async throws {

@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from forest_api import history_worker, shop_worker
 from forest_api.config import Settings
 from forest_api.database import Database
+from forest_api.operation_metrics import measure
 
 
 def response(result, task):
@@ -38,12 +39,21 @@ def create_app(settings: Settings | None = None):
     def live():
         return {"status": "ok"}
 
+    def measured_pass(operation, task):
+        if not settings.operation_metrics_enabled:
+            return response(operation(), task)
+        with measure() as sample:
+            result = operation()
+        for key in ("queries", "dbResultValueBytes", "dbResultSampleTruncated"):
+            result[key] = sample[key]
+        return response(result, task)
+
     @app.post("/tasks/history")
     def history():
-        return response(history_worker.tick(database, settings), "history")
+        return measured_pass(lambda: history_worker.tick(database, settings), "history")
 
     @app.post("/tasks/shop")
     def shop():
-        return response(shop_worker.tick(database), "shop")
+        return measured_pass(lambda: shop_worker.tick(database), "shop")
 
     return app

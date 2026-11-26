@@ -27,6 +27,42 @@ final class GardenStrategyTests: XCTestCase {
             XCTAssertEqual(value.signature, reversed.signature, "Input order: " + example.name)
         }
     }
+    func testDraftHistoryRoundTripsCompactlyAndReadsOlderDrafts() throws {
+        let fixture = try XCTUnwrap(GardenStrategyContract.load().cases.first { $0.name == "all_species" })
+        let gardenID = UUID()
+        let garden = APIGarden(gardenId: gardenID, width: 50, depth: 50, coordinateUnit: "unit",
+            gardenUnitMetres: 1, catalogVersion: "fixture", layoutVersion: 0, stateVersion: 0, plants: [])
+        var draft = GardenDraftSession(garden: garden, plants: fixture.plants, items: [])
+        for plant in fixture.plants {
+            draft.layout.plants[plant.id] = APIPlacement(gardenId: gardenID, x: 1, y: 1, rotationDegrees: 0)
+        }
+        let id = try XCTUnwrap(fixture.plants.first?.id)
+        var legacyUndo: [GardenDraftLayout] = []
+        for position in 2...51 {
+            legacyUndo.append(draft.layout)
+            var next = draft.layout
+            next.plants[id] = APIPlacement(gardenId: gardenID, x: Decimal(position), y: 1, rotationDegrees: 0)
+            draft.apply(next)
+        }
+        let encoder = JSONEncoder(), decoder = JSONDecoder()
+        let compact = try encoder.encode(draft)
+        var legacy = try XCTUnwrap(JSONSerialization.jsonObject(with: compact) as? [String: Any])
+        legacy.removeValue(forKey: "undoChanges")
+        legacy.removeValue(forKey: "redoChanges")
+        legacy["undo"] = try JSONSerialization.jsonObject(with: encoder.encode(legacyUndo))
+        legacy["redo"] = []
+        let previousBytes = try JSONSerialization.data(withJSONObject: legacy)
+        XCTAssertLessThan(compact.count, previousBytes.count / 2)
+        var restored = try decoder.decode(GardenDraftSession.self, from: previousBytes)
+        XCTAssertEqual(restored, try decoder.decode(GardenDraftSession.self, from: compact))
+        for expected in legacyUndo.reversed() {
+            restored.undoLastChange()
+            XCTAssertEqual(restored.layout, expected)
+        }
+        for _ in legacyUndo { restored.redoLastChange() }
+        XCTAssertEqual(restored.layout, draft.layout)
+    }
+
     func testIncompleteRulesNeverInventEffects() throws {
         let example = try XCTUnwrap(GardenStrategyContract.load().cases.first { $0.name == "adult_moonwillow" })
         var plant = try XCTUnwrap(example.plants.first)

@@ -62,6 +62,10 @@ source_path = (
 )
 source = source_path.read_text().split("// Console validation")[0]
 source = source.replace(block(source, "struct APIInventoryCapacity:"), "")
+source = (
+    source[: source.index("struct APIOwnedPack:")]
+    + source[source.index("@MainActor\nprotocol GardenServing") :]
+)
 api = read("MovementForest/Services/APIClient.swift")
 source = source.replace(
     block(source, "struct RequestRecovery:"), block(api, "struct RequestRecovery:")
@@ -101,6 +105,7 @@ source += fixtures(
 selected = [
     "testEditorRenderingCacheInvalidatesOnDraftAndRefreshButNotSelection",
     "testAtomicSnapshotLoadsOnceAndFreshSaveDoesNotReload",
+    "testCompactTransformKeepsStoredCopiesAndAvoidsRefreshing",
     "testLostFreshResponseReplaysThenReadsCurrentSnapshot",
     "testModernSaveChecksStrategyInTheEditWithoutAPreviewRequest",
     "testInitialVerifiedSnapshotAvoidsAnotherNetworkRead",
@@ -133,6 +138,7 @@ header = re.sub(r"^(?:import|@testable import) .+\n", "", header, flags=re.MULTI
 source += fixtures(header)
 selected_collection = [
     "testVerifiedCatalogueVersionReusesGardenCatalogueAndReloadsOnChange",
+    "testFocusedShopAndOpeningDoNotWaitForUnrelatedReads",
     "testLostExchangeResponseRelaunchReplaysExactBytesAndUUID",
     "testCannotSendIfDurableSaveFails",
     "testCompletionDiskFailureRetainsRequestAndOpeningResultSurvivesRelaunch",
@@ -165,6 +171,6 @@ source += block(
 )
 print(
     "Prepared",
-    len(selected) + len(selected_collection) + 5,
+    len(selected) + len(selected_collection) + 6,
     "actual native editor/collection/strategy regressions with platform interfaces.",
 )

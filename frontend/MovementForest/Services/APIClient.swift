@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 struct APIError: Error, LocalizedError {
     let status: Int
@@ -207,12 +208,18 @@ protocol GardenServing {
     func garden() async throws -> APIGarden
     func inventory(after: UUID?) async throws -> APIInventory
     func edit(body: Data) async throws -> GardenEditResult
+    func edit(body: Data, knownInventoryStateVersion: Int64?) async throws -> GardenEditResult
     func preview(body: Data) async throws -> GardenStrategyEvaluation
+    func compactStrategySignature(_ signature: String) -> String?
     func items(after: UUID?) async throws -> APIItemInventory
     func snapshot(catalogVersion: String?) async throws -> APIGardenSnapshot?
 }
 
 extension GardenServing {
+    func compactStrategySignature(_ signature: String) -> String? { nil }
+    func edit(body: Data, knownInventoryStateVersion: Int64?) async throws -> GardenEditResult {
+        try await edit(body: body)
+    }
     func snapshot(catalogVersion: String?) async throws -> APIGardenSnapshot? { nil }
     func preview(body: Data) async throws -> GardenStrategyEvaluation {
         throw ForestError.invalidData("Garden preview is unavailable. Update the server.")
@@ -225,6 +232,9 @@ extension GardenServing {
 struct APIGardenRepository: GardenServing {
     let client: APIClient
     var serverID: String { client.baseURL.absoluteString }
+    func compactStrategySignature(_ signature: String) -> String? {
+        "sha256:" + SHA256.hash(data: Data(signature.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
     func profile() async throws -> APIProfile { try await client.request("v1/me") }
     func catalogue() async throws -> APICatalogue { try await client.request("v1/catalog") }
     func garden() async throws -> APIGarden { try await client.request("v1/me/garden") }
@@ -239,7 +249,13 @@ struct APIGardenRepository: GardenServing {
         return try await client.request("v1/me/inventory", query: query)
     }
     func edit(body: Data) async throws -> GardenEditResult {
-        try await client.request("v1/me/garden/edits", method: "POST", body: body)
+        try await edit(body: body, knownInventoryStateVersion: nil)
+    }
+    func edit(body: Data, knownInventoryStateVersion: Int64?) async throws -> GardenEditResult {
+        let query = knownInventoryStateVersion.map {
+            [URLQueryItem(name: "knownInventoryStateVersion", value: String($0))]
+        } ?? []
+        return try await client.request("v1/me/garden/edits", method: "POST", body: body, query: query)
     }
     func preview(body: Data) async throws -> GardenStrategyEvaluation {
         try await client.request("v1/me/garden/preview", method: "POST", body: body)

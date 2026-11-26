@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, or_, select, text
 
 from forest_api import services
 from forest_api.errors import ApiError
@@ -142,7 +142,7 @@ def grant(session, owner, item_id, version, *, source, reference, quantity=1, to
     return [r.id for r in identities]
 
 
-def rows(session, owner, *, placed_only=False):
+def rows(session, owner, *, placed_only=False, ids=None, placed_or_ids=None):
     query = (
         select(OwnedItem, ItemIdentity, ItemDefinition, ItemPlacement)
         .join(ItemIdentity, ItemIdentity.id == OwnedItem.id)
@@ -157,6 +157,12 @@ def rows(session, owner, *, placed_only=False):
     )
     if placed_only:
         query = query.where(ItemPlacement.item_id.is_not(None))
+    if ids is not None:
+        query = query.where(OwnedItem.id.in_(ids))
+    if placed_or_ids is not None:
+        query = query.where(
+            or_(ItemPlacement.item_id.is_not(None), OwnedItem.id.in_(placed_or_ids))
+        )
     return session.execute(query).all()
 
 

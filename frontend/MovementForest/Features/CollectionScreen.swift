@@ -104,7 +104,7 @@ struct CollectionScreen: View {
         .task(id: destination) {
             store.discovery.endViewing(discoveryViewer)
             if destination == .catalog { store.discovery.beginViewing(discoveryViewer) }
-            await refresh()
+            await refresh(onArrival: true)
         }
         .onChange(of: scenePhase) { phase in
             if phase == .active && destination == .catalog { Task { await store.discovery.refresh() } }
@@ -112,7 +112,6 @@ struct CollectionScreen: View {
         }
         .task(id: destination) {
             guard destination == .exchange else { return }
-            await store.requestShopRefresh()
             while !Task.isCancelled {
                 do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
                 if scenePhase == .active { await store.tickShop() }
@@ -149,12 +148,23 @@ struct CollectionScreen: View {
             openingChanged?(false); store.discovery.endViewing(discoveryViewer)
         }
     }
-    private func refresh() async {
-        async let collection: Void = store.refresh()
+    private func refresh(onArrival: Bool = false) async {
+        let scope: CollectionReadScope
+        switch destination {
+        case .exchange: scope = .shop
+        case .draws: scope = .packs
+        case .catalog: scope = .catalog
+        case .milestones, .expedition: scope = .home
+        }
+        async let collection: Void = refreshCollection(scope: scope, onArrival: onArrival)
         async let account: Void? = accountSummary?.refresh()
         if destination == .catalog { await store.discovery.refresh() }
         await collection
         _ = await account
+    }
+    private func refreshCollection(scope: CollectionReadScope, onArrival: Bool) async {
+        if onArrival { await store.refreshOnArrival(scope: scope) }
+        else { await store.refresh(scope: scope) }
     }
     private var content: some View {
         ScrollView {
@@ -197,7 +207,11 @@ struct CollectionScreen: View {
         if store.offers.contains(where: { $0.pack.isFixture }) {
             Text("Development prices and odds").font(.caption).foregroundStyle(JournalTheme.secondary)
         }
-        if store.busy && store.tokenBalance == nil { ProgressView("Loading collection…").tint(JournalTheme.action) }
+        if store.state.pending != nil && store.busy && destination == .exchange {
+            ProgressView("Confirming purchase…").tint(JournalTheme.action)
+        } else if store.busy && store.tokenBalance == nil {
+            ProgressView("Loading collection…").tint(JournalTheme.action)
+        }
         if let message = store.message, store.refreshFailed || store.recoveryLocked {
             Text(message).font(.callout).accessibilityIdentifier("collection.status")
         }

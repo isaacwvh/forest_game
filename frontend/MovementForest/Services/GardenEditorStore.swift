@@ -85,6 +85,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private var inventoryGeneration = UUID()
     private var started = false
     private var supportsSnapshots = false
+    private var supportsStrategyDigest = false
+    private var inventoryStateVersion: Int64?
     private var lastReadIssue: UUID?
     private var editGeneration = UUID()
     private var strategyCache: [String: GardenStrategyEvaluation] = [:]
@@ -195,7 +197,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     /// All editor and activity receipts meet here. Historical receipts can never
     /// replace newer confirmed state, even when they arrive after a relaunch.
     func applyConfirmed(_ garden: APIGarden, at date: Date = Date(), updatedPlants: [APIOwnedPlant] = [],
-                        activityRequestID: UUID? = nil) throws {
+                        activityRequestID: UUID? = nil, reconcileDraft: Bool = true,
+                        confirmedCapacity: APIInventoryCapacity? = nil) throws {
         guard isActive else { throw CancellationError() }
         guard let catalogue = catalogue, garden.catalogVersion == catalogue.catalogVersion else { return }
         if let current = confirmed {
@@ -205,8 +208,9 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         let snapshot = try garden.rendered(catalogue: catalogue, assets: assets)
         if let requestID = activityRequestID { effects.recordActivity(requestID: requestID, before: confirmed, after: garden) }
         confirmed = garden; rendered = snapshot
-        updateDraftFacts(garden, plants: updatedPlants)
-        if let old = capacity {
+        if reconcileDraft { updateDraftFacts(garden, plants: updatedPlants) }
+        if let confirmedCapacity = confirmedCapacity { acceptCapacity(confirmedCapacity) }
+        else if let old = capacity {
             capacity = APIInventoryCapacity(ownedPlants: old.ownedPlants, plantedPlants: garden.plants.count,
                 storedPlants: max(0, old.ownedPlants - garden.plants.count), plantLimit: old.plantLimit,
                 plantedLimit: old.plantedLimit, unopenedPacks: old.unopenedPacks, packLimit: old.packLimit)
@@ -216,6 +220,46 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         confirmedAt = date; showingCached = false
         if selectedPlanted == nil && selectedItem == nil && (!editing || candidate == nil) { selectedID = nil }
         try persistConfirmed()
+    }
+
+    func applyInventoryReceipt(_ receipt: APICollectionReceipt) async {
+        guard isActive else { return }
+        if let version = receipt.gardenStateVersion, let known = inventoryStateVersion,
+           version <= known { return } // Current inventory already includes any surviving copy.
+        guard readyForMutation, !refreshInFlight, !activityBusy, var garden = confirmed,
+              let base = receipt.inventoryBaseStateVersion, base == inventoryStateVersion,
+              base == garden.stateVersion, base < Int64.max, receipt.gardenStateVersion == base + 1 else {
+            await refresh(); return
+        }
+
+        if let plant = receipt.plant, receipt.openingId != nil, plant.placement == nil,
+           nextCursor == nil, let updatedCapacity = receipt.capacity {
+            var plants = inventory.filter { $0.id != plant.id }
+            plants.append(plant)
+            plants.sort { $0.id.uuidString < $1.id.uuidString }
+            inventory = plants
+            acceptCapacity(updatedCapacity)
+            garden.stateVersion = base + 1
+            confirmed = garden
+            updateDraftFacts(garden, plants: [plant])
+        } else if receipt.purchaseId != nil, let rows = receipt.ownedItems, !rows.isEmpty,
+                  let updatedCapacity = receipt.itemCapacity, itemCursor == nil,
+                  Set(rows.map(\.id)) == Set(receipt.ownedItemIds ?? []),
+                  rows.count == Set(rows.map(\.id)).count, rows.allSatisfy({ $0.placement == nil }) {
+            let ids = Set(rows.map(\.id))
+            itemInventory = (itemInventory.filter { !ids.contains($0.id) } + rows)
+                .sorted { $0.id.uuidString < $1.id.uuidString }
+            itemCapacity = updatedCapacity
+            garden.stateVersion = base + 1
+            confirmed = garden
+            updateDraftFacts(garden, items: rows)
+        } else {
+            await refresh(); return
+        }
+        inventoryStateVersion = garden.stateVersion
+        confirmedAt = Date()
+        do { try persistConfirmed() }
+        catch { report("The current inventory couldn't be cached on this device.", source: .inventory) }
     }
 
     func beginActivityOperation() -> Bool {
@@ -261,6 +305,8 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                 try acceptSnapshot(snapshot)
                 return
             }
+            supportsSnapshots = false
+            supportsStrategyDigest = false
             supportsSnapshots = false
             // Individual reads are coherent, but not an atomic bootstrap. Bound retries
             // if another client keeps changing the layout/catalogue during this read.
@@ -311,7 +357,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         }
     }
 
-    private func acceptSnapshot(_ value: APIGardenSnapshot) throws {
+    private func acceptSnapshot(_ value: APIGardenSnapshot, reconcileDraft: Bool = true) throws {
         guard isActive else { throw CancellationError() }
         guard value.profile.userId == profile.userId,
               let catalog = value.catalogue ?? catalogue,
@@ -330,12 +376,16 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         _ = try PlacementGeometry.units(after.depth)
         catalogue = catalog; confirmed = after; rendered = snapshot
         supportsSnapshots = true
+        if reconcileDraft { supportsStrategyDigest = value.supportsStrategyDigest == true }
+        inventoryStateVersion = after.stateVersion
         inventory = filtered(value.inventory.plants, garden: after); nextCursor = value.inventory.nextCursor
         itemInventory = value.itemInventory.items.filter { $0.placement == nil }
         itemCapacity = value.itemInventory.capacity; itemCursor = value.itemInventory.nextCursor
         acceptCapacity(value.inventory.capacity)
-        if draft == nil { restoreDraft() }
-        updateDraftFacts(after, plants: value.inventory.plants, items: value.itemInventory.items)
+        if reconcileDraft {
+            if draft == nil { restoreDraft() }
+            updateDraftFacts(after, plants: value.inventory.plants, items: value.itemInventory.items)
+        }
         confirmedAt = Date(); showingCached = false
         try persistConfirmed()
         needsRefresh = false; state = .ready
@@ -601,24 +651,31 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         do {
             let request = try edit.request
             DiagnosticHistory.shared.record("Garden edit", "sending saved operation", requestID: request.requestId.uuidString, scope: diagnosticScope)
-            let result = try await service.edit(body: edit.body)
+            let knownInventoryVersion = inventoryStateVersion == confirmed?.stateVersion ? inventoryStateVersion : nil
+            let result = try await service.edit(body: edit.body, knownInventoryStateVersion: knownInventoryVersion)
             guard isActive else { return }
             guard result.requestId == request.requestId, result.garden.gardenId == edit.gardenID else {
                 throw ForestError.invalidData("The server returned an unexpected edit receipt.")
             }
             // A replay may contain an older catalogue/snapshot: refresh current state
             // after acknowledging the durable receipt, rather than displaying it as current.
-            if let catalogue = catalogue, result.garden.catalogVersion == catalogue.catalogVersion,
-               confirmed == nil || result.garden.stateVersion >= (confirmed?.stateVersion ?? 0) {
-                try applyConfirmed(result.garden, updatedPlants: result.updatedPlants)
-            }
             var currentSnapshot = false
-            if result.replayed == false, catalogue?.catalogVersion == result.garden.catalogVersion,
+            if catalogue?.catalogVersion == result.garden.catalogVersion,
                result.garden.stateVersion >= (confirmed?.stateVersion ?? 0),
-               let inventory = result.inventory, let items = result.itemInventory {
-                try acceptSnapshot(APIGardenSnapshot(profile: profile, garden: result.garden,
-                    catalogue: nil, inventory: inventory, itemInventory: items))
-                currentSnapshot = true
+               result.garden.layoutVersion >= (confirmed?.layoutVersion ?? 0) {
+                if result.replayed == false, let inventory = result.inventory, let items = result.itemInventory {
+                    try acceptSnapshot(APIGardenSnapshot(profile: profile, garden: result.garden,
+                        catalogue: nil, inventory: inventory, itemInventory: items), reconcileDraft: false)
+                    currentSnapshot = true
+                } else if result.replayed == false, let base = result.inventoryBaseStateVersion,
+                          inventoryStateVersion == base, confirmed?.stateVersion == base,
+                          let capacity = result.capacity {
+                    try applyConfirmed(result.garden, reconcileDraft: false, confirmedCapacity: capacity)
+                    inventoryStateVersion = result.garden.stateVersion
+                    currentSnapshot = true
+                } else if result.replayed != true {
+                    try applyConfirmed(result.garden, updatedPlants: result.updatedPlants, reconcileDraft: false)
+                }
             }
             discardDraft()
             try journal.remove(server: edit.serverID, user: edit.userID)
@@ -798,7 +855,6 @@ extension GardenEditorStore {
                 items: (garden.items ?? []) + itemInventory)
         }
         updateDraftFacts(garden, plants: inventory, items: itemInventory)
-        persistDraft()
     }
     private func updateDraftFacts(_ garden: APIGarden, plants: [APIOwnedPlant] = [], items: [APIOwnedItem] = []) {
         strategyCache = [:]; unavailableStrategies = []
@@ -824,13 +880,13 @@ extension GardenEditorStore {
         applyDraftLayout(layout)
     }
     func undoDraft() {
-        guard canUndoDraft, var value = draft, let previous = value.undo.popLast() else { return }
-        value.redo.append(value.layout); value.layout = previous; draft = value
+        guard canUndoDraft, var value = draft else { return }
+        value.undoLastChange(); draft = value
         cancelCandidate(); selectedID = nil; persistDraft()
     }
     func redoDraft() {
-        guard canRedoDraft, var value = draft, let next = value.redo.popLast() else { return }
-        value.undo.append(value.layout); value.layout = next; draft = value
+        guard canRedoDraft, var value = draft else { return }
+        value.redoLastChange(); draft = value
         cancelCandidate(); selectedID = nil; persistDraft()
     }
     func resetDraft() {
@@ -838,7 +894,7 @@ extension GardenEditorStore {
         let plants = draft?.plants ?? inventory, items = draft?.items ?? itemInventory
         draft = GardenDraftSession(garden: garden, plants: plants, items: items)
         updateDraftFacts(garden, plants: inventory, items: itemInventory)
-        cancelCandidate(); selectedID = nil; draftConflict = false; persistDraft()
+        cancelCandidate(); selectedID = nil; draftConflict = false
     }
     func discardDraft() {
         draft = nil; draftConflict = false; strategyCache = [:]; unavailableStrategies = []
@@ -914,7 +970,9 @@ extension GardenEditorStore {
         do {
             if confirmed?.strategyContext != nil {
                 guard let local = draftStrategy else { report("Garden effects are unavailable. Refresh to try again."); return }
-                if supportsSnapshots && local.signature.utf8.count <= 32768 {
+                if supportsStrategyDigest, let compact = service.compactStrategySignature(local.signature) {
+                    request.expectedStrategySignature = compact
+                } else if supportsSnapshots && local.signature.utf8.count <= 32768 {
                     // The server checks the reviewed effective result under the
                     // edit's locks, avoiding a separate preview round trip.
                     request.expectedStrategySignature = local.signature

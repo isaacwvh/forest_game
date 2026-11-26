@@ -1,3 +1,4 @@
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -111,10 +112,11 @@ def claim_milestone(
 @router.get("/v1/me/collection")
 def summary(
     request: Request,
+    view: Literal["full", "home", "shop", "packs"] = "full",
     identity: Identity = Depends(get_identity),
     session: Session = Depends(get_session),
 ):
-    return collection.read(session, request.app.state.settings, identity)
+    return collection.read(session, request.app.state.settings, identity, view=view)
 
 
 @router.get("/v1/me/packs")
@@ -133,13 +135,20 @@ def packs(
 @router.get("/v1/me/pack-openings")
 def openings(
     request: Request,
+    latest: bool = False,
     limit: int = Query(30, ge=1, le=100),
     after: UUID | None = None,
     identity: Identity = Depends(get_identity),
     session: Session = Depends(get_session),
 ):
     return collection.read(
-        session, request.app.state.settings, identity, kind="openings", limit=limit, after=after
+        session,
+        request.app.state.settings,
+        identity,
+        kind="openings",
+        limit=limit,
+        after=after,
+        view="latest" if latest else "full",
     )
 
 

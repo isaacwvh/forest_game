@@ -2,6 +2,7 @@
 
 import logging
 from collections import deque
+from contextlib import contextmanager
 from contextvars import ContextVar
 from time import perf_counter
 
@@ -9,6 +10,42 @@ from sqlalchemy import event
 
 current = ContextVar("forest_operation_metrics", default=None)
 log = logging.getLogger("forest.metrics")
+
+
+@contextmanager
+def measure():
+    sample = dict(
+        queries=0,
+        rowsWritten=0,
+        sqlMs=0.0,
+        transactionMs=0.0,
+        requestBytes=0,
+        responseBytes=0,
+        dbResultValueBytes=0,
+        dbResultSampleTruncated=False,
+    )
+    token = current.set(sample)
+    try:
+        yield sample
+    finally:
+        current.reset(token)
+
+
+def result_bytes(cursor, sample):
+    # psycopg buffers the PGresult already. Inspect value lengths without issuing
+    # SQL, changing the cursor position or retaining any result contents.
+    result = getattr(cursor, "pgresult", None)
+    if result is None or not result.nfields:
+        return
+    remaining = max(0, 4096 - sample.get("_dbResultCells", 0))
+    count = min(remaining, result.ntuples * result.nfields)
+    if count < result.ntuples * result.nfields:
+        sample["dbResultSampleTruncated"] = True
+    sample["_dbResultCells"] = sample.get("_dbResultCells", 0) + count
+    for cell in range(count):
+        value = result.get_value(*divmod(cell, result.nfields))
+        if value is not None:
+            sample["dbResultValueBytes"] += len(value)
 
 
 def instrument(engine):
@@ -20,6 +57,7 @@ def instrument(engine):
     def after(connection, cursor, statement, parameters, context, many):
         sample = current.get()
         if sample is not None:
+            result_bytes(cursor, sample)
             sample["queries"] += 1
             sample["sqlMs"] += (perf_counter() - context._forest_started) * 1000
             if context.isinsert or context.isupdate or context.isdelete:
@@ -46,9 +84,17 @@ class OperationMetrics:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http" or not self.collector.enabled:
             return await self.app(scope, receive, send)
-        sample = dict(queries=0, rowsWritten=0, sqlMs=0.0, transactionMs=0.0, responseBytes=0)
-        token = current.set(sample)
+        with measure() as sample:
+            return await self._measured(scope, receive, send, sample)
+
+    async def _measured(self, scope, receive, send, sample):
         started = perf_counter()
+
+        async def measured_receive():
+            message = await receive()
+            if message["type"] == "http.request":
+                sample["requestBytes"] += len(message.get("body", b""))
+            return message
 
         async def measured(message):
             if message["type"] == "http.response.start":
@@ -58,15 +104,15 @@ class OperationMetrics:
             await send(message)
 
         try:
-            await self.app(scope, receive, measured)
+            await self.app(scope, measured_receive, measured)
         finally:
             sample["requestMs"] = (perf_counter() - started) * 1000
             route = scope.get("route")
             sample["route"] = getattr(route, "path", "unmatched")
             sample["method"] = scope["method"]
+            sample.pop("_dbResultCells", None)
             self.collector.samples.append(sample)
             log.info("operation %s", sample)
-            current.reset(token)
 
 
 class Collector:

@@ -200,7 +200,7 @@ struct MyPlantsHostScreen: View {
                 Text("Inventory").font(.system(.title2, design: .serif).weight(.semibold))
                     .foregroundStyle(JournalTheme.ink)
             } }
-            .task(id: connection.collection?.id) { await connection.collection?.refresh() }
+            .task(id: connection.collection?.id) { await connection.collection?.refresh(scope: .home) }
     }
 }
 
@@ -277,7 +277,7 @@ struct MyPlantsScreen: View {
                     .accessibilityLabel("Filter plants")
             }
         }
-        .refreshable { await store.refresh(); await collection?.refresh() }
+        .refreshable { await store.refresh(); await collection?.refresh(scope: .home) }
         .fullScreenCover(item: $inspecting) { selection in
             OwnedPlantDetailScreen(store: store, copyID: selection.id, catalog: catalog,
                 collection: collection).journalModalBackground()

@@ -31,6 +31,8 @@ parts.append(view[view.index("struct GardenSkillGroup"):view.index("struct Garde
 checks = (ROOT / "MovementForestTests/GardenStrategyTests.swift").read_text(encoding="utf-8")
 parts.append(checks[checks.index("// Shared behavioral checks"):])
 if args.typecheck_store:
+    # The editor applies confirmed purchase/opening inventory receipts.
+    parts.append(collection[collection.index("struct APIOwnedPack:"):collection.index("struct CollectionExchangeBody:")])
     client = (ROOT / "MovementForest/Services/APIClient.swift").read_text(encoding="utf-8")
     parts.append(client[client.index("@MainActor\nprotocol GardenServing"):client.index("struct APIGardenRepository")])
     journal = (ROOT / "MovementForest/Services/PendingGardenEditStore.swift").read_text(encoding="utf-8")

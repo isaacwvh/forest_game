@@ -199,7 +199,7 @@ struct ConnectedGardenScreen: View {
         }
         .onChange(of: sheet) { if $0 == nil { store.cancelReplacement() } }
         .onChange(of: store.selectedID) { renderer.selectedPlantID = $0 }
-        .task(id: collection?.id) { await collection?.refresh() }
+        .task(id: collection?.id) { await collection?.refresh(scope: .home) }
         .onChange(of: store.editCandidateID) { if $0 == nil { positionControlsPresented = false } }
         .onChange(of: store.canEdit) { if !$0 && !store.preparingMembership { store.cancelCandidate() } }
         .onChange(of: active) { value in

@@ -337,6 +337,7 @@ class CatalogueDTO(DTO):
 
 
 class GardenSnapshotDTO(DTO):
+    supports_strategy_digest: bool = True
     profile: UserDTO
     garden: GardenDTO
     catalogue: CatalogueDTO | None
@@ -449,6 +450,8 @@ class GardenEditResult(DTO):
     inventory: InventoryDTO | None = None
     item_inventory: dict | None = None
     replayed: bool | None = None
+    inventory_base_state_version: int | None = None
+    capacity: dict[str, int] | None = None
 
 
 class ItemAction(DTO):

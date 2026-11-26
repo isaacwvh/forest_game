@@ -73,6 +73,15 @@ final class CollectionCoordinator: ObservableObject {
     private var attached = true
     var onWallet: ((String, Int64) -> Void)?
     var onPlantAwarded: (() async -> Void)?
+    var onInventoryReceipt: ((APICollectionReceipt) async -> Void)?
+    private var inventoryReconciliation: Task<Void, Never>?
+    private var deferredRead: CollectionReadScope?
+    private var refreshTask: Task<Void, Never>?
+    private var refreshScope: CollectionReadScope?
+    private var refreshedAt: [CollectionReadScope: TimeInterval] = [:]
+    var unopenedPackCount: Int {
+        capacity?.unopenedPacks ?? packs.filter { $0.id != state.result?.ownedPackId }.count
+    }
 
     init(userID: UUID, service: any CollectionServing, journal: (any CollectionJournalPersisting)? = nil,
          discovery: CatalogDiscoveryStore? = nil, initialCatalogue: APICatalogue? = nil,
@@ -115,7 +124,7 @@ final class CollectionCoordinator: ObservableObject {
     func balance(for offer: APIExchangeOffer) -> String? {
         offer.purchaseCurrency == "gems" ? gemBalance : tokenBalance
     }
-    func deactivate() { attached = false; discovery.deactivate() }
+    func deactivate() { attached = false; refreshTask?.cancel(); inventoryReconciliation?.cancel(); discovery.deactivate() }
     func applyWallet(_ balance: String, version: Int64, gems: String? = nil) {
         guard attached, version >= economyVersion, ExactAmount.integer(balance) != nil else { return }
         if version > economyVersion { gemBalance = nil }
@@ -145,7 +154,7 @@ final class CollectionCoordinator: ObservableObject {
         do { try persist(updated) }
         catch { message = "Your milestone position could not be saved." }
     }
-    private func recover() async throws {
+    private func recover(live: Bool = false) async throws {
         guard let pending = state.pending else { return }
         do {
             DiagnosticHistory.shared.record("Collection", "sending \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
@@ -200,6 +209,7 @@ final class CollectionCoordinator: ObservableObject {
                 exchangeOfferID = (try? ActivityWire.decoder().decode(CollectionExchangeBody.self, from: pending.body))?.offerId
                 exchangeMessage = "Purchase confirmed. Your packs are saved."
             }
+            let fresh = live && receipt.economyVersion >= economyVersion
             applyWallet(receipt.tokenBalance, version: receipt.economyVersion, gems: receipt.gemBalance)
             if receipt.economyVersion == economyVersion, let capacity = receipt.itemCapacity { itemCapacity = capacity }
             if receipt.economyVersion == economyVersion, let capacity = receipt.capacity {
@@ -212,7 +222,20 @@ final class CollectionCoordinator: ObservableObject {
                 pending.kind == .sell ? "Plant sold for \(receipt.tokensEarned ?? "0") tokens." :
                 pending.kind == .milestone ? "Milestone reward saved." :
                 (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
-            if isOpening || pending.kind == .sell || pending.kind == .itemPurchase || pending.kind == .itemSell || pending.kind == .expeditionClaim { await onPlantAwarded?() }
+            let changesInventory = isOpening || pending.kind == .sell || pending.kind == .itemPurchase ||
+                pending.kind == .itemSell || pending.kind == .expeditionClaim
+            if service.supportsFocusedReads {
+                if fresh { applyCollectionChanges(receipt, operation: pending) }
+                if changesInventory {
+                    let previous = inventoryReconciliation
+                    inventoryReconciliation = Task { [weak self] in
+                        await previous?.value
+                        guard let self = self, self.attached else { return }
+                        if fresh, let apply = self.onInventoryReceipt { await apply(receipt) }
+                        else { await self.onPlantAwarded?() }
+                    }
+                }
+            } else if changesInventory { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
                     ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
             guard attached else { return }
@@ -220,39 +243,76 @@ final class CollectionCoordinator: ObservableObject {
             throw error
         }
     }
-    private func loadCurrent() async throws {
+    private func applyCollectionChanges(_ receipt: APICollectionReceipt, operation: PendingCollectionOperation) {
+        if let acquired = receipt.packs, packCursor == nil {
+            let known = Set(packs.map(\.id))
+            packs += acquired.filter { !known.contains($0.id) }
+        }
+        if let pack = receipt.ownedPackId, receipt.openingId != nil {
+            packs.removeAll { $0.id == pack }
+            history.removeAll { $0.id == receipt.id }
+            history.insert(receipt, at: 0)
+        }
+        if operation.kind == .itemPurchase {
+            if let remaining = receipt.remainingAllowance,
+               let index = itemOffers.firstIndex(where: {
+                   $0.offerId == receipt.offerId && $0.offerVersion == receipt.offerVersion
+               }) {
+                itemOffers[index].remainingAllowance = remaining
+            } else if let offer = try? ActivityWire.decoder().decode(CollectionExchangeBody.self, from: operation.body),
+                      itemOffers.contains(where: { $0.offerId == offer.offerId && $0.remainingAllowance != nil }) {
+                deferredRead = .shop // Older servers do not return the updated limited allowance.
+            }
+        }
+        if (operation.kind == .open || operation.kind == .exchange) && receipt.capacity == nil {
+            deferredRead = .home
+        }
+    }
+
+    private func loadCurrent(scope: CollectionReadScope) async throws {
         let sent = uptime()
-        let summary = try await service.summary()
+        let summary = try await service.summary(scope: scope)
         guard attached else { return }
-        if let incoming = summary.shop {
-            if let existing = shop, incoming.startsAt < existing.startsAt { return }
-            shop = incoming
-            shopCountdown = ShopCountdown(rotation: incoming, sent: sent, received: uptime())
-            shopRemaining = shopCountdown?.remaining(at: uptime())
-        } else { shop = nil; shopCountdown = nil; shopRemaining = nil }
+        if scope == .shop || scope == .full {
+            if let incoming = summary.shop {
+                if let existing = shop, incoming.startsAt < existing.startsAt { return }
+                shop = incoming
+                shopCountdown = ShopCountdown(rotation: incoming, sent: sent, received: uptime())
+                shopRemaining = shopCountdown?.remaining(at: uptime())
+            } else { shop = nil; shopCountdown = nil; shopRemaining = nil }
+            offers = summary.offers
+            itemOffers = summary.itemOffers ?? []
+            for offer in offers { definitions[offer.pack.id] = offer.pack }
+        }
         applyWallet(summary.tokenBalance, version: summary.economyVersion, gems: summary.gemBalance)
-        if summary.economyVersion == economyVersion { acceptCapacity(summary.capacity) }
-        offers = summary.offers
-        itemOffers = summary.itemOffers ?? []
-        if summary.economyVersion == economyVersion { itemCapacity = summary.itemCapacity }
-        milestones = summary.milestones ?? []
-        milestonesConfirmedAt = Date()
-        var cached = state
-        cached.milestonesCache = milestones
-        cached.milestonesConfirmedAt = milestonesConfirmedAt
-        try persist(cached)
-        for offer in offers { definitions[offer.pack.id] = offer.pack }
+        if summary.economyVersion == economyVersion {
+            acceptCapacity(summary.capacity)
+            if scope == .shop || scope == .full { itemCapacity = summary.itemCapacity }
+        }
+        if let rows = summary.milestones, scope != .shop {
+            milestonesConfirmedAt = Date()
+            // Ordinary reads need not rewrite durable recovery files when facts are identical.
+            if state.milestonesCache != rows {
+                var updated = state
+                updated.milestonesCache = rows
+                updated.milestonesConfirmedAt = milestonesConfirmedAt
+                try persist(updated)
+            }
+            milestones = rows
+        }
+        guard scope != .home, scope != .shop else { return }
         if catalogue == nil || summary.catalogVersion == nil || catalogue?.catalogVersion != summary.catalogVersion {
             let catalogue = try await service.catalogue()
             guard attached else { return }
             self.catalogue = catalogue
         }
+        guard scope != .catalog else { return }
         let page = try await service.packs(after: nil)
         guard attached else { return }
         try await loadDefinitions(page.packs)
         guard attached else { return }
         packs = page.packs; packCursor = page.nextCursor
-        let history = try await service.openings(after: nil)
+        let history = try await (scope == .packs ? service.latestOpening() : service.openings(after: nil))
         guard attached else { return }
         self.history = history.openings; historyCursor = history.nextCursor
     }
@@ -263,13 +323,37 @@ final class CollectionCoordinator: ObservableObject {
             definitions[definition.id] = definition
         }
     }
-    func refresh() async {
+    func refreshOnArrival(scope: CollectionReadScope) async {
+        if service.supportsFocusedReads, (scope == .shop || scope == .packs),
+           state.pending == nil, !refreshFailed, let previous = refreshedAt[scope],
+           uptime() - previous < 10, scope != .shop || (shopRemaining ?? 1) > 0 {
+            return
+        }
+        await refresh(scope: scope)
+    }
+
+    func refresh(scope requested: CollectionReadScope = .full) async {
+        let scope = service.supportsFocusedReads ? requested : .full
+        if let prior = refreshTask {
+            let coversRequest = refreshScope == scope || refreshScope == .full
+            await prior.value
+            if coversRequest { return }
+            await refresh(scope: scope)
+            return
+        }
         guard attached, !busy, !recoveryLocked else { return }
-        busy = true; refreshFailed = false; message = nil; defer { busy = false }
+        busy = true; refreshFailed = false; message = nil
+        refreshScope = scope
         // SwiftUI can cancel the swipe's task as its refresh control updates.
         // Finish the same refresh/recovery independently; account guards still apply.
         let work = Task { @MainActor in
-            do { try await recover(); guard attached else { return }; try await loadCurrent() }
+            defer { busy = false; refreshTask = nil; refreshScope = nil }
+            do {
+                try await recover()
+                guard attached else { return }
+                try await loadCurrent(scope: scope)
+                if attached { refreshedAt[scope] = uptime() }
+            }
             catch is CancellationError { }
             catch let error as URLError where error.code == .cancelled { }
             catch { if attached {
@@ -279,6 +363,7 @@ final class CollectionCoordinator: ObservableObject {
                 else if exchangeOfferID != nil && confirmedExchange == nil { exchangeMessage = message }
             } }
         }
+        refreshTask = work
         await work.value
     }
     private func submit(_ operation: PendingCollectionOperation) async {
@@ -287,12 +372,22 @@ final class CollectionCoordinator: ObservableObject {
         do {
             try operation.validate()
             try persist(CollectionJournalState(pending: operation, result: state.result))
-            try await recover()
+            try await recover(live: true)
             guard attached else { return }
-            try await loadCurrent()
+            if !service.supportsFocusedReads {
+                try await loadCurrent(scope: .full)
+            } else if let scope = deferredRead {
+                deferredRead = nil
+                Task { [weak self] in await self?.refresh(scope: scope) }
+            }
         } catch { if attached {
             refreshFailed = true
             message = displayFailure(error)
+            if let error = error as? APIError,
+               ["stale_offer", "item_allowance_used", "item_capacity_full"].contains(error.code),
+               service.supportsFocusedReads {
+                shopRefreshNeeded = true
+            }
             if operation.kind == .exchange {
                 if confirmedExchange?.requestId == operation.id {
                     exchangeMessage = "Purchase confirmed. Refresh the collection to update its list."
@@ -321,7 +416,7 @@ final class CollectionCoordinator: ObservableObject {
         guard attached, confirmedOpening(for: pack.id) == nil else { return }
         if let pending = state.pending {
             // A reopened/restarted presentation recovers the original operation.
-            if pending.kind == .open && pending.target == pack.id { await refresh() }
+            if pending.kind == .open && pending.target == pack.id { await refresh(scope: .packs) }
             return
         }
         guard canOpenPack else { return }
@@ -377,7 +472,8 @@ final class CollectionCoordinator: ObservableObject {
     }
 
     func canBuyItem(_ offer: APIItemShopOffer, quantity: Int) -> Bool {
-        guard itemOfferCurrent(offer), quantity <= (offer.remainingAllowance ?? 20) else { return false }
+        let current = itemOffers.first { $0.id == offer.id }
+        guard itemOfferCurrent(offer), quantity <= (current?.remainingAllowance ?? offer.remainingAllowance ?? 20) else { return false }
         guard canMutate, (1...20).contains(quantity), quantity <= (itemCapacity?.room ?? 0),
               let cost = ExactAmount.integer(offer.tokenCost), cost > 0,
               let balance = tokenBalance.flatMap(ExactAmount.integer) else { return false }
@@ -403,7 +499,7 @@ final class CollectionCoordinator: ObservableObject {
         if shopRemaining == 0 { shopRefreshNeeded = true }
         guard shopRefreshNeeded, uptime() >= shopRetryAfter, !busy, !recoveryLocked else { return }
         shopRefreshNeeded = false
-        await refresh()
+        await refresh(scope: .shop)
         if refreshFailed { shopRefreshNeeded = true; shopRetryAfter = uptime() + 15 }
     }
 

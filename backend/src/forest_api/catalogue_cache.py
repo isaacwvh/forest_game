@@ -1,5 +1,7 @@
 """One bounded, process-local published catalogue; never caches account data."""
 
+from collections import OrderedDict
+from copy import deepcopy
 from threading import Lock
 from time import monotonic
 
@@ -21,3 +23,27 @@ class CatalogueCache:
         if seconds > 0:
             with self.lock:
                 self.entry = key, monotonic() + seconds, value.model_copy(deep=True)
+
+
+class PackPresentationCache:
+    """Contained in one database instance; keys identify published immutable rows."""
+
+    def __init__(self):
+        self.lock = Lock()
+        self.entries = OrderedDict()
+
+    def get(self, key):
+        with self.lock:
+            entry = self.entries.get(key)
+            if entry is not None and monotonic() < entry[0]:
+                self.entries.move_to_end(key)
+                return deepcopy(entry[1])
+            self.entries.pop(key, None)
+        return None
+
+    def put(self, key, value, seconds):
+        with self.lock:
+            self.entries[key] = (monotonic() + seconds, deepcopy(value))
+            self.entries.move_to_end(key)
+            if len(self.entries) > 32:
+                self.entries.popitem(last=False)

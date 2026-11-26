@@ -59,7 +59,7 @@ final class ExpeditionCoordinator: ObservableObject {
         busy = true
         defer { busy = false }
         do {
-            if collection?.tokenBalance == nil { await collection?.refresh() }
+            if collection?.tokenBalance == nil { await collection?.refresh(scope: .home) }
             try await loadStatus()
         }
         catch {
@@ -200,7 +200,7 @@ final class ExpeditionCoordinator: ObservableObject {
         try save(proposed)
     }
     func retryClaim() async {
-        await collection?.refresh()
+        await collection?.refresh(scope: .home)
         do { try retainConfirmedReceipt() }
         catch { recoveryLocked = true; message = "The confirmed receipt is saved. Reconnect before collecting more rewards."; return }
         await refresh()

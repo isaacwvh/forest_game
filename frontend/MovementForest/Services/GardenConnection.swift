@@ -611,6 +611,9 @@ final class GardenConnection: ObservableObject {
             self.collection = collection
             collectionUpdates = collection.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
             collection.onPlantAwarded = { [weak store] in await store?.refresh() }
+            collection.onInventoryReceipt = { [weak store] receipt in
+                await store?.applyInventoryReceipt(receipt)
+            }
             collection.onWallet = { [weak summary] _, version in summary?.economyChanged(version) }
         }
         editorUpdates = store.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }

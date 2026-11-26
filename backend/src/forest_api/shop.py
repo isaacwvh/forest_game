@@ -120,7 +120,10 @@ def ensure_current(session, clock=None, *, upcoming=False):
         launch = session.scalar(select(func.min(ShopRelease.effective_week)))
         if launch is None or launch > target:
             return True
-        if session.get(ShopWeek, target) is not None:
+        if (
+            session.scalar(select(ShopWeek.week_start).where(ShopWeek.week_start == target))
+            is not None
+        ):
             return True
         session.execute(text(f"SELECT pg_advisory_xact_lock({LOCK})"))
         # Lock waits may cross a UTC boundary; resolve the target again.
@@ -245,12 +248,14 @@ def consume(session, owner, window, quantity):
         return
     key = owner, window.offer_id, window.offer_version
     usage = session.get(ShopAllowance, key)
+    purchased = (usage.purchased if usage else 0) + quantity
     if usage:
-        usage.purchased += quantity
+        usage.purchased = purchased
     else:
         session.add(
             ShopAllowance(owner_id=owner, offer_id=key[1], offer_version=key[2], purchased=quantity)
         )
+    return max(0, window.purchase_limit - purchased)
 
 
 def preview(session, week):

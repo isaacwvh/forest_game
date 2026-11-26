@@ -150,7 +150,8 @@ def purchase(session, settings, identity, body, clock):
         previous = collection.durable_replay(session, user.id, body.request_id, operation, digest)
         if previous is not None:
             return previous
-        services.lock_garden(session, user.id, write=True)
+        garden = services.lock_garden(session, user.id, write=True)
+        base_state = garden.state_version
         services.get_catalogue_state(session, settings, lock=True)
         require_client(session)
         offer = session.get(ItemShopOffer, (body.offer_id, body.offer_version))
@@ -184,7 +185,7 @@ def purchase(session, settings, identity, body, clock):
             token_value=offer.token_cost,
         )
         wallet.tokens -= cost
-        shop.consume(session, user.id, window, body.quantity)
+        remaining = shop.consume(session, user.id, window, body.quantity)
         wallet.economy_version = collection.checked(wallet.economy_version + 1)
         receipt = {
             "requestId": str(body.request_id),
@@ -194,7 +195,18 @@ def purchase(session, settings, identity, body, clock):
             "quantity": body.quantity,
             "tokensSpent": str(cost),
             "ownedItemIds": [str(v) for v in ids],
-            "itemCapacity": items.capacity(session, user.id),
+            "ownedItems": [
+                items.present(row).model_dump(mode="json", by_alias=True)
+                for row in items.rows(session, user.id, ids=ids)
+            ],
+            "inventoryBaseStateVersion": base_state,
+            "gardenStateVersion": garden.state_version,
+            "remainingAllowance": remaining,
+            "itemCapacity": {
+                **room,
+                "ownedItems": room["ownedItems"] + body.quantity,
+                "storedItems": room["storedItems"] + body.quantity,
+            },
             "acceptedAt": boundary.isoformat(),
             **collection.wallet_dto(wallet),
         }

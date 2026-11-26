@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from threading import RLock
 
 from fastapi import Depends, FastAPI
+from starlette.middleware.gzip import GZipMiddleware
 
 from forest_api import (
     expedition_models,  # noqa: F401 - monthly progress and permanent rewards
@@ -55,6 +56,7 @@ def _create_app(settings: Settings | None = None) -> FastAPI:
     from forest_api.operation_metrics import Collector, OperationMetrics
 
     app.state.metrics = Collector(enabled=settings.operation_metrics_enabled)
+    app.add_middleware(GZipMiddleware, minimum_size=2048, compresslevel=3)
     app.add_middleware(OperationMetrics, collector=app.state.metrics)
     app.state.database = database
     app.state.verifier = TokenVerifier(settings)

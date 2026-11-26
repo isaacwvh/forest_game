@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from forest_api.catalogue_cache import CatalogueCache
+from forest_api.catalogue_cache import CatalogueCache, PackPresentationCache
 from forest_api.config import Settings
 
 
@@ -23,7 +23,11 @@ class Database:
             self.engine,
             expire_on_commit=False,
             autoflush=False,
-            info={"settings": settings, "catalogue_cache": CatalogueCache()},
+            info={
+                "settings": settings,
+                "catalogue_cache": CatalogueCache(),
+                "pack_presentation_cache": PackPresentationCache(),
+            },
         )
         from forest_api.operation_metrics import instrument
 

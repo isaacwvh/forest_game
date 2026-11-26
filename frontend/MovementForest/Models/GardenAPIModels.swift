@@ -74,7 +74,7 @@ struct APIGarden: Codable, Equatable {
     let gardenUnitMetres: Decimal
     let catalogVersion: String
     let layoutVersion: Int64
-    let stateVersion: Int64
+    var stateVersion: Int64
     var plants: [APIOwnedPlant]
     var totalAttractionMicroUnits: String? = nil
     var skillSummary: APISkillSummary? = nil
@@ -366,6 +366,8 @@ struct GardenEditResult: Codable {
     var inventory: APIInventory? = nil
     var itemInventory: APIItemInventory? = nil
     var replayed: Bool? = nil
+    var inventoryBaseStateVersion: Int64? = nil
+    var capacity: APIInventoryCapacity? = nil
 }
 
 struct APIGardenSnapshot: Codable {
@@ -374,6 +376,7 @@ struct APIGardenSnapshot: Codable {
     let catalogue: APICatalogue?
     let inventory: APIInventory
     let itemInventory: APIItemInventory
+    var supportsStrategyDigest: Bool? = nil
 }
 
 

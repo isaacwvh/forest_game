@@ -15,6 +15,7 @@ final class VisitorCoordinator: ObservableObject {
     private func report(_ text: String, kind: GardenFeedback.Kind = .failure, source: GardenFeedback.Source = .visitorReward) {
         feedback = GardenFeedback(text: text, kind: kind, source: source)
     }
+    @Published private(set) var welcomingID: UUID?
     @Published private(set) var busy = false
     @Published private(set) var eligible = false
     @Published private(set) var connected = false
@@ -80,7 +81,7 @@ final class VisitorCoordinator: ObservableObject {
 
     var serverNow: Date? { receivedServerTime.map { $0.addingTimeInterval(max(0, uptime() - receivedUptime)) } }
     var canRequestReward: Bool {
-        attached && journalReady && connected && !recoveryLocked && !savingJournal && queuedReward == nil &&
+        attached && journalReady && connected && !recoveryLocked && !savingJournal && queuedReward == nil && welcomingID == nil &&
             ((!busy && pending == nil) || pending?.kind == .heartbeat)
     }
     var canCollect: Bool {
@@ -89,14 +90,14 @@ final class VisitorCoordinator: ObservableObject {
     var collecting: Bool { queuedReward?.kind == .claim || pending?.kind == .claim }
     var recoveringRequest: Bool { pending != nil && !busy }
     var confirmingReward: Bool {
-        queuedReward != nil || pending?.kind == .welcome || pending?.kind == .claim
+        welcomingID != nil || queuedReward != nil || pending?.kind == .welcome || pending?.kind == .claim
     }
     var visibleOpportunities: [APIVisitorOpportunity] {
         guard attached, eligible, connected,
               pending == nil || pending?.kind == .heartbeat || pending?.kind == .welcome || pending?.kind == .claim,
               let now = serverNow, let session = summary?.session,
               session.installationId == installationID, session.leaseExpiresAt > now else { return [] }
-        let welcoming = queuedReward?.kind == .welcome ? queuedReward?.target : (pending?.kind == .welcome ? pending?.target : nil)
+        let welcoming = welcomingID ?? (queuedReward?.kind == .welcome ? queuedReward?.target : (pending?.kind == .welcome ? pending?.target : nil))
         return Array((summary?.opportunities ?? []).filter {
             $0.sessionId == session.sessionId && $0.issuedAt <= now && $0.expiresAt > now && $0.id != welcoming
         }.prefix(12))
@@ -285,6 +286,8 @@ final class VisitorCoordinator: ObservableObject {
     func welcome(_ opportunity: APIVisitorOpportunity) async {
         await prepare()
         guard canRequestReward, visibleOpportunities.contains(where: { $0.id == opportunity.id }) else { return }
+        welcomingID = opportunity.id
+        defer { welcomingID = nil }
         await reward(.welcome, target: opportunity.id)
     }
 

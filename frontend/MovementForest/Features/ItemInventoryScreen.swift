@@ -52,7 +52,7 @@ struct ItemInventoryPanel: View {
             }.padding(16)
         }.background(JournalPageBackground().ignoresSafeArea())
             .foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
-            .refreshable { await store.refresh(); await collection?.refresh() }
+            .refreshable { await store.refresh(); await collection?.refresh(scope: .home) }
             .fullScreenCover(item: $inspection, onDismiss: {
                 if let item = placing { placing = nil; onPlace?(item) }
             }) { selection in

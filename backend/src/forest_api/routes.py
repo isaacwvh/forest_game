@@ -208,6 +208,9 @@ def garden_preview(
 def garden_edits(
     body: GardenEditRequest,
     request: Request,
+    known_inventory_state_version: int | None = Query(
+        default=None, alias="knownInventoryStateVersion", ge=0, le=9223372036854775807
+    ),
     identity: Identity = Depends(get_identity),
     session: Session = Depends(get_session),
 ) -> GardenEditResult:
@@ -218,6 +221,7 @@ def garden_edits(
         body,
         accounting=request.app.state.accounting,
         clock=request_clock(request, session),
+        known_inventory_state_version=known_inventory_state_version,
     )
 
 

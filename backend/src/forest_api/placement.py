@@ -4,6 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from hashlib import sha256
 from typing import Protocol
 
 from sqlalchemy import select
@@ -56,6 +57,7 @@ def edit_garden(
     *,
     accounting: PlacementAccounting = DISABLED_ACCOUNTING,
     clock: Callable[[], datetime] = utc_now,
+    known_inventory_state_version: int | None = None,
 ) -> GardenEditResult:
     operation = "garden_edits"
     payload_hash = services.request_hash(operation, body)
@@ -68,6 +70,7 @@ def edit_garden(
                 result.replayed = True
             return result
         garden = services.lock_garden(session, user.id, write=True)
+        base_state_version = garden.state_version
         from forest_api.daily_items import settle_due
 
         settlement_boundary = clock()
@@ -93,13 +96,14 @@ def edit_garden(
             from forest_api.garden_strategy import evaluate_proposal, strategy_signature
 
             preview = evaluate_proposal(session, settings, garden, catalogue, proposal, boundary)
+            expected_signature = body.expected_strategy_signature
+            signature = strategy_signature(preview) if expected_signature is not None else None
+            if signature is not None and expected_signature.startswith("sha256:"):
+                signature = "sha256:" + sha256(signature.encode()).hexdigest()
             if (
                 body.expected_strategy_fingerprint is not None
                 and preview["fingerprint"] != body.expected_strategy_fingerprint
-            ) or (
-                body.expected_strategy_signature is not None
-                and strategy_signature(preview) != body.expected_strategy_signature
-            ):
+            ) or (expected_signature is not None and signature != expected_signature):
                 raise ApiError(
                     409, "strategy_changed", "Garden effects changed. Review before saving."
                 )
@@ -163,8 +167,20 @@ def edit_garden(
 
             # These facts belong to the committed layout, not a later read.
             session.flush()
-            result.inventory = services.present_inventory(session, user.id, presenter=presenter)
-            result.item_inventory = items.present_inventory(session, user.id)
+            if (
+                known_inventory_state_version == base_state_version
+                and initial.keys() == final.keys()
+                and initial_items.keys() == final_items.keys()
+                and garden.state_version
+                == base_state_version + int(final != initial or final_items != initial_items)
+            ):
+                from forest_api.inventory_management import capacity
+
+                result.inventory_base_state_version = base_state_version
+                result.capacity = capacity(session, user.id, settings)
+            else:
+                result.inventory = services.present_inventory(session, user.id, presenter=presenter)
+                result.item_inventory = items.present_inventory(session, user.id)
             result.replayed = False
         services.record_request(session, user.id, body, operation, payload_hash, result)
     return result
@@ -185,7 +201,8 @@ def propose_layout(session, settings, user, garden, catalogue, body):
     """Validate a complete mixed layout without applying or settling anything."""
     from forest_api import items
 
-    item_rows = items.rows(session, user.id)
+    requested_items = {action.item_id for action in body.item_actions}
+    item_rows = items.rows(session, user.id, placed_or_ids=requested_items)
     initial_items = {
         row[0].id: Transform(row[3].x, row[3].y, row[3].rotation_degrees)
         for row in item_rows
@@ -195,9 +212,7 @@ def propose_layout(session, settings, user, garden, catalogue, body):
         raise ApiError(426, "items_client_update_required", "Update the app to edit garden items")
     owned_items = {row[0].id: row for row in item_rows}
     if not session.info.get("item_rotations_client") and any(
-        row[2].id != "wooden-bench"
-        for row in item_rows
-        if row[3] is not None or row[0].id in {a.item_id for a in body.item_actions}
+        row[2].id != "wooden-bench" for row in item_rows
     ):
         raise ApiError(
             426, "item_content_update_required", "Update the app for the new garden items"

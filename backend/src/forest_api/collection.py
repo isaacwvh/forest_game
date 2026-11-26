@@ -57,45 +57,82 @@ def pack_contract(session, settings, pack_id, version):
 
 
 def validate_dependencies(session, definition, *, publishing=False, fixture=False):
-    for pool in definition.rarities:
-        for outcome in outcomes(pool):
-            species = session.get(Species, outcome.species_id)
-            variant = session.get(Variant, (outcome.species_id, outcome.variant_id))
-            if species is None or variant is None:
-                raise ApiError(409, "invalid_pack", "Pack refers to an unknown plant")
-            if publishing and (not species.enabled or not variant.enabled):
-                raise ApiError(409, "invalid_pack", "New packs require available plants")
-            if publishing and species.is_fixture and not fixture:
-                raise ApiError(409, "invalid_pack", "Fixture plants require a fixture pack")
-            expected_rarity = species.rarity if definition.schema_version == 2 else variant.rarity
-            if publishing and expected_rarity != pool.rarity:
-                raise ApiError(409, "invalid_pack", "Outcome rarity disagrees with the catalogue")
-            for kind, model in services.PROFILE_MODELS.items():
-                ref = getattr(outcome.profiles, kind)
-                if session.get(model, (ref.id, ref.version)) is None:
-                    raise ApiError(409, "invalid_pack", "Pack profile version does not exist")
-            stages = session.scalars(
-                select(PlantStage).where(
-                    PlantStage.species_id == outcome.species_id,
-                    PlantStage.variant_id == outcome.variant_id,
+    members = [(pool, outcome) for pool in definition.rarities for outcome in outcomes(pool)]
+    keys = {(o.species_id, o.variant_id) for _, o in members}
+    species_by_id = {
+        row.id: row
+        for row in session.execute(
+            select(Species.id, Species.enabled, Species.is_fixture, Species.rarity).where(
+                Species.id.in_({key[0] for key in keys})
+            )
+        )
+    }
+    variants = {
+        (row.species_id, row.variant_id): row
+        for row in session.execute(
+            select(
+                Variant.species_id,
+                Variant.variant_id,
+                Variant.enabled,
+                Variant.rarity,
+                Variant.asset_catalog_key,
+                Variant.asset_catalog_version,
+            ).where(tuple_(Variant.species_id, Variant.variant_id).in_(keys))
+        )
+    }
+    stages_by_variant = {}
+    for row in session.execute(
+        select(
+            PlantStage.species_id,
+            PlantStage.variant_id,
+            PlantStage.stage,
+            PlantStage.model_key,
+            PlantStage.thumbnail_key,
+        ).where(tuple_(PlantStage.species_id, PlantStage.variant_id).in_(keys))
+    ):
+        stages_by_variant.setdefault((row.species_id, row.variant_id), []).append(row)
+    profiles = {}
+    for kind, model in services.PROFILE_MODELS.items():
+        refs = [getattr(outcome.profiles, kind) for _, outcome in members]
+        profiles[kind] = set(
+            session.execute(
+                select(model.id, model.version).where(
+                    tuple_(model.id, model.version).in_({(ref.id, ref.version) for ref in refs})
                 )
-            ).all()
-            if {row.stage for row in stages} != set(STAGES):
-                raise ApiError(409, "invalid_pack", "Pack requires all four plant stages")
-            prefix = f"assets/{outcome.species_id}/v1/"
-            paths = [(variant.asset_catalog_key, ".json")]
-            paths += [(row.model_key, ".usdz") for row in stages]
-            paths += [(row.thumbnail_key, ".png") for row in stages]
-            if not variant.asset_catalog_version or any(
-                not path.startswith(prefix)
-                or "\\" in path
-                or ".." in PurePosixPath(path).parts
-                or not path.endswith(extension)
-                for path, extension in paths
-            ):
-                raise ApiError(
-                    409, "invalid_pack", "Pack asset references are incomplete or unsafe"
-                )
+            ).tuples()
+        )
+    for pool, outcome in members:
+        key = outcome.species_id, outcome.variant_id
+        species = species_by_id.get(key[0])
+        variant = variants.get(key)
+        if species is None or variant is None:
+            raise ApiError(409, "invalid_pack", "Pack refers to an unknown plant")
+        if publishing and (not species.enabled or not variant.enabled):
+            raise ApiError(409, "invalid_pack", "New packs require available plants")
+        if publishing and species.is_fixture and not fixture:
+            raise ApiError(409, "invalid_pack", "Fixture plants require a fixture pack")
+        expected_rarity = species.rarity if definition.schema_version == 2 else variant.rarity
+        if publishing and expected_rarity != pool.rarity:
+            raise ApiError(409, "invalid_pack", "Outcome rarity disagrees with the catalogue")
+        for kind, available in profiles.items():
+            ref = getattr(outcome.profiles, kind)
+            if (ref.id, ref.version) not in available:
+                raise ApiError(409, "invalid_pack", "Pack profile version does not exist")
+        stages = stages_by_variant.get(key, [])
+        if {row.stage for row in stages} != set(STAGES):
+            raise ApiError(409, "invalid_pack", "Pack requires all four plant stages")
+        prefix = f"assets/{outcome.species_id}/v1/"
+        paths = [(variant.asset_catalog_key, ".json")]
+        paths += [(row.model_key, ".usdz") for row in stages]
+        paths += [(row.thumbnail_key, ".png") for row in stages]
+        if not variant.asset_catalog_version or any(
+            not path.startswith(prefix)
+            or "\\" in path
+            or ".." in PurePosixPath(path).parts
+            or not path.endswith(extension)
+            for path, extension in paths
+        ):
+            raise ApiError(409, "invalid_pack", "Pack asset references are incomplete or unsafe")
 
 
 def publish(session, settings, body):
@@ -230,10 +267,12 @@ def pack_dto(pack):
     }
 
 
-def read(session, settings, identity, *, kind="summary", limit=30, after=None):
+def read(session, settings, identity, *, kind="summary", limit=30, after=None, view="full"):
     for attempt in range(2):
         try:
-            return _read_once(session, settings, identity, kind=kind, limit=limit, after=after)
+            return _read_once(
+                session, settings, identity, kind=kind, limit=limit, after=after, view=view
+            )
         except ApiError as error:
             # A lock wait can cross Monday after preparation. End the account
             # transaction before recovering the newly required week.
@@ -241,52 +280,65 @@ def read(session, settings, identity, *, kind="summary", limit=30, after=None):
                 raise
 
 
-def _read_once(session, settings, identity, *, kind="summary", limit=30, after=None):
+def _read_once(session, settings, identity, *, kind="summary", limit=30, after=None, view="full"):
     from forest_api import shop
 
     clock = session.info.get("clock") or (lambda: session.scalar(select(func.clock_timestamp())))
-    if kind == "summary":
+    if kind == "summary" and view in {"full", "shop"}:
         with session.begin():
             services.get_user(session, identity)
         if not shop.ensure_current(session, clock):
             raise ApiError(503, "shop_preparing", "Shop is recovering missed weeks. Please retry")
     with session.begin():
         user = services.get_user(session, identity, lock=True)
-        wallet = wallet_for(session, user.id)
         if kind == "summary":
+            wallet = wallet_for(session, user.id)
+            from forest_api import milestones
             from forest_api.inventory_management import capacity
+
+            catalogue = services.get_catalogue_state(session, settings)
+            result = {
+                **wallet_dto(wallet),
+                "catalogVersion": catalogue.version,
+                "capacity": capacity(session, user.id, settings),
+            }
+            if view in {"full", "home"}:
+                result["milestones"] = milestones.summary(session, user.id, catalogue, wallet)
+            if view in {"home", "packs"}:
+                return {**result, "offers": []}
 
             offers = []
             for offer in session.scalars(
                 select(ExchangeOffer).where(ExchangeOffer.active).order_by(ExchangeOffer.id)
             ):
-                row, definition = pack_contract(
-                    session, settings, offer.pack_id, offer.pack_version
-                )
+                key = offer.pack_id, offer.pack_version
+                cache = session.info.get("pack_presentation_cache")
+                use_cache = cache is not None and settings.catalogue_cache_seconds > 0
+                pack = cache.get(key) if use_cache else None
+                if pack is None:
+                    row, definition = pack_contract(session, settings, *key)
+                    pack = definition_dto(row, definition)
+                    if use_cache:
+                        cache.put(key, pack, settings.catalogue_cache_seconds)
                 offers.append(
                     {
                         "offerId": offer.id,
                         "offerVersion": offer.version,
                         "tokenCost": str(offer.token_cost),
                         "currency": offer.currency,
-                        "pack": definition_dto(row, definition),
+                        "pack": pack,
                     }
                 )
-            from forest_api import item_commerce, items, milestones
+            from forest_api import item_commerce, items
 
             now = clock()
             rotation = shop.current(session, user.id, now)
-            catalogue = services.get_catalogue_state(session, settings)
-
             return {
-                **wallet_dto(wallet),
-                "catalogVersion": catalogue.version,
-                "capacity": capacity(session, user.id, settings),
+                **result,
                 "offers": offers,
                 "itemOffers": item_commerce.offers(session, user.id, now),
                 "shop": rotation,
                 "itemCapacity": items.capacity(session, user.id),
-                "milestones": milestones.summary(session, user.id, catalogue, wallet),
             }
         if kind == "packs":
             query = select(OwnedPack).where(
@@ -307,7 +359,11 @@ def _read_once(session, settings, identity, *, kind="summary", limit=30, after=N
                 "packs": [pack_dto(row) for row in rows[:limit]],
                 "nextCursor": str(rows[limit - 1].id) if len(rows) > limit else None,
             }
-        query = select(PackOpening).where(PackOpening.owner_id == user.id)
+        query = (
+            select(PackOpening.id, CollectionEvent.receipt)
+            .join(CollectionEvent, CollectionEvent.id == PackOpening.event_id)
+            .where(PackOpening.owner_id == user.id, CollectionEvent.owner_id == user.id)
+        )
         if after:
             cursor = session.get(PackOpening, after)
             if cursor is None or cursor.owner_id != user.id:
@@ -315,13 +371,16 @@ def _read_once(session, settings, identity, *, kind="summary", limit=30, after=N
             query = query.where(
                 tuple_(PackOpening.opened_at, PackOpening.id) < (cursor.opened_at, cursor.id)
             )
-        rows = session.scalars(
+        if view == "latest":
+            row = session.execute(
+                query.order_by(PackOpening.opened_at.desc(), PackOpening.id.desc()).limit(1)
+            ).first()
+            return {"openings": [row.receipt] if row else [], "nextCursor": None}
+        rows = session.execute(
             query.order_by(PackOpening.opened_at.desc(), PackOpening.id.desc()).limit(limit + 1)
         ).all()
         return {
-            "openings": [
-                session.get(CollectionEvent, row.event_id).receipt for row in rows[:limit]
-            ],
+            "openings": [row.receipt for row in rows[:limit]],
             "nextCursor": str(rows[limit - 1].id) if len(rows) > limit else None,
         }
 
@@ -349,7 +408,7 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
         previous = durable_replay(session, user.id, body.request_id, operation, digest)
         if previous is not None:
             return previous
-        services.lock_garden(session, user.id, write=True)
+        garden = services.lock_garden(session, user.id, write=True)
         services.get_catalogue_state(session, settings, lock=True)
         boundary = clock()
         # The B6 throttle is account-wide and checks replays before charging quota.
@@ -408,6 +467,7 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 "gemsSpent": str(cost if offer.currency == "gems" else 0),
                 "currency": offer.currency,
                 "packs": [pack_dto(pack) for pack in packs],
+                "capacity": {**limits, "unopenedPacks": limits["unopenedPacks"] + body.quantity},
             }
         else:
             pack = session.scalar(
@@ -422,9 +482,15 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 receipt = session.get(CollectionEvent, opening.event_id).receipt
                 services.record_request(session, user.id, body, operation, digest, receipt)
                 return receipt
-            from forest_api.inventory_management import require_plant_room
+            from forest_api.inventory_management import capacity
 
-            require_plant_room(session, user.id, settings)
+            limits = capacity(session, user.id, settings)
+            if limits["ownedPlants"] >= limits["plantLimit"]:
+                raise ApiError(
+                    409,
+                    "plant_capacity_full",
+                    "Plant collection full. Sell a stored plant to open this pack.",
+                )
             row, definition = pack_contract(session, settings, pack.pack_id, pack.pack_version)
             validate_dependencies(session, definition)
             require_woodland_client(session, row)
@@ -455,8 +521,8 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
             from forest_api.discovery import record_reached
 
             record_reached(session, user.id, [plant], boundary)
-            garden = services.lock_garden(session, user.id, write=True)
-            garden.state_version = checked(garden.state_version + 1)
+            base_state = garden.state_version
+            garden.state_version = checked(base_state + 1)
             # UUID ordering is not used for time semantics, only bounded pagination.
             opening_id = uuid4()
             from forest_api.expeditions import observe_opening
@@ -470,6 +536,14 @@ def mutate(session, settings, identity, body, clock, *, pack_id=None, randbelow=
                 "packVersion": row.version,
                 "rarity": rarity,
                 "openedAt": boundary.isoformat(),
+                "inventoryBaseStateVersion": base_state,
+                "gardenStateVersion": garden.state_version,
+                "capacity": {
+                    **limits,
+                    "ownedPlants": limits["ownedPlants"] + 1,
+                    "storedPlants": limits["storedPlants"] + 1,
+                    "unopenedPacks": limits["unopenedPacks"] - 1,
+                },
                 "plant": services.PlantPresenter(session)
                 .plant(plant, None)
                 .model_dump(mode="json", by_alias=True),
