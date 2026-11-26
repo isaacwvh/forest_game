@@ -25,6 +25,19 @@ final class GardenFrameMetrics: ObservableObject {
 /// Ordinary gameplay does not need to project moving accessibility frames at 60 Hz.
 @MainActor
 private final class GardenARView: ARView {
+    func applyRenderingScale() {
+        let nativeScale = window?.screen.scale ?? traitCollection.displayScale
+        guard nativeScale > 0 else { return }
+        contentScaleFactor = CGFloat(GardenRenderPolicy.renderScale(nativeScale: Double(nativeScale)))
+    }
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        applyRenderingScale()
+    }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if previousTraitCollection?.displayScale != traitCollection.displayScale { applyRenderingScale() }
+    }
     var onAccessibilityRead: (() -> Void)?
     private var readingAccessibility = false
     override var accessibilityElements: [Any]? {
@@ -124,6 +137,10 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     private let root = AnchorEntity(world: .zero)
     private let rig = AnchorEntity(world: .zero)
     private let camera = PerspectiveCamera()
+    private let sun = DirectionalLight()
+    private let performance: GardenPerformanceMonitor
+    private var performanceUpdates: AnyCancellable?
+    private(set) var conservesEffects = false
     private let environment = GardenEnvironment()
     private let loader = PlantModelLoader()
     private let visitorModels: VisitorModelLibrary
@@ -196,8 +213,10 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     override convenience init() { self.init(visitorModels: VisitorModelLibrary.shared) }
 
     init(visitorModels: VisitorModelLibrary,
-         accessibilityMotionEnabled: (() -> Bool)? = nil) {
+         accessibilityMotionEnabled: (() -> Bool)? = nil,
+         performance: GardenPerformanceMonitor? = nil) {
         self.visitorModels = visitorModels
+        self.performance = performance ?? GardenPerformanceMonitor.shared
         self.accessibilityMotionEnabled = accessibilityMotionEnabled ?? {
             UIAccessibility.isVoiceOverRunning || UIAccessibility.isSwitchControlRunning
         }
@@ -215,7 +234,6 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         camera.name = "garden-camera"
         rig.addChild(camera)
         environment.attachBackdrop(to: camera)
-        let sun = DirectionalLight()
         sun.light.color = UIColor(red: 1, green: 0.95, blue: 0.85, alpha: 1)
         sun.light.intensity = 1700
         sun.shadow = DirectionalLightComponent.Shadow(maximumDistance: 50, depthBias: 2)
@@ -229,6 +247,8 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         configureGestures()
         configureAccessibility()
         (view as? GardenARView)?.onAccessibilityRead = { [weak self] in self?.updateAccessibility() }
+        (view as? GardenARView)?.applyRenderingScale()
+        performanceUpdates = self.performance.$conservesEffects.sink { [weak self] in self?.setConservingEffects($0) }
         updateCamera()
     }
 
@@ -498,7 +518,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
         // A root clip often contains tracks for its descendants; don't play those twice.
         if let clip = entity.availableAnimations.first {
             let controller = entity.playAnimation(clip.repeat(duration: .infinity), transitionDuration: 0,
-                                                  startsPaused: !wantsMotion || !isActive)
+                                                  startsPaused: !wantsMotion || !isActive || conservesEffects)
             plantPlaybacks[plantID, default: []].append(controller)
             return 1
         }
@@ -515,11 +535,20 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     }
     private func applyMotion() {
         for controller in playbacks {
-            if wantsMotion && isActive { controller.resume() } else { controller.pause() }
+            if wantsMotion && isActive && !conservesEffects { controller.resume() } else { controller.pause() }
         }
         for controller in visitorPlaybacks.values.flatMap({ $0 }) {
             if wantsMotion && isActive { controller.resume() } else { controller.pause() }
         }
+    }
+    private func setConservingEffects(_ value: Bool) {
+        guard !disposed, conservesEffects != value else { return }
+        conservesEffects = value
+        // Keep the lights and authored materials; omit the optional shadow pass
+        // during serious thermal pressure or the user's Low Power Mode.
+        sun.shadow = value ? nil : DirectionalLightComponent.Shadow(maximumDistance: 50, depthBias: 2)
+        sharedEffects.setConservingEffects(value)
+        applyMotion()
     }
     func setActive(_ active: Bool) {
         guard !disposed else { return }
@@ -550,6 +579,7 @@ final class RealityGardenRenderer: NSObject, ObservableObject, GardenRenderer, U
     func stop() {
         guard !disposed else { return }
         setActive(false); disposed = true; visitorGeneration = UUID()
+        performanceUpdates?.cancel(); performanceUpdates = nil
         environment.stop()
         settleGrowthEffects(); growthUpdates?.cancel(); growthUpdates = nil; growthEffects = nil
         LifecycleDiagnostics.event("renderer disposed id=\(diagnosticID)")

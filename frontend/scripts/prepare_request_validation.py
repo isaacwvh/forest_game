@@ -99,6 +99,7 @@ source += fixtures(
     )
 )
 selected = [
+    "testEditorRenderingCacheInvalidatesOnDraftAndRefreshButNotSelection",
     "testAtomicSnapshotLoadsOnceAndFreshSaveDoesNotReload",
     "testLostFreshResponseReplaysThenReadsCurrentSnapshot",
     "testModernSaveChecksStrategyInTheEditWithoutAPreviewRequest",

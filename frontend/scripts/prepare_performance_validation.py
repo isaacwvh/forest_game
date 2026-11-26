@@ -74,6 +74,8 @@ interfaces += block(diagnostics, "enum PlayerMessage")
 interfaces += block(read("MovementForest/Services/GardenEffectsCoordinator.swift"), "struct ConfirmedTokenReward:")
 interfaces += block(read("MovementForest/Services/AppResumeCoordinator.swift"), "enum LifecycleClock")
 interfaces += block(read("MovementForest/Features/Garden/VisitorViews.swift"), "struct VisitorFlightPose:")
+interfaces += read("MovementForest/Models/GardenRenderPolicy.swift")
+interfaces += read("MovementForestTests/RenderPolicyChecks.swift")
 disk = read("MovementForest/Services/AccountDiskStore.swift")
 interfaces += disk[disk.index("private struct AccountDiskRecord"):disk.index("struct ConfirmedGardenCache")]
 visitor_models = read("MovementForest/Models/VisitorModels.swift")
@@ -100,6 +102,13 @@ for match in re.finditer(r"    func test\w+\(", native):
     methods.append("    " + signature + "{" + body)
 helpers = block(native, "    private func waitUntil") + block(native, "    private func releaseHeartbeat")
 tests = production + header + "\n@MainActor\nfinal class PortableVisitorTests: XCTestCase {\n" + "\n".join(methods) + helpers + "}\n"
+tests += """
+final class PortableRenderPolicyTests: XCTestCase {
+    func testFixedResolutionAndThermalRecovery() throws {
+        XCTAssertEqual(try RenderPolicyChecks.run(), 17)
+    }
+}
+"""
 (TESTS / "VisitorTests.swift").write_text(tests, encoding="utf-8")
 (OUT / "Package.swift").write_text('''// swift-tools-version: 5.9
 import PackageDescription
@@ -107,4 +116,4 @@ let package = Package(name: "ForestPerformanceChecks", targets: [
     .testTarget(name: "PerformanceTests", path: "Tests/PerformanceTests")
 ])
 ''', encoding="utf-8")
-print(f"Prepared {len(methods)} actual visitor scenarios in {OUT} (platform shims; no Apple SDK coverage).")
+print(f"Prepared {len(methods)} actual visitor scenarios and 17 shared render-policy assertions in {OUT} (no Apple SDK coverage).")

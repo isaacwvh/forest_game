@@ -7,6 +7,7 @@ struct MovementForestApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(container: container).tint(.forestTint).preferredColorScheme(.light)
+                .modifier(GardenPerformanceEnvironment())
                 .onOpenURL { url in
                     guard let catalog = container.catalog else { return }
                     Task { await container.connection.handleAuthCallback(url, assets: catalog) }
@@ -71,7 +72,8 @@ private enum RootAccountSheet: String, Identifiable {
 @MainActor
 struct RootView: View {
     @ObservedObject var container: AppContainer
-    @ObservedObject private var connection: GardenConnection
+    private let connection: GardenConnection
+    @StateObject private var presentation: RootPresentationObserver
     @ObservedObject private var sampleGarden: GardenStore
     @Environment(\.scenePhase) private var phase
     @State private var selectedTab = ForestDestination.garden
@@ -86,6 +88,7 @@ struct RootView: View {
     init(container: AppContainer) {
         self.container = container
         self.connection = container.connection
+        _presentation = StateObject(wrappedValue: RootPresentationObserver(connection: container.connection))
         self.sampleGarden = container.garden
     }
 
@@ -139,6 +142,7 @@ struct RootView: View {
     }
 
     var body: some View {
+        let _ = presentation
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--fixture-effects") {
             RewardEffectsFixtureScreen()

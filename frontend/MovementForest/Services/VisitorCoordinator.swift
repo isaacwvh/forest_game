@@ -230,11 +230,16 @@ final class VisitorCoordinator: ObservableObject {
     }
 
     func clearTokenFeedback() {
-        tokenRewards = []; liveRewardIDs = []
+        if !tokenRewards.isEmpty { tokenRewards = [] }
+        liveRewardIDs = []
     }
 
     func tick(force: Bool = false) async {
         guard attached, !busy, !recoveryLocked, force || uptime() >= nextPoll else { return }
+        // Once an inactive session has ended there is no work to publish or send.
+        // Eligibility changes, pending recovery and explicit reads still run.
+        guard force || !journalReady || eligible || needsRead || pending != nil ||
+              summary?.session?.installationId == installationID else { return }
         busy = true
         defer { busy = false; nextPoll = uptime() + Double(summary?.heartbeatSeconds ?? 10) }
         do {

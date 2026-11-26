@@ -48,6 +48,8 @@ struct RenderDiagnostics: View {
     var isSample = true
     var body: some View {
         Section("Renderer") {
+            DetailRow(title: "3D rendering scale", value: "85% of display scale")
+            DetailRow(title: "Optional effects", value: renderer.conservesEffects ? "Conserving" : "Normal")
             DetailRow(title: "Models loaded", value: "\(renderer.loadedCount)")
             DetailRow(title: "Scene load", value: String(format: "%.2f s", renderer.loadSeconds))
             RenderFrameInterval(metrics: renderer.frameMetrics)

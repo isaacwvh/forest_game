@@ -7,6 +7,21 @@ import UIKit
 @MainActor
 final class SharedGardenEffects {
     static let maximumConcurrent = 6
+    private var concurrencyLimit = SharedGardenEffects.maximumConcurrent
+    private var particleLimit = 12
+
+    func setConservingEffects(_ value: Bool) {
+        concurrencyLimit = value ? 3 : Self.maximumConcurrent
+        particleLimit = value ? 6 : 12
+        if value {
+            for effect in running where effect.particles.count > particleLimit {
+                effect.particles.dropFirst(particleLimit).forEach { $0.removeFromParent() }
+                effect.particles = Array(effect.particles.prefix(particleLimit))
+            }
+        }
+        // Existing reveals finish, and every queued stage replacement is retained.
+        fillSlots()
+    }
     private let dropletMesh = MeshResource.generateSphere(radius: 1)
     private let sparkleMesh = MeshResource.generateBox(size: 1, cornerRadius: 0.12)
     private struct Pending {
@@ -75,14 +90,14 @@ final class SharedGardenEffects {
 
     private func fillSlots() {
         guard let parent = parent else { return }
-        while running.count < Self.maximumConcurrent && !queue.isEmpty {
+        while running.count < concurrencyLimit && !queue.isEmpty {
             let effect = Effect(queue.removeFirst())
             effect.root.name = "growth-effect-\(effect.pending.target.id.uuidString)"
             effect.root.transform = effect.source.transform
             parent.addChild(effect.root)
             capture(effect)
             if !effect.pending.reduced {
-                for index in 0..<12 {
+                for index in 0..<particleLimit {
                     let water = effect.pending.target.water && index < 6
                     let color = water ? UIColor(red: 0.52, green: 0.82, blue: 0.98, alpha: 1) :
                         (index.isMultiple(of: 2) ? UIColor(red: 0.82, green: 0.94, blue: 0.62, alpha: 1) :

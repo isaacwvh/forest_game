@@ -186,6 +186,30 @@ private final class EditorTestService: GardenServing {
 
 @MainActor
 final class GardenEditorTests: XCTestCase {
+    func testEditorRenderingCacheInvalidatesOnDraftAndRefreshButNotSelection() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        let store = try makeStore(service)
+        await store.start(); store.editing = true
+        let initial = store.editorRendered
+        let builds = store.editorRenderBuildCount
+        for _ in 0..<20 { XCTAssertEqual(store.editorRendered, initial) }
+        store.selectedID = UUID(); store.adultPreview = true
+        _ = store.editorRendered
+        XCTAssertEqual(store.editorRenderBuildCount, builds)
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        store.updatePosition(x: 2, y: 2); await store.releaseCandidate()
+        XCTAssertEqual(store.editorRendered?.plants.count, (initial?.plants.count ?? 0) + 1)
+        XCTAssertGreaterThan(store.editorRenderBuildCount, builds)
+        let afterPlace = store.editorRenderBuildCount
+        store.undoDraft()
+        XCTAssertEqual(store.editorRendered, initial)
+        XCTAssertGreaterThan(store.editorRenderBuildCount, afterPlace)
+        let beforeRefresh = store.editorRenderBuildCount
+        await store.refresh()
+        _ = store.editorRendered
+        XCTAssertGreaterThan(store.editorRenderBuildCount, beforeRefresh)
+    }
+
     func testAtomicSnapshotLoadsOnceAndFreshSaveDoesNotReload() async throws {
         let service = EditorTestService(try EditorContract.load())
         service.supportsSnapshots = true; service.includesCapacity = true

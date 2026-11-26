@@ -53,6 +53,7 @@ private final class FakeVisitors: VisitorServing {
     let contract: VisitorContract
     var current: APIVisitorSummary
     var operations: [PendingVisitorOperation] = []
+    var readCalls = 0
     var offline = false
     var blockHeartbeat = false
     var heartbeatContinuation: CheckedContinuation<Void, Never>?
@@ -61,6 +62,7 @@ private final class FakeVisitors: VisitorServing {
     var rewardTokensOverride: String?
     init(_ contract: VisitorContract) { self.contract = contract; current = contract.initial }
     func read() async throws -> APIVisitorSummary {
+        readCalls += 1
         if offline { throw URLError(.notConnectedToInternet) }
         return current
     }
@@ -93,6 +95,22 @@ private final class FakeVisitors: VisitorServing {
 
 @MainActor
 final class VisitorTests: XCTestCase {
+    func testInactiveTickDoesNotReadOrSendUntilEligibilityChanges() async throws {
+        let fixture = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
+        var time: TimeInterval = 0
+        let store = VisitorCoordinator(userID: UUID(), installationID: try XCTUnwrap(fixture.active.session?.installationId),
+                                      service: service, journal: MemoryVisitorJournal(), uptime: { time })
+        await store.tick(force: true)
+        let reads = service.readCalls
+        for _ in 0..<10 { time += 20; await store.tick() }
+        XCTAssertEqual(service.readCalls, reads)
+        XCTAssertTrue(service.operations.isEmpty)
+        store.setEligible(true, reconcile: false)
+        await store.tick()
+        XCTAssertEqual(service.readCalls, reads + 1)
+        XCTAssertEqual(service.operations.map(\.kind), [.start])
+    }
+
     func testStaleControlRecoveryPreservesQueuedRewardAndStaysQuiet() async throws {
         let f = try VisitorContract.load(), service = FakeVisitors(try VisitorContract.load())
         service.current = f.active

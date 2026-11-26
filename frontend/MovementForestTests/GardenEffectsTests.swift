@@ -6,6 +6,25 @@ import UIKit
 
 @MainActor
 final class GardenEffectsTests: XCTestCase {
+    func testConstrainedEffectsRetainAndCompleteEveryStageReplacement() {
+        let effects = SharedGardenEffects(), root = Entity()
+        effects.setConservingEffects(true)
+        var swaps = 0
+        for _ in 0..<9 {
+            let source = ModelEntity(mesh: .generateBox(size: 1), materials: [UnlitMaterial(color: .green)])
+            root.addChild(source)
+            effects.enqueue(.init(plantID: UUID(), water: true, before: .sprout, after: .adult),
+                source: source, parent: root, reducedMotion: false, replace: { swaps += 1; return source })
+        }
+        XCTAssertEqual(effects.activeCount, 3); XCTAssertEqual(effects.queuedCount, 6)
+        let effectRoots = root.children.filter { $0.name.hasPrefix("growth-effect-") }
+        XCTAssertTrue(effectRoots.allSatisfy { $0.children.count == 6 })
+        for _ in 0..<400 { effects.tick(1.0 / 60) }
+        XCTAssertEqual(swaps, 9)
+        XCTAssertEqual(effects.activeCount, 0); XCTAssertEqual(effects.queuedCount, 0)
+        XCTAssertEqual(root.children.count, 9)
+    }
+
     private let gardenID = UUID()
 
     private func plant(_ id: UUID, stage: GrowthStage = .sprout, growth: String = "0", placed: Bool = true) -> APIOwnedPlant {

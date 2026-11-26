@@ -1,3 +1,10 @@
+## Client rendering follow-up — 26 November 2026
+
+The garden uses fixed 0.85 display-relative resolution, conservative thermal/power
+effects, narrower root observation and render/image caches. Artwork, frame rate,
+collisions, request/reward contracts and backend deployment remain unchanged.
+See [behavior, executed checks and required native acceptance](RENDERING_085_ACCEPTANCE.md).
+
 ## Cloud Run testing — 25 November 2026
 
 The hosted backend is `https://forest-api-482382863751.asia-southeast1.run.app`.

@@ -35,9 +35,9 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     @Published var activityBlocked = false
     var prepareMembershipChange: (() async -> Bool)?
     var reconcileActivity: (() async -> Void)?
-    @Published private(set) var catalogue: APICatalogue?
-    @Published private(set) var confirmed: APIGarden?
-    @Published private(set) var rendered: GardenSnapshot?
+    @Published private(set) var catalogue: APICatalogue? { didSet { invalidateEditorRendering() } }
+    @Published private(set) var confirmed: APIGarden? { didSet { invalidateEditorRendering() } }
+    @Published private(set) var rendered: GardenSnapshot? { didSet { invalidateEditorRendering() } }
     @Published private(set) var inventory: [APIOwnedPlant] = []
     @Published private(set) var itemInventory: [APIOwnedItem] = []
     @Published private(set) var itemCapacity: APIItemCapacity?
@@ -70,9 +70,12 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     @Published private(set) var recoveryLocked = false
     @Published var selectedID: UUID?
     @Published var editing = false {
-        didSet { if editing && !oldValue { beginDraft() } }
+        didSet {
+            if editing != oldValue { invalidateEditorRendering() }
+            if editing && !oldValue { beginDraft() }
+        }
     }
-    @Published private(set) var draft: GardenDraftSession?
+    @Published private(set) var draft: GardenDraftSession? { didSet { invalidateEditorRendering() } }
     @Published private(set) var draftConflict = false
     @Published private(set) var replacementID: UUID?
     @Published private(set) var draftPersistenceIssue: String?
@@ -86,6 +89,10 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private var editGeneration = UUID()
     private var strategyCache: [String: GardenStrategyEvaluation] = [:]
     private var unavailableStrategies = Set<String>()
+    private var editorRenderingValid = false
+    private var editorRenderingCache: GardenSnapshot?
+    private(set) var editorRenderBuildCount = 0
+    private func invalidateEditorRendering() { editorRenderingValid = false; editorRenderingCache = nil }
     var diagnosticScope: String { DiagnosticHistory.scope(server: service.serverID, user: profile.userId) }
     var canReadInventory: Bool {
         isActive && confirmed != nil && catalogue != nil && !refreshInFlight && pending == nil && !needsRefresh
@@ -665,8 +672,14 @@ extension GardenEditorStore {
         return garden
     }
     var editorRendered: GardenSnapshot? {
-        guard editing, let garden = editorGarden, let catalogue = catalogue else { return rendered }
-        return (try? garden.rendered(catalogue: catalogue, assets: assets)) ?? rendered
+        guard editing else { return rendered }
+        if editorRenderingValid { return editorRenderingCache }
+        if let garden = editorGarden, let catalogue = catalogue {
+            editorRenderBuildCount += 1
+            editorRenderingCache = (try? garden.rendered(catalogue: catalogue, assets: assets)) ?? rendered
+        } else { editorRenderingCache = rendered }
+        editorRenderingValid = true
+        return editorRenderingCache
     }
     var storedPlants: [APIOwnedPlant] {
         guard editing, let draft = draft else { return inventory }

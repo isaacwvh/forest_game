@@ -3,6 +3,15 @@ import UIKit
 import ImageIO
 
 enum PresentationAssets {
+    private static let imageCache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.totalCostLimit = 24 * 1024 * 1024
+        cache.countLimit = 48
+        return cache
+    }()
+    private static let memoryWarningObserver = NotificationCenter.default.addObserver(
+        forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: nil
+    ) { _ in imageCache.removeAllObjects() }
     static func url(_ path: String, bundle: Bundle = .main) -> URL? {
         guard !path.hasPrefix("/"), !path.contains("\\"), !path.split(separator: "/").contains(".."),
               let root = bundle.resourceURL else { return nil }
@@ -12,14 +21,20 @@ enum PresentationAssets {
 
     /// Decode only display-sized pixels; avoid retaining full PNG canvases.
     static func image(_ path: String, maximumPixels: Int = 900) -> UIImage? {
-        guard let url = url(path), let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+        guard maximumPixels > 0, let url = url(path) else { return nil }
+        _ = memoryWarningObserver
+        let key = "\(url.absoluteString)|\(maximumPixels)" as NSString
+        if let cached = imageCache.object(forKey: key) { return cached }
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceThumbnailMaxPixelSize: maximumPixels,
                 kCGImageSourceCreateThumbnailWithTransform: true,
                 kCGImageSourceShouldCacheImmediately: true
               ] as CFDictionary) else { return nil }
-        return UIImage(cgImage: image)
+        let decoded = UIImage(cgImage: image)
+        imageCache.setObject(decoded, forKey: key, cost: image.bytesPerRow * image.height)
+        return decoded
     }
 
     static func packPath(packID: String, part: String) -> String? {
