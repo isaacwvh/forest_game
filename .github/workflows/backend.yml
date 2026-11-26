@@ -1,18 +1,28 @@
 name: Backend
 on:
   push:
-    paths: ['backend/**', 'assets/**', 'spec_examples/*.json', 'frontend/MovementForest/Resources/Fixtures/*.json', '.github/workflows/backend.yml']
   pull_request:
-    paths: ['backend/**', 'assets/**', 'spec_examples/*.json', 'frontend/MovementForest/Resources/Fixtures/*.json', '.github/workflows/backend.yml']
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  postgres:
+  changes:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: changes
+        run: python tools/ci_changes.py
+  postgres:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:17-bookworm
@@ -45,10 +55,12 @@ jobs:
         run: |
           ruff check backend
           ruff format --check backend
+      - name: Verify canonical catalogue bytes
+        run: python tools/check_catalog_bytes.py
       - name: PostgreSQL migrations, ownership and concurrency
         run: |
           set -euo pipefail
-          python -m pytest backend/tests -q 2>&1 | tee backend-tests.log
+          python -m pytest backend/tests -q --junitxml=backend-results.xml 2>&1 | tee backend-tests.log
       - name: Activity, skills and scheduled-visitor HTTP walkthroughs
         run: |
           set -euo pipefail
@@ -65,7 +77,20 @@ jobs:
             python backend/scripts/simulate_visitors.py
           } 2>&1 | tee visitor-smoke.log
       - name: Build application image
-        run: docker build -t movement-forest-api:ci backend
+        run: docker build --build-arg FOREST_RELEASE_COMMIT=${{ github.sha }} -t movement-forest-api:ci backend
+      - name: Exercise built API, worker, migration and maintenance
+        run: python backend/scripts/smoke_image.py --image movement-forest-api:ci
+      - name: Retain validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-validation
+          path: |
+            backend-results.xml
+            backend-tests.log
+            activity-smoke.log
+            visitor-smoke.log
+          if-no-files-found: ignore
       - name: Summarize validation failure
         if: failure()
         run: |
@@ -80,3 +105,17 @@ jobs:
                       summary.write("\n".join(log.read_text(errors="replace").splitlines()[-120:]))
                       summary.write("\n```\n")
           PY
+  backend-gate:
+    name: Backend gate
+    if: always()
+    needs: [changes, postgres]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require applicable validation to pass
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          REQUIRED: ${{ needs.changes.outputs.backend }}
+          RESULT: ${{ needs.postgres.result }}
+        run: |
+          test "$CHANGES" = success
+          if [ "$REQUIRED" = true ]; then test "$RESULT" = success; else test "$RESULT" = skipped; fi

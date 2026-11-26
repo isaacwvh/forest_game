@@ -29,6 +29,7 @@ from forest_api.schemas import (
     GardenDTO,
     GardenEditRequest,
     GardenEditResult,
+    GardenSnapshotDTO,
     InventoryDTO,
     PlantDTO,
     RegisterAccount,
@@ -39,7 +40,7 @@ from forest_api.server_clock import request_clock
 
 router = APIRouter()
 placement_router = APIRouter(route_class=ExactJSONRoute)
-SCHEMA_REVISION = "0022_expedition_launch"
+SCHEMA_REVISION = "0023_cloud_runtime"
 
 
 @router.get("/health/live", tags=["health"])
@@ -126,6 +127,20 @@ def garden(
     session: Session = Depends(get_session),
 ) -> GardenDTO:
     return services.read_garden(session, request.app.state.settings, identity)
+
+
+@router.get("/v1/me/garden/snapshot", response_model=GardenSnapshotDTO, tags=["garden"])
+def garden_snapshot(
+    request: Request,
+    response: Response,
+    catalog_version: str | None = Query(default=None, alias="catalogVersion", max_length=100),
+    identity: Identity = Depends(get_identity),
+    session: Session = Depends(get_session),
+) -> GardenSnapshotDTO:
+    response.headers["Cache-Control"] = "no-store"
+    return services.read_garden_snapshot(
+        session, request.app.state.settings, identity, catalog_version
+    )
 
 
 @router.get(

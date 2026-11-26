@@ -81,6 +81,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private var refreshInFlight = false
     private var inventoryGeneration = UUID()
     private var started = false
+    private var supportsSnapshots = false
     private var lastReadIssue: UUID?
     private var editGeneration = UUID()
     private var strategyCache: [String: GardenStrategyEvaluation] = [:]
@@ -133,7 +134,7 @@ final class GardenEditorStore: ObservableObject, Identifiable {
         catalogue.map { plant.rendered(catalogue: $0, assets: assets) }
     }
 
-    func start(refreshRemote: Bool = true) async {
+    func start(refreshRemote: Bool = true, snapshot: APIGardenSnapshot? = nil) async {
         started = true
         restoreCached()
         restoreDraft()
@@ -148,7 +149,14 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             state = pending == nil ? .blocked : .unknown
             return
         }
-        if pending != nil { await retryPending() } else { await refresh() }
+        if pending != nil { await retryPending() }
+        else if let snapshot = snapshot {
+            do { try acceptSnapshot(snapshot) }
+            catch {
+                state = .blocked; needsRefresh = true
+                report(PlayerMessage.failure(error, fallback: "Your garden couldn’t load. Refresh to try again."), source: .gardenRead)
+            }
+        } else { await refresh() }
     }
 
     func restoreCached() {
@@ -241,6 +249,12 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     private func readCurrent(previousState: GardenSaveState, previousNeedsRefresh: Bool) async {
         guard isActive, pending == nil, !recoveryLocked else { return }
         do {
+            if let snapshot = try await service.snapshot(catalogVersion: catalogue?.catalogVersion) {
+                guard isActive else { return }
+                try acceptSnapshot(snapshot)
+                return
+            }
+            supportsSnapshots = false
             // Individual reads are coherent, but not an atomic bootstrap. Bound retries
             // if another client keeps changing the layout/catalogue during this read.
             for _ in 0..<3 {
@@ -288,6 +302,39 @@ final class GardenEditorStore: ObservableObject, Identifiable {
             report(PlayerMessage.failure(error, fallback: "Your garden couldn’t refresh. Try again when connected."), source: .gardenRead)
             lastReadIssue = feedback?.id
         }
+    }
+
+    private func acceptSnapshot(_ value: APIGardenSnapshot) throws {
+        guard isActive else { throw CancellationError() }
+        guard value.profile.userId == profile.userId,
+              let catalog = value.catalogue ?? catalogue,
+              catalog.catalogVersion == value.garden.catalogVersion else {
+            throw ForestError.invalidData("The garden snapshot could not be verified.")
+        }
+        let after = value.garden
+        if let current = confirmed {
+            guard after.gardenId == current.gardenId, after.stateVersion >= current.stateVersion,
+                  after.layoutVersion >= current.layoutVersion else {
+                throw ForestError.invalidData("The garden snapshot is older than your confirmed garden.")
+            }
+        }
+        let snapshot = try after.rendered(catalogue: catalog, assets: assets)
+        _ = try PlacementGeometry.units(after.width)
+        _ = try PlacementGeometry.units(after.depth)
+        catalogue = catalog; confirmed = after; rendered = snapshot
+        supportsSnapshots = true
+        inventory = filtered(value.inventory.plants, garden: after); nextCursor = value.inventory.nextCursor
+        itemInventory = value.itemInventory.items.filter { $0.placement == nil }
+        itemCapacity = value.itemInventory.capacity; itemCursor = value.itemInventory.nextCursor
+        acceptCapacity(value.inventory.capacity)
+        if draft == nil { restoreDraft() }
+        updateDraftFacts(after, plants: value.inventory.plants, items: value.itemInventory.items)
+        confirmedAt = Date(); showingCached = false
+        try persistConfirmed()
+        needsRefresh = false; state = .ready
+        if feedback?.id == lastReadIssue { feedback = nil }
+        lastReadIssue = nil
+        if selectedPlanted == nil && selectedItem == nil { selectedID = nil }
     }
 
     private func filtered(_ plants: [APIOwnedPlant], garden: APIGarden) -> [APIOwnedPlant] {
@@ -558,12 +605,20 @@ final class GardenEditorStore: ObservableObject, Identifiable {
                confirmed == nil || result.garden.stateVersion >= (confirmed?.stateVersion ?? 0) {
                 try applyConfirmed(result.garden, updatedPlants: result.updatedPlants)
             }
+            var currentSnapshot = false
+            if result.replayed == false, catalogue?.catalogVersion == result.garden.catalogVersion,
+               result.garden.stateVersion >= (confirmed?.stateVersion ?? 0),
+               let inventory = result.inventory, let items = result.itemInventory {
+                try acceptSnapshot(APIGardenSnapshot(profile: profile, garden: result.garden,
+                    catalogue: nil, inventory: inventory, itemInventory: items))
+                currentSnapshot = true
+            }
             discardDraft()
             try journal.remove(server: edit.serverID, user: edit.userID)
-            pending = nil; needsRefresh = true; state = .ready
+            pending = nil; needsRefresh = !currentSnapshot; state = .ready
             report("Saved.", kind: .success)
             DiagnosticHistory.shared.record("Garden edit", "confirmed", requestID: request.requestId.uuidString, scope: diagnosticScope)
-            await refresh()
+            if !currentSnapshot { await refresh() }
         } catch let recovery as RequestRecovery {
             do {
                 try recovery.validate(id: edit.request.requestId, operation: "garden_edits")
@@ -833,31 +888,9 @@ extension GardenEditorStore {
             report("Activity could not sync. Your draft is kept."); return
         }
         guard isActive, editing, generation == editGeneration else { return }
-        await refresh()
-        // Refresh every owned copy before reviewing a draft, including copies on
-        // later inventory pages. A stored copy may have changed on another device.
-        for _ in 0..<64 {
-            guard isActive, editing, generation == editGeneration, readyForMutation else { return }
-            if nextCursor == nil && itemCursor == nil { break }
-            let plantCursor = nextCursor, savedItemCursor = itemCursor
-            if nextCursor != nil { await loadMore() }
-            if itemCursor != nil { await loadMoreItems() }
-            if plantCursor == nextCursor && savedItemCursor == itemCursor {
-                report("Storage could not refresh. Your draft is kept."); return
-            }
-        }
-        guard nextCursor == nil && itemCursor == nil else {
-            report("Storage needs another refresh. Your draft is kept."); return
-        }
-        if var refreshed = draft, let garden = confirmed {
-            let plants = garden.plants + inventory, items = (garden.items ?? []) + itemInventory
-            guard Set(refreshed.layout.plants.keys).isSubset(of: Set(plants.map(\.id))),
-                  Set(refreshed.layout.items.keys).isSubset(of: Set(items.map(\.id))) else {
-                draftConflict = true; report("Some objects are no longer owned. Reset this draft to continue."); return
-            }
-            refreshed.plants = plants; refreshed.items = items; draft = refreshed
-            strategyCache = [:]; unavailableStrategies = []; persistDraft()
-        }
+        // Ownership, layout/catalogue versions and the strategy proof are checked
+        // atomically by the server. A full inventory scan before every save adds
+        // latency and still cannot prevent a change between that scan and commit.
         guard isActive, editing, generation == editGeneration, readyForMutation,
               !activityBusy, !activityBlocked, !draftConflict, let value = draft else { return }
         if let before = before, before != draftStrategy?.signature {
@@ -868,12 +901,19 @@ extension GardenEditorStore {
         do {
             if confirmed?.strategyContext != nil {
                 guard let local = draftStrategy else { report("Garden effects are unavailable. Refresh to try again."); return }
-                let preview = try await service.preview(body: request.encoded())
-                guard isActive, editing, generation == editGeneration else { return }
-                guard preview.signature == local.signature, let proof = preview.fingerprint else {
-                    report("Garden effects need a refresh. Your draft is kept."); return
+                if supportsSnapshots && local.signature.utf8.count <= 32768 {
+                    // The server checks the reviewed effective result under the
+                    // edit's locks, avoiding a separate preview round trip.
+                    request.expectedStrategySignature = local.signature
+                } else {
+                    let preview = try await service.preview(body: request.encoded())
+                    guard isActive, editing, generation == editGeneration else { return }
+                    guard preview.signature == local.signature, let proof = preview.fingerprint else {
+                        await refresh()
+                        report("Garden effects updated. Review, then save.", kind: .pending); return
+                    }
+                    request.expectedStrategyFingerprint = proof
                 }
-                request.expectedStrategyFingerprint = proof
             }
             guard generation == editGeneration, readyForMutation, editing, !draftConflict else { return }
             let edit = PendingGardenEdit(serverID: service.serverID, userID: profile.userId,
@@ -883,6 +923,11 @@ extension GardenEditorStore {
             await retryPending()
             if pending == nil && draft == nil { endEditing() }
         } catch {
+            if let error = error as? APIError, pending == nil,
+               ["stale_layout", "stale_catalogue", "strategy_changed", "plant_not_found", "item_not_found"].contains(error.code) {
+                await refresh()
+                if ["plant_not_found", "item_not_found"].contains(error.code) { draftConflict = true }
+            }
             report(PlayerMessage.failure(error, fallback: "The garden could not save. Your draft is kept."))
         }
     }

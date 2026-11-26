@@ -19,7 +19,7 @@ struct GardenStrategyContract: Decodable {
 final class GardenStrategyTests: XCTestCase {
     func testAllBackendReferenceCasesMatchNativePredictions() throws {
         let contract = try GardenStrategyContract.load()
-        XCTAssertEqual(contract.cases.count, 87)
+        XCTAssertEqual(contract.cases.count, 92)
         for example in contract.cases {
             let value = try GardenStrategyEvaluator.evaluate(plants: example.plants, items: example.items, context: example.context)
             XCTAssertEqual(value.signature, example.expectedSignature, example.name)
@@ -43,10 +43,10 @@ final class GardenStrategyTests: XCTestCase {
         let value = try GardenStrategyEvaluator.evaluate(plants: [young], items: [], context: example.context)
         XCTAssertTrue(value.skillSummary.activeSkills.isEmpty)
     }
-    func testSkillGroupsRetainEveryAfterglowComponent() throws {
+    func testSkillGroupsRetainEveryAfterglowReserveComponent() throws {
         let example = try XCTUnwrap(GardenStrategyContract.load().cases.first { $0.name == "all_species" })
         let value = try GardenStrategyEvaluator.evaluate(plants: example.plants, items: example.items, context: example.context)
-        let group = try XCTUnwrap(GardenSkillGroup.groups(value.skillSummary).first { $0.name == "Afterglow" })
+        let group = try XCTUnwrap(GardenSkillGroup.groups(value.skillSummary).first { $0.name == "Afterglow Reserve" })
         XCTAssertTrue(group.effects.contains { $0.scope == "activity" })
         XCTAssertTrue(group.effects.contains { $0.scope == "offline_capacity" })
     }

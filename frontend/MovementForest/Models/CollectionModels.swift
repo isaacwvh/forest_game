@@ -109,6 +109,7 @@ struct APIExchangeOffer: Codable, Identifiable {
 }
 
 struct APICollectionSummary: Codable {
+    var catalogVersion: String? = nil
     var gemBalance: String? = nil
     let tokenBalance: String
     let economyVersion: Int64

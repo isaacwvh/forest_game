@@ -35,12 +35,15 @@ def settle_due(session, settings, garden, now):
     zone = ZoneInfo(owner.game_timezone)
     day = state.settled_at.astimezone(zone).date() + timedelta(days=1)
     today = now.astimezone(zone).date()
+    if day > today:
+        state.settled_at = now
+        return
     sources = [
         (identity, profile)
         for identity, profile in item_skills.placed_profiles(session, garden)
         if profile.rules.get("dailyGrant", {}).get("family") == "morning_rain"
     ]
-    if not sources or day > today:
+    if not sources:
         state.settled_at = now
         return
     plants = list(

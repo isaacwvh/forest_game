@@ -1,5 +1,11 @@
 # Client recurring-work optimizations — 26 November 2026
 
+The integrated branch also retains the request-latency changes from
+`codex/request-latency`. See [merge provenance and local validation](INTEGRATED_PERFORMANCE_VALIDATION.md)
+before making another branch or rebuilding the app. The original rendering branch
+and latency branch independently descended from `main`; both feature sets must
+be present in the installed build.
+
 This is a frontend-only change. Rebuild/install the iPhone app; no backend
 redeployment, database migration, API change or visitor-rule publication is needed.
 Artwork, rendering quality, frame rate, flight paths, wind and reward rules are

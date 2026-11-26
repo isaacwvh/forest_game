@@ -131,6 +131,9 @@ def ensure_current(session, clock=None, *, upcoming=False):
         last = session.scalar(select(func.max(ShopWeek.week_start)))
         cursor = launch if last is None else last + timedelta(days=7)
         for _ in range(MAX_CATCHUP_WEEKS):
+            from forest_api.execution_budget import checkpoint
+
+            checkpoint()
             if cursor > target:
                 break
             release = release_at(session, cursor)

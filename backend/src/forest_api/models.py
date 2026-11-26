@@ -45,6 +45,17 @@ class Timestamps:
     )
 
 
+class RuntimeControl(Base):
+    """Stable infrastructure control; only the migration/operator role may write."""
+
+    __tablename__ = "runtime_control"
+    __table_args__ = (CheckConstraint("id = 1", name="singleton"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    maintenance: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    release: Mapped[str] = mapped_column(Text, server_default="")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class User(Timestamps, Base):
     __tablename__ = "users"
     __table_args__ = (

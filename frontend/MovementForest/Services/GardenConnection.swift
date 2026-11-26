@@ -513,8 +513,13 @@ final class GardenConnection: ObservableObject {
                 // No queued mutations are sent until /me confirms the game identity.
             }
             let profile: APIProfile
+            var initialSnapshot: APIGardenSnapshot?
             LifecycleDiagnostics.event("account verification started id=\(operation)")
-            do { profile = try await repository.profile() }
+            do {
+                initialSnapshot = try await repository.snapshot(catalogVersion: nil)
+                if let snapshot = initialSnapshot { profile = snapshot.profile }
+                else { profile = try await repository.profile() }
+            }
             catch let error as APIError where error.code == "account_required" {
                 guard managedGeneration == operation else { return }
                 editor?.deactivate(); editor = nil
@@ -535,7 +540,7 @@ final class GardenConnection: ObservableObject {
             let store = GardenEditorStore(profile: profile, service: repository, assets: assets, cache: disk)
             editor = store
             LifecycleDiagnostics.event("garden bootstrap started id=\(operation)")
-            await store.start()
+            await store.start(snapshot: initialSnapshot)
             LifecycleDiagnostics.event("garden bootstrap ended id=\(operation)")
             guard managedGeneration == operation else { store.deactivate(); return }
             installActivity(client: client, store: store)

@@ -3,12 +3,12 @@
 import json
 import random
 from copy import deepcopy
-from decimal import Decimal
 from pathlib import Path
 from uuid import UUID
 
 from forest_api import expedition_definitions, item_catalogue, woodland
 from forest_api.activity_inputs import WORKOUT_TYPES
+from forest_api.garden_strategy import strategy_signature
 from forest_api.schemas import BehaviourDefinition
 from forest_api.skill_rules import CAPS_V1, SkillCaps, SkillEffect
 from forest_api.skills import ItemFacts, PlantFacts, SkillSnapshot
@@ -142,41 +142,13 @@ def cases():
             items=tuple(sources),
         )
 
-        def normal(value):
-            return format(Decimal(value).normalize(), "f")
-
         summary = snap.summary()
-        effects = sorted(
-            "/".join(
-                [
-                    e["id"],
-                    e["scope"],
-                    e["metric"] or "",
-                    e.get("stepBand", ""),
-                    e["stackingGroup"],
-                    normal(e["magnitude"]),
-                    ",".join(sorted(e["recipientPlantIds"])),
-                ]
-            )
-            for e in summary["activeSkills"]
-        )
-        factors = sorted(
-            e["plantId"]
-            + ":"
-            + normal(e["waterFactor"])
-            + ":"
-            + ",".join(
-                k + "=" + normal(e["activityFactors"][k]) for k in sorted(e["activityFactors"])
-            )
-            for e in summary["growthFactors"]
-        )
-        signature = "#".join(
-            [
-                str(snap.attraction()),
-                str(snap.capacity(21600, 64800, flat_multiplier=10)),
-                "|".join(effects),
-                "|".join(factors),
-            ]
+        signature = strategy_signature(
+            {
+                "totalAttractionMicroUnits": str(snap.attraction()),
+                "offlineCapacity": snap.capacity(21600, 64800, flat_multiplier=10),
+                "skillSummary": summary,
+            }
         )
         return {
             "name": name,

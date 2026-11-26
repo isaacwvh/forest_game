@@ -164,7 +164,7 @@ final class GardenEffectsTests: XCTestCase {
             material.emissiveColor = .init(color: .purple)
             material.emissiveIntensity = 0.12
             material.blending = .transparent(opacity: .init(floatLiteral: 0.7))
-            let color = material.baseColor.tint, intensity = material.emissiveIntensity, blending = material.blending
+            let color = material.baseColor.tint, intensity = material.emissiveIntensity
             let source = ModelEntity(mesh: .generateBox(size: 1), materials: [material])
             root.addChild(source)
             for _ in 0..<2 {
@@ -176,7 +176,11 @@ final class GardenEffectsTests: XCTestCase {
                 let restored = try XCTUnwrap(source.model?.materials.first as? PhysicallyBasedMaterial)
                 XCTAssertEqual(restored.baseColor.tint, color)
                 XCTAssertEqual(restored.emissiveIntensity, intensity)
-                XCTAssertEqual(restored.blending, blending)
+                guard case .transparent(let opacity) = restored.blending else {
+                    return XCTFail("Watering must preserve authored transparency")
+                }
+                XCTAssertEqual(opacity.scale, 0.7, accuracy: 0.0001)
+                XCTAssertNil(opacity.texture)
             }
         }
     }
@@ -187,7 +191,7 @@ final class GardenEffectsTests: XCTestCase {
             var replacement = PhysicallyBasedMaterial()
             replacement.baseColor = .init(tint: .green)
             replacement.emissiveIntensity = 0.08
-            let color = replacement.baseColor.tint, intensity = replacement.emissiveIntensity, blending = replacement.blending
+            let color = replacement.baseColor.tint, intensity = replacement.emissiveIntensity
             let source = ModelEntity(mesh: .generateBox(size: 1), materials: [SimpleMaterial(color: .brown, isMetallic: false)])
             root.addChild(source)
             var swaps = 0
@@ -200,7 +204,9 @@ final class GardenEffectsTests: XCTestCase {
             XCTAssertEqual(swaps, 1); XCTAssertEqual(effects.activeCount, 0)
             XCTAssertEqual(restored.baseColor.tint, color)
             XCTAssertEqual(restored.emissiveIntensity, intensity)
-            XCTAssertEqual(restored.blending, blending)
+            guard case .opaque = restored.blending else {
+                return XCTFail("Stage watering must preserve the replacement's opaque material")
+            }
         }
     }
 
@@ -210,7 +216,7 @@ final class GardenEffectsTests: XCTestCase {
         var swaps = 0
         effects.enqueue(.init(plantID: UUID(), water: true, before: .sprout, after: .adult), source: source,
                         parent: root, reducedMotion: true, replace: { swaps += 1; return source })
-        XCTAssertEqual(root.children.last?.children.count, 0)
+        XCTAssertEqual(Array(root.children).last?.children.count, 0)
         effects.tick(0.2); effects.tick(0.2); effects.tick(0.2)
         XCTAssertEqual(swaps, 1); XCTAssertEqual(effects.activeCount, 0)
         XCTAssertEqual(root.children.count, 1)

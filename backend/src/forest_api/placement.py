@@ -63,7 +63,10 @@ def edit_garden(
         user = services.get_user(session, identity, lock=True)
         previous = services.replay(session, user.id, body.request_id, operation, payload_hash)
         if previous is not None:
-            return GardenEditResult.model_validate(previous)
+            result = GardenEditResult.model_validate(previous)
+            if session.info.get("snapshot_client"):
+                result.replayed = True
+            return result
         garden = services.lock_garden(session, user.id, write=True)
         from forest_api.daily_items import settle_due
 
@@ -83,11 +86,20 @@ def edit_garden(
         boundary = max(settlement_boundary, clock())
         if boundary > settlement_boundary:
             settle_due(session, settings, garden, boundary)
-        if body.expected_strategy_fingerprint is not None:
-            from forest_api.garden_strategy import evaluate_proposal
+        if (
+            body.expected_strategy_fingerprint is not None
+            or body.expected_strategy_signature is not None
+        ):
+            from forest_api.garden_strategy import evaluate_proposal, strategy_signature
 
             preview = evaluate_proposal(session, settings, garden, catalogue, proposal, boundary)
-            if preview["fingerprint"] != body.expected_strategy_fingerprint:
+            if (
+                body.expected_strategy_fingerprint is not None
+                and preview["fingerprint"] != body.expected_strategy_fingerprint
+            ) or (
+                body.expected_strategy_signature is not None
+                and strategy_signature(preview) != body.expected_strategy_signature
+            ):
                 raise ApiError(
                     409, "strategy_changed", "Garden effects changed. Review before saving."
                 )
@@ -146,6 +158,14 @@ def edit_garden(
                 for action in body.actions
             ],
         )
+        if session.info.get("snapshot_client"):
+            from forest_api import items
+
+            # These facts belong to the committed layout, not a later read.
+            session.flush()
+            result.inventory = services.present_inventory(session, user.id, presenter=presenter)
+            result.item_inventory = items.present_inventory(session, user.id)
+            result.replayed = False
         services.record_request(session, user.id, body, operation, payload_hash, result)
     return result
 

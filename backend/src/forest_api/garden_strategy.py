@@ -3,6 +3,7 @@
 import hashlib
 import json
 from datetime import UTC, datetime, time, timedelta
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
@@ -10,11 +11,58 @@ from sqlalchemy import func, select
 from forest_api import services
 from forest_api.errors import ApiError
 from forest_api.models import SkillPolicy, User
+from forest_api.reference_data import definition as reference_definition
 from forest_api.skill_rules import CAPS_VERSION, SkillCaps, SkillEffect
 from forest_api.skills import ItemFacts, PlantFacts, SkillSnapshot
 from forest_api.visitor_models import VisitorRules
 from forest_api.visitor_schemas import VisitorRuleDefinition
 from forest_api.woodland_models import DailySkillActivity
+
+
+def strategy_signature(result):
+    """Effective-result comparison shared with the native garden evaluator.
+
+    This is an expectation, not authority: all results are recomputed from locked
+    server state before a mutation. Emitter tie identities do not affect it.
+    """
+
+    def normal(value):
+        return format(Decimal(value).normalize(), "f")
+
+    summary = result["skillSummary"]
+    effects = sorted(
+        "/".join(
+            [
+                row["id"],
+                row["scope"],
+                row["metric"] or "",
+                row.get("stepBand") or "",
+                row["stackingGroup"],
+                normal(row["magnitude"]),
+                ",".join(sorted(str(value).lower() for value in row["recipientPlantIds"])),
+            ]
+        )
+        for row in summary["activeSkills"]
+    )
+    factors = sorted(
+        str(row["plantId"]).lower()
+        + ":"
+        + normal(row["waterFactor"])
+        + ":"
+        + ",".join(
+            key + "=" + normal(row["activityFactors"][key])
+            for key in sorted(row["activityFactors"])
+        )
+        for row in summary["growthFactors"]
+    )
+    return "#".join(
+        [
+            normal(result["totalAttractionMicroUnits"]),
+            str(result["offlineCapacity"]),
+            "|".join(effects),
+            "|".join(factors),
+        ]
+    )
 
 
 def strategy_context(session, settings, garden, *, boundary=None):
@@ -41,8 +89,10 @@ def strategy_context(session, settings, garden, *, boundary=None):
     )
     if upcoming:
         expiry = min(expiry, upcoming)
-    policy = session.get(
-        SkillPolicy, rule.rules.get("skill_policy_version", CAPS_VERSION) if rule else CAPS_VERSION
+    policy = reference_definition(
+        session,
+        SkillPolicy,
+        rule.rules.get("skill_policy_version", CAPS_VERSION) if rule else CAPS_VERSION,
     )
     if policy is None:
         raise ApiError(503, "skill_policy_unavailable", "Skill rules require maintenance")

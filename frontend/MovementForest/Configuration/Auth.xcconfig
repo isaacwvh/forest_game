@@ -1,5 +1,6 @@
 // Installation-specific API, callback and signing configuration.
-FOREST_GAME_API_URL =
+// Local.xcconfig can override this; remove an old local API override for hosted testing.
+FOREST_GAME_API_URL = https:/$()/forest-api-482382863751.asia-southeast1.run.app
 FOREST_AUTH_CALLBACK_SCHEME = $(PRODUCT_BUNDLE_IDENTIFIER)
 FOREST_AUTH_GOOGLE_ENABLED = YES
 FOREST_AUTH_GUEST_ENABLED = YES

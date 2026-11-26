@@ -77,6 +77,7 @@ GROUPS = {
         "visitor_opportunities",
     },
     "shared_configuration": {
+        "runtime_control",
         "expedition_templates",
         "expedition_schedule",
         "expedition_launches",

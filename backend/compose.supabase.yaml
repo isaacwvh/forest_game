@@ -1,0 +1,69 @@
+# Local FastAPI/workers using the hosted Supabase game database.
+# backend/.env selects this file through COMPOSE_FILE after cutover.
+# No local PostgreSQL service is started and no migration runs on startup.
+name: movement-forest
+
+x-runtime: &runtime
+  build: .
+  image: movement-forest-api:local
+  env_file: .env
+  volumes:
+    - type: bind
+      source: ${FOREST_DB_CA_FILE:?Set FOREST_DB_CA_FILE in backend/.env}
+      target: /etc/forest-db/ca.crt
+      read_only: true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  api:
+    <<: *runtime
+    environment:
+      FOREST_DATABASE_URL: ${FOREST_CONTAINER_DATABASE_URL:?Set the Supabase runtime URL}
+      FOREST_DB_POOL_SIZE: "2"
+      FOREST_DB_MAX_OVERFLOW: "0"
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=8).close()"
+      interval: 15s
+      timeout: 10s
+      start_period: 10s
+      retries: 6
+
+  shop:
+    <<: *runtime
+    command: ["forest", "shop-worker"]
+    restart: unless-stopped
+    environment:
+      FOREST_DATABASE_URL: ${FOREST_CONTAINER_DATABASE_URL:?Set the Supabase runtime URL}
+      FOREST_DB_POOL_SIZE: "1"
+      FOREST_DB_MAX_OVERFLOW: "0"
+
+  maintenance:
+    <<: *runtime
+    profiles: ["maintenance"]
+    command: ["forest", "history-worker"]
+    environment:
+      FOREST_DATABASE_URL: ${FOREST_CONTAINER_DATABASE_URL:?Set the Supabase runtime URL}
+      FOREST_DB_POOL_SIZE: "1"
+      FOREST_DB_MAX_OVERFLOW: "0"
+
+  migrate:
+    build: .
+    image: movement-forest-api:local
+    profiles: ["tools"]
+    env_file: .env.supabase-operator
+    command: ["alembic", "upgrade", "head"]
+    volumes:
+      - type: bind
+        source: ${FOREST_DB_CA_FILE:?Set FOREST_DB_CA_FILE in backend/.env}
+        target: /etc/forest-db/ca.crt
+        read_only: true

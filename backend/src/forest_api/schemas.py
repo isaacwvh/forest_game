@@ -336,6 +336,14 @@ class CatalogueDTO(DTO):
     profiles: dict[str, list[dict]]
 
 
+class GardenSnapshotDTO(DTO):
+    profile: UserDTO
+    garden: GardenDTO
+    catalogue: CatalogueDTO | None
+    inventory: InventoryDTO
+    item_inventory: dict
+
+
 def canonical_number(value: object, places: int, maximum: Decimal) -> Decimal:
     # Never coerce strings, booleans or nulls into a placement coordinate.
     if type(value) not in {int, float, Decimal}:
@@ -416,6 +424,7 @@ PlacementAction = Annotated[
 
 class GardenEditRequest(DTO):
     expected_strategy_fingerprint: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    expected_strategy_signature: str | None = Field(default=None, min_length=1, max_length=32768)
     request_id: UUID
     expected_layout_version: Annotated[int, Field(strict=True, ge=0, le=9223372036854775807)]
     catalog_version: str = Field(min_length=1, max_length=100)
@@ -437,6 +446,9 @@ class GardenEditResult(DTO):
     request_id: UUID
     garden: GardenDTO
     updated_plants: list[PlantDTO]
+    inventory: InventoryDTO | None = None
+    item_inventory: dict | None = None
+    replayed: bool | None = None
 
 
 class ItemAction(DTO):

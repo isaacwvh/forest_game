@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from threading import RLock
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
 from forest_api import (
     expedition_models,  # noqa: F401 - monthly progress and permanent rewards
@@ -17,6 +17,7 @@ from forest_api.config import Settings
 from forest_api.database import Database
 from forest_api.errors import install_error_handlers
 from forest_api.expedition_routes import router as expedition_router
+from forest_api.maintenance import check_gameplay
 from forest_api.routes import router
 from forest_api.visitor_routes import router as visitor_router
 from forest_api.visitors import VisitorAccounting
@@ -45,6 +46,7 @@ def _create_app(settings: Settings | None = None) -> FastAPI:
         title="Movement Forest API",
         version="0.1.0",
         lifespan=lifespan,
+        dependencies=[Depends(check_gameplay)],
         docs_url="/docs" if settings.environment in {"local", "test"} else None,
         redoc_url=None,
         openapi_url="/openapi.json" if settings.environment in {"local", "test"} else None,

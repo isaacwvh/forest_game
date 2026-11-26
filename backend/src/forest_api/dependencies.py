@@ -12,12 +12,17 @@ bearer = HTTPBearer(auto_error=False)
 
 def get_session(request: Request) -> Iterator[Session]:
     with request.app.state.database.sessions() as session:
+        session.info["maintenance_guard"] = (
+            request.app.state.settings.maintenance_gate_enabled
+            and request.url.path.startswith("/v1/")
+        )
         session.info["recovery_version"] = (
             1 if request.headers.get("X-Forest-Recovery") == "1" else 0
         )
         session.info["woodland_release"] = request.headers.get("X-Forest-Woodland") == "1"
         session.info["milestones_client"] = request.headers.get("X-Forest-Milestones")
         session.info["items_client"] = request.headers.get("X-Forest-Items") == "1"
+        session.info["snapshot_client"] = request.headers.get("X-Forest-Snapshot") == "1"
         session.info["expeditions_client"] = request.headers.get("X-Forest-Expeditions") == "1"
         session.info["item_commerce_client"] = request.headers.get("X-Forest-Item-Commerce") == "1"
         session.info["item_rotations_client"] = (

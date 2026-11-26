@@ -107,17 +107,30 @@ private final class EditorTestService: GardenServing {
     var pauseInventory = false
     var inventoryGate: CheckedContinuation<Void, Never>?
     var includesCapacity = false
+    var supportsSnapshots = false
+    var snapshotCalls = 0
+    var catalogueCalls = 0
 
     init(_ fixture: EditorContract) {
         self.fixture = fixture; current = fixture.emptyGarden; catalogueValue = fixture.catalogue
     }
     func profile() async throws -> APIProfile { fixture.profile }
     func catalogue() async throws -> APICatalogue {
+        catalogueCalls += 1
         if pauseRead { pauseRead = false; await withCheckedContinuation { gate = $0 } }
         if checkReadCancellation { try Task.checkCancellation() }
         if let readError = readError { throw readError }
         if failReads { throw URLError(.notConnectedToInternet) }
         return catalogueValue
+    }
+    func snapshot(catalogVersion: String?) async throws -> APIGardenSnapshot? {
+        guard supportsSnapshots else { return nil }
+        snapshotCalls += 1
+        if failReads { throw URLError(.notConnectedToInternet) }
+        return APIGardenSnapshot(profile: fixture.profile, garden: current,
+            catalogue: catalogVersion == catalogueValue.catalogVersion ? nil : catalogueValue,
+            inventory: try await inventory(after: nil),
+            itemInventory: APIItemInventory(items: [], nextCursor: nil, capacity: nil))
     }
     func garden() async throws -> APIGarden { current }
     func inventory(after: UUID?) async throws -> APIInventory {
@@ -138,7 +151,10 @@ private final class EditorTestService: GardenServing {
         if let error = nextError { nextError = nil; throw error }
         if let error = compactError { compactError = nil; throw error }
         let request = try JSONDecoder().decode(GardenEditRequest.self, from: body)
-        if let result = receipts[request.requestId] { return result }
+        if var result = receipts[request.requestId] {
+            if supportsSnapshots { result.replayed = true }
+            return result
+        }
         guard request.expectedLayoutVersion == current.layoutVersion else {
             throw APIError(status: 409, code: "stale_layout", message: "Refresh the garden before editing")
         }
@@ -156,7 +172,12 @@ private final class EditorTestService: GardenServing {
                             coordinateUnit: current.coordinateUnit, gardenUnitMetres: current.gardenUnitMetres,
                             catalogVersion: current.catalogVersion, layoutVersion: current.layoutVersion + 1,
                             stateVersion: current.stateVersion + 1, plants: plants)
-        let result = GardenEditResult(requestId: request.requestId, garden: current, updatedPlants: updatedPlants)
+        var result = GardenEditResult(requestId: request.requestId, garden: current, updatedPlants: updatedPlants)
+        if supportsSnapshots {
+            result.inventory = try await inventory(after: nil)
+            result.itemInventory = APIItemInventory(items: [], nextCursor: nil, capacity: nil)
+            result.replayed = false
+        }
         receipts[request.requestId] = result
         if loseNextResponse { loseNextResponse = false; throw URLError(.networkConnectionLost) }
         return result
@@ -165,6 +186,95 @@ private final class EditorTestService: GardenServing {
 
 @MainActor
 final class GardenEditorTests: XCTestCase {
+    func testAtomicSnapshotLoadsOnceAndFreshSaveDoesNotReload() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        service.supportsSnapshots = true; service.includesCapacity = true
+        let store = try makeStore(service)
+        await store.start()
+        XCTAssertEqual(service.snapshotCalls, 1); XCTAssertEqual(service.catalogueCalls, 0)
+        store.editing = true
+        let copy = try XCTUnwrap(store.inventory.first)
+        store.begin(copy, kind: .plant); store.updatePosition(x: 2, y: 2)
+        await store.releaseCandidate(); await store.saveDraft()
+        XCTAssertEqual(service.bodies.count, 1)
+        XCTAssertEqual(service.snapshotCalls, 1, "Fresh committed inventory must avoid a post-save reload")
+        XCTAssertEqual(service.catalogueCalls, 0)
+        XCTAssertNil(store.pending); XCTAssertNil(store.draft); XCTAssertEqual(store.state, .ready)
+        XCTAssertEqual(store.confirmed?.plants.map(\.id), [copy.id])
+        XCTAssertFalse(store.inventory.contains { $0.id == copy.id })
+        XCTAssertEqual(store.capacity?.plantedPlants, 1)
+        await store.refresh()
+        XCTAssertEqual(service.snapshotCalls, 2); XCTAssertEqual(service.catalogueCalls, 0)
+        XCTAssertNotNil(store.catalogue, "A matching catalogue may be omitted on refresh")
+    }
+
+    func testLostFreshResponseReplaysThenReadsCurrentSnapshot() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        service.supportsSnapshots = true
+        let store = try makeStore(service)
+        await store.start(); store.editing = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        store.updatePosition(x: 2, y: 2); await store.releaseCandidate()
+        service.loseNextResponse = true
+        await store.saveDraft()
+        XCTAssertNotNil(store.pending); XCTAssertEqual(store.state, .unknown)
+        await store.retryPending()
+        XCTAssertEqual(service.bodies.count, 2)
+        XCTAssertEqual(service.bodies[0], service.bodies[1])
+        XCTAssertEqual(service.snapshotCalls, 2, "Historical receipts require one current snapshot")
+        XCTAssertNil(store.pending); XCTAssertEqual(store.state, .ready)
+    }
+
+    func testModernSaveChecksStrategyInTheEditWithoutAPreviewRequest() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        service.supportsSnapshots = true
+        service.current.strategyContext = try XCTUnwrap(GardenStrategyContract.load().cases.first).context
+        var plant = try XCTUnwrap(service.fixture.inventory.plants.first)
+        plant.gardenSkills = []; plant.gameplayTags = []
+        service.pages["first"] = APIInventory(plants: [plant], nextCursor: nil)
+        let store = try makeStore(service)
+        await store.start(); store.editing = true
+        store.begin(try XCTUnwrap(store.inventory.first), kind: .plant)
+        store.updatePosition(x: 2, y: 2); await store.releaseCandidate()
+        let signature = try XCTUnwrap(store.draftStrategy).signature
+        await store.saveDraft()
+        let body = try XCTUnwrap(service.bodies.first)
+        let request = try JSONDecoder().decode(GardenEditRequest.self, from: body)
+        XCTAssertEqual(request.expectedStrategySignature, signature)
+        XCTAssertNil(request.expectedStrategyFingerprint)
+        XCTAssertEqual(service.snapshotCalls, 1); XCTAssertEqual(service.bodies.count, 1)
+        XCTAssertNil(store.pending)
+    }
+
+    func testInitialVerifiedSnapshotAvoidsAnotherNetworkRead() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        service.supportsSnapshots = true
+        let response = try await service.snapshot(catalogVersion: nil)
+        let initial = try XCTUnwrap(response)
+        let store = try makeStore(service)
+        await store.start(snapshot: initial)
+        XCTAssertEqual(service.snapshotCalls, 1); XCTAssertEqual(service.catalogueCalls, 0)
+        XCTAssertEqual(store.state, .ready); XCTAssertFalse(store.showingCached)
+    }
+
+    func testUnsentJournalAtRelaunchLoadsCatalogueAfterFreshCommit() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())
+        service.supportsSnapshots = true
+        let journal = MemoryEditJournal()
+        let plant = try XCTUnwrap(fixture.inventory.plants.first)
+        let request = GardenEditRequest(requestId: UUID(), expectedLayoutVersion: 0,
+            catalogVersion: fixture.catalogue.catalogVersion,
+            actions: [GardenEditAction(action: .plant, plantId: plant.id, x: 2, y: 2, rotationDegrees: 0)])
+        try journal.save(PendingGardenEdit(serverID: service.serverID, userID: fixture.profile.userId,
+            gardenID: fixture.emptyGarden.gardenId, body: request.encoded()))
+        let store = try makeStore(service, journal: journal)
+        await store.start()
+        XCTAssertEqual(service.bodies.count, 1, "An unsent journal should commit in one attempt")
+        XCTAssertEqual(service.snapshotCalls, 1, "Missing catalogue requires one current snapshot")
+        XCTAssertNil(store.pending); XCTAssertEqual(store.state, .ready)
+        XCTAssertEqual(store.confirmed?.plants.map(\.id), [plant.id])
+    }
+
     func testConfirmedLevelCapacitySurvivesLaterStaleInventory() async throws {
         let service = EditorTestService(try EditorContract.load())
         let store = try makeStore(service, journal: MemoryEditJournal())
@@ -261,7 +371,8 @@ final class GardenEditorTests: XCTestCase {
         let window = UIWindow(windowScene: scene)
         window.rootViewController = UIHostingController(rootView:
             ConnectedGardenScreen(store: store, catalog: catalog, active: true)
-                .environment(\.dynamicTypeSize, .large).environment(\.accessibilityReduceMotion, true)
+                .environment(\.dynamicTypeSize, .large)
+                .transaction { $0.disablesAnimations = true }
                 .environment(\.scenePhase, .active))
         window.makeKeyAndVisible()
         defer { window.isHidden = true; window.rootViewController = nil }
