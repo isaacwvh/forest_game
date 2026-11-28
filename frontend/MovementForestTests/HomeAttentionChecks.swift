@@ -62,6 +62,14 @@ enum HomeAttentionChecks {
         try check(HomeAttention.packCount(packs, opened: packs[0].id) == 0, "Confirmed opening suppresses stale pack page")
         try check(HomeAttention.packCount(packs + packs, opened: nil) == 1, "Repeated pages do not duplicate attention")
         try check(HomeAttention.packCount([], opened: nil) == 0, "Missing packs never invent attention")
+        let compact = APIHomeAttention(userId: UUID(), milestoneCount: 2, expeditionCount: 1, unopenedPackCount: 1)
+        let opened = compact.applyingConfirmedCounts(milestones: nil, packs: 0)
+        try check(opened.unopenedPackCount == 0 && opened.milestoneCount == 2, "A confirmed opening clears the compact pack badge")
+        let rewarded = opened.applyingConfirmedCounts(milestones: 0, packs: 1)
+        try check(rewarded.milestoneCount == 0 && rewarded.unopenedPackCount == 1 && rewarded.expeditionCount == 1,
+            "A milestone receipt clears the milestone badge and shows its rewarded pack")
+        try check(rewarded.applyingConfirmedCounts(milestones: nil, packs: 1).unopenedPackCount == 1,
+            "An absolute receipt count cannot be applied twice")
         try check(HomeAttention.rewardDescription(0).isEmpty, "Zero rewards stays quiet")
         try check(HomeAttention.rewardDescription(1) == "1 unclaimed reward", "Accessible singular reason")
         try check(HomeAttention.rewardDescription(2) == "2 unclaimed rewards", "Accessible plural reason")

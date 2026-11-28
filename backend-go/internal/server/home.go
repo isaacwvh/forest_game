@@ -1,9 +1,11 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -11,13 +13,30 @@ func (s *Server) homeAttention(r *http.Request, tx pgx.Tx, id Identity) (any, er
 	ctx := r.Context()
 	// The first attention read may enroll the account. Lock the owner before
 	// the catalogue, as claim and activity transactions do.
-	p, err := lookupProfile(ctx, tx, id, true)
+	var owner uuid.UUID
+	var active bool
+	var fixture, legacy *bool
+	err := tx.QueryRow(ctx, `WITH account AS MATERIALIZED (
+		SELECT id,status='active' AS active FROM users WHERE auth_issuer=$1 AND auth_subject=$2 FOR UPDATE
+	)
+	SELECT a.id,a.active,c.is_fixture,c.legacy FROM account a LEFT JOIN LATERAL (
+		SELECT is_fixture,version IN ('woodland-v1','launch-balance-v1','launch-visitors-v2') AS legacy
+		FROM game_catalogue WHERE id=1 AND a.active FOR SHARE
+	) c ON true`, id.Issuer, id.Subject).Scan(&owner, &active, &fixture, &legacy)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, accountRequired
+	}
 	if err != nil {
 		return nil, err
 	}
-	catalog, err := s.catalogueState(ctx, tx)
-	if err != nil {
-		return nil, err
+	if !active {
+		return nil, accountDisabled
+	}
+	if fixture == nil || legacy == nil {
+		return nil, catalogueUnavailable
+	}
+	if *fixture && s.Environment != "local" && s.Environment != "test" {
+		return nil, fixtureCatalogueDisabled
 	}
 	var milestones, expeditions, packs int64
 	var initialize bool
@@ -54,7 +73,7 @@ SELECT CASE WHEN EXISTS (SELECT 1 FROM active)
 	(SELECT count(*) FROM owned_packs p WHERE p.owner_id=owner.id AND NOT EXISTS (
 		SELECT 1 FROM pack_openings o WHERE o.pack_id=p.id)),
 	$3::bool AND EXISTS (SELECT 1 FROM active) AND NOT EXISTS (SELECT 1 FROM milestone_state WHERE owner_id=owner.id)
-FROM owner,boundary`, p.ID, catalog.Version == "woodland-v1" || catalog.Version == "launch-balance-v1" || catalog.Version == "launch-visitors-v2",
+FROM owner,boundary`, owner, *legacy,
 		r.Header.Get("X-Forest-Milestones") == "1", r.Header.Get("X-Forest-Expeditions") == "1", clock).Scan(&milestones, &expeditions, &packs, &initialize)
 	if err != nil {
 		return nil, err
@@ -72,17 +91,17 @@ FROM owner,boundary`, p.ID, catalog.Version == "woodland-v1" || catalog.Version 
 			if !policy.valid {
 				return nil, milestonesUnavailable
 			}
-			if err := refreshMilestoneEntitlements(ctx, tx, p.ID, at); err != nil {
+			if err := refreshMilestoneEntitlements(ctx, tx, owner.String(), at); err != nil {
 				return nil, err
 			}
 			err = tx.QueryRow(ctx, `SELECT (`+milestoneAttentionCount+`) FROM (SELECT $1::uuid AS id) owner,
-				(SELECT $2::timestamptz AS at) boundary`, p.ID, at).Scan(&milestones)
+				(SELECT $2::timestamptz AS at) boundary`, owner, at).Scan(&milestones)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
-	return map[string]any{"userId": p.ID, "milestoneCount": milestones, "expeditionCount": expeditions, "unopenedPackCount": packs}, nil
+	return map[string]any{"userId": owner, "milestoneCount": milestones, "expeditionCount": expeditions, "unopenedPackCount": packs}, nil
 }
 
 const milestoneAttentionCount = `SELECT count(*) FROM milestone_entitlements e

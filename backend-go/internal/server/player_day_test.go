@@ -113,6 +113,9 @@ func TestSupportedGoPlayerDay(t *testing.T) {
 	task := func(label, path string) map[string]any {
 		return call(label, worker, "POST", path, "", nil)
 	}
+	homeAfterAction := func() map[string]any {
+		return user("home attention after confirmation", "GET", "/v1/me/home-attention", nil)
+	}
 
 	call("cold readiness", api, "GET", "/health/ready", "", nil)
 	zone := time.UTC
@@ -212,11 +215,15 @@ func TestSupportedGoPlayerDay(t *testing.T) {
 	if entry := findMilestone(t, milestones, "steps_new_beginnings"); entry["eligible"] != true {
 		t.Fatal(entry)
 	}
+	beforeClaim := user("home attention", "GET", "/v1/me/home-attention", nil)
 	milestoneClaim := map[string]string{"requestId": uuid.NewString()}
 	milestonePath := "/v1/me/milestones/steps_new_beginnings/claim"
 	issuedBundle := user("milestone bundle claim", "POST", milestonePath, milestoneClaim)
 	if len(issuedBundle["packs"].([]any)) != 1 {
 		t.Fatal(issuedBundle)
+	}
+	if after := homeAfterAction(); after["milestoneCount"].(float64) >= beforeClaim["milestoneCount"].(float64) || after["unopenedPackCount"] != float64(1) {
+		t.Fatal(after)
 	}
 	user("milestone claim replay", "POST", milestonePath, milestoneClaim)
 
@@ -245,7 +252,8 @@ func TestSupportedGoPlayerDay(t *testing.T) {
 		if second%10 == 0 {
 			summary = control("visitor heartbeat", sessions+"/heartbeat", false)
 		}
-		if second%30 == 0 {
+		// Charge the full passive refresh allowance even when progress is quiet.
+		if second%15 == 0 {
 			user("home attention", "GET", "/v1/me/home-attention", nil)
 		}
 		if second%450 == 0 && second < 1800 {
@@ -291,6 +299,7 @@ func TestSupportedGoPlayerDay(t *testing.T) {
 			}
 			lastWorkoutEnd, lastWorkout = workoutEnd, workout
 			state = actual
+			homeAfterAction()
 			summary = user("visitor refresh after growth", "GET", "/v1/me/visitors", nil)
 			if second == 600 {
 				user("activity sync, replay", "POST", "/v1/activity/sync", body)
@@ -340,9 +349,15 @@ func TestSupportedGoPlayerDay(t *testing.T) {
 	exchange := user("pack exchange", "POST", "/v1/me/exchanges", map[string]any{
 		"requestId": uuid.NewString(), "offerId": "woodland", "offerVersion": 2, "quantity": 3,
 	})
-	for _, value := range exchange["packs"].([]any) {
+	if after := homeAfterAction(); after["unopenedPackCount"] != float64(4) {
+		t.Fatal(after)
+	}
+	for i, value := range exchange["packs"].([]any) {
 		pack := value.(map[string]any)["ownedPackId"].(string)
 		user("pack open", "POST", "/v1/me/packs/"+pack+"/open", map[string]string{"requestId": uuid.NewString()})
+		if after := homeAfterAction(); after["unopenedPackCount"] != float64(3-i) {
+			t.Fatal(after)
+		}
 		user("latest opening", "GET", "/v1/me/pack-openings?latest=true", nil)
 	}
 	user("opening history", "GET", "/v1/me/pack-openings", nil)
@@ -358,6 +373,7 @@ func TestSupportedGoPlayerDay(t *testing.T) {
 	if result := user("expedition claim", "POST", claimPath, claim); result["gemsEarned"] != "1" {
 		t.Fatal(result)
 	}
+	homeAfterAction()
 	user("expedition claim replay", "POST", claimPath, claim)
 	user("expedition archive", "GET", "/v1/me/expeditions", nil)
 

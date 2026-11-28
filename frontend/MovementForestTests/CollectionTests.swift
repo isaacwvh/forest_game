@@ -140,7 +140,16 @@ final class CollectionTests: XCTestCase {
         XCTAssertEqual(service.packReads, 1)
         XCTAssertEqual(service.openingReads, 1)
         let pack = try XCTUnwrap(store.packs.first { store.confirmedOpening(for: $0.id) == nil })
+        let openingVersion = service.contract.opening.economyVersion
+        store.applyWallet(service.contract.opening.tokenBalance, version: openingVersion)
+        var attentionReceipt: APICollectionReceipt?
+        store.onHomeAttentionReceipt = { receipt, fresh in
+            XCTAssertTrue(fresh)
+            attentionReceipt = receipt
+        }
         await store.open(pack)
+        XCTAssertEqual(store.economyVersion, openingVersion, "A pack opening need not advance the wallet")
+        XCTAssertEqual(attentionReceipt?.ownedPackId, pack.id)
         XCTAssertNotNil(store.confirmedOpening(for: pack.id))
         XCTAssertFalse(store.busy)
         XCTAssertEqual(service.packReads, 1)

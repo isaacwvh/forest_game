@@ -26,7 +26,7 @@ checks = (ROOT / "MovementForestTests/HomeAttentionChecks.swift").read_text(enco
 main = '''
 let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
 let count = try HomeAttentionChecks.run(fixtures: fixtures)
-precondition(count == 20)
+precondition(count == 23)
 print("PASS: \\(count) shared Home attention/recovery/contract assertions using real Swift source.")
 '''
 (OUT / "main.swift").write_text(interfaces + records + wire + source + checks + main, encoding="utf-8")

@@ -80,6 +80,7 @@ final class GardenConnection: ObservableObject {
     @Published private(set) var visitors: VisitorCoordinator?
     @Published private(set) var collection: CollectionCoordinator?
     @Published private var compactHomeAttention: APIHomeAttention?
+    @Published private var homeAttentionReceipt: UUID?
     @Published private(set) var accountSummary: AccountSummaryStore?
     @Published private(set) var levelUps: LevelUpCoordinator?
     @Published private(set) var accountRequired = false
@@ -98,6 +99,7 @@ final class GardenConnection: ObservableObject {
     private var pendingClient: APIClient?
     private var homeAttentionClient: APIClient?
     private var homeAttentionEditorID: UUID?
+    private var homeAttentionRequest: UUID?
     private var pendingCredential: String?
     private let disk = AccountDiskStore()
     private var editorUpdates: AnyCancellable?
@@ -600,23 +602,37 @@ final class GardenConnection: ObservableObject {
         return summary
     }
 
-    var homeAttention: APIHomeAttention? {
-        guard let current = editor, current.isActive, current.id == homeAttentionEditorID else { return nil }
-        return compactHomeAttention
+    var homeAttention: HomeAttention {
+        let compact = editor?.isActive == true && editor?.id == homeAttentionEditorID ? compactHomeAttention : nil
+        return HomeAttention(milestones: compact?.milestoneCount ?? HomeAttention.milestoneCount(collection?.milestones ?? [],
+            confirmed: collection?.confirmedMilestoneIDs ?? []),
+            expeditions: compact?.expeditionCount ?? HomeAttention.expeditionCount(expeditions?.status?.current,
+                confirmed: collection?.state.result?.entitlementId),
+            unopenedPacks: compact?.unopenedPackCount ?? collection?.unopenedPackCount ?? 0)
+    }
+
+    var homeAttentionRevision: HomeAttentionRevision {
+        HomeAttentionRevision(progression: accountSummary?.snapshot?.progression.version ?? 0, receipt: homeAttentionReceipt)
     }
 
     func refreshCompactHomeAttention() async -> Bool {
         guard let client = homeAttentionClient, let current = editor, current.isActive,
               current.id == homeAttentionEditorID else { return false }
+        let request = UUID(), revision = homeAttentionRevision
+        homeAttentionRequest = request
+        func isCurrent() -> Bool {
+            current.isActive && current.id == editor?.id && current.id == homeAttentionEditorID &&
+                request == homeAttentionRequest && revision == homeAttentionRevision
+        }
         do {
             let result: APIHomeAttention = try await client.request("v1/me/home-attention")
-            guard current.isActive, current.id == editor?.id, current.id == homeAttentionEditorID else { return true }
+            guard isCurrent() else { return true }
             guard result.userId == current.profile.userId, result.milestoneCount >= 0,
                   result.expeditionCount >= 0, result.unopenedPackCount >= 0 else { return false }
             compactHomeAttention = result
             return true
         } catch {
-            guard current.isActive, current.id == editor?.id, current.id == homeAttentionEditorID else { return true }
+            guard isCurrent() else { return true }
             if let error = error as? APIError, error.status == 404 {
                 homeAttentionClient = nil
                 compactHomeAttention = nil
@@ -628,6 +644,8 @@ final class GardenConnection: ObservableObject {
 
     private func installActivity(client: APIClient, store: GardenEditorStore, visitorsEnabled: Bool = true) {
         compactHomeAttention = nil
+        homeAttentionReceipt = nil
+        homeAttentionRequest = nil
         homeAttentionClient = visitorsEnabled ? client : nil
         homeAttentionEditorID = visitorsEnabled ? store.id : nil
         var client = client
@@ -642,6 +660,15 @@ final class GardenConnection: ObservableObject {
                 service: APICollectionRepository(client: client), discovery: discovery, initialCatalogue: store.catalogue)
             self.collection = collection
             collectionUpdates = collection.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+            collection.onHomeAttentionReceipt = { [weak self, weak collection] receipt, fresh in
+                guard let self, let collection, self.collection === collection, self.homeAttentionClient != nil else { return }
+                if fresh, let compact = self.compactHomeAttention {
+                    let milestones = receipt.milestoneId != nil && collection.milestonesConfirmedAt != nil
+                        ? HomeAttention.milestoneCount(collection.milestones, confirmed: collection.confirmedMilestoneIDs) : nil
+                    self.compactHomeAttention = compact.applyingConfirmedCounts(milestones: milestones, packs: receipt.capacity?.unopenedPacks)
+                }
+                self.homeAttentionReceipt = receipt.requestId
+            }
             collection.onPlantAwarded = { [weak store] in await store?.refresh() }
             collection.onInventoryReceipt = { [weak store] receipt in
                 await store?.applyInventoryReceipt(receipt)

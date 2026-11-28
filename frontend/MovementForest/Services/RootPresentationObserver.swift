@@ -10,10 +10,10 @@ final class RootPresentationObserver: ObservableObject {
         let flags: [Bool]
         let savedURL: String
         let profile: UUID?
-        let progression: Int64
+        let homeRevision: HomeAttentionRevision
         let hostedTotal: String?
         let notice: APILevelUpNotice?
-        let attention: [Int]
+        let attention: HomeAttention
 
         @MainActor init(_ connection: GardenConnection) {
             let editor = connection.editor, collection = connection.collection
@@ -31,14 +31,10 @@ final class RootPresentationObserver: ObservableObject {
                 connection.activitySync?.busy == true || editor?.connectionBusy == true
             ]
             savedURL = connection.savedURL; profile = editor?.profile.userId
-            progression = connection.accountSummary?.snapshot?.progression.version ?? 0
+            homeRevision = connection.homeAttentionRevision
             hostedTotal = connection.visitors?.summary?.hostedTotal
             notice = connection.levelUps?.presented
-            attention = [
-                HomeAttention.milestoneCount(collection?.milestones ?? [], confirmed: collection?.confirmedMilestoneIDs ?? []),
-                HomeAttention.expeditionCount(connection.expeditions?.status?.current, confirmed: collection?.state.result?.entitlementId),
-                collection?.unopenedPackCount ?? 0
-            ]
+            attention = connection.homeAttention
         }
     }
     let objectWillChange = ObservableObjectPublisher()

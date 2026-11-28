@@ -82,7 +82,7 @@ struct RootView: View {
     @State private var packOpeningPresented = false
     @State private var childEntryBlocked = false
     @State private var bottomNavigationTop: CGFloat?
-    @State private var lastHomeAttentionRead: (scope: String, uptime: TimeInterval)?
+    @State private var lastHomeAttentionRead: (scope: String, revision: HomeAttentionRevision, uptime: TimeInterval)?
     @StateObject private var entryRecap = AppEntryRecapCoordinator()
     @StateObject private var resume = AppResumeCoordinator()
 
@@ -383,23 +383,24 @@ struct RootView: View {
 
     private var homeAttentionRevision: String {
         [phase == .active ? "active" : "inactive", homeAttentionScope,
-         String(connection.accountSummary?.snapshot?.progression.version ?? 0),
+         String(connection.homeAttentionRevision.progression),
          connection.visitors?.summary?.hostedTotal ?? "",
-         connection.homeAttention == nil ? "" : String(connection.collection?.economyVersion ?? 0)].joined(separator: ":")
+         connection.homeAttentionRevision.receipt?.uuidString ?? ""].joined(separator: ":")
     }
 
     private func refreshHomeAttention() async {
         guard phase == .active else { lastHomeAttentionRead = nil; return }
         guard connection.collection != nil || connection.expeditions != nil else { return }
         let scope = homeAttentionScope
-        if let previous = lastHomeAttentionRead, previous.scope == scope {
+        let revision = connection.homeAttentionRevision
+        if let previous = lastHomeAttentionRead, previous.scope == scope, previous.revision == revision {
             let remaining = 15 - (ProcessInfo.processInfo.systemUptime - previous.uptime)
             if remaining > 0 {
                 do { try await Task.sleep(for: .seconds(remaining)) } catch { return }
             }
         }
         guard !Task.isCancelled, phase == .active, scope == homeAttentionScope else { return }
-        lastHomeAttentionRead = (scope, ProcessInfo.processInfo.systemUptime)
+        lastHomeAttentionRead = (scope, revision, ProcessInfo.processInfo.systemUptime)
         let read = Task {
             if await connection.refreshCompactHomeAttention() { return }
             await connection.collection?.refresh(scope: .home)
@@ -412,16 +413,14 @@ struct RootView: View {
     }
 
     private func attention(for destination: CollectionDestination) -> String {
-        let collection = connection.collection
+        let attention = connection.homeAttention
         switch destination {
         case .milestones:
-            return HomeAttention.rewardDescription(connection.homeAttention?.milestoneCount ?? HomeAttention.milestoneCount(collection?.milestones ?? [],
-                confirmed: collection?.confirmedMilestoneIDs ?? []))
+            return HomeAttention.rewardDescription(attention.milestones)
         case .expedition:
-            return HomeAttention.rewardDescription(connection.homeAttention?.expeditionCount ?? HomeAttention.expeditionCount(connection.expeditions?.status?.current,
-                confirmed: collection?.state.result?.entitlementId))
+            return HomeAttention.rewardDescription(attention.expeditions)
         case .draws:
-            let count = connection.homeAttention?.unopenedPackCount ?? collection?.unopenedPackCount ?? 0
+            let count = attention.unopenedPacks
             return count == 0 ? "" : "\(count) unopened \(count == 1 ? "pack" : "packs")"
         case .exchange, .catalog: return ""
         }

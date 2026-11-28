@@ -72,6 +72,7 @@ final class CollectionCoordinator: ObservableObject {
     private let journal: any CollectionJournalPersisting
     private var attached = true
     var onWallet: ((String, Int64) -> Void)?
+    var onHomeAttentionReceipt: ((APICollectionReceipt, Bool) -> Void)?
     var onPlantAwarded: (() async -> Void)?
     var onInventoryReceipt: ((APICollectionReceipt) async -> Void)?
     private var inventoryReconciliation: Task<Void, Never>?
@@ -214,6 +215,10 @@ final class CollectionCoordinator: ObservableObject {
             if receipt.economyVersion == economyVersion, let capacity = receipt.itemCapacity { itemCapacity = capacity }
             if receipt.economyVersion == economyVersion, let capacity = receipt.capacity {
                 acceptCapacity(capacity)
+            }
+            switch pending.kind {
+            case .exchange, .open, .milestone, .expeditionClaim: onHomeAttentionReceipt?(receipt, fresh)
+            case .sell, .itemPurchase, .itemSell: break
             }
             DiagnosticHistory.shared.record("Collection", "confirmed \(pending.kind.rawValue)", requestID: pending.id.uuidString, scope: diagnosticScope)
             message = pending.kind == .itemPurchase ? "Item saved to Storage." :

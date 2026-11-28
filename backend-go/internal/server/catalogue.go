@@ -23,6 +23,8 @@ type catalogueCache struct {
 	value json.RawMessage
 }
 
+var fixtureCatalogueDisabled = &apiError{503, "fixture_catalogue_disabled", "Development catalogue is disabled"}
+
 func (s *Server) catalogueState(ctx context.Context, tx pgx.Tx) (catalogueState, error) {
 	var state catalogueState
 	var metres string
@@ -32,7 +34,7 @@ func (s *Server) catalogueState(ctx context.Context, tx pgx.Tx) (catalogueState,
 		return state, catalogueUnavailable
 	}
 	if err == nil && state.Fixture && s.Environment != "local" && s.Environment != "test" {
-		return state, &apiError{503, "fixture_catalogue_disabled", "Development catalogue is disabled"}
+		return state, fixtureCatalogueDisabled
 	}
 	state.Metres = json.Number(metres)
 	return state, err
