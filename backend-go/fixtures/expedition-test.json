@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "name": "Forgotten Forest Observatory",
+  "timezone": "UTC",
+  "artworkKey": "expeditions/observatory/v1/observatory.png",
+  "quests": [
+    {
+      "id": "steps_days_3",
+      "piece": 0,
+      "description": "Reach at least 5,000 steps on 3 different days during the expedition.",
+      "target": 3,
+      "reward": {
+        "itemId": "astronomers-satchel",
+        "version": 1
+      }
+    },
+    {
+      "id": "run_walk_sessions_3",
+      "piece": 1,
+      "description": "Complete 3 recorded runs of at least 2 km or recorded walks of at least 15 minutes, in any combination.",
+      "target": 3,
+      "reward": {
+        "tokens": 400
+      }
+    },
+    {
+      "id": "items_together_4",
+      "piece": 2,
+      "description": "Have at least 4 items placed in your garden together.",
+      "target": 4,
+      "reward": {
+        "tokens": 200
+      }
+    },
+    {
+      "id": "active_butterflies_100",
+      "piece": 3,
+      "description": "Tap to welcome 100 butterflies during the expedition. Stored collections do not count.",
+      "target": 100,
+      "reward": {
+        "tokens": 250
+      }
+    },
+    {
+      "id": "packs_opened_3",
+      "piece": 4,
+      "description": "Open 3 packs of any kind during the expedition.",
+      "target": 3,
+      "reward": {
+        "gems": 1
+      }
+    },
+    {
+      "id": "all_stages_together",
+      "piece": 5,
+      "description": "Have a sprout, seedling, young plant and adult planted together once.",
+      "target": 4,
+      "reward": {
+        "tokens": 300
+      }
+    },
+    {
+      "id": "copies_advanced_4",
+      "piece": 6,
+      "description": "Help 4 different plant copies advance at least one growth stage during the expedition.",
+      "target": 4,
+      "reward": {
+        "packId": "woodland",
+        "version": 20
+      }
+    },
+    {
+      "id": "tree_herb_butterflies_50",
+      "piece": 7,
+      "description": "Tap to welcome 50 butterflies while at least one tree and one herb are planted. Stored collections do not count.",
+      "target": 50,
+      "reward": {
+        "tokens": 300
+      }
+    },
+    {
+      "id": "monthly_steps_30000",
+      "piece": 8,
+      "description": "Accumulate 30,000 steps during the expedition, with no daily minimum.",
+      "target": 30000,
+      "reward": {
+        "tokens": 400
+      }
+    }
+  ],
+  "milestones": [
+    {
+      "count": 4,
+      "reward": {
+        "itemId": "comet-basin",
+        "version": 1
+      }
+    },
+    {
+      "count": 9,
+      "reward": {
+        "itemId": "worldseed-orrery",
+        "version": 1
+      }
+    }
+  ],
+  "tags": {
+    "oak": [
+      "tree"
+    ],
+    "moonwillow": [
+      "herb"
+    ]
+  }
+}

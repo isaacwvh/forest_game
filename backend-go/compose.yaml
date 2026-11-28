@@ -1,0 +1,69 @@
+name: forestivity-go
+x-forest-go: &forest-go
+  build: .
+  image: forestivity-go:local
+services:
+  db:
+    image: postgres:17.12-bookworm
+    environment:
+      POSTGRES_USER: forest
+      POSTGRES_PASSWORD: forest-compose-admin-only
+      POSTGRES_DB: forest
+    volumes:
+      - game-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "forest", "-d", "forest"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  migrate:
+    <<: *forest-go
+    command: ["migrate"]
+    environment:
+      FOREST_DATABASE_URL: postgres://forest:forest-compose-admin-only@db:5432/forest?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+  fixture:
+    image: postgres:17.12-bookworm
+    command: ["psql", "-X", "-w", "-v", "ON_ERROR_STOP=1", "-f", "/fixtures/provision.psql"]
+    environment:
+      PGHOST: db
+      PGUSER: forest
+      PGPASSWORD: forest-compose-admin-only
+      PGDATABASE: forest
+    volumes:
+      - ./fixtures:/fixtures:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+  api:
+    <<: *forest-go
+    ports:
+      - "127.0.0.1:18000:8000"
+    environment:
+      FOREST_ENVIRONMENT: local
+      FOREST_AUTH_MODE: development
+      FOREST_DEV_AUTH_SECRET: local-forestivity-compose-signing-key-only
+      FOREST_DATABASE_URL: postgres://forest_runtime:forest-compose-runtime-only@db:5432/forest?sslmode=disable
+    healthcheck:
+      test: ["CMD", "/forest", "healthcheck"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      fixture:
+        condition: service_completed_successfully
+  worker:
+    <<: *forest-go
+    command: ["worker"]
+    ports:
+      - "127.0.0.1:18001:8000"
+    environment:
+      FOREST_ENVIRONMENT: local
+      FOREST_DATABASE_URL: postgres://forest_runtime:forest-compose-runtime-only@db:5432/forest?sslmode=disable
+    depends_on:
+      fixture:
+        condition: service_completed_successfully
+volumes:
+  game-db:

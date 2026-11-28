@@ -165,6 +165,42 @@ source += (
 source += block(
     read("MovementForest/Services/AppResumeCoordinator.swift"), "enum LifecycleClock"
 )
+
+# If the Go integration suite exported HTTP replays, decode them with the same
+# DTOs used by CollectionCoordinator and ExpeditionCoordinator on iOS.
+source += block(read("MovementForest/Models/ExpeditionModels.swift"), "struct ExpeditionEvidenceResult:")
+source += '''
+final class GoRecoveryWireTests: XCTestCase {
+    func testGoCompactedMutationReceiptsDecode() throws {
+        guard let path = ProcessInfo.processInfo.environment["FOREST_GO_RECOVERY_FIXTURE_DIR"] else {
+            throw XCTSkip("Set FOREST_GO_RECOVERY_FIXTURE_DIR to run the Go wire check")
+        }
+        func load(_ name: String) throws -> Data {
+            let url = URL(fileURLWithPath: path).appendingPathComponent(name + ".json")
+            let data = try Data(contentsOf: url)
+            let document = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+            XCTAssertNil(document["recovery"])
+            return data
+        }
+        let decoder = ActivityWire.decoder()
+        let milestone = try decoder.decode(APICollectionReceipt.self, from: load("milestone-claim"))
+        XCTAssertEqual(milestone.milestoneId, "steps_new_beginnings")
+        let claim = try decoder.decode(APICollectionReceipt.self, from: load("expedition-claim"))
+        XCTAssertNotNil(claim.entitlementId)
+        XCTAssertEqual(claim.tokensEarned, "400")
+        let evidence = try decoder.decode(ExpeditionEvidenceResult.self, from: load("expedition-evidence"))
+        XCTAssertEqual(evidence.runId, claim.runId)
+        XCTAssertGreaterThan(evidence.progressVersion, 0)
+        let pack = try decoder.decode(APICollectionReceipt.self, from: load("pack-open"))
+        XCTAssertNotNil(pack.openingId)
+        XCTAssertEqual(pack.plant?.speciesId, "moonwillow")
+        let purchase = try decoder.decode(APICollectionReceipt.self, from: load("item-purchase"))
+        XCTAssertNotNil(purchase.purchaseId)
+        XCTAssertEqual(purchase.ownedItems?.count, 2)
+    }
+}
+'''
+
 (tests / "IntegrationTests.swift").write_text(source, encoding="utf-8")
 (out / "Package.swift").write_text(
     '// swift-tools-version: 5.9\nimport PackageDescription\nlet package = Package(name: "MergedForestChecks", targets: [.testTarget(name: "IntegrationTests", path: "Tests/IntegrationTests")])\n'

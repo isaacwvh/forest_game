@@ -122,7 +122,7 @@ final class ActivitySyncCoordinator: ObservableObject {
         let id = UUID(); runID = id
         LifecycleDiagnostics.event("sync started run=\(id)")
         running = Task {
-            let result = await self.run(replacingDevice: replacingDevice)
+            let result = await self.run(replacingDevice: replacingDevice, beforeMembershipChange: beforeMembershipChange)
             if self.runID == id {
                 self.running = nil; self.runID = nil
                 self.finishWaiters(result)
@@ -152,7 +152,7 @@ final class ActivitySyncCoordinator: ObservableObject {
         pending.forEach { $0.resume(returning: result) }
     }
 
-    private func run(replacingDevice: Bool) async -> Bool {
+    private func run(replacingDevice: Bool, beforeMembershipChange: Bool) async -> Bool {
         guard active else { return false }
         busy = true
         defer { busy = false; updateEditingGate() }
@@ -201,8 +201,11 @@ final class ActivitySyncCoordinator: ObservableObject {
                     try await refreshStatus()
                 } else {
                     try enqueueSync(observation)
-                    try await drain()
-                    try await refreshStatus()
+                    if let receipt = try await drain(), !beforeMembershipChange {
+                        if !(try applyFreshStatus(from: receipt)) { try await refreshStatus() }
+                    } else {
+                        try await refreshStatus()
+                    }
                 }
                 if status?.device?.ready != true {
                     message = "Waiting for today’s readable activity. No earlier movement was counted."
@@ -247,6 +250,25 @@ final class ActivitySyncCoordinator: ObservableObject {
             if issue != nil { try? await refreshStatus() }
             return false
         }
+    }
+
+    private func applyFreshStatus(from receipt: APIActivitySyncResult) throws -> Bool {
+        guard let previous = status, let priorDevice = previous.device,
+              let progression = receipt.progression, let wallet = receipt.wallet,
+              let metrics = receipt.activityMetrics,
+              receipt.acceptedAt >= previous.serverTime,
+              priorDevice.deviceId == receipt.device.deviceId,
+              receipt.device.installationId == installationID,
+              progression.version >= (previous.progression?.version ?? 0),
+              wallet.economyVersion >= (previous.wallet?.economyVersion ?? 0) else { return false }
+        var next = saved
+        next.status = APIActivityStatus(serverTime: receipt.acceptedAt, gameTimezone: previous.gameTimezone,
+            supportedMetrics: previous.supportedMetrics, reconciliationDays: previous.reconciliationDays,
+            queuedUploadMaxAgeDays: previous.queuedUploadMaxAgeDays, device: receipt.device,
+            activitySteps: receipt.activitySteps, firstMaturityCount: receipt.firstMaturityCount,
+            lastSyncAt: progression.lastSyncAt, activityMetrics: metrics, progression: progression, wallet: wallet)
+        try save(next)
+        return true
     }
 
     private func refreshStatus() async throws {
@@ -350,14 +372,17 @@ final class ActivitySyncCoordinator: ObservableObject {
         catch { message += " A new observation could not be saved; existing requests are retained." }
     }
 
-    private func drain(acknowledgementsOnly: Bool = false) async throws {
+    @discardableResult
+    private func drain(acknowledgementsOnly: Bool = false) async throws -> APIActivitySyncResult? {
+        var syncReceipt: APIActivitySyncResult?
         while let operation = saved.operations.first {
-            if acknowledgementsOnly && operation.kind != .acknowledgement { return }
+            if acknowledgementsOnly && operation.kind != .acknowledgement { return syncReceipt }
             guard active else { throw CancellationError() }
             do {
                 DiagnosticHistory.shared.record("Activity", "sending \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: editor.diagnosticScope)
                 switch operation.kind {
                 case .enrolment:
+                    syncReceipt = nil
                     let result = try await service.enrol(body: operation.body)
                     guard active else { throw CancellationError() }
                     guard result.requestId == operation.id else { throw ForestError.invalidData("Unexpected enrolment receipt.") }
@@ -371,6 +396,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                         activityRequestID: runID != nil && runID == presentationSuppressedRun ? nil : operation.id)
                     onConfirmedGrowth?()
                     onAccountProgression?(result.progression, result.wallet)
+                    syncReceipt = result
                 case .acknowledgement:
                     guard let recap = operation.recapID else { throw ForestError.invalidData("Invalid recap request.") }
                     let result = try await service.acknowledge(recap: recap, body: operation.body)
@@ -380,6 +406,7 @@ final class ActivitySyncCoordinator: ObservableObject {
                     }
                 }
             } catch let recovery as RequestRecovery {
+                syncReceipt = nil
                 let expected: String
                 switch operation.kind {
                 case .sync: expected = "activity_sync"
@@ -410,6 +437,7 @@ final class ActivitySyncCoordinator: ObservableObject {
             if let recap = operation.recapID { next.dismissedRecaps.removeAll { $0 == recap } }
             try save(next)
         }
+        return syncReceipt
     }
 
     private func loadRecaps() async throws {

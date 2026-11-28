@@ -123,6 +123,33 @@ final class AccountSummaryTests: XCTestCase {
         XCTAssertTrue(store.failed)
     }
 
+    func testAdjacentVisitorReceiptUpdatesWalletWithoutReadingAccountSummary() async throws {
+        let original = try fixture("fresh")
+        let service = FakeAccountSummary(original)
+        let store = AccountSummaryStore(userID: original.profile.userId, service: service, cache: MemoryAccountSummaryCache())
+        await store.refresh()
+        let url = try XCTUnwrap(Bundle.main.url(forResource: "visitor-contract", withExtension: "json", subdirectory: "Fixtures"))
+        let fixtures = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        var payload = try XCTUnwrap(fixtures["initial"] as? [String: Any])
+        let version = original.wallet.economyVersion + 1
+        let balance = String(try XCTUnwrap(Int64(original.wallet.tokenBalance)) + 20)
+        payload["economyVersion"] = version
+        payload["tokenBalance"] = balance
+        payload["hostedActive"] = String(try XCTUnwrap(Int64(original.wallet.hostedActive)) + 1)
+        payload["hostedOffline"] = original.wallet.hostedOffline
+        payload["hostedTotal"] = String(try XCTUnwrap(Int64(original.wallet.hostedTotal)) + 1)
+        let summary = try ActivityWire.decoder().decode(APIVisitorSummary.self,
+            from: JSONSerialization.data(withJSONObject: payload))
+        let reward = APIVisitorReward(requestId: UUID(), eventId: UUID(), visits: "1", tokens: "20", summary: summary)
+
+        store.receiveVisitorReward(reward, offline: false)
+        store.economyChanged(version)
+        XCTAssertEqual(store.snapshot?.wallet.tokenBalance, balance)
+        XCTAssertEqual(store.snapshot?.wallet.gemBalance, original.wallet.gemBalance)
+        XCTAssertEqual(store.snapshot?.progression, original.progression)
+        XCTAssertEqual(service.calls, 1)
+    }
+
     func testWarmRewardRefreshDoesNotFlashSavedProgress() async throws {
         let fresh = try fixture("fresh"), grown = try fixture()
         let service = FakeAccountSummary(fresh)

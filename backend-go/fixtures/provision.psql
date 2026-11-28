@@ -1,0 +1,17 @@
+BEGIN;
+SELECT NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'forest_runtime') AS create_role \gset
+\if :create_role
+CREATE ROLE forest_runtime LOGIN PASSWORD 'forest-compose-runtime-only';
+\endif
+
+SELECT NOT EXISTS (SELECT 1 FROM public.game_catalogue) AS seed_catalogue \gset
+\if :seed_catalogue
+\ir development.sql
+\endif
+
+GRANT CONNECT ON DATABASE forest TO forest_runtime;
+GRANT USAGE ON SCHEMA public TO forest_runtime;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO forest_runtime;
+REVOKE INSERT, UPDATE, DELETE ON public.runtime_control, public.schema_migrations FROM forest_runtime;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO forest_runtime;
+COMMIT;

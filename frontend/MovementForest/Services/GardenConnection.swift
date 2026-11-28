@@ -79,6 +79,7 @@ final class GardenConnection: ObservableObject {
     @Published private(set) var activitySync: ActivitySyncCoordinator?
     @Published private(set) var visitors: VisitorCoordinator?
     @Published private(set) var collection: CollectionCoordinator?
+    @Published private var compactHomeAttention: APIHomeAttention?
     @Published private(set) var accountSummary: AccountSummaryStore?
     @Published private(set) var levelUps: LevelUpCoordinator?
     @Published private(set) var accountRequired = false
@@ -95,6 +96,8 @@ final class GardenConnection: ObservableObject {
     private var restored = false
     private var health: ActivityStore?
     private var pendingClient: APIClient?
+    private var homeAttentionClient: APIClient?
+    private var homeAttentionEditorID: UUID?
     private var pendingCredential: String?
     private let disk = AccountDiskStore()
     private var editorUpdates: AnyCancellable?
@@ -597,7 +600,36 @@ final class GardenConnection: ObservableObject {
         return summary
     }
 
+    var homeAttention: APIHomeAttention? {
+        guard let current = editor, current.isActive, current.id == homeAttentionEditorID else { return nil }
+        return compactHomeAttention
+    }
+
+    func refreshCompactHomeAttention() async -> Bool {
+        guard let client = homeAttentionClient, let current = editor, current.isActive,
+              current.id == homeAttentionEditorID else { return false }
+        do {
+            let result: APIHomeAttention = try await client.request("v1/me/home-attention")
+            guard current.isActive, current.id == editor?.id, current.id == homeAttentionEditorID else { return true }
+            guard result.userId == current.profile.userId, result.milestoneCount >= 0,
+                  result.expeditionCount >= 0, result.unopenedPackCount >= 0 else { return false }
+            compactHomeAttention = result
+            return true
+        } catch {
+            guard current.isActive, current.id == editor?.id, current.id == homeAttentionEditorID else { return true }
+            if let error = error as? APIError, error.status == 404 {
+                homeAttentionClient = nil
+                compactHomeAttention = nil
+                return false
+            }
+            return compactHomeAttention != nil
+        }
+    }
+
     private func installActivity(client: APIClient, store: GardenEditorStore, visitorsEnabled: Bool = true) {
+        compactHomeAttention = nil
+        homeAttentionClient = visitorsEnabled ? client : nil
+        homeAttentionEditorID = visitorsEnabled ? store.id : nil
         var client = client
         client.diagnosticScope = store.diagnosticScope
         DiagnosticHistory.shared.setScope(store.diagnosticScope)
@@ -623,6 +655,9 @@ final class GardenConnection: ObservableObject {
                 let visitor = VisitorCoordinator(userID: store.profile.userId,
                     installationID: try InstallationIdentity.load(disk: disk), service: APIVisitorRepository(client: client))
                 visitors = visitor
+                visitor.onConfirmedReward = { [weak summary] reward, offline in
+                    summary?.receiveVisitorReward(reward, offline: offline)
+                }
                 visitor.onWallet = { [weak collection = self.collection, weak summary] balance, version in
                     collection?.applyWallet(balance, version: version)
                     summary?.economyChanged(version)

@@ -20,3 +20,10 @@ enum HomeAttention {
         count == 0 ? "" : count == 1 ? "1 unclaimed reward" : "\(count) unclaimed rewards"
     }
 }
+
+struct APIHomeAttention: Decodable {
+    let userId: UUID
+    let milestoneCount: Int
+    let expeditionCount: Int
+    let unopenedPackCount: Int
+}

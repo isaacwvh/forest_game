@@ -41,6 +41,7 @@ final class VisitorCoordinator: ObservableObject {
     private var liveRewardIDs = Set<UUID>()
     private var economyVersion: Int64 = -1
     var onWallet: ((String, Int64) -> Void)?
+    var onConfirmedReward: ((APIVisitorReward, Bool) -> Void)?
     var tokenBalance: String { confirmedTokenBalance ?? summary?.tokenBalance ?? "0" }
 
     func applyWallet(_ balance: String, version: Int64) {
@@ -148,6 +149,9 @@ final class VisitorCoordinator: ObservableObject {
                 DiagnosticHistory.shared.record("Visitors", "sending \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: scope)
                 let (value, reward) = try await service.mutate(operation)
                 guard attached else { return }
+                if let reward = reward, reward.requestId == operation.id, reward.summary == value {
+                    onConfirmedReward?(reward, operation.kind == .claim)
+                }
                 apply(value)
                 DiagnosticHistory.shared.record("Visitors", "confirmed \(operation.kind.rawValue)", requestID: operation.id.uuidString, scope: scope)
                 try await persist { VisitorJournalState(pending: self.queuedReward) }

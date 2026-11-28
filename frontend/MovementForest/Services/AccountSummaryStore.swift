@@ -70,6 +70,32 @@ final class AccountSummaryStore: ObservableObject {
         invalidate()
     }
 
+    func receiveVisitorReward(_ reward: APIVisitorReward, offline: Bool) {
+        // An adjacent economy version proves the reward is the only wallet
+        // change since this snapshot. Keep the ordinary refresh for gaps.
+        guard attached, var current = snapshot, reward.eventId != nil,
+              minimumEconomyVersion == current.wallet.economyVersion,
+              current.wallet.economyVersion < Int64.max,
+              let version = reward.summary.economyVersion, version == current.wallet.economyVersion + 1,
+              let visits = APIAccountSummary.amount(reward.visits), visits > 0,
+              let tokens = APIAccountSummary.amount(reward.tokens),
+              let oldBalance = APIAccountSummary.amount(current.wallet.tokenBalance),
+              let newBalance = APIAccountSummary.amount(reward.summary.tokenBalance),
+              let oldActive = APIAccountSummary.amount(current.wallet.hostedActive),
+              let oldOffline = APIAccountSummary.amount(current.wallet.hostedOffline),
+              let newActive = APIAccountSummary.amount(reward.summary.hostedActive),
+              let newOffline = APIAccountSummary.amount(reward.summary.hostedOffline),
+              newBalance - oldBalance == tokens,
+              newActive - oldActive == (offline ? 0 : visits),
+              newOffline - oldOffline == (offline ? visits : 0) else { return }
+        let prior = current.wallet
+        current.wallet = APIAccountWallet(economyVersion: version, tokenBalance: reward.summary.tokenBalance,
+            gemBalance: prior.gemBalance, lifetimeGemsEarned: prior.lifetimeGemsEarned, initialized: prior.initialized,
+            hostedActive: reward.summary.hostedActive, hostedOffline: reward.summary.hostedOffline,
+            hostedTotal: reward.summary.hostedTotal, stepGemsEarned: prior.stepGemsEarned, bonusGemsEarned: prior.bonusGemsEarned)
+        do { try merge(current) } catch { return }
+    }
+
     func receive(progression: APIAccountProgression?, wallet: APIAccountWallet?) {
         guard attached else { return }
         if let p = progression, let w = wallet, let current = snapshot {
@@ -133,6 +159,7 @@ final class AccountSummaryStore: ObservableObject {
         }
         let previous = snapshot
         snapshot = try merged.validated(user: userID)
+        minimumEconomyVersion = max(minimumEconomyVersion, merged.wallet.economyVersion)
         onSummary?(merged)
         if previous?.progression != merged.progression || previous?.wallet != merged.wallet {
             let p = merged.progression
@@ -140,7 +167,6 @@ final class AccountSummaryStore: ObservableObject {
                 "steps=\(p.lifetimeRecordedSteps) gems=\(merged.wallet.gemBalance) level=\(p.level) xp=\(p.xpIntoLevel)/\(p.xpForNextLevel) nextGem=\(p.stepsIntoNextGem)/\(p.stepsPerGem)",
                 scope: DiagnosticHistory.scope(server: service.serverID, user: userID))
         }
-        minimumEconomyVersion = max(minimumEconomyVersion, merged.wallet.economyVersion)
         if previous?.wallet != merged.wallet {
             onWallet?(merged.wallet.tokenBalance, merged.wallet.economyVersion)
         }

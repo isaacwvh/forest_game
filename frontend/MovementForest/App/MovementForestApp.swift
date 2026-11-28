@@ -82,6 +82,7 @@ struct RootView: View {
     @State private var packOpeningPresented = false
     @State private var childEntryBlocked = false
     @State private var bottomNavigationTop: CGFloat?
+    @State private var lastHomeAttentionRead: (scope: String, uptime: TimeInterval)?
     @StateObject private var entryRecap = AppEntryRecapCoordinator()
     @StateObject private var resume = AppResumeCoordinator()
 
@@ -228,10 +229,7 @@ struct RootView: View {
                 }
                 .task(id: connection.levelUps?.id) { connection.levelUps?.setEligible(levelUpAllowed) }
                 .task(id: homeAttentionRevision) {
-                    guard phase == .active else { return }
-                    await connection.collection?.refresh(scope: .home)
-                    guard !Task.isCancelled else { return }
-                    await connection.expeditions?.refresh()
+                    await refreshHomeAttention()
                 }
                 .onChange(of: levelUpAllowed) { connection.levelUps?.setEligible($0) }
                 .sheet(item: $accountSheet) { destination in
@@ -378,26 +376,52 @@ struct RootView: View {
             .accessibilityIdentifier("home.shortcuts")
     }
 
+    private var homeAttentionScope: String {
+        [connection.collection?.id.uuidString ?? "",
+         connection.expeditions?.id.uuidString ?? ""].joined(separator: ":")
+    }
+
     private var homeAttentionRevision: String {
-        // Actual earning evidence and foreground entry trigger one shared read.
-        // Do not key this to balances/refresh timestamps: that would poll itself.
-        [phase == .active ? "active" : "inactive", connection.collection?.id.uuidString ?? "",
-         connection.expeditions?.id.uuidString ?? "",
+        [phase == .active ? "active" : "inactive", homeAttentionScope,
          String(connection.accountSummary?.snapshot?.progression.version ?? 0),
-         connection.visitors?.summary?.hostedTotal ?? ""].joined(separator: ":")
+         connection.visitors?.summary?.hostedTotal ?? "",
+         connection.homeAttention == nil ? "" : String(connection.collection?.economyVersion ?? 0)].joined(separator: ":")
+    }
+
+    private func refreshHomeAttention() async {
+        guard phase == .active else { lastHomeAttentionRead = nil; return }
+        guard connection.collection != nil || connection.expeditions != nil else { return }
+        let scope = homeAttentionScope
+        if let previous = lastHomeAttentionRead, previous.scope == scope {
+            let remaining = 15 - (ProcessInfo.processInfo.systemUptime - previous.uptime)
+            if remaining > 0 {
+                do { try await Task.sleep(for: .seconds(remaining)) } catch { return }
+            }
+        }
+        guard !Task.isCancelled, phase == .active, scope == homeAttentionScope else { return }
+        lastHomeAttentionRead = (scope, ProcessInfo.processInfo.systemUptime)
+        let read = Task {
+            if await connection.refreshCompactHomeAttention() { return }
+            await connection.collection?.refresh(scope: .home)
+            guard phase == .active, scope == homeAttentionScope else { return }
+            await connection.expeditions?.refresh()
+        }
+        // Reward changes can cancel the SwiftUI task without interrupting a
+        // read already in progress for the same account.
+        await read.value
     }
 
     private func attention(for destination: CollectionDestination) -> String {
         let collection = connection.collection
         switch destination {
         case .milestones:
-            return HomeAttention.rewardDescription(HomeAttention.milestoneCount(collection?.milestones ?? [],
+            return HomeAttention.rewardDescription(connection.homeAttention?.milestoneCount ?? HomeAttention.milestoneCount(collection?.milestones ?? [],
                 confirmed: collection?.confirmedMilestoneIDs ?? []))
         case .expedition:
-            return HomeAttention.rewardDescription(HomeAttention.expeditionCount(connection.expeditions?.status?.current,
+            return HomeAttention.rewardDescription(connection.homeAttention?.expeditionCount ?? HomeAttention.expeditionCount(connection.expeditions?.status?.current,
                 confirmed: collection?.state.result?.entitlementId))
         case .draws:
-            let count = collection?.unopenedPackCount ?? 0
+            let count = connection.homeAttention?.unopenedPackCount ?? collection?.unopenedPackCount ?? 0
             return count == 0 ? "" : "\(count) unopened \(count == 1 ? "pack" : "packs")"
         case .exchange, .catalog: return ""
         }

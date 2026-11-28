@@ -221,6 +221,7 @@ struct APIActivitySyncResult: Codable {
     let recapId: UUID?
     var progression: APIAccountProgression? = nil
     var wallet: APIAccountWallet? = nil
+    var activityMetrics: [String: String]? = nil
 }
 
 struct APIRewardRecap: Codable, Identifiable {
