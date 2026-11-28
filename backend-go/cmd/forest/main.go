@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 	_ "time/tzdata"
@@ -31,6 +32,10 @@ func run() error {
 		command = os.Args[1]
 	}
 	dsn := os.Getenv("FOREST_DATABASE_URL")
+	// The existing Cloud Run secret names the Python driver in its URL scheme.
+	if strings.HasPrefix(dsn, "postgresql+psycopg://") {
+		dsn = "postgresql://" + strings.TrimPrefix(dsn, "postgresql+psycopg://")
+	}
 	environment := os.Getenv("FOREST_ENVIRONMENT")
 	if environment == "" {
 		environment = "local"
@@ -40,6 +45,9 @@ func run() error {
 	}
 	if isReleaseCommand(command) {
 		return runReleaseCommand(command, os.Args[2:], dsn, environment)
+	}
+	if isOperatorCommand(command) {
+		return runOperatorCommand(command, os.Args[2:], dsn, environment)
 	}
 	if command == "healthcheck" {
 		client := http.Client{Timeout: 2 * time.Second}
@@ -54,7 +62,7 @@ func run() error {
 		return nil
 	}
 	if command != "serve" && command != "worker" && command != "dev-token" {
-		return errors.New("expected serve, worker, migrate, dev-token, healthcheck or a local release command")
+		return errors.New("expected serve, worker, migrate, dev-token, healthcheck or a local operator command")
 	}
 
 	var verifier *server.Verifier

@@ -180,6 +180,12 @@ func (s *Server) workerPass(ctx context.Context, run func(context.Context, pgx.T
 	if err != nil || ctx.Err() != nil {
 		return "retry", ""
 	}
+	if preview := workerReportFrom(ctx); preview != nil && preview.DryRun {
+		if err := tx.Rollback(ctx); err != nil {
+			return "retry", ""
+		}
+		return status, ""
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return "retry", ""
 	}

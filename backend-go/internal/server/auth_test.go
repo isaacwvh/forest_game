@@ -14,11 +14,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
-func TestRemoteVerifierWithLocalJWKS(t *testing.T) {
+func managedJWTForTest(t *testing.T) (*Verifier, string, func(string, string, string, string, time.Time) string) {
+	t.Helper()
 	const keyID = "local-test-signing-key"
-	const audience = "authenticated"
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +38,7 @@ func TestRemoteVerifierWithLocalJWKS(t *testing.T) {
 	}))
 	t.Cleanup(jwks.Close)
 	issuer := jwks.URL + "/auth/v1"
-	verifier, err := RemoteVerifier("ES256", issuer, audience, issuer+"/.well-known/jwks.json")
+	verifier, err := RemoteVerifier("ES256", issuer, "authenticated", issuer+"/.well-known/jwks.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,6 +55,13 @@ func TestRemoteVerifierWithLocalJWKS(t *testing.T) {
 		}
 		return signed
 	}
+	return verifier, issuer, issue
+}
+
+func TestRemoteVerifierWithLocalJWKS(t *testing.T) {
+	const keyID = "local-test-signing-key"
+	const audience = "authenticated"
+	verifier, issuer, issue := managedJWTForTest(t)
 	now := time.Now()
 	for _, tc := range []struct {
 		name, issuer, subject, audience, kid string
@@ -79,4 +87,30 @@ func TestRemoteVerifierWithLocalJWKS(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestManagedJWKSAccountsKeepIdentityAcrossSessions(t *testing.T) {
+	pool := localDatabase(t)
+	verifier, issuer, issue := managedJWTForTest(t)
+	app := httptest.NewServer((&Server{Pool: pool, Auth: verifier, Environment: "test"}).Handler())
+	t.Cleanup(app.Close)
+	token := func(subject string, expiry time.Time) string {
+		return issue(issuer, subject, "authenticated", "local-test-signing-key", expiry)
+	}
+	bootstrap := func(bearer string) map[string]any {
+		t.Helper()
+		profile, _ := testCall(t, app, "POST", "/v1/accounts/bootstrap", bearer,
+			map[string]string{"requestId": uuid.NewString(), "gameTimezone": "Asia/Singapore"}, nil, 200)
+		return profile
+	}
+	now := time.Now()
+	subject := uuid.NewString()
+	first := bootstrap(token(subject, now.Add(time.Minute)))
+	other := bootstrap(token(uuid.NewString(), now.Add(time.Minute)))
+	fresh := bootstrap(token(subject, now.Add(10*time.Minute)))
+	if first["gardenId"] != fresh["gardenId"] || first["starterPlantId"] != fresh["starterPlantId"] ||
+		first["gardenId"] == other["gardenId"] || first["starterPlantId"] == other["starterPlantId"] {
+		t.Fatal("managed subject did not preserve the same garden and isolate other accounts")
+	}
+	testCall(t, app, "GET", "/v1/me", token(subject, now.Add(-time.Minute)), nil, nil, http.StatusUnauthorized)
 }

@@ -236,6 +236,9 @@ func dateReleaseRows(table string, rows []map[string]any, now time.Time) []strin
 	case "shop_releases":
 		rows[0]["published_at"], rows[0]["effective_week"] = now, targetWeek(now, false).Format(time.DateOnly)
 		return []string{"published_at", "effective_week"}
+	case "exchange_offers":
+		// Retirement changes availability without changing the pinned offer definition.
+		return []string{"active"}
 	default:
 		return []string{}
 	}

@@ -1,0 +1,11 @@
+name: forestivity-go-managed-auth
+services:
+  api:
+    ports: !override ["127.0.0.1:18200:8000"]
+    environment:
+      FOREST_AUTH_MODE: jwks
+      FOREST_DEV_AUTH_SECRET: ""
+      FOREST_AUTH_ISSUER: "${FOREST_STAGING_AUTH_ISSUER:?Set the approved Supabase Auth issuer}"
+      FOREST_AUTH_JWKS_URL: "${FOREST_STAGING_AUTH_ISSUER:?Set the approved Supabase Auth issuer}/.well-known/jwks.json"
+      FOREST_AUTH_AUDIENCE: authenticated
+      FOREST_AUTH_ALGORITHM: "${FOREST_STAGING_AUTH_ALGORITHM:?Set the active ES256 or RS256 signing algorithm}"
