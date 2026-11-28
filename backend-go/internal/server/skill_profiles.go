@@ -103,7 +103,14 @@ func (c *skillProfileCache) fill(ctx context.Context, tx pgx.Tx, requested map[s
 		if err != nil {
 			return err
 		}
-		entry := skillProfileEntry{effects, raw, now.Add(5 * time.Minute)}
+		var presentation json.RawMessage
+		if !key.Item {
+			presentation, err = plantSkillWire(raw)
+			if err != nil {
+				return err
+			}
+		}
+		entry := skillProfileEntry{effects, presentation, now.Add(5 * time.Minute)}
 		requested[key] = entry
 		fetched[key] = entry
 	}

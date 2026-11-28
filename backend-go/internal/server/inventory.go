@@ -80,6 +80,12 @@ func (s *Server) inventoryFor(ctx context.Context, tx pgx.Tx, owner string, limi
 		}
 		cursor = &last.ID
 	}
+	for i, plant := range plants {
+		plants[i], err = plantDocumentWire(plant)
+		if err != nil {
+			return nil, err
+		}
+	}
 	capacity, err := s.plantCapacity(ctx, tx, owner)
 	if err != nil {
 		return nil, err
@@ -102,7 +108,10 @@ func (s *Server) plant(r *http.Request, tx pgx.Tx, id Identity) (any, error) {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, &apiError{404, "plant_not_found", "Plant not found"}
 	}
-	return value, err
+	if err != nil {
+		return nil, err
+	}
+	return plantDocumentWire(value)
 }
 
 func (s *Server) capacity(r *http.Request, tx pgx.Tx, id Identity) (any, error) {

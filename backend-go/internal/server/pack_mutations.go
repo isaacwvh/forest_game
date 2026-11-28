@@ -364,7 +364,10 @@ func awardPackPlant(ctx context.Context, tx pgx.Tx, m packMutation, pack, plant 
 	}
 	var presentation json.RawMessage
 	err = tx.QueryRow(ctx, plantQuery("p.owner_id=$1 AND p.id=$2"), m.owner, plant).Scan(&presentation)
-	return presentation, err
+	if err != nil {
+		return nil, err
+	}
+	return plantDocumentWire(presentation)
 }
 
 func radiusParameter(radius json.RawMessage) any {

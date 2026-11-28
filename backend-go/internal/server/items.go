@@ -144,24 +144,23 @@ func itemSkillPresentation(profile string, version int, rules json.RawMessage) (
 	effects := []map[string]json.RawMessage{}
 	info := []map[string]any{}
 	for _, raw := range source.Effects {
+		if raw == nil {
+			return nil, nil, invalidSkills
+		}
 		info = append(info, map[string]any{"id": raw["id"], "name": raw["name"], "description": raw["description"]})
-		defaults := map[string]json.RawMessage{
-			"componentVersion": []byte("1"), "minimumStage": []byte(`"adult"`), "operation": []byte(`"percent"`),
-			"stackingRule": []byte(`"strongest"`), "metric": []byte("null"), "recipients": []byte("null"), "condition": []byte("null"),
+		if err := skillEffectWire(raw); err != nil {
+			return nil, nil, err
 		}
-		for key, value := range raw {
-			defaults[key] = value
+		if string(raw["stepBand"]) == "null" {
+			delete(raw, "stepBand")
 		}
-		if string(defaults["stepBand"]) == "null" {
-			delete(defaults, "stepBand")
-		}
-		if string(defaults["metric"]) != `"workouts"` {
-			effects = append(effects, defaults)
+		if string(raw["metric"]) != `"workouts"` {
+			effects = append(effects, raw)
 			continue
 		}
 		for _, kind := range []string{"cycling", "hiking", "running", "strength_training", "swimming", "walking", "yoga"} {
-			effect := make(map[string]json.RawMessage, len(defaults))
-			for key, value := range defaults {
+			effect := make(map[string]json.RawMessage, len(raw))
+			for key, value := range raw {
 				effect[key] = value
 			}
 			effect["metric"] = []byte(`"workout_minutes.` + kind + `"`)

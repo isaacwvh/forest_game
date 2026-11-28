@@ -140,19 +140,22 @@ func presentGarden(r *http.Request, tx pgx.Tx, g gardenRecord, catalog catalogue
 		byID := make(map[uuid.UUID]json.RawMessage, len(docs))
 		for _, doc := range docs {
 			var fields struct {
-				ID     uuid.UUID `json:"plantId"`
-				Placed bool      `json:"contributesAttraction"`
+				ID     uuid.UUID       `json:"plantId"`
+				Placed bool            `json:"contributesAttraction"`
+				Skills json.RawMessage `json:"gardenSkills"`
 			}
 			if err := json.Unmarshal(doc, &fields); err != nil {
 				return nil, nil, err
 			}
-			if raw := skills[fields.ID]; raw != nil {
-				var plant map[string]json.RawMessage
-				if err := json.Unmarshal(doc, &plant); err != nil {
+			wireSkills := skills[fields.ID]
+			if wireSkills == nil && string(fields.Skills) != "[]" {
+				wireSkills, err = plantSkillWire(fields.Skills)
+				if err != nil {
 					return nil, nil, err
 				}
-				plant["gardenSkills"] = raw
-				doc, err = json.Marshal(plant)
+			}
+			if wireSkills != nil {
+				doc, err = setPlantSkills(doc, wireSkills)
 				if err != nil {
 					return nil, nil, err
 				}

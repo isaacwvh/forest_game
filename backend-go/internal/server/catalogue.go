@@ -57,8 +57,45 @@ func (s *Server) catalogueDocument(ctx context.Context, tx pgx.Tx) (json.RawMess
 	if err != nil {
 		return nil, fmt.Errorf("catalogue document: %w", err)
 	}
+	document, err = catalogueSkillWire(document)
+	if err != nil {
+		return nil, fmt.Errorf("catalogue skill presentation: %w", err)
+	}
 	s.catalogues.state, s.catalogues.value = state, document
 	return document, nil
+}
+
+func catalogueSkillWire(raw json.RawMessage) (json.RawMessage, error) {
+	var doc map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		return nil, err
+	}
+	var profiles map[string]json.RawMessage
+	if err := json.Unmarshal(doc["profiles"], &profiles); err != nil {
+		return nil, err
+	}
+	var behaviours []map[string]json.RawMessage
+	if err := json.Unmarshal(profiles["behaviour"], &behaviours); err != nil {
+		return nil, err
+	}
+	for _, profile := range behaviours {
+		skills, err := plantSkillWire(profile["gardenEffects"])
+		if err != nil {
+			return nil, err
+		}
+		profile["gardenEffects"] = skills
+	}
+	encoded, err := json.Marshal(behaviours)
+	if err != nil {
+		return nil, err
+	}
+	profiles["behaviour"] = encoded
+	encoded, err = json.Marshal(profiles)
+	if err != nil {
+		return nil, err
+	}
+	doc["profiles"] = encoded
+	return json.Marshal(doc)
 }
 
 const catalogueSQL = `

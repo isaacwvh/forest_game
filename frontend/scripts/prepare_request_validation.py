@@ -166,11 +166,26 @@ source += block(
     read("MovementForest/Services/AppResumeCoordinator.swift"), "enum LifecycleClock"
 )
 
-# If the Go integration suite exported HTTP replays, decode them with the same
-# DTOs used by CollectionCoordinator and ExpeditionCoordinator on iOS.
+# Decode exported Go HTTP responses with the same DTOs used by the iOS app.
 source += block(read("MovementForest/Models/ExpeditionModels.swift"), "struct ExpeditionEvidenceResult:")
 source += '''
 final class GoRecoveryWireTests: XCTestCase {
+    func testGoReleaseGardenSnapshotDecodesAndRenders() throws {
+        guard let path = ProcessInfo.processInfo.environment["FOREST_GO_RECOVERY_FIXTURE_DIR"] else {
+            throw XCTSkip("Set FOREST_GO_RECOVERY_FIXTURE_DIR to run the Go wire check")
+        }
+        let url = URL(fileURLWithPath: path).appendingPathComponent("release-garden-snapshot.json")
+        let snapshot = try ActivityWire.decoder().decode(APIGardenSnapshot.self, from: Data(contentsOf: url))
+        let catalogue = try XCTUnwrap(snapshot.catalogue)
+        XCTAssertEqual(catalogue.catalogVersion, "woodland-v1")
+        let behaviour = try XCTUnwrap(catalogue.profiles?["behaviour"]?.first { $0.id == "woodland_amberfan" })
+        let effect = try XCTUnwrap(behaviour.gardenEffects?.first)
+        XCTAssertEqual(effect.minimumStage, "adult")
+        XCTAssertEqual(effect.magnitude?.selector?.tags, ["tree"])
+        XCTAssertEqual(effect.magnitude?.selector?.species, [])
+        _ = try snapshot.garden.rendered(catalogue: catalogue, assets: BundleAssetCatalog())
+    }
+
     func testGoCompactedMutationReceiptsDecode() throws {
         guard let path = ProcessInfo.processInfo.environment["FOREST_GO_RECOVERY_FIXTURE_DIR"] else {
             throw XCTSkip("Set FOREST_GO_RECOVERY_FIXTURE_DIR to run the Go wire check")

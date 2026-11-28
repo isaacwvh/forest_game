@@ -123,7 +123,28 @@ func TestLocalReleasePublicationAndGameplay(t *testing.T) {
 			t.Fatal(grant)
 		}
 	}
-	call("GET", "/v1/me/garden/snapshot", nil)
+	snapshot := call("GET", "/v1/me/garden/snapshot", nil)
+	behaviours := snapshot["catalogue"].(map[string]any)["profiles"].(map[string]any)["behaviour"].([]any)
+	foundAmberfan := false
+	for _, value := range behaviours {
+		profile := value.(map[string]any)
+		if profile["id"] != "woodland_amberfan" {
+			continue
+		}
+		effect := profile["gardenEffects"].([]any)[0].(map[string]any)
+		selector := effect["magnitude"].(map[string]any)["selector"].(map[string]any)
+		if effect["minimumStage"] != "adult" || effect["operation"] != "percent" ||
+			!reflect.DeepEqual(selector["tags"], []any{"tree"}) || !reflect.DeepEqual(selector["species"], []any{}) ||
+			!reflect.DeepEqual(selector["variants"], []any{}) || !reflect.DeepEqual(selector["stages"], []any{}) {
+			t.Fatal(effect)
+		}
+		foundAmberfan = true
+		break
+	}
+	if !foundAmberfan {
+		t.Fatal("published Amberfan behaviour missing from the garden catalogue")
+	}
+	exportRecoveryFixture(t, "release-garden-snapshot", snapshot)
 	call("GET", "/v1/me/visitors", nil)
 	shop := call("GET", "/v1/me/collection?view=shop", nil)
 	if shop["catalogVersion"] != woodlandRelease || len(shop["offers"].([]any)) != 3 || shop["shop"] == nil {
