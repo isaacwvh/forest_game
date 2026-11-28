@@ -1,0 +1,26 @@
+name: forestivity-go-release
+services:
+  release:
+    image: forestivity-go:release-test
+    build: .
+    command: ["publish-release", "--apply"]
+    environment:
+      FOREST_ENVIRONMENT: local
+      FOREST_DATABASE_URL: postgres://forest:forest-compose-admin-only@db:5432/forest?sslmode=disable
+    depends_on:
+      fixture:
+        condition: service_completed_successfully
+  migrate:
+    image: forestivity-go:release-test
+  api:
+    image: forestivity-go:release-test
+    ports: !override ["127.0.0.1:18100:8000"]
+    depends_on:
+      release:
+        condition: service_completed_successfully
+  worker:
+    image: forestivity-go:release-test
+    ports: !override ["127.0.0.1:18101:8000"]
+    depends_on:
+      release:
+        condition: service_completed_successfully

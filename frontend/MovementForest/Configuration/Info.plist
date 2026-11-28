@@ -20,6 +20,7 @@
         <key>GuestEnabled</key><string>$(FOREST_AUTH_GUEST_ENABLED)</string>
         <key>AppleEnabled</key><string>$(FOREST_AUTH_APPLE_ENABLED)</string>
     </dict>
+    <key>ForestDebugManualConnection</key><string>$(FOREST_DEBUG_MANUAL_CONNECTION)</string>
     <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
     <key>LSRequiresIPhoneOS</key><true/>

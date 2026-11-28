@@ -38,6 +38,9 @@ func run() error {
 	if command == "migrate" {
 		return migrations.Apply(dsn)
 	}
+	if isReleaseCommand(command) {
+		return runReleaseCommand(command, os.Args[2:], dsn, environment)
+	}
 	if command == "healthcheck" {
 		client := http.Client{Timeout: 2 * time.Second}
 		res, err := client.Get("http://127.0.0.1:" + port() + "/health/ready")
@@ -51,7 +54,7 @@ func run() error {
 		return nil
 	}
 	if command != "serve" && command != "worker" && command != "dev-token" {
-		return errors.New("expected serve, worker, migrate, dev-token or healthcheck")
+		return errors.New("expected serve, worker, migrate, dev-token, healthcheck or a local release command")
 	}
 
 	var verifier *server.Verifier

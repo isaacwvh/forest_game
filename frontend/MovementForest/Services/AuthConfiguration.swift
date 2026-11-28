@@ -14,6 +14,7 @@ struct AuthConfiguration {
     static func load(bundle: Bundle = .main) throws -> AuthConfiguration? {
         #if DEBUG
         if ProcessInfo.processInfo.environment["FOREST_DISABLE_AUTH"] == "1" ||
+            bundle.object(forInfoDictionaryKey: "ForestDebugManualConnection") as? String == "YES" ||
             ProcessInfo.processInfo.arguments.contains("--fixture-health") { return nil }
         #endif
         return try parse(bundle.object(forInfoDictionaryKey: "ForestAuth") as? [String: String] ?? [:])

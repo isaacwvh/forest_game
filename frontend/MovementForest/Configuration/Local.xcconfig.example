@@ -2,6 +2,8 @@
 // Auth.xcconfig supplies the shared Singapore URL and public publishable key.
 // Old local Supabase URL/key entries are superseded by that tracked configuration.
 FOREST_GAME_API_URL = https:/$()/forest-api-482382863751.asia-southeast1.run.app
+// Uncomment only in a Debug test checkout that uses a manual development token.
+// FOREST_DEBUG_MANUAL_CONNECTION = YES
 // Choose your own bundle identifier/team in Xcode before enabling Apple.
 FOREST_AUTH_GOOGLE_ENABLED = YES
 FOREST_AUTH_GUEST_ENABLED = YES

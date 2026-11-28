@@ -3,6 +3,8 @@
 This local port is in progress. It runs natively in Go with PostgreSQL. The Python backend remains the reference for gameplay behavior and still supplies operator commands.
 
 See the [iPhone test and retirement checklist](RETIREMENT_CHECKLIST.md).
+For current Woodland, milestones, Observatory, and the rotating Shop, see the
+[release-content iPhone playtest](RELEASE_PLAYTEST.md).
 
 ## Run locally
 

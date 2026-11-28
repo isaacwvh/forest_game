@@ -24,6 +24,19 @@ import (
 
 func localDatabase(t *testing.T) *pgxpool.Pool {
 	t.Helper()
+	pool := emptyLocalDatabase(t)
+	fixture, err := os.ReadFile("../../fixtures/development.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(context.Background(), string(fixture)); err != nil {
+		t.Fatal(err)
+	}
+	return pool
+}
+
+func emptyLocalDatabase(t *testing.T) *pgxpool.Pool {
+	t.Helper()
 	dsn := os.Getenv("FOREST_GO_TEST_ADMIN_DSN")
 	if dsn == "" {
 		t.Skip("FOREST_GO_TEST_ADMIN_DSN is required for disposable PostgreSQL tests")
@@ -59,13 +72,6 @@ func localDatabase(t *testing.T) *pgxpool.Pool {
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	fixture, err := os.ReadFile("../../fixtures/development.sql")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := pool.Exec(context.Background(), string(fixture)); err != nil {
-		t.Fatal(err)
-	}
 	return pool
 }
 
