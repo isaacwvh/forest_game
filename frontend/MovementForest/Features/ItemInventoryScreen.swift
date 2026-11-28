@@ -105,20 +105,26 @@ struct ItemDetailScreen: View {
                 Text("This copy is no longer available. Refresh your inventory.")
             }
         } footer: {
-            if let item = item, !store.editing, let collection = collection {
-                ItemSaleControls(store: collection, item: item, editingEnabled: store.canEdit,
-                                 place: place, close: close).padding(16).background(JournalTheme.sage.opacity(0.65))
+            if let item = item, let collection = collection,
+               !store.editing || (item.placement == nil && place != nil && store.canSellFromStorage(copyID)) {
+                VStack(spacing: 6) {
+                    if store.editing { placementImpact(item) }
+                    ItemSaleControls(store: collection, item: item, editingEnabled: store.canEdit,
+                                     place: place, close: close)
+                }.padding(16).background(JournalTheme.sage.opacity(0.65))
             } else if let item = item, item.placement == nil, let place = place {
                 VStack(spacing: 6) {
-                    if store.editing {
-                        GardenActionImpact(title: store.replacementID == nil ? "If placed" : "If replaced",
-                            before: store.draftStrategy, after: store.strategyIfPlaced(item))
-                    }
+                    if store.editing { placementImpact(item) }
                     Button { place(item) } label: { Text("Place").frame(maxWidth: .infinity, minHeight: 44) }
                         .buttonStyle(.journalPrimary).disabled(!store.canEdit).accessibilityIdentifier("itemDetails.place")
                 }.padding(.horizontal, 12).padding(.vertical, 8).background(JournalTheme.paper)
             }
         }
+    }
+
+    private func placementImpact(_ item: APIOwnedItem) -> some View {
+        GardenActionImpact(title: store.replacementID == nil ? "If placed" : "If replaced",
+            before: store.draftStrategy, after: store.strategyIfPlaced(item))
     }
 }
 

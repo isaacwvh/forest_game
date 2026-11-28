@@ -113,6 +113,8 @@ selected = [
     "testConfirmedLevelCapacitySurvivesLaterStaleInventory",
     "testFailedActivityPreflightPreventsMembershipMutation",
     "testSuccessfulActivityPreflightUsesLatestConfirmedState",
+    "testStorageSalesRemoveCopiesWithoutUndoingOtherDraftChanges",
+    "testStorageSaleRequiresAConfirmedMoveToStorage",
 ]
 source += "@MainActor\nfinal class MergedEditorTests: XCTestCase {\n" + block(
     editor, "    private func makeStore"

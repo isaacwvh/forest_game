@@ -411,8 +411,10 @@ struct OwnedPlantDetailScreen: View {
                     collection: collection, strategyBefore: store.editing ? store.draftStrategy : nil,
                     strategyAfter: context == .storagePlacement ? store.ownedCopy(copyID).flatMap { store.strategyIfPlanted($0) } : nil,
                     strategyTitle: store.replacementID == nil ? "If planted" : "If replaced",
-                    saleEnabled: !store.editing && store.canReadInventory && !store.showingCached &&
-                        !store.connectionBusy && (!store.editing || store.canEdit) && store.candidate == nil)
+                    saleEnabled: context == .storagePlacement
+                        ? copy.placement == nil && store.canSellFromStorage(copyID)
+                        : !store.editing && store.canReadInventory && !store.showingCached &&
+                            !store.connectionBusy && store.candidate == nil)
             } else if collection?.state.result?.saleId != nil && collection?.state.result?.plantId == copyID {
                 Color.clear.onAppear { dismiss() }
             } else {

@@ -18,6 +18,11 @@ struct GardenDraftChange: Codable, Equatable {
     let plants: [PlacementChange]
     let items: [PlacementChange]
 
+    private init(plants: [PlacementChange], items: [PlacementChange]) {
+        self.plants = plants
+        self.items = items
+    }
+
     init(from current: GardenDraftLayout, to target: GardenDraftLayout) {
         func changed(_ current: [UUID: APIPlacement], _ target: [UUID: APIPlacement]) -> [PlacementChange] {
             Set(current.keys).union(target.keys).sorted { $0.uuidString < $1.uuidString }.compactMap { id in
@@ -34,6 +39,13 @@ struct GardenDraftChange: Codable, Equatable {
         for change in plants { next.plants[change.id] = change.placement }
         for change in items { next.items[change.id] = change.placement }
         return next
+    }
+
+    func removing(plantID: UUID?, itemID: UUID?) -> GardenDraftChange? {
+        let remainingPlants = plants.filter { $0.id != plantID }
+        let remainingItems = items.filter { $0.id != itemID }
+        guard !remainingPlants.isEmpty || !remainingItems.isEmpty else { return nil }
+        return GardenDraftChange(plants: remainingPlants, items: remainingItems)
     }
 }
 
@@ -112,6 +124,19 @@ struct GardenDraftSession: Codable, Equatable {
         let next = change.applying(to: layout)
         undo.append(GardenDraftChange(from: next, to: layout))
         layout = next
+    }
+
+    mutating func removeSoldCopy(plantID: UUID?, itemID: UUID?) {
+        if let id = plantID {
+            plants.removeAll { $0.id == id }
+            layout.plants.removeValue(forKey: id)
+        }
+        if let id = itemID {
+            items.removeAll { $0.id == id }
+            layout.items.removeValue(forKey: id)
+        }
+        undo = undo.compactMap { $0.removing(plantID: plantID, itemID: itemID) }
+        redo = redo.compactMap { $0.removing(plantID: plantID, itemID: itemID) }
     }
 
     func request() -> GardenEditRequest {

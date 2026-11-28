@@ -99,6 +99,12 @@ final class GardenEditorStore: ObservableObject, Identifiable {
     var canReadInventory: Bool {
         isActive && confirmed != nil && catalogue != nil && !refreshInFlight && pending == nil && !needsRefresh
     }
+    func canSellFromStorage(_ id: UUID) -> Bool {
+        guard editing, canReadInventory, canEdit, !showingCached, !connectionBusy,
+              editCandidateID == nil, replacementID == nil, let garden = confirmed else { return false }
+        // A copy moved to Storage in an unsaved draft is still placed on the server.
+        return !garden.plants.contains { $0.id == id } && !(garden.items ?? []).contains { $0.id == id }
+    }
     private(set) var isActive = true
 
     func deactivate() {
@@ -224,6 +230,20 @@ final class GardenEditorStore: ObservableObject, Identifiable {
 
     func applyInventoryReceipt(_ receipt: APICollectionReceipt) async {
         guard isActive else { return }
+        if receipt.saleId != nil {
+            if let id = receipt.plantId { inventory.removeAll { $0.id == id } }
+            if let id = receipt.ownedItemId { itemInventory.removeAll { $0.id == id } }
+            if var value = draft {
+                value.removeSoldCopy(plantID: receipt.plantId, itemID: receipt.ownedItemId)
+                draft = value
+                strategyCache = [:]; unavailableStrategies = []
+                if selectedID == receipt.plantId || selectedID == receipt.ownedItemId { selectedID = nil }
+                if let id = editCandidateID, id == receipt.plantId || id == receipt.ownedItemId { cancelCandidate() }
+                persistDraft()
+            }
+            await refresh()
+            return
+        }
         if let version = receipt.gardenStateVersion, let known = inventoryStateVersion,
            version <= known { return } // Current inventory already includes any surviving copy.
         guard readyForMutation, !refreshInFlight, !activityBusy, var garden = confirmed,

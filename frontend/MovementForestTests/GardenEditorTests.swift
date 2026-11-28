@@ -103,6 +103,7 @@ private final class EditorTestService: GardenServing {
     var pauseRead = false
     var gate: CheckedContinuation<Void, Never>?
     var extraInventory: [APIOwnedPlant] = []
+    var storedItems: [APIOwnedItem] = []
     var pages: [String: APIInventory] = [:]
     var pauseInventory = false
     var inventoryGate: CheckedContinuation<Void, Never>?
@@ -144,7 +145,7 @@ private final class EditorTestService: GardenServing {
         return APIGardenSnapshot(profile: fixture.profile, garden: current,
             catalogue: catalogVersion == catalogueValue.catalogVersion ? nil : catalogueValue,
             inventory: try await inventory(after: nil),
-            itemInventory: APIItemInventory(items: [], nextCursor: nil, capacity: nil))
+            itemInventory: APIItemInventory(items: storedItems, nextCursor: nil, capacity: nil))
     }
     func garden() async throws -> APIGarden { current }
     func inventory(after: UUID?) async throws -> APIInventory {
@@ -1139,6 +1140,59 @@ extension GardenEditorTests {
         XCTAssertEqual(request.actions[0].x, Decimal(string: "4.321"))
         XCTAssertEqual(request.actions[0].rotationDegrees, Decimal(string: "45.67"))
         XCTAssertFalse(store.editing); XCTAssertNil(store.draft); XCTAssertNil(store.pending)
+    }
+    func testStorageSalesRemoveCopiesWithoutUndoingOtherDraftChanges() async throws {
+        let service = EditorTestService(try EditorContract.load())
+        service.supportsSnapshots = true
+        let item = APIOwnedItem(ownedItemId: UUID(), itemId: "test-lantern", definitionVersion: 1,
+            displayName: "Lantern", description: "", rarity: "common", assetVersion: "1",
+            modelKey: "lantern", thumbnailKey: "lantern", clearanceRadius: 0.25, placement: nil)
+        service.storedItems = [item]
+        let store = try makeStore(service)
+        await store.start(); store.editing = true
+        let plant = try XCTUnwrap(store.storedPlants.first)
+        XCTAssertTrue(store.canSellFromStorage(plant.id))
+        XCTAssertTrue(store.canSellFromStorage(item.id))
+
+        store.begin(plant, kind: .plant); store.updatePosition(x: 2, y: 2)
+        await store.releaseCandidate()
+        store.selectedID = plant.id; await store.storeSelected()
+        store.beginItem(item, action: "place"); store.updatePosition(x: 3, y: 3)
+        await store.releaseCandidate()
+        store.undoDraft()
+        XCTAssertTrue(store.canUndoDraft)
+        XCTAssertTrue(store.canRedoDraft)
+
+        service.pages["first"] = APIInventory(plants: [], nextCursor: nil, capacity: nil)
+        service.current.stateVersion += 1
+        await store.applyInventoryReceipt(APICollectionReceipt(requestId: UUID(), tokenBalance: "100",
+            economyVersion: 1, saleId: UUID(), plantId: plant.id))
+        XCTAssertTrue(store.storedPlants.isEmpty)
+        XCTAssertFalse(store.canUndoDraft)
+        store.redoDraft()
+        XCTAssertEqual(store.editorGarden?.items?.map(\.id), [item.id])
+
+        await store.storeItem(item)
+        store.undoDraft()
+        store.undoDraft()
+        XCTAssertTrue(store.canRedoDraft)
+        service.storedItems = []
+        service.current.stateVersion += 1
+        await store.applyInventoryReceipt(APICollectionReceipt(requestId: UUID(), tokenBalance: "125",
+            economyVersion: 2, saleId: UUID(), ownedItemId: item.id))
+        XCTAssertTrue(store.storedItems.isEmpty)
+        XCTAssertFalse(store.canRedoDraft)
+        XCTAssertFalse(store.hasDraftChanges)
+    }
+    func testStorageSaleRequiresAConfirmedMoveToStorage() async throws {
+        let fixture = try EditorContract.load(), service = EditorTestService(fixture)
+        service.current = fixture.plantResult.garden
+        let store = try makeStore(service)
+        await store.start(); store.editing = true
+        let plant = try XCTUnwrap(store.confirmed?.plants.first)
+        store.selectedID = plant.id; await store.storeSelected()
+        XCTAssertEqual(store.ownedCopy(plant.id)?.placement, nil)
+        XCTAssertFalse(store.canSellFromStorage(plant.id))
     }
     func testDraftSurvivesBackgroundAndRejectsAnExternalLayoutChange() async throws {
         let fixture = try EditorContract.load(), service = EditorTestService(try EditorContract.load())

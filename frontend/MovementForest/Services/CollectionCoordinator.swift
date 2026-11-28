@@ -227,8 +227,8 @@ final class CollectionCoordinator: ObservableObject {
                 pending.kind == .sell ? "Plant sold for \(receipt.tokensEarned ?? "0") tokens." :
                 pending.kind == .milestone ? "Milestone reward saved." :
                 (isOpening ? "Your plant is in Storage." : "Your unopened packs are ready in Packs.")
-            let changesInventory = isOpening || pending.kind == .sell || pending.kind == .itemPurchase ||
-                pending.kind == .itemSell || pending.kind == .expeditionClaim
+            let isSale = pending.kind == .sell || pending.kind == .itemSell
+            let changesInventory = isOpening || isSale || pending.kind == .itemPurchase || pending.kind == .expeditionClaim
             if service.supportsFocusedReads {
                 if fresh { applyCollectionChanges(receipt, operation: pending) }
                 if changesInventory {
@@ -236,11 +236,12 @@ final class CollectionCoordinator: ObservableObject {
                     inventoryReconciliation = Task { [weak self] in
                         await previous?.value
                         guard let self = self, self.attached else { return }
-                        if fresh, let apply = self.onInventoryReceipt { await apply(receipt) }
+                        if fresh || isSale, let apply = self.onInventoryReceipt { await apply(receipt) }
                         else { await self.onPlantAwarded?() }
                     }
                 }
-            } else if changesInventory { await onPlantAwarded?() }
+            } else if isSale, let apply = onInventoryReceipt { await apply(receipt) }
+            else if changesInventory { await onPlantAwarded?() }
         } catch let error as APIError where (400..<500).contains(error.status) &&
                     ![401, 408, 426, 429].contains(error.status) && error.code != "idempotency_conflict" {
             guard attached else { return }
