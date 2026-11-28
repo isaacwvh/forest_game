@@ -342,6 +342,7 @@ struct GardenSkillsPage: View {
                 if groups.isEmpty { Text("No active skills").foregroundStyle(JournalTheme.secondary) }
                 ForEach(groups) { group in
                     skill(group).padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .background(JournalTheme.sage.opacity(0.45), in: RoundedRectangle(cornerRadius: 12))
                 }
                 if let evaluation = evaluation {
@@ -361,8 +362,10 @@ struct GardenSkillsPage: View {
                     }
                 }
                 if store.showingCached { Text("Last confirmed context").font(.caption).foregroundStyle(JournalTheme.secondary) }
-            }.padding(20)
-        }.navigationTitle("Garden skills").navigationBarTitleDisplayMode(.inline)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .navigationTitle("Garden skills").navigationBarTitleDisplayMode(.inline)
             .background(JournalPageBackground().ignoresSafeArea()).foregroundStyle(JournalTheme.ink).tint(JournalTheme.action)
             .accessibilityIdentifier("garden.skillsPage")
             .toolbar {

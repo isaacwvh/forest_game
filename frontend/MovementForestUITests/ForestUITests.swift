@@ -590,8 +590,11 @@ final class ForestUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Reset garden view"].exists)
         XCTAssertFalse(app.buttons["visitors.welcome"].exists)
         app.buttons["garden.info"].tap()
-        XCTAssertTrue(app.navigationBars["Garden information"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Active skills"].exists)
+        let page = app.scrollViews["garden.skillsPage"]
+        XCTAssertTrue(page.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Garden skills"].exists)
+        XCTAssertGreaterThan(page.frame.width, app.windows.firstMatch.frame.width * 0.8)
+        XCTAssertTrue(app.buttons["garden.skills.close"].exists)
         XCTAssertFalse(app.staticTexts["Garden controls"].exists)
         XCTAssertFalse(app.staticTexts["Visitors"].exists)
     }
